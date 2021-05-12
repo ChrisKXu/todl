@@ -7,10 +7,11 @@ namespace Todl.Tests.CodeAnalysis
     public sealed class LexerTests
     {
         [Fact]
-        public void BasicTests()
+        public void BasicLexerTests()
         {
             var sourceText = SourceText.FromString("1+    2 +3");
-            var lexer = new Lexer(sourceText);
+            var syntaxTree = new SyntaxTree(sourceText);
+            var lexer = new Lexer(syntaxTree);
             lexer.Lex();
 
             var tokens = lexer.SyntaxTokens;

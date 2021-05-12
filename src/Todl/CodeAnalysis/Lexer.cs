@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
+using System.Linq;
 using Todl.Diagnostics;
 
 namespace Todl.CodeAnalysis
@@ -10,34 +10,33 @@ namespace Todl.CodeAnalysis
     /// </summary>
     public sealed class Lexer
     {
-        private readonly SourceText sourceText;
-        private readonly ImmutableArray<SyntaxToken>.Builder syntaxTokenBuilder = ImmutableArray.CreateBuilder<SyntaxToken>();
-        private readonly ImmutableArray<Diagnostic>.Builder diagnosticsBuilder = ImmutableArray.CreateBuilder<Diagnostic>();
+        private readonly SyntaxTree syntaxTree;
+        private readonly List<SyntaxToken> syntaxTokens = new List<SyntaxToken>();
+        private readonly List<Diagnostic> diagnostics = new List<Diagnostic>();
         private int position = 0;
 
+        private SourceText SourceText => this.syntaxTree.SourceText;
         private char Current => this.Seek(0);
-
         private char Peak => this.Seek(1);
 
-        public IReadOnlyCollection<SyntaxToken> SyntaxTokens => syntaxTokenBuilder.ToImmutable();
+        public IReadOnlyList<SyntaxToken> SyntaxTokens => syntaxTokens;
+        public IReadOnlyCollection<Diagnostic> Diagnostics => diagnostics;
 
-        public IReadOnlyCollection<Diagnostic> Diagnostics => diagnosticsBuilder.ToImmutable();
-
-        public Lexer(SourceText sourceText)
+        public Lexer(SyntaxTree syntaxTree)
         {
-            this.sourceText = sourceText;
+            this.syntaxTree = syntaxTree;
         }
 
         private char Seek(int offset)
         {
             var index = this.position + offset;
 
-            if (index >= this.sourceText.Text.Length)
+            if (index >= this.SourceText.Text.Length)
             {
                 return '\0';
             }
 
-            return this.sourceText.Text[index];
+            return this.SourceText.Text[index];
         }
 
         private IReadOnlyCollection<SyntaxTrivia> ReadSyntaxTrivia(bool leading)
@@ -75,7 +74,7 @@ namespace Todl.CodeAnalysis
                 {
                     triviaList.Add(new SyntaxTrivia(
                         kind: kind,
-                        text: this.sourceText.Text.Substring(start, length),
+                        text: this.SourceText.Text.Substring(start, length),
                         position: start
                     ));
                 }
@@ -215,8 +214,9 @@ namespace Todl.CodeAnalysis
             var trailingTrivia = ReadTrailingSyntaxTrivia();
 
             return new SyntaxToken(
+                syntaxTree: this.syntaxTree,
                 kind: kind,
-                text: this.sourceText.Text.Substring(start, length),
+                text: this.SourceText.Text.Substring(start, length),
                 position: start,
                 leadingTrivia: leadingTrivia,
                 trailingTrivia: trailingTrivia
@@ -225,14 +225,20 @@ namespace Todl.CodeAnalysis
 
         public void Lex()
         {
+            // if syntaxTokens is not empty, it means lexer has already been executed.
+            if (syntaxTokens.Any())
+            {
+                return;
+            }
+
             while (true)
             {
                 var token = GetNextToken();
-                syntaxTokenBuilder.Add(token);
+                syntaxTokens.Add(token);
 
                 if (token.Kind == SyntaxKind.BadToken)
                 {
-                    diagnosticsBuilder.Add(new Diagnostic("Bad token", DiagnosticLevel.Error));
+                    diagnostics.Add(new Diagnostic("Bad token", DiagnosticLevel.Error));
                     break;
                 }
 
