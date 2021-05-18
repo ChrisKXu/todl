@@ -4,7 +4,9 @@ namespace Todl.CodeAnalysis
 {
     public class LiteralExpression : Expression
     {
-        public SyntaxToken LiteralToken { get; } 
+        public SyntaxToken LiteralToken { get; }
+
+        public string Text => this.LiteralToken.Text;
 
         public LiteralExpression(SyntaxTree syntaxTree, SyntaxToken token) : base(syntaxTree)
         {

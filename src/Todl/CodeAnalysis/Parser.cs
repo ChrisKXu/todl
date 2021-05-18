@@ -61,15 +61,18 @@ namespace Todl.CodeAnalysis
             return null;
         }
 
-        public Parser(SyntaxTree syntaxTree)
+        internal Parser(SyntaxTree syntaxTree)
         {
             this.syntaxTree = syntaxTree;
             this.lexer = new Lexer(syntaxTree);
         }
 
+        // Giving unit tests access to lexer.Lex()
+        internal void Lex() => this.lexer.Lex();
+
         public void Parse()
         {
-            this.lexer.Lex();
+            this.Lex();
 
             if (this.lexer.Diagnostics.Any())
             {
@@ -93,7 +96,7 @@ namespace Todl.CodeAnalysis
             throw new NotImplementedException();
         }
 
-        private Expression ParseBinaryExpression(int parentPrecedence = 0)
+        internal Expression ParseBinaryExpression(int parentPrecedence = 0)
         {
             var left = this.ParsePrimaryExpression();
 

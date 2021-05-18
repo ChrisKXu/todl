@@ -8,7 +8,7 @@ namespace Todl.CodeAnalysis
 
         public SourceText SourceText { get; }
 
-        public SyntaxTree(SourceText sourceText)
+        internal SyntaxTree(SourceText sourceText)
         {
             this.SourceText = sourceText;
             this.parser = new Parser(this);
