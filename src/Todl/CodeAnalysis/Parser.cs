@@ -117,12 +117,28 @@ namespace Todl.CodeAnalysis
             return left;
         }
 
+        private ParethesizedExpression ParseParethesizedExpression()
+        {
+            var leftParenthesisToken = this.ExpectToken(SyntaxKind.LeftParenthesisToken);
+            var innerExpression = ParseBinaryExpression();
+            var rightParenthesisToken = this.ExpectToken(SyntaxKind.RightParenthesisToken);
+
+            if (rightParenthesisToken != null)
+            {
+                return new ParethesizedExpression(this.syntaxTree, leftParenthesisToken, innerExpression, rightParenthesisToken);
+            }
+
+            throw new NotImplementedException();
+        }
+
         private Expression ParsePrimaryExpression()
         {
             switch (Current.Kind)
             {
                 case SyntaxKind.NumberToken:
                     return new LiteralExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.NumberToken));
+                case SyntaxKind.LeftParenthesisToken:
+                    return ParseParethesizedExpression();
             }
 
             throw new NotImplementedException($"{Current.Kind} is not recognised");

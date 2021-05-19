@@ -16,6 +16,8 @@ namespace Todl.CodeAnalysis
         StarEqualsToken,
         SlashToken,
         SlashEqualsToken,
+        LeftParenthesisToken,
+        RightParenthesisToken,
 
         // Trivia
         WhitespaceTrivia,

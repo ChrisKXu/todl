@@ -205,6 +205,14 @@ namespace Todl.CodeAnalysis
                         ++this.position;
                     }
                     break;
+                case '(':
+                    kind = SyntaxKind.LeftParenthesisToken;
+                    ++this.position;
+                    break;
+                case ')':
+                    kind = SyntaxKind.RightParenthesisToken;
+                    ++this.position;
+                    break;
                 default:
                     break;
             }
