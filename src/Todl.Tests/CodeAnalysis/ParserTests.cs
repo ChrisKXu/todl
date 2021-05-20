@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Todl.CodeAnalysis;
+using Todl.CodeAnalysis.Text;
 using Xunit;
 
 namespace Todl.Tests.CodeAnalysis
