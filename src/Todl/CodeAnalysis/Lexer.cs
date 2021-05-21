@@ -75,8 +75,7 @@ namespace Todl.CodeAnalysis
                 {
                     triviaList.Add(new SyntaxTrivia(
                         kind: kind,
-                        text: this.SourceText.Text.Substring(start, length),
-                        position: start
+                        text: this.SourceText.GetTextSpan(start, length)
                     ));
                 }
             }
@@ -225,8 +224,7 @@ namespace Todl.CodeAnalysis
             return new SyntaxToken(
                 syntaxTree: this.syntaxTree,
                 kind: kind,
-                text: this.SourceText.Text.Substring(start, length),
-                position: start,
+                text: this.SourceText.GetTextSpan(start, length),
                 leadingTrivia: leadingTrivia,
                 trailingTrivia: trailingTrivia
             );

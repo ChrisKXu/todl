@@ -5,7 +5,6 @@ namespace Todl.CodeAnalysis.Text
 {
     public sealed class SourceText
     {
-
         public string Text { get; }
 
         public int Length => this.Text.Length;
@@ -24,5 +23,7 @@ namespace Todl.CodeAnalysis.Text
         {
             return FromString(await File.ReadAllTextAsync(fileName));
         }
+
+        public TextSpan GetTextSpan(int start, int length) => new TextSpan(this, start, length);
     }
 }

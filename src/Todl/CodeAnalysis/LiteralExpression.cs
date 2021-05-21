@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Todl.CodeAnalysis.Text;
 
 namespace Todl.CodeAnalysis
 {
@@ -6,7 +7,7 @@ namespace Todl.CodeAnalysis
     {
         public SyntaxToken LiteralToken { get; }
 
-        public string Text => this.LiteralToken.Text;
+        public TextSpan Text => this.LiteralToken.Text;
 
         public LiteralExpression(SyntaxTree syntaxTree, SyntaxToken token) : base(syntaxTree)
         {
