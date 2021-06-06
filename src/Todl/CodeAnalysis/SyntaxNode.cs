@@ -8,7 +8,7 @@ namespace Todl.CodeAnalysis
 
         protected SyntaxNode(SyntaxTree syntaxTree)
         {
-            this.SyntaxTree = SyntaxTree;
+            this.SyntaxTree = syntaxTree;
         }
 
         public abstract IEnumerable<SyntaxNode> GetChildren();

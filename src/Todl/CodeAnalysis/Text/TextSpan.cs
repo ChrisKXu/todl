@@ -23,6 +23,11 @@ namespace Todl.CodeAnalysis.Text
             return this.SourceText.Text.Substring(this.Start, this.Length);
         }
 
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         public override bool Equals(object obj)
         {
             if (obj is string other)

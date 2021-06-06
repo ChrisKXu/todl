@@ -21,7 +21,7 @@ namespace Todl.CodeAnalysis
         private char Peak => this.Seek(1);
 
         public IReadOnlyList<SyntaxToken> SyntaxTokens => syntaxTokens;
-        public IReadOnlyCollection<Diagnostic> Diagnostics => diagnostics;
+        public IReadOnlyList<Diagnostic> Diagnostics => diagnostics;
 
         public Lexer(SyntaxTree syntaxTree)
         {
@@ -126,7 +126,6 @@ namespace Todl.CodeAnalysis
         }
 
         private IReadOnlyCollection<SyntaxTrivia> ReadLeadingSyntaxTrivia() => this.ReadSyntaxTrivia(true);
-
         private IReadOnlyCollection<SyntaxTrivia> ReadTrailingSyntaxTrivia() => this.ReadSyntaxTrivia(false);
 
         private SyntaxToken GetNextToken()
@@ -245,7 +244,7 @@ namespace Todl.CodeAnalysis
 
                 if (token.Kind == SyntaxKind.BadToken)
                 {
-                    diagnostics.Add(new Diagnostic("Bad token", DiagnosticLevel.Error));
+                    diagnostics.Add(new Diagnostic("Bad token", DiagnosticLevel.Error, token.GetTextLocation()));
                     break;
                 }
 

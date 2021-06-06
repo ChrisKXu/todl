@@ -28,5 +28,7 @@ namespace Todl.CodeAnalysis
         {
             yield break;
         }
+
+        public TextLocation GetTextLocation() => new TextLocation(this.SyntaxTree.SourceText, this.Text);
     }
 }
