@@ -1,19 +1,17 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Todl.CodeAnalysis
+namespace Todl.CodeAnalysis.Text
 {
     public sealed class SourceText
     {
-        private readonly string text;
+        public string Text { get; }
 
-        public string Text => text;
-
-        public int Length => text.Length;
+        public int Length => this.Text.Length;
 
         private SourceText(string text)
         {
-            this.text = text;
+            this.Text = text;
         }
 
         public static SourceText FromString(string text)
@@ -25,5 +23,7 @@ namespace Todl.CodeAnalysis
         {
             return FromString(await File.ReadAllTextAsync(fileName));
         }
+
+        public TextSpan GetTextSpan(int start, int length) => new TextSpan(this, start, length);
     }
 }

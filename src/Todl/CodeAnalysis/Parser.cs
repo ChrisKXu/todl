@@ -20,7 +20,7 @@ namespace Todl.CodeAnalysis
         private SyntaxToken Current => this.Seek(0);
         private SyntaxToken Peak => this.Seek(1);
 
-        public IReadOnlyCollection<Diagnostic> Diagnostics
+        public IReadOnlyList<Diagnostic> Diagnostics
         {
             get
             {
@@ -58,6 +58,8 @@ namespace Todl.CodeAnalysis
                 return this.NextToken();
             }
 
+            ReportUnexpectedToken(syntaxKind);
+
             return null;
         }
 
@@ -87,13 +89,7 @@ namespace Todl.CodeAnalysis
 
         private Expression ParseExpression()
         {
-            switch (Current.Kind)
-            {
-                case SyntaxKind.NumberToken:
-                    return ParseBinaryExpression();
-            }
-            
-            throw new NotImplementedException();
+            return ParseBinaryExpression();
         }
 
         internal Expression ParseBinaryExpression(int parentPrecedence = 0)
@@ -123,12 +119,7 @@ namespace Todl.CodeAnalysis
             var innerExpression = ParseBinaryExpression();
             var rightParenthesisToken = this.ExpectToken(SyntaxKind.RightParenthesisToken);
 
-            if (rightParenthesisToken != null)
-            {
-                return new ParethesizedExpression(this.syntaxTree, leftParenthesisToken, innerExpression, rightParenthesisToken);
-            }
-
-            throw new NotImplementedException();
+            return new ParethesizedExpression(this.syntaxTree, leftParenthesisToken, innerExpression, rightParenthesisToken);
         }
 
         private Expression ParsePrimaryExpression()
@@ -142,6 +133,11 @@ namespace Todl.CodeAnalysis
             }
 
             throw new NotImplementedException($"{Current.Kind} is not recognised");
+        }
+
+        private void ReportUnexpectedToken(SyntaxKind expectedSyntaxKind)
+        {
+            this.diagnostics.Add(new Diagnostic($"Unexpected token found: {Current.Text}. Expecting {expectedSyntaxKind}", DiagnosticLevel.Error, Current.GetTextLocation()));
         }
     }
 }

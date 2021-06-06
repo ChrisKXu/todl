@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Todl.CodeAnalysis;
+using Todl.CodeAnalysis.Text;
 using Xunit;
 
 namespace Todl.Tests.CodeAnalysis
@@ -74,6 +75,18 @@ namespace Todl.Tests.CodeAnalysis
             (innerExpression.Left as LiteralExpression).Text.Should().Be("1");
             (innerExpression.Right as LiteralExpression).Text.Should().Be("2");
             innerExpression.Operator.Text.Should().Be("+");
+        }
+
+        [Fact]
+        public void TestParserWithDiagnostics()
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString("(1 + 2 * 3 - 4")); // missing a ")"
+            var parser = new Parser(syntaxTree);
+            parser.Parse();
+
+            parser.Diagnostics.Should().NotBeEmpty();
+            parser.Diagnostics[0].TextLocation.TextSpan.Start.Should().Be(14);
+            parser.Diagnostics[0].TextLocation.TextSpan.Length.Should().Be(0);
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Todl.CodeAnalysis.Text;
 using Todl.Diagnostics;
 
 namespace Todl.CodeAnalysis
@@ -20,7 +21,7 @@ namespace Todl.CodeAnalysis
         private char Peak => this.Seek(1);
 
         public IReadOnlyList<SyntaxToken> SyntaxTokens => syntaxTokens;
-        public IReadOnlyCollection<Diagnostic> Diagnostics => diagnostics;
+        public IReadOnlyList<Diagnostic> Diagnostics => diagnostics;
 
         public Lexer(SyntaxTree syntaxTree)
         {
@@ -74,8 +75,7 @@ namespace Todl.CodeAnalysis
                 {
                     triviaList.Add(new SyntaxTrivia(
                         kind: kind,
-                        text: this.SourceText.Text.Substring(start, length),
-                        position: start
+                        text: this.SourceText.GetTextSpan(start, length)
                     ));
                 }
             }
@@ -126,7 +126,6 @@ namespace Todl.CodeAnalysis
         }
 
         private IReadOnlyCollection<SyntaxTrivia> ReadLeadingSyntaxTrivia() => this.ReadSyntaxTrivia(true);
-
         private IReadOnlyCollection<SyntaxTrivia> ReadTrailingSyntaxTrivia() => this.ReadSyntaxTrivia(false);
 
         private SyntaxToken GetNextToken()
@@ -224,8 +223,7 @@ namespace Todl.CodeAnalysis
             return new SyntaxToken(
                 syntaxTree: this.syntaxTree,
                 kind: kind,
-                text: this.SourceText.Text.Substring(start, length),
-                position: start,
+                text: this.SourceText.GetTextSpan(start, length),
                 leadingTrivia: leadingTrivia,
                 trailingTrivia: trailingTrivia
             );
@@ -246,7 +244,7 @@ namespace Todl.CodeAnalysis
 
                 if (token.Kind == SyntaxKind.BadToken)
                 {
-                    diagnostics.Add(new Diagnostic("Bad token", DiagnosticLevel.Error));
+                    diagnostics.Add(new Diagnostic("Bad token", DiagnosticLevel.Error, token.GetTextLocation()));
                     break;
                 }
 

@@ -1,16 +1,16 @@
+using Todl.CodeAnalysis.Text;
+
 namespace Todl.CodeAnalysis
 {
     public sealed class SyntaxTrivia
     {
         public SyntaxKind Kind { get; }
-        public string Text { get; }
-        public int Position { get; }
+        public TextSpan Text { get; }
 
-        public SyntaxTrivia(SyntaxKind kind, string text, int position)
+        public SyntaxTrivia(SyntaxKind kind, TextSpan text)
         {
             Kind = kind;
             Text = text;
-            Position = position;
         }
     }
 }
