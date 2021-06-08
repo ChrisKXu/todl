@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Todl.CodeAnalysis.Text;
+using Todl.Compiler.CodeAnalysis.Text;
 
-namespace Todl.CodeAnalysis
+namespace Todl.Compiler.CodeAnalysis
 {
     public class LiteralExpression : Expression
     {

@@ -1,9 +1,9 @@
 using FluentAssertions;
-using Todl.CodeAnalysis;
-using Todl.CodeAnalysis.Text;
+using Todl.Compiler.CodeAnalysis;
+using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
 
-namespace Todl.Tests.CodeAnalysis
+namespace Todl.Compiler.Tests.CodeAnalysis
 {
     public sealed class LexerTests
     {

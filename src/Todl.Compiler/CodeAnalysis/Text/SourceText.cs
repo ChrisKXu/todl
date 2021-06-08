@@ -1,7 +1,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Todl.CodeAnalysis.Text
+namespace Todl.Compiler.CodeAnalysis.Text
 {
     public sealed class SourceText
     {

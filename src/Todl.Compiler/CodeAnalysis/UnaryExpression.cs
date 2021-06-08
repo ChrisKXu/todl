@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Todl.CodeAnalysis
+namespace Todl.Compiler.CodeAnalysis
 {
     public sealed class UnaryExpression : Expression
     {

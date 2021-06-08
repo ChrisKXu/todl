@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Todl.Diagnostics;
+using Todl.Compiler.Diagnostics;
 
-namespace Todl.CodeAnalysis
+namespace Todl.Compiler.CodeAnalysis
 {
     /// <summary>
     /// This class implements a recursive descent parser for the todl language

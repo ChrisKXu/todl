@@ -1,6 +1,6 @@
-using Todl.CodeAnalysis.Text;
+using Todl.Compiler.CodeAnalysis.Text;
 
-namespace Todl.CodeAnalysis
+namespace Todl.Compiler.CodeAnalysis
 {
     public sealed class SyntaxTrivia
     {

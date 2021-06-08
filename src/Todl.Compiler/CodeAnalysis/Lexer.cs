@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Todl.CodeAnalysis.Text;
-using Todl.Diagnostics;
+using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 
-namespace Todl.CodeAnalysis
+namespace Todl.Compiler.CodeAnalysis
 {
     /// <summary>
     /// This lexer converts source texts into syntax tokens, which allows parser to parse into syntax trees later

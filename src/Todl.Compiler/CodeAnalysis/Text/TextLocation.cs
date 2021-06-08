@@ -1,4 +1,4 @@
-﻿namespace Todl.CodeAnalysis.Text
+﻿namespace Todl.Compiler.CodeAnalysis.Text
 {
     public struct TextLocation
     {

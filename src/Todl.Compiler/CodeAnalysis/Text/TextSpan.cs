@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Todl.CodeAnalysis.Text
+namespace Todl.Compiler.CodeAnalysis.Text
 {
     /// <summary>
     /// TextSpan represents a portion of the source text

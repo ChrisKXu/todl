@@ -1,4 +1,4 @@
-namespace Todl.Diagnostics
+namespace Todl.Compiler.Diagnostics
 {
     public enum DiagnosticLevel
     {

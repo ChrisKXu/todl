@@ -1,6 +1,6 @@
-using Todl.CodeAnalysis.Text;
+using Todl.Compiler.CodeAnalysis.Text;
 
-namespace Todl.Diagnostics
+namespace Todl.Compiler.Diagnostics
 {
     public sealed class Diagnostic
     {

@@ -1,4 +1,4 @@
-namespace Todl.CodeAnalysis
+namespace Todl.Compiler.CodeAnalysis
 {
     static class SyntaxFacts
     {
