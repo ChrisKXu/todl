@@ -5,6 +5,8 @@ using System.CommandLine.Invocation;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Evaluation;
 
 namespace Todl.Repl
 {
@@ -19,9 +21,47 @@ namespace Todl.Repl
 
         public Task<int> InvokeAsync(InvocationContext context)
         {
-            Console.WriteLine(">");
+            return Task.Run(() =>
+            {
+                while (true)
+                {
+                    Console.Write("> ");
 
-            return Task.FromResult(0);
+                    var input = Console.ReadLine()!;
+
+                    if (input.Equals("exit", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        return 0;
+                    }
+
+                    var evaluator = new Evaluator(SourceText.FromString(input));
+                    var evaluatorResult = evaluator.Evaluate();
+
+                    WriteEvaluationResult(evaluatorResult);
+                }
+            });
+        }
+
+        private void WriteEvaluationResult(EvaluatorResult evaluatorResult)
+        {
+            var originalColor = Console.ForegroundColor;
+
+            if (evaluatorResult.DiagnosticsOutput.Any())
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+
+                foreach (var line in evaluatorResult.DiagnosticsOutput)
+                {
+                    Console.WriteLine($"  {line}");
+                }
+
+                Console.ForegroundColor = originalColor;
+                Console.WriteLine();
+            }
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"==> {evaluatorResult.EvaluationOutput}");
+            Console.ForegroundColor = originalColor;
         }
     }
 }
