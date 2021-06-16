@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis
+namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     /// <summary>
     /// This class implements a recursive descent parser for the todl language

@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Todl.Compiler.CodeAnalysis;
+using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
 

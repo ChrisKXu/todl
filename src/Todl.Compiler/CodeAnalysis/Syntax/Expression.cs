@@ -1,4 +1,4 @@
-namespace Todl.Compiler.CodeAnalysis
+namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public abstract class Expression : SyntaxNode
     {

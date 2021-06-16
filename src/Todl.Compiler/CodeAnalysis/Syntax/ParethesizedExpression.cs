@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Todl.Compiler.CodeAnalysis
+namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class ParethesizedExpression : Expression
     {
