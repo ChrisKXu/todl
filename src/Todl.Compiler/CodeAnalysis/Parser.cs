@@ -60,7 +60,13 @@ namespace Todl.Compiler.CodeAnalysis
 
             ReportUnexpectedToken(syntaxKind);
 
-            return null;
+            // return a fake syntax token of the expected kind, with a text span at the current location with 0 length 
+            return new SyntaxToken(
+                syntaxTree: this.syntaxTree,
+                kind: syntaxKind,
+                text: this.syntaxTree.SourceText.GetTextSpan(this.Current.GetTextLocation().TextSpan.Start, 0),
+                leadingTrivia: Array.Empty<SyntaxTrivia>(),
+                trailingTrivia: Array.Empty<SyntaxTrivia>());
         }
 
         internal Parser(SyntaxTree syntaxTree)
@@ -132,7 +138,8 @@ namespace Todl.Compiler.CodeAnalysis
                     return ParseParethesizedExpression();
             }
 
-            throw new NotImplementedException($"{Current.Kind} is not recognised");
+            ReportUnexpectedToken(Current.Kind);
+            return null;
         }
 
         private void ReportUnexpectedToken(SyntaxKind expectedSyntaxKind)

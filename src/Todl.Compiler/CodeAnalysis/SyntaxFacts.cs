@@ -12,6 +12,9 @@ namespace Todl.Compiler.CodeAnalysis
                 case SyntaxKind.PlusToken:
                 case SyntaxKind.MinusToken:
                     return 4;
+                case SyntaxKind.EqualsEqualsToken:
+                case SyntaxKind.BangEqualsToken:
+                    return 3;
             }
 
             return 0;
