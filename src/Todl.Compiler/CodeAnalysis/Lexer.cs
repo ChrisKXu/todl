@@ -212,6 +212,30 @@ namespace Todl.Compiler.CodeAnalysis
                     kind = SyntaxKind.RightParenthesisToken;
                     ++this.position;
                     break;
+                case '=':
+                    if (Peak == '=')
+                    {
+                        kind = SyntaxKind.EqualsEqualsToken;
+                        this.position += 2;
+                    }
+                    else
+                    {
+                        kind = SyntaxKind.EqualsToken;
+                        ++this.position;
+                    }
+                    break;
+                case '!':
+                    if (Peak == '=')
+                    {
+                        kind = SyntaxKind.BangEqualsToken;
+                        this.position += 2;
+                    }
+                    else
+                    {
+                        kind = SyntaxKind.BangToken;
+                        ++this.position;
+                    }
+                    break;
                 default:
                     break;
             }

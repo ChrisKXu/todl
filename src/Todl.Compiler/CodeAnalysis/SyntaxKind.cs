@@ -18,6 +18,10 @@ namespace Todl.Compiler.CodeAnalysis
         SlashEqualsToken,
         LeftParenthesisToken,
         RightParenthesisToken,
+        EqualsToken,
+        EqualsEqualsToken,
+        BangToken,
+        BangEqualsToken,
 
         // Trivia
         WhitespaceTrivia,

@@ -78,6 +78,44 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
+        public void TestParseBinaryExpressionWithEquality()
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString("3 == 1 + 2"));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            var binaryExpression = parser.ParseBinaryExpression() as BinaryExpression;
+            binaryExpression.Should().NotBeNull();
+            binaryExpression.Operator.Text.Should().Be("==");
+            (binaryExpression.Left as LiteralExpression).Text.Should().Be("3");
+
+            var right = binaryExpression.Right as BinaryExpression;
+            right.Should().NotBeNull();
+            right.Operator.Text.Should().Be("+");
+            (right.Left as LiteralExpression).Text.Should().Be("1");
+            (right.Right as LiteralExpression).Text.Should().Be("2");
+        }
+
+        [Fact]
+        public void TestParseBinaryExpressionWithInequality()
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString("5 != 1 + 2"));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            var binaryExpression = parser.ParseBinaryExpression() as BinaryExpression;
+            binaryExpression.Should().NotBeNull();
+            binaryExpression.Operator.Text.Should().Be("!=");
+            (binaryExpression.Left as LiteralExpression).Text.Should().Be("5");
+
+            var right = binaryExpression.Right as BinaryExpression;
+            right.Should().NotBeNull();
+            right.Operator.Text.Should().Be("+");
+            (right.Left as LiteralExpression).Text.Should().Be("1");
+            (right.Right as LiteralExpression).Text.Should().Be("2");
+        }
+
+        [Fact]
         public void TestParserWithDiagnostics()
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString("(1 + 2 * 3 - 4")); // missing a ")"
