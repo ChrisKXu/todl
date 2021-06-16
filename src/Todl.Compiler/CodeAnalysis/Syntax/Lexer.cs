@@ -4,7 +4,7 @@ using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis
+namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     /// <summary>
     /// This lexer converts source texts into syntax tokens, which allows parser to parse into syntax trees later
