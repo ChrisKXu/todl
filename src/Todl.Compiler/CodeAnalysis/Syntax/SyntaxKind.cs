@@ -22,6 +22,15 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         EqualsEqualsToken,
         BangToken,
         BangEqualsToken,
+        AmpersandToken,
+        AmpersandAmpersandToken,
+        PipeToken,
+        PipePipeToken,
+        IdentifierToken,
+
+        // Keywords
+        TrueKeywordToken,
+        FalseKeywordToken,
 
         // Trivia
         WhitespaceTrivia,

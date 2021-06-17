@@ -108,11 +108,11 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             }
         }
 
-        private void ReadNumber()
+        private SyntaxKind ReadNumber()
         {
             // currently we only support integers (123) or floating points in 123.45 format
             // will revisit this part and support other formats as well
-            while(true)
+            while (true)
             {
                 if (char.IsDigit(Current) || Current == '.')
                 {
@@ -123,6 +123,21 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     break;
                 }
             }
+
+            return SyntaxKind.NumberToken;
+        }
+
+        private SyntaxKind ReadKeywordOrIdentifier()
+        {
+            var start = this.position;
+
+            while (char.IsLetterOrDigit(Current))
+            {
+                ++this.position;
+            }
+
+            var token = this.SourceText.Text.Substring(start, this.position - start);
+            return SyntaxFacts.KeywordMap.GetValueOrDefault(token, SyntaxKind.IdentifierToken);
         }
 
         private IReadOnlyCollection<SyntaxTrivia> ReadLeadingSyntaxTrivia() => this.ReadSyntaxTrivia(true);
@@ -143,8 +158,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     break;
                 case '0': case '1': case '2': case '3': case '4':
                 case '5': case '6': case '7': case '8': case '9':
-                    kind = SyntaxKind.NumberToken;
-                    ReadNumber();
+                    kind = ReadNumber();
                     break;
                 case '+':
                     if (Peak == '+')
@@ -236,7 +250,37 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                         ++this.position;
                     }
                     break;
+                case '&':
+                    if (Peak == '&')
+                    {
+                        kind = SyntaxKind.AmpersandAmpersandToken;
+                        this.position += 2;
+                    }
+                    else
+                    {
+                        kind = SyntaxKind.AmpersandToken;
+                        ++this.position;
+                    }
+                    break;
+                case '|':
+                    if (Peak == '|')
+                    {
+                        kind = SyntaxKind.PipePipeToken;
+                        this.position += 2;
+                    }
+                    else
+                    {
+                        kind = SyntaxKind.PipeToken;
+                        ++this.position;
+                    }
+                    break;
                 default:
+                    // identifiers in todl can only start with a letter and not a digit or underscore
+                    if (char.IsLetter(Current))
+                    {
+                        kind = ReadKeywordOrIdentifier();
+                    }
+                    
                     break;
             }
 

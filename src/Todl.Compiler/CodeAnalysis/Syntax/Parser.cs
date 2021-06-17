@@ -104,7 +104,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
             while (true)
             {
-                var precedence = Current.Kind.GetBinaryOperatorPrecedence();
+                var precedence = SyntaxFacts.BinaryOperatorPrecedence.GetValueOrDefault(Current.Kind, 0);
                 if (precedence == 0 || precedence <= parentPrecedence)
                 {
                     break;
@@ -134,12 +134,14 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             {
                 case SyntaxKind.NumberToken:
                     return new LiteralExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.NumberToken));
+                case SyntaxKind.TrueKeywordToken:
+                case SyntaxKind.FalseKeywordToken:
+                    return new LiteralExpression(this.syntaxTree, this.ExpectToken(Current.Kind));
                 case SyntaxKind.LeftParenthesisToken:
                     return ParseParethesizedExpression();
+                default:
+                    return new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken));
             }
-
-            ReportUnexpectedToken(Current.Kind);
-            return null;
         }
 
         private void ReportUnexpectedToken(SyntaxKind expectedSyntaxKind)
