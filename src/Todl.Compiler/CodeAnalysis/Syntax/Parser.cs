@@ -100,18 +100,28 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         internal Expression ParseBinaryExpression(int parentPrecedence = 0)
         {
-            var left = this.ParsePrimaryExpression();
-
+            Expression left;
+            var unaryPrecedence = SyntaxFacts.UnaryOperatorPrecedence.GetValueOrDefault(Current.Kind, 0);
+            if (unaryPrecedence == 0 || unaryPrecedence <= parentPrecedence)
+            {
+                left = this.ParsePrimaryExpression();
+            }
+            else
+            {
+                var operatorToken = ExpectToken(Current.Kind);
+                left = new UnaryExpression(this.syntaxTree, operatorToken, this.ParsePrimaryExpression(), false);
+            }
+            
             while (true)
             {
-                var precedence = SyntaxFacts.BinaryOperatorPrecedence.GetValueOrDefault(Current.Kind, 0);
-                if (precedence == 0 || precedence <= parentPrecedence)
+                var binaryPrecedence = SyntaxFacts.BinaryOperatorPrecedence.GetValueOrDefault(Current.Kind, 0);
+                if (binaryPrecedence == 0 || binaryPrecedence <= parentPrecedence)
                 {
                     break;
                 }
                 
                 var operatorToken = this.NextToken();
-                var right = ParseBinaryExpression(precedence);
+                var right = ParseBinaryExpression(binaryPrecedence);
 
                 left = new BinaryExpression(this.syntaxTree, left, operatorToken, right);
             }
@@ -138,10 +148,20 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 case SyntaxKind.FalseKeywordToken:
                     return new LiteralExpression(this.syntaxTree, this.ExpectToken(Current.Kind));
                 case SyntaxKind.LeftParenthesisToken:
-                    return ParseParethesizedExpression();
+                    return this.ParseTrailingUnaryExpression(this.ParseParethesizedExpression());
                 default:
-                    return new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken));
+                    return this.ParseTrailingUnaryExpression(new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken)));
             }
+        }
+
+        private Expression ParseTrailingUnaryExpression(Expression expression)
+        {
+            if (Current.Kind == SyntaxKind.PlusPlusToken || Current.Kind == SyntaxKind.MinusMinusToken)
+            {
+                return new UnaryExpression(this.syntaxTree, this.ExpectToken(Current.Kind), expression, true);
+            }
+
+            return expression;
         }
 
         private void ReportUnexpectedToken(SyntaxKind expectedSyntaxKind)
