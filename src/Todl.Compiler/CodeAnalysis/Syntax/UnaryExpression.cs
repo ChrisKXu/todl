@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -6,22 +7,22 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         public SyntaxToken Operator { get; }
         public Expression Operand { get; }
-        public bool Inversed { get; }
+        public bool Trailing { get; }
 
         public UnaryExpression(
             SyntaxTree syntaxTree,
             SyntaxToken operatorToken,
             Expression operand,
-            bool inversed) : base(syntaxTree)
+            bool trailing) : base(syntaxTree)
         {
             this.Operator = operatorToken;
             this.Operand = operand;
-            this.Inversed = inversed;
+            this.Trailing = trailing;
         }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
-            if (this.Inversed)
+            if (this.Trailing)
             {
                 yield return Operand;
                 yield return Operator;

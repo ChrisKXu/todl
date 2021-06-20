@@ -116,6 +116,59 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
+        public void TestParseBinaryExpressionWithNameAndUnaryExpression()
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString("(++a + 2) * 3 + 4"));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            var binaryExpression = parser.ParseBinaryExpression() as BinaryExpression;
+            binaryExpression.Should().NotBeNull();
+            binaryExpression.Operator.Text.Should().Be("+");
+            (binaryExpression.Right as LiteralExpression).Text.Should().Be("4");
+
+            var left = binaryExpression.Left as BinaryExpression;
+            left.Should().NotBeNull();
+            left.Operator.Text.Should().Be("*");
+            (left.Right as LiteralExpression).Text.Should().Be("3");
+
+            var parethesizedExpression = left.Left as ParethesizedExpression;
+            var innerExpression = parethesizedExpression.InnerExpression as BinaryExpression;
+            innerExpression.Should().NotBeNull();
+            innerExpression.Operator.Text.Should().Be("+");
+            (innerExpression.Right as LiteralExpression).Text.Should().Be("2");
+
+            var unaryExpression = innerExpression.Left as UnaryExpression;
+            unaryExpression.Should().NotBeNull();
+            (unaryExpression.Operand as NameExpression).IdentifierToken.Text.Should().Be("a");
+            unaryExpression.Operator.Text.Should().Be("++");
+            unaryExpression.Trailing.Should().Be(false);
+        }
+
+        [Fact]
+        public void TestParseBinaryExpressionWithNameAndTrailingUnaryExpression()
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString("(a++ + 2) * 3"));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            var binaryExpression = parser.ParseBinaryExpression() as BinaryExpression;
+            binaryExpression.Should().NotBeNull();
+            binaryExpression.Operator.Text.Should().Be("*");
+            (binaryExpression.Right as LiteralExpression).Text.Should().Be("3");
+
+            var innerExpression = (binaryExpression.Left as ParethesizedExpression).InnerExpression as BinaryExpression;
+            innerExpression.Should().NotBeNull();
+            innerExpression.Operator.Text.Should().Be("+");
+            (innerExpression.Right as LiteralExpression).Text.Should().Be("2");
+
+            var unaryExpression = innerExpression.Left as UnaryExpression;
+            unaryExpression.Operator.Text.Should().Be("++");
+            (unaryExpression.Operand as NameExpression).IdentifierToken.Text.Should().Be("a");
+            unaryExpression.Trailing.Should().Be(true);
+        }
+
+        [Fact]
         public void TestParserWithDiagnostics()
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString("(1 + 2 * 3 - 4")); // missing a ")"
