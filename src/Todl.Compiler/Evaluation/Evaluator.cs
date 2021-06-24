@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 
@@ -27,46 +29,75 @@ namespace Todl.Compiler.Evaluation
 
             var diagnosticsOutput = parser.Diagnostics.Select(diagnostics => diagnostics.Message).ToList();
 
+            var binder = new Binder();
+            var boundExpression = binder.BindExpression(binaryExpression);
+
             return new EvaluatorResult()
             {
                 DiagnosticsOutput = diagnosticsOutput,
-                EvaluationOutput = EvaluateExpression(binaryExpression).ToString()
+                EvaluationOutput = EvaluateBoundExpression(boundExpression)
             };
         }
 
-        private int EvaluateExpression(Expression expression)
+        public object EvaluateBoundExpression(BoundExpression boundExpression)
         {
-            switch (expression)
+            switch (boundExpression)
             {
-                case LiteralExpression literalExpression:
-                    return int.Parse(literalExpression.Text.ToString());
-                case BinaryExpression binaryExpression:
-                    return EvaluateBinaryExpression(binaryExpression);
-                case ParethesizedExpression parethesizedExpression:
-                    return EvaluateExpression(parethesizedExpression.InnerExpression);
+                case BoundConstant boundConstant:
+                    return boundConstant.Value;
+                case BoundUnaryExpression boundUnaryExpression:
+                    return EvaluateBoundUnaryExpression(boundUnaryExpression);
+                case BoundBinaryExpression boundBinaryExpression:
+                    return EvaluateBoundBinaryExpression(boundBinaryExpression);
             }
 
-            throw new NotSupportedException("Expression type not supported");
+            throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation");
         }
 
-        private int EvaluateBinaryExpression(BinaryExpression binaryExpression)
+        public object EvaluateBoundUnaryExpression(BoundUnaryExpression boundUnaryExpression)
         {
-            var left = EvaluateExpression(binaryExpression.Left);
-            var right = EvaluateExpression(binaryExpression.Right);
+            var operandValue = this.EvaluateBoundExpression(boundUnaryExpression.Operand);
 
-            switch (binaryExpression.Operator.Kind)
+            Debug.Assert(operandValue != null);
+
+            switch (boundUnaryExpression.Operator.BoundUnaryOperatorKind)
             {
-                case SyntaxKind.PlusToken:
-                    return left + right;
-                case SyntaxKind.MinusToken:
-                    return left - right;
-                case SyntaxKind.StarToken:
-                    return left * right;
-                case SyntaxKind.SlashToken:
-                    return left / right;
+                case BoundUnaryExpression.BoundUnaryOperatorKind.Identity:
+                    return operandValue;
+                case BoundUnaryExpression.BoundUnaryOperatorKind.Negation:
+                    return -(int)operandValue;
+                case BoundUnaryExpression.BoundUnaryOperatorKind.LogicalNegation:
+                    return !(bool)operandValue;
             }
 
-            throw new NotSupportedException($"Operator {binaryExpression.Operator.Text} not supported");
+            throw new NotSupportedException($"Unary operator {boundUnaryExpression.Operator.SyntaxKind} not supported for evaluation");
+        }
+
+        public object EvaluateBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
+        {
+            var leftValue = this.EvaluateBoundExpression(boundBinaryExpression.Left);
+            var rightValue = this.EvaluateBoundExpression(boundBinaryExpression.Right);
+
+            Debug.Assert(leftValue != null && rightValue != null);
+
+            switch (boundBinaryExpression.Operator.BoundBinaryOperatorKind)
+            {
+                case BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition:
+                    return (int)leftValue + (int)rightValue;
+                case BoundBinaryExpression.BoundBinaryOperatorKind.NumericSubstraction:
+                    return (int)leftValue - (int)rightValue;
+                case BoundBinaryExpression.BoundBinaryOperatorKind.NumericMultiplication:
+                    return (int)leftValue * (int)rightValue;
+                case BoundBinaryExpression.BoundBinaryOperatorKind.NumericDivision:
+                    return (int)leftValue / (int)rightValue;
+
+                case BoundBinaryExpression.BoundBinaryOperatorKind.LogicalAnd:
+                    return (bool)leftValue && (bool)rightValue;
+                case BoundBinaryExpression.BoundBinaryOperatorKind.LogicalOr:
+                    return (bool)leftValue || (bool)rightValue;
+            }
+
+            throw new NotSupportedException($"Binary operator {boundBinaryExpression.Operator.SyntaxKind} not supported for evaluation");
         }
     }
 }
