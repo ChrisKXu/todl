@@ -143,7 +143,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             switch (Current.Kind)
             {
                 case SyntaxKind.NumberToken:
-                    return new LiteralExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.NumberToken));
+                case SyntaxKind.StringToken:
                 case SyntaxKind.TrueKeywordToken:
                 case SyntaxKind.FalseKeywordToken:
                     return new LiteralExpression(this.syntaxTree, this.ExpectToken(Current.Kind));

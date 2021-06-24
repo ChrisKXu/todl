@@ -35,7 +35,8 @@ namespace Todl.Compiler.Evaluation
             return new EvaluatorResult()
             {
                 DiagnosticsOutput = diagnosticsOutput,
-                EvaluationOutput = EvaluateBoundExpression(boundExpression)
+                EvaluationOutput = EvaluateBoundExpression(boundExpression),
+                ResultType = boundExpression.ResultType
             };
         }
 
@@ -95,6 +96,9 @@ namespace Todl.Compiler.Evaluation
                     return (bool)leftValue && (bool)rightValue;
                 case BoundBinaryExpression.BoundBinaryOperatorKind.LogicalOr:
                     return (bool)leftValue || (bool)rightValue;
+
+                case BoundBinaryExpression.BoundBinaryOperatorKind.StringConcatenation:
+                    return (string)leftValue + (string)rightValue;
             }
 
             throw new NotSupportedException($"Binary operator {boundBinaryExpression.Operator.SyntaxKind} not supported for evaluation");

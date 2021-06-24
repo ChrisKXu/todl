@@ -37,6 +37,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 case SyntaxKind.NumberToken:
                     return this.BindNumericConstant(literalExpression.LiteralToken);
+                case SyntaxKind.StringToken:
+                    return this.BindStringConstant(literalExpression.LiteralToken);
                 case SyntaxKind.TrueKeywordToken:
                 case SyntaxKind.FalseKeywordToken:
                     return new BoundConstant(TypeSymbol.ClrBoolean, Boolean.Parse(literalExpression.LiteralToken.Text.ToReadOnlyTextSpan()));
@@ -62,6 +64,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             }
 
             throw new NotSupportedException($"Literal value {syntaxToken.Text} is not supported");
+        }
+
+        private BoundConstant BindStringConstant(SyntaxToken syntaxToken)
+        {
+            var text = syntaxToken.Text;
+            return new BoundConstant(TypeSymbol.ClrString, syntaxToken.Text.ToString().Substring(1, text.Length - 2));
         }
 
         private BoundUnaryExpression BindUnaryExpression(UnaryExpression unaryExpression)
