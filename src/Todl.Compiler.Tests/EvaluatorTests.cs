@@ -8,13 +8,13 @@ namespace Todl.Compiler.Tests
     public sealed class EvaluatorTests
     {
         [Theory]
-        [InlineData("10", "10")]
-        [InlineData("true", "True")]
-        [InlineData("1 + 2", "3")]
-        [InlineData("(1 + 2) * 3 + 4", "13")]
-        [InlineData("true && false", "False")]
-        [InlineData("false || true", "True")]
-        public void TestEvaluationPositive(string input, string expectedOutput)
+        [InlineData("10", 10)]
+        [InlineData("true", true)]
+        [InlineData("1 + 2", 3)]
+        [InlineData("(1 + 2) * 3 + 4", 13)]
+        [InlineData("true && false", false)]
+        [InlineData("false || true", true)]
+        public void TestEvaluationPositive(string input, object expectedOutput)
         {
             var sourceText = SourceText.FromString(input);
             var evaluator = new Evaluator(sourceText);

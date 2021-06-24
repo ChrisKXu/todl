@@ -35,7 +35,7 @@ namespace Todl.Compiler.Evaluation
             return new EvaluatorResult()
             {
                 DiagnosticsOutput = diagnosticsOutput,
-                EvaluationOutput = EvaluateBoundExpression(boundExpression).ToString()
+                EvaluationOutput = EvaluateBoundExpression(boundExpression)
             };
         }
 

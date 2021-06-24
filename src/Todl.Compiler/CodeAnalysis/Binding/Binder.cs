@@ -19,11 +19,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             switch(expression)
             {
                 case LiteralExpression literalExpression:
-                    return BindLiteralExpression(literalExpression);
+                    return this.BindLiteralExpression(literalExpression);
                 case BinaryExpression binaryExpression:
-                    return BindBinaryExpression(binaryExpression);
+                    return this.BindBinaryExpression(binaryExpression);
                 case UnaryExpression unaryExpression:
-                    return BindUnaryExpression(unaryExpression);
+                    return this.BindUnaryExpression(unaryExpression);
                 case ParethesizedExpression parethesizedExpression:
                     return this.BindExpression(parethesizedExpression.InnerExpression);
             }
