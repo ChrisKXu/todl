@@ -60,7 +60,7 @@ namespace Todl.Repl
 
             Console.ForegroundColor = ConsoleColor.Green;
 
-            var output = evaluatorResult.EvaluationOutput.ToString();
+            var output = evaluatorResult.EvaluationOutput;
             if (evaluatorResult.ResultType == TypeSymbol.ClrString)
             {
                 output = $"\"{output}\"";

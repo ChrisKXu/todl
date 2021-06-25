@@ -29,6 +29,16 @@ namespace Todl.Compiler.Evaluation
 
             var diagnosticsOutput = parser.Diagnostics.Select(diagnostics => diagnostics.Message).ToList();
 
+            if (diagnosticsOutput.Any())
+            {
+                return new EvaluatorResult()
+                {
+                    DiagnosticsOutput = diagnosticsOutput,
+                    EvaluationOutput = null,
+                    ResultType = null
+                };
+            }
+
             var binder = new Binder();
             var boundExpression = binder.BindExpression(binaryExpression);
 
