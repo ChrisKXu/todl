@@ -23,6 +23,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 BinaryExpression binaryExpression => this.BindBinaryExpression(binaryExpression),
                 UnaryExpression unaryExpression => this.BindUnaryExpression(unaryExpression),
                 ParethesizedExpression parethesizedExpression => this.BindExpression(parethesizedExpression.InnerExpression),
+                AssignmentExpression assignmentExpression => this.BindAssignmentExpression(assignmentExpression),
                 _ => throw new NotImplementedException()
             };
         }

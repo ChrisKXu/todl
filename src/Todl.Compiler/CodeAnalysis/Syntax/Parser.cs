@@ -104,6 +104,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     return new LiteralExpression(this.syntaxTree, this.ExpectToken(Current.Kind));
                 case SyntaxKind.LeftParenthesisToken:
                     return this.ParseTrailingUnaryExpression(this.ParseParethesizedExpression());
+                case SyntaxKind.IdentifierToken:
+                    if (this.Peak.Kind == SyntaxKind.EqualsToken)
+                    {
+                        return this.ParseAssignmentExpression();
+                    }
+
+                    return this.ParseTrailingUnaryExpression(new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken)));
                 default:
                     return this.ParseTrailingUnaryExpression(new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken)));
             }

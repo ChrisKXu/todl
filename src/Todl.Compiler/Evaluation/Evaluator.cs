@@ -60,6 +60,8 @@ namespace Todl.Compiler.Evaluation
                     return EvaluateBoundUnaryExpression(boundUnaryExpression);
                 case BoundBinaryExpression boundBinaryExpression:
                     return EvaluateBoundBinaryExpression(boundBinaryExpression);
+                case BoundAssignmentExpression boundAssignmentExpression:
+                    return EvaluateBoundExpression(boundAssignmentExpression.BoundExpression);
             }
 
             throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation");
