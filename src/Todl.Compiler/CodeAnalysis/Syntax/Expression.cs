@@ -6,4 +6,12 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         {
         }
     }
+
+    public sealed partial class Parser
+    {
+        internal Expression ParseExpression()
+        {
+            return ParseBinaryExpression();
+        }
+    }
 }

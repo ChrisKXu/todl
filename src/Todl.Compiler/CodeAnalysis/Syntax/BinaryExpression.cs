@@ -26,4 +26,38 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             yield return Right;
         }
     }
+
+    public sealed partial class Parser
+    {
+        internal Expression ParseBinaryExpression(int parentPrecedence = 0)
+        {
+            Expression left;
+            var unaryPrecedence = SyntaxFacts.UnaryOperatorPrecedence.GetValueOrDefault(Current.Kind, 0);
+            if (unaryPrecedence == 0 || unaryPrecedence <= parentPrecedence)
+            {
+                left = this.ParsePrimaryExpression();
+            }
+            else
+            {
+                var operatorToken = ExpectToken(Current.Kind);
+                left = new UnaryExpression(this.syntaxTree, operatorToken, this.ParsePrimaryExpression(), false);
+            }
+
+            while (true)
+            {
+                var binaryPrecedence = SyntaxFacts.BinaryOperatorPrecedence.GetValueOrDefault(Current.Kind, 0);
+                if (binaryPrecedence == 0 || binaryPrecedence <= parentPrecedence)
+                {
+                    break;
+                }
+
+                var operatorToken = this.NextToken();
+                var right = ParseBinaryExpression(binaryPrecedence);
+
+                left = new BinaryExpression(this.syntaxTree, left, operatorToken, right);
+            }
+
+            return left;
+        }
+    }
 }

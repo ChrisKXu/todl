@@ -34,4 +34,17 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             }
         }
     }
+
+    public sealed partial class Parser
+    {
+        private Expression ParseTrailingUnaryExpression(Expression expression)
+        {
+            if (Current.Kind == SyntaxKind.PlusPlusToken || Current.Kind == SyntaxKind.MinusMinusToken)
+            {
+                return new UnaryExpression(this.syntaxTree, this.ExpectToken(Current.Kind), expression, true);
+            }
+
+            return expression;
+        }
+    }
 }

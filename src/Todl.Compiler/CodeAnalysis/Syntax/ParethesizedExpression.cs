@@ -29,4 +29,16 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             yield return this.RightParenthesisToken;
         }
     }
+
+    public sealed partial class Parser
+    {
+        private ParethesizedExpression ParseParethesizedExpression()
+        {
+            var leftParenthesisToken = this.ExpectToken(SyntaxKind.LeftParenthesisToken);
+            var innerExpression = ParseBinaryExpression();
+            var rightParenthesisToken = this.ExpectToken(SyntaxKind.RightParenthesisToken);
+
+            return new ParethesizedExpression(this.syntaxTree, leftParenthesisToken, innerExpression, rightParenthesisToken);
+        }
+    }
 }
