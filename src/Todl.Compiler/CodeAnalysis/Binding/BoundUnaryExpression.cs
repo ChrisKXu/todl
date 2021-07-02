@@ -35,7 +35,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             PreDecrement,     // --i
             PostIncrement,    // i++
             PostDecrement,    // i--
-            
+
             // Logical
             LogicalNegation   // !isNative
         }

@@ -111,7 +111,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 var operatorToken = ExpectToken(Current.Kind);
                 left = new UnaryExpression(this.syntaxTree, operatorToken, this.ParsePrimaryExpression(), false);
             }
-            
+
             while (true)
             {
                 var binaryPrecedence = SyntaxFacts.BinaryOperatorPrecedence.GetValueOrDefault(Current.Kind, 0);
@@ -119,7 +119,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 {
                     break;
                 }
-                
+
                 var operatorToken = this.NextToken();
                 var right = ParseBinaryExpression(binaryPrecedence);
 

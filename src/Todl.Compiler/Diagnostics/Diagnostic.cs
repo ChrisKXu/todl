@@ -7,7 +7,7 @@ namespace Todl.Compiler.Diagnostics
         public string Message { get; }
         public DiagnosticLevel Level { get; }
         public TextLocation TextLocation { get; }
-        
+
         public Diagnostic(string message, DiagnosticLevel level, TextLocation textLocation)
         {
             this.Message = message;

@@ -10,7 +10,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public BinaryExpression(
             SyntaxTree syntaxTree,
-            Expression left, 
+            Expression left,
             SyntaxToken operatorToken,
             Expression right) : base(syntaxTree)
         {

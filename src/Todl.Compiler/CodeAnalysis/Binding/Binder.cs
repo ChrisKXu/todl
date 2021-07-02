@@ -16,49 +16,37 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         internal BoundExpression BindExpression(Expression expression)
         {
-            switch(expression)
+            return expression switch
             {
-                case LiteralExpression literalExpression:
-                    return this.BindLiteralExpression(literalExpression);
-                case BinaryExpression binaryExpression:
-                    return this.BindBinaryExpression(binaryExpression);
-                case UnaryExpression unaryExpression:
-                    return this.BindUnaryExpression(unaryExpression);
-                case ParethesizedExpression parethesizedExpression:
-                    return this.BindExpression(parethesizedExpression.InnerExpression);
-            }
-
-            throw new NotImplementedException();
+                LiteralExpression literalExpression => this.BindLiteralExpression(literalExpression),
+                BinaryExpression binaryExpression => this.BindBinaryExpression(binaryExpression),
+                UnaryExpression unaryExpression => this.BindUnaryExpression(unaryExpression),
+                ParethesizedExpression parethesizedExpression => this.BindExpression(parethesizedExpression.InnerExpression),
+                _ => throw new NotImplementedException()
+            };
         }
 
         private BoundConstant BindLiteralExpression(LiteralExpression literalExpression)
         {
-            switch (literalExpression.LiteralToken.Kind)
+            return literalExpression.LiteralToken.Kind switch
             {
-                case SyntaxKind.NumberToken:
-                    return this.BindNumericConstant(literalExpression.LiteralToken);
-                case SyntaxKind.StringToken:
-                    return this.BindStringConstant(literalExpression.LiteralToken);
-                case SyntaxKind.TrueKeywordToken:
-                case SyntaxKind.FalseKeywordToken:
-                    return new BoundConstant(TypeSymbol.ClrBoolean, Boolean.Parse(literalExpression.LiteralToken.Text.ToReadOnlyTextSpan()));
-            }
-
-            throw new NotSupportedException($"Literal value {literalExpression.LiteralToken.Text} is not supported");
+                SyntaxKind.NumberToken => this.BindNumericConstant(literalExpression.LiteralToken),
+                SyntaxKind.StringToken => this.BindStringConstant(literalExpression.LiteralToken),
+                SyntaxKind.TrueKeywordToken or SyntaxKind.FalseKeywordToken => new BoundConstant(TypeSymbol.ClrBoolean, bool.Parse(literalExpression.LiteralToken.Text.ToReadOnlyTextSpan())),
+                _ => throw new NotSupportedException($"Literal value {literalExpression.LiteralToken.Text} is not supported"),
+            };
         }
 
         private BoundConstant BindNumericConstant(SyntaxToken syntaxToken)
         {
             var text = syntaxToken.Text.ToReadOnlyTextSpan();
 
-            int parsedInt;
-            if (Int32.TryParse(text, out parsedInt))
+            if (int.TryParse(text, out var parsedInt))
             {
                 return new BoundConstant(TypeSymbol.ClrInt32, parsedInt);
             }
 
-            double parsedDouble;
-            if (Double.TryParse(text, out parsedDouble))
+            if (double.TryParse(text, out var parsedDouble))
             {
                 return new BoundConstant(TypeSymbol.ClrDouble, parsedDouble);
             }

@@ -12,8 +12,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     public sealed class Lexer
     {
         private readonly SyntaxTree syntaxTree;
-        private readonly List<SyntaxToken> syntaxTokens = new List<SyntaxToken>();
-        private readonly List<Diagnostic> diagnostics = new List<Diagnostic>();
+        private readonly List<SyntaxToken> syntaxTokens = new();
+        private readonly List<Diagnostic> diagnostics = new();
         private int position = 0;
 
         private SourceText SourceText => this.syntaxTree.SourceText;
@@ -48,19 +48,21 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var start = this.position;
             var kind = SyntaxKind.BadToken;
 
-            while(!done)
+            while (!done)
             {
-                switch(Current)
+                switch (Current)
                 {
                     case '\0':
                         done = true;
                         break;
-                    case '\n': case '\r':
+                    case '\n':
+                    case '\r':
                         done = !leading;
                         kind = SyntaxKind.LineBreakTrivia;
                         ReadLineBreak();
                         break;
-                    case ' ': case '\t':
+                    case ' ':
+                    case '\t':
                         kind = SyntaxKind.WhitespaceTrivia;
                         ReadWhitespace();
                         break;
@@ -332,7 +334,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     {
                         kind = ReadKeywordOrIdentifier();
                     }
-                    
+
                     break;
             }
 
