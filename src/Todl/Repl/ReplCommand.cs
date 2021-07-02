@@ -5,6 +5,7 @@ using System.CommandLine.Invocation;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Evaluation;
 
@@ -44,8 +45,6 @@ namespace Todl.Repl
 
         private void WriteEvaluationResult(EvaluatorResult evaluatorResult)
         {
-            var originalColor = Console.ForegroundColor;
-
             if (evaluatorResult.DiagnosticsOutput.Any())
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
@@ -55,13 +54,20 @@ namespace Todl.Repl
                     Console.WriteLine($"  {line}");
                 }
 
-                Console.ForegroundColor = originalColor;
+                Console.ResetColor();
                 Console.WriteLine();
             }
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"==> {evaluatorResult.EvaluationOutput}");
-            Console.ForegroundColor = originalColor;
+
+            var output = evaluatorResult.EvaluationOutput;
+            if (evaluatorResult.ResultType == TypeSymbol.ClrString)
+            {
+                output = $"\"{output}\"";
+            }
+
+            Console.WriteLine($"==> {output}");
+            Console.ResetColor();
         }
     }
 }

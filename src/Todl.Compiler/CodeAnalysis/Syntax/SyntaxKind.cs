@@ -6,6 +6,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         BadToken,
         EndOfFileToken,
         NumberToken,
+        StringToken,
         PlusToken,
         PlusEqualsToken,
         PlusPlusToken,

@@ -40,7 +40,7 @@ namespace Todl.Compiler.CodeAnalysis.Text
 
         public ReadOnlySpan<char> ToReadOnlyTextSpan()
         {
-            return this.SourceText.Text.ToCharArray(this.Start, this.Length);
+            return this.SourceText.Text.AsSpan(this.Start, this.Length);
         }
     }
 }

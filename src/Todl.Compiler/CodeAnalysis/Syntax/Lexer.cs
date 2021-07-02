@@ -127,6 +127,49 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             return SyntaxKind.NumberToken;
         }
 
+        private SyntaxKind ReadString()
+        {
+            switch (Current)
+            {
+                case '"':
+                    ++this.position;
+                    break;
+                case '@':
+                    this.position += 2;
+                    break;
+            }
+
+            var done = false;
+
+            while (!done)
+            {
+                switch (Current)
+                {
+                    case '\0':
+                    case '\r':
+                    case '\n':
+                        diagnostics.Add(
+                            new Diagnostic(
+                                message: "Unexpected EndOfFileToken",
+                                level: DiagnosticLevel.Error,
+                                textLocation: new TextLocation(this.SourceText, new TextSpan(this.SourceText, Current, 0))));
+                        return SyntaxKind.BadToken;
+                    case '"':
+                        ++this.position;
+                        done = true;
+                        break;
+                    case '\\':
+                        this.position += 2;
+                        break;
+                    default:
+                        ++this.position;
+                        break;
+                }
+            }
+
+            return SyntaxKind.StringToken;
+        }
+
         private SyntaxKind ReadKeywordOrIdentifier()
         {
             var start = this.position;
@@ -159,6 +202,15 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 case '0': case '1': case '2': case '3': case '4':
                 case '5': case '6': case '7': case '8': case '9':
                     kind = ReadNumber();
+                    break;
+                case '"':
+                    kind = ReadString();
+                    break;
+                case '@':
+                    if (Peak == '"')
+                    {
+                        kind = ReadString();
+                    }
                     break;
                 case '+':
                     if (Peak == '+')

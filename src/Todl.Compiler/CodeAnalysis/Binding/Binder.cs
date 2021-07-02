@@ -37,6 +37,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 case SyntaxKind.NumberToken:
                     return this.BindNumericConstant(literalExpression.LiteralToken);
+                case SyntaxKind.StringToken:
+                    return this.BindStringConstant(literalExpression.LiteralToken);
                 case SyntaxKind.TrueKeywordToken:
                 case SyntaxKind.FalseKeywordToken:
                     return new BoundConstant(TypeSymbol.ClrBoolean, Boolean.Parse(literalExpression.LiteralToken.Text.ToReadOnlyTextSpan()));
@@ -62,6 +64,47 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             }
 
             throw new NotSupportedException($"Literal value {syntaxToken.Text} is not supported");
+        }
+
+        private BoundConstant BindStringConstant(SyntaxToken syntaxToken)
+        {
+            var text = syntaxToken.Text.ToReadOnlyTextSpan();
+            var escape = text[0] != '@';
+            var builder = new StringBuilder();
+
+            for (var i = escape ? 1 : 2; i < text.Length - 1; ++i)
+            {
+                var c = text[i];
+                if (escape && c == '\\')
+                {
+                    switch (text[++i])
+                    {
+                        case 't':
+                            builder.Append('\t');
+                            break;
+                        case 'r':
+                            builder.Append('\r');
+                            break;
+                        case 'n':
+                            builder.Append('\n');
+                            break;
+                        case '\\':
+                            builder.Append('\\');
+                            break;
+                        case '"':
+                            builder.Append('"');
+                            break;
+                        default:
+                            throw new NotSupportedException($"Literal value {syntaxToken.Text} is not supported");
+                    }
+                }
+                else
+                {
+                    builder.Append(c);
+                }
+            }
+
+            return new BoundConstant(TypeSymbol.ClrString, builder.ToString());
         }
 
         private BoundUnaryExpression BindUnaryExpression(UnaryExpression unaryExpression)

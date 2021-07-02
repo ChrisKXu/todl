@@ -29,13 +29,24 @@ namespace Todl.Compiler.Evaluation
 
             var diagnosticsOutput = parser.Diagnostics.Select(diagnostics => diagnostics.Message).ToList();
 
+            if (diagnosticsOutput.Any())
+            {
+                return new EvaluatorResult()
+                {
+                    DiagnosticsOutput = diagnosticsOutput,
+                    EvaluationOutput = null,
+                    ResultType = null
+                };
+            }
+
             var binder = new Binder();
             var boundExpression = binder.BindExpression(binaryExpression);
 
             return new EvaluatorResult()
             {
                 DiagnosticsOutput = diagnosticsOutput,
-                EvaluationOutput = EvaluateBoundExpression(boundExpression)
+                EvaluationOutput = EvaluateBoundExpression(boundExpression),
+                ResultType = boundExpression.ResultType
             };
         }
 
@@ -95,6 +106,9 @@ namespace Todl.Compiler.Evaluation
                     return (bool)leftValue && (bool)rightValue;
                 case BoundBinaryExpression.BoundBinaryOperatorKind.LogicalOr:
                     return (bool)leftValue || (bool)rightValue;
+
+                case BoundBinaryExpression.BoundBinaryOperatorKind.StringConcatenation:
+                    return (string)leftValue + (string)rightValue;
             }
 
             throw new NotSupportedException($"Binary operator {boundBinaryExpression.Operator.SyntaxKind} not supported for evaluation");
