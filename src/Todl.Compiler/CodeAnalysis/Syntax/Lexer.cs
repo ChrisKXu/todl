@@ -161,6 +161,16 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                         done = true;
                         break;
                     case '\\':
+                        if (Peak == '\0')
+                        {
+                            diagnostics.Add(
+                                new Diagnostic(
+                                    message: "Unexpected EndOfFileToken",
+                                    level: DiagnosticLevel.Error,
+                                    textLocation: new TextLocation(this.SourceText, new TextSpan(this.SourceText, Current, 0))));
+                            return SyntaxKind.BadToken;
+                        }
+
                         this.position += 2;
                         break;
                     default:
