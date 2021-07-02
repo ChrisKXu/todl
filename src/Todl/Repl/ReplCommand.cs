@@ -14,7 +14,7 @@ namespace Todl.Repl
     sealed class ReplCommand : Command, ICommandHandler
     {
         public ReplCommand()
-            : base ("repl", "Interactive Shell")
+            : base("repl", "Interactive Shell")
         {
             TreatUnmatchedTokensAsErrors = true;
             Handler = this;

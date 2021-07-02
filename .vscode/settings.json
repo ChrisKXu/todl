@@ -1,0 +1,6 @@
+{
+  "omnisharp.enableRoslynAnalyzers": true,
+  "omnisharp.enableEditorConfigSupport": true,
+  "omnisharp.defaultLaunchSolution": "src/Todl.sln",
+  "dotnet-test-explorer.testProjectPath": "**/*Tests.@(csproj)"
+}
