@@ -72,4 +72,23 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             this.Operand = operand;
         }
     }
+
+    public sealed partial class Binder
+    {
+        private BoundUnaryExpression BindUnaryExpression(UnaryExpression unaryExpression)
+        {
+            var boundOperand = this.BindExpression(unaryExpression.Operand);
+            var boundUnaryOperator = BoundUnaryExpression.MatchUnaryOperator(
+                operandResultType: boundOperand.ResultType,
+                syntaxKind: unaryExpression.Operator.Kind,
+                trailing: unaryExpression.Trailing);
+
+            if (boundUnaryOperator == null)
+            {
+                throw new NotSupportedException($"Operator {unaryExpression.Operator.Text} is not supported on type {boundOperand.ResultType.Name}");
+            }
+
+            return new BoundUnaryExpression(boundUnaryOperator, boundOperand);
+        }
+    }
 }

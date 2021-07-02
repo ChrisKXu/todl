@@ -70,4 +70,21 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             this.Right = right;
         }
     }
+
+    public sealed partial class Binder
+    {
+        private BoundBinaryExpression BindBinaryExpression(BinaryExpression binaryExpression)
+        {
+            var boundLeft = this.BindExpression(binaryExpression.Left);
+            var boundRight = this.BindExpression(binaryExpression.Right);
+            var boundBinaryOperator = BoundBinaryExpression.MatchBinaryOperator(boundLeft.ResultType, boundRight.ResultType, binaryExpression.Operator.Kind);
+
+            if (boundBinaryOperator == null)
+            {
+                throw new NotSupportedException($"Operator {binaryExpression.Operator.Text} is not supported on types {boundLeft.ResultType.Name} and {boundRight.ResultType.Name}");
+            }
+
+            return new BoundBinaryExpression(boundBinaryOperator, boundLeft, boundRight);
+        }
+    }
 }
