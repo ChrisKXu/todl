@@ -62,6 +62,30 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             token.Text.Should().Be(text);
         }
 
+        [Theory]
+        [InlineData("\"\"")]
+        [InlineData("@\"\"")]
+        [InlineData("\"abcd\"")]
+        [InlineData("@\"abcd\"")]
+        [InlineData("\"ab\\tcd\"")]
+        [InlineData("@\"ab\\tcd\"")]
+        [InlineData("\"ab\\\"cd\"")]
+        [InlineData("@\"ab\\\"cd\"")]
+        public void TestStringToken(string text)
+        {
+            var sourceText = SourceText.FromString(text);
+            var syntaxTree = new SyntaxTree(sourceText);
+            var lexer = new Lexer(syntaxTree);
+            lexer.Lex();
+
+            lexer.SyntaxTokens.Count.Should().Be(2); // the expected token + EndOfFileToken
+            lexer.Diagnostics.Should().BeEmpty();
+
+            var token = lexer.SyntaxTokens.First();
+            token.Kind.Should().Be(SyntaxKind.StringToken);
+            token.Text.Should().Be(text);
+        }
+
         [Fact]
         public void TestLexerWithDiagnostics()
         {

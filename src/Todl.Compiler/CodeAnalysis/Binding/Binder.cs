@@ -68,8 +68,43 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         private BoundConstant BindStringConstant(SyntaxToken syntaxToken)
         {
-            var text = syntaxToken.Text;
-            return new BoundConstant(TypeSymbol.ClrString, syntaxToken.Text.ToString().Substring(1, text.Length - 2));
+            var text = syntaxToken.Text.ToReadOnlyTextSpan();
+            var escape = text[0] != '@';
+            var builder = new StringBuilder();
+
+            for (var i = escape ? 1 : 2; i < text.Length - 1; ++i)
+            {
+                var c = text[i];
+                if (escape && c == '\\')
+                {
+                    switch (text[++i])
+                    {
+                        case 't':
+                            builder.Append('\t');
+                            break;
+                        case 'r':
+                            builder.Append('\r');
+                            break;
+                        case 'n':
+                            builder.Append('\n');
+                            break;
+                        case '\\':
+                            builder.Append('\\');
+                            break;
+                        case '"':
+                            builder.Append('"');
+                            break;
+                        default:
+                            throw new NotSupportedException($"Literal value {syntaxToken.Text} is not supported");
+                    }
+                }
+                else
+                {
+                    builder.Append(c);
+                }
+            }
+
+            return new BoundConstant(TypeSymbol.ClrString, builder.ToString());
         }
 
         private BoundUnaryExpression BindUnaryExpression(UnaryExpression unaryExpression)

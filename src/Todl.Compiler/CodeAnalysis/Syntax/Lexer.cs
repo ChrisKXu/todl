@@ -129,7 +129,15 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         private SyntaxKind ReadString()
         {
-            ++this.position;
+            switch (Current)
+            {
+                case '"':
+                    ++this.position;
+                    break;
+                case '@':
+                    this.position += 2;
+                    break;
+            }
 
             var done = false;
 
@@ -197,6 +205,12 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     break;
                 case '"':
                     kind = ReadString();
+                    break;
+                case '@':
+                    if (Peak == '"')
+                    {
+                        kind = ReadString();
+                    }
                     break;
                 case '+':
                     if (Peak == '+')

@@ -93,7 +93,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             }
         }
 
-        private Expression ParseExpression()
+        internal Expression ParseExpression()
         {
             return ParseBinaryExpression();
         }
