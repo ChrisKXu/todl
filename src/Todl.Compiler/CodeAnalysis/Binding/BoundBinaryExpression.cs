@@ -56,7 +56,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             { Tuple.Create(TypeSymbol.ClrString, TypeSymbol.ClrString, SyntaxKind.PlusToken), new BoundBinaryOperator(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, TypeSymbol.ClrString) }
         };
 
-        public static BoundBinaryOperator MatchBinaryOperator(TypeSymbol leftResultType, TypeSymbol rightResultType, SyntaxKind syntaxKind)
+        internal static BoundBinaryOperator MatchBinaryOperator(TypeSymbol leftResultType, TypeSymbol rightResultType, SyntaxKind syntaxKind)
             => BoundBinaryExpression.supportedBinaryOperators.GetValueOrDefault(Tuple.Create(leftResultType, rightResultType, syntaxKind), null);
 
         public BoundBinaryOperator Operator { get; }

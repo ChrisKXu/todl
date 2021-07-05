@@ -112,8 +112,30 @@ namespace Todl.Compiler.Evaluation
         public object EvaluateBoundAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
         {
             var result = this.EvaluateBoundExpression(boundAssignmentExpression.BoundExpression);
-            this.variables[boundAssignmentExpression.Variable] = result;
-            return result;
+            var variable = boundAssignmentExpression.Variable;
+
+            switch (boundAssignmentExpression.Operator.BoundAssignmentOperatorKind)
+            {
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment:
+                    this.variables[variable] = result;
+                    break;
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.AdditionInline:
+                    this.variables[variable] = (int)this.variables[variable] + (int)result;
+                    break;
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.SubstractionInline:
+                    this.variables[variable] = (int)this.variables[variable] - (int)result;
+                    break;
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.MultiplicationInline:
+                    this.variables[variable] = (int)this.variables[variable] * (int)result;
+                    break;
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.DivisionInline:
+                    this.variables[variable] = (int)this.variables[variable] / (int)result;
+                    break;
+                default:
+                    break;
+            }
+
+            return this.variables[variable];
         }
 
         public object EvaluateBoundVariableExpression(BoundVariableExpression boundVariableExpression)

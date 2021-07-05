@@ -60,7 +60,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             { Tuple.Create(TypeSymbol.ClrBoolean, SyntaxKind.BangToken, false), new BoundUnaryOperator(SyntaxKind.BangToken, BoundUnaryOperatorKind.LogicalNegation, TypeSymbol.ClrBoolean) }
         };
 
-        public static BoundUnaryOperator MatchUnaryOperator(TypeSymbol operandResultType, SyntaxKind syntaxKind, bool trailing)
+        internal static BoundUnaryOperator MatchUnaryOperator(TypeSymbol operandResultType, SyntaxKind syntaxKind, bool trailing)
             => BoundUnaryExpression.supportedUnaryOperators.GetValueOrDefault(Tuple.Create(operandResultType, syntaxKind, trailing), null);
 
         public BoundUnaryOperator Operator { get; }

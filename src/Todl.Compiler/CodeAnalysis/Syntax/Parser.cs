@@ -105,7 +105,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 case SyntaxKind.LeftParenthesisToken:
                     return this.ParseTrailingUnaryExpression(this.ParseParethesizedExpression());
                 case SyntaxKind.IdentifierToken:
-                    if (this.Peak.Kind == SyntaxKind.EqualsToken)
+                    if (AssignmentExpression.AssignmentOperators.Contains(Peak.Kind))
                     {
                         return this.ParseAssignmentExpression();
                     }

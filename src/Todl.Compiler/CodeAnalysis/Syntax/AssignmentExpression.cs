@@ -1,31 +1,41 @@
 using System.Collections.Generic;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class AssignmentExpression : Expression
     {
         public SyntaxToken IdentifierToken { get; }
-        public SyntaxToken EqualsToken { get; }
+        public SyntaxToken AssignmentOperator { get; }
         public Expression Expression { get; }
 
         public AssignmentExpression(
             SyntaxTree syntaxTree,
             SyntaxToken identifierToken,
-            SyntaxToken equalsToken,
+            SyntaxToken assignmentOperator,
             Expression expression)
             : base(syntaxTree)
         {
             this.IdentifierToken = identifierToken;
-            this.EqualsToken = equalsToken;
+            this.AssignmentOperator = assignmentOperator;
             this.Expression = expression;
         }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
             yield return this.IdentifierToken;
-            yield return this.EqualsToken;
+            yield return this.AssignmentOperator;
             yield return this.Expression;
         }
+
+        public static readonly IReadOnlySet<SyntaxKind> AssignmentOperators = new HashSet<SyntaxKind>()
+        {
+            SyntaxKind.EqualsToken,
+            SyntaxKind.PlusEqualsToken,
+            SyntaxKind.MinusEqualsToken,
+            SyntaxKind.StarEqualsToken,
+            SyntaxKind.SlashEqualsToken
+        };
     }
 
     public sealed partial class Parser
@@ -33,13 +43,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public AssignmentExpression ParseAssignmentExpression()
         {
             var identifierToken = this.ExpectToken(SyntaxKind.IdentifierToken);
-            var equalsToken = this.ExpectToken(SyntaxKind.EqualsToken);
+            var assignmentOperator = this.ExpectToken(Current.Kind);
             var expression = this.ParseExpression();
 
             return new AssignmentExpression(
                 syntaxTree: this.syntaxTree,
                 identifierToken: identifierToken,
-                equalsToken: equalsToken,
+                assignmentOperator: assignmentOperator,
                 expression: expression);
         }
     }

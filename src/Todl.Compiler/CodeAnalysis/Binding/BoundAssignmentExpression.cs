@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -6,13 +7,48 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 {
     public sealed class BoundAssignmentExpression : BoundExpression
     {
+        public sealed class BoundAssignmentOperator
+        {
+            public SyntaxKind SyntaxKind { get; }
+            public BoundAssignmentOperatorKind BoundAssignmentOperatorKind { get; }
+
+            public BoundAssignmentOperator(SyntaxKind syntaxKind, BoundAssignmentOperatorKind boundAssignmentOperatorKind)
+            {
+                this.SyntaxKind = syntaxKind;
+                this.BoundAssignmentOperatorKind = boundAssignmentOperatorKind;
+            }
+        }
+
+        public enum BoundAssignmentOperatorKind
+        {
+            Assignment,
+            AdditionInline,
+            SubstractionInline,
+            MultiplicationInline,
+            DivisionInline
+        }
+
+        private static readonly IReadOnlyDictionary<SyntaxKind, BoundAssignmentOperator> supportedAssignmentOperators = new Dictionary<SyntaxKind, BoundAssignmentOperator>()
+        {
+            { SyntaxKind.EqualsToken, new BoundAssignmentOperator(SyntaxKind.EqualsToken, BoundAssignmentOperatorKind.Assignment) },
+            { SyntaxKind.PlusEqualsToken, new BoundAssignmentOperator(SyntaxKind.PlusEqualsToken, BoundAssignmentOperatorKind.AdditionInline) },
+            { SyntaxKind.MinusEqualsToken, new BoundAssignmentOperator(SyntaxKind.MinusEqualsToken, BoundAssignmentOperatorKind.SubstractionInline) },
+            { SyntaxKind.StarEqualsToken, new BoundAssignmentOperator(SyntaxKind.StarEqualsToken, BoundAssignmentOperatorKind.MultiplicationInline) },
+            { SyntaxKind.SlashEqualsToken, new BoundAssignmentOperator(SyntaxKind.SlashEqualsToken, BoundAssignmentOperatorKind.DivisionInline) }
+        };
+
+        internal static BoundAssignmentOperator MatchAssignmentOperator(SyntaxKind syntaxKind)
+            => BoundAssignmentExpression.supportedAssignmentOperators.GetValueOrDefault(syntaxKind, null);
+
         public VariableSymbol Variable { get; }
+        public BoundAssignmentOperator Operator { get; }
         public BoundExpression BoundExpression { get; }
         public override TypeSymbol ResultType => this.BoundExpression.ResultType;
 
-        public BoundAssignmentExpression(VariableSymbol variable, BoundExpression boundExpression)
+        public BoundAssignmentExpression(VariableSymbol variable, BoundAssignmentOperator boundAssignmentOperator, BoundExpression boundExpression)
         {
             this.Variable = variable;
+            this.Operator = boundAssignmentOperator;
             this.BoundExpression = boundExpression;
         }
     }
@@ -23,6 +59,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             var variableName = assignmentExpression.IdentifierToken.Text.ToString();
             var variable = this.boundScope.LookupVariable(variableName);
+            var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
             var boundExpression = this.BindExpression(assignmentExpression.Expression);
 
             if (variable == null)
@@ -54,6 +91,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             return new BoundAssignmentExpression(
                 variable: variable,
+                boundAssignmentOperator: boundAssignmentOperator,
                 boundExpression: boundExpression);
         }
     }
