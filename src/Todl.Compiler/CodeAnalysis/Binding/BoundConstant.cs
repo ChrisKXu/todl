@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -23,7 +24,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundConstant BindLiteralExpression(LiteralExpression literalExpression)
+        private BoundExpression BindLiteralExpression(LiteralExpression literalExpression)
         {
             return literalExpression.LiteralToken.Kind switch
             {
@@ -31,11 +32,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 SyntaxKind.StringToken => this.BindStringConstant(literalExpression.LiteralToken),
                 SyntaxKind.TrueKeywordToken or SyntaxKind.FalseKeywordToken
                     => new BoundConstant(TypeSymbol.ClrBoolean, bool.Parse(literalExpression.LiteralToken.Text.ToReadOnlyTextSpan())),
-                _ => throw new NotSupportedException($"Literal value {literalExpression.LiteralToken.Text} is not supported"),
+                _ => this.ReportErrorExpression(
+                        new Diagnostic(
+                            message: $"Literal value {literalExpression.LiteralToken.Text} is not supported",
+                            level: DiagnosticLevel.Error,
+                            textLocation: literalExpression.LiteralToken.GetTextLocation()))
             };
         }
 
-        private BoundConstant BindNumericConstant(SyntaxToken syntaxToken)
+        private BoundExpression BindNumericConstant(SyntaxToken syntaxToken)
         {
             var text = syntaxToken.Text.ToReadOnlyTextSpan();
 
@@ -49,10 +54,14 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 return new BoundConstant(TypeSymbol.ClrDouble, parsedDouble);
             }
 
-            throw new NotSupportedException($"Literal value {syntaxToken.Text} is not supported");
+            return this.ReportErrorExpression(
+                new Diagnostic(
+                    message: $"Literal value {syntaxToken.Text} is not supported",
+                    level: DiagnosticLevel.Error,
+                    textLocation: syntaxToken.GetTextLocation()));
         }
 
-        private BoundConstant BindStringConstant(SyntaxToken syntaxToken)
+        private BoundExpression BindStringConstant(SyntaxToken syntaxToken)
         {
             var text = syntaxToken.Text.ToReadOnlyTextSpan();
             var escape = text[0] != '@';
@@ -81,7 +90,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                             builder.Append('"');
                             break;
                         default:
-                            throw new NotSupportedException($"Literal value {syntaxToken.Text} is not supported");
+                            return this.ReportErrorExpression(
+                                new Diagnostic(
+                                    message: $"Literal value {syntaxToken.Text} is not supported",
+                                    level: DiagnosticLevel.Error,
+                                    textLocation: syntaxToken.GetTextLocation()));
                     }
                 }
                 else

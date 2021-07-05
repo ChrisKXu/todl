@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -75,7 +76,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundUnaryExpression BindUnaryExpression(UnaryExpression unaryExpression)
+        private BoundExpression BindUnaryExpression(UnaryExpression unaryExpression)
         {
             var boundOperand = this.BindExpression(unaryExpression.Operand);
             var boundUnaryOperator = BoundUnaryExpression.MatchUnaryOperator(
@@ -85,7 +86,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (boundUnaryOperator == null)
             {
-                throw new NotSupportedException($"Operator {unaryExpression.Operator.Text} is not supported on type {boundOperand.ResultType.Name}");
+                return this.ReportErrorExpression(
+                    new Diagnostic(
+                        message: $"Operator {unaryExpression.Operator.Text} is not supported on type {boundOperand.ResultType.Name}",
+                        level: DiagnosticLevel.Error,
+                        textLocation: unaryExpression.Operator.GetTextLocation()));
             }
 
             return new BoundUnaryExpression(boundUnaryOperator, boundOperand);

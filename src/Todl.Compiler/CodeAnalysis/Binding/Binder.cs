@@ -16,7 +16,19 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     public sealed partial class Binder
     {
         private readonly List<Diagnostic> diagnostics = new();
+        private readonly BoundScope boundScope;
 
         public IReadOnlyList<Diagnostic> Diagnostics => diagnostics;
+
+        public Binder(BoundScope boundScope)
+        {
+            this.boundScope = boundScope;
+        }
+
+        public BoundErrorExpression ReportErrorExpression(Diagnostic diagnostic)
+        {
+            this.diagnostics.Add(diagnostic);
+            return new BoundErrorExpression();
+        }
     }
 }

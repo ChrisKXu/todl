@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -73,7 +74,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundBinaryExpression BindBinaryExpression(BinaryExpression binaryExpression)
+        private BoundExpression BindBinaryExpression(BinaryExpression binaryExpression)
         {
             var boundLeft = this.BindExpression(binaryExpression.Left);
             var boundRight = this.BindExpression(binaryExpression.Right);
@@ -81,7 +82,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (boundBinaryOperator == null)
             {
-                throw new NotSupportedException($"Operator {binaryExpression.Operator.Text} is not supported on types {boundLeft.ResultType.Name} and {boundRight.ResultType.Name}");
+                return this.ReportErrorExpression(
+                    new Diagnostic(
+                        message: $"Operator {binaryExpression.Operator.Text} is not supported on types {boundLeft.ResultType.Name} and {boundRight.ResultType.Name}",
+                        level: DiagnosticLevel.Error,
+                        textLocation: binaryExpression.Operator.GetTextLocation()));
             }
 
             return new BoundBinaryExpression(boundBinaryOperator, boundLeft, boundRight);

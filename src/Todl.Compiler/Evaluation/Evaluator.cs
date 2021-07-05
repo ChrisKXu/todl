@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 
@@ -13,19 +14,15 @@ namespace Todl.Compiler.Evaluation
     /// </summary>
     public class Evaluator
     {
-        private readonly SourceText sourceText;
+        private readonly Binder binder = new(BoundScope.GlobalScope);
+        private readonly Dictionary<VariableSymbol, object> variables = new();
 
-        public Evaluator(SourceText sourceText)
+        public EvaluatorResult Evaluate(SourceText sourceText)
         {
-            this.sourceText = sourceText;
-        }
-
-        public EvaluatorResult Evaluate()
-        {
-            var syntaxTree = new SyntaxTree(this.sourceText);
+            var syntaxTree = new SyntaxTree(sourceText);
             var parser = new Parser(syntaxTree);
             parser.Lex();
-            var binaryExpression = parser.ParseBinaryExpression();
+            var expression = parser.ParseExpression();
 
             var diagnosticsOutput = parser.Diagnostics.Select(diagnostics => diagnostics.Message).ToList();
 
@@ -39,12 +36,11 @@ namespace Todl.Compiler.Evaluation
                 };
             }
 
-            var binder = new Binder();
-            var boundExpression = binder.BindExpression(binaryExpression);
+            var boundExpression = this.binder.BindExpression(expression);
 
             return new EvaluatorResult()
             {
-                DiagnosticsOutput = diagnosticsOutput,
+                DiagnosticsOutput = this.binder.Diagnostics.Select(diagnostics => diagnostics.Message).ToList(),
                 EvaluationOutput = EvaluateBoundExpression(boundExpression),
                 ResultType = boundExpression.ResultType
             };
@@ -52,19 +48,16 @@ namespace Todl.Compiler.Evaluation
 
         public object EvaluateBoundExpression(BoundExpression boundExpression)
         {
-            switch (boundExpression)
+            return boundExpression switch
             {
-                case BoundConstant boundConstant:
-                    return boundConstant.Value;
-                case BoundUnaryExpression boundUnaryExpression:
-                    return EvaluateBoundUnaryExpression(boundUnaryExpression);
-                case BoundBinaryExpression boundBinaryExpression:
-                    return EvaluateBoundBinaryExpression(boundBinaryExpression);
-                case BoundAssignmentExpression boundAssignmentExpression:
-                    return EvaluateBoundExpression(boundAssignmentExpression.BoundExpression);
-            }
-
-            throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation");
+                BoundConstant boundConstant => boundConstant.Value,
+                BoundUnaryExpression boundUnaryExpression => EvaluateBoundUnaryExpression(boundUnaryExpression),
+                BoundBinaryExpression boundBinaryExpression => EvaluateBoundBinaryExpression(boundBinaryExpression),
+                BoundAssignmentExpression boundAssignmentExpression => EvaluateBoundAssignmentExpression(boundAssignmentExpression),
+                BoundVariableExpression boundVariableExpression => EvaluateBoundVariableExpression(boundVariableExpression),
+                BoundErrorExpression => null,
+                _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
+            };
         }
 
         public object EvaluateBoundUnaryExpression(BoundUnaryExpression boundUnaryExpression)
@@ -114,6 +107,23 @@ namespace Todl.Compiler.Evaluation
             }
 
             throw new NotSupportedException($"Binary operator {boundBinaryExpression.Operator.SyntaxKind} not supported for evaluation");
+        }
+
+        public object EvaluateBoundAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
+        {
+            var result = this.EvaluateBoundExpression(boundAssignmentExpression.BoundExpression);
+            this.variables[boundAssignmentExpression.Variable] = result;
+            return result;
+        }
+
+        public object EvaluateBoundVariableExpression(BoundVariableExpression boundVariableExpression)
+        {
+            if (this.variables.ContainsKey(boundVariableExpression.Variable))
+            {
+                return this.variables[boundVariableExpression.Variable];
+            }
+
+            throw new Exception($"Variable {boundVariableExpression.Variable.Name} does not exist");
         }
     }
 }

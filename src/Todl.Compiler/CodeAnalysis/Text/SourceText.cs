@@ -24,6 +24,6 @@ namespace Todl.Compiler.CodeAnalysis.Text
             return FromString(await File.ReadAllTextAsync(fileName));
         }
 
-        public TextSpan GetTextSpan(int start, int length) => new TextSpan(this, start, length);
+        public TextSpan GetTextSpan(int start, int length) => new(this, start, length);
     }
 }
