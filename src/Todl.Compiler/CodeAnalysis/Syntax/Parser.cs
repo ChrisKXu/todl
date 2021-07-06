@@ -38,7 +38,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var index = this.position + offset;
             if (index >= this.SyntaxTokens.Count)
             {
-                return this.SyntaxTokens.Last();
+                return this.SyntaxTokens[SyntaxTokens.Count - 1];
             }
 
             return this.SyntaxTokens[index];
