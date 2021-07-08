@@ -7,14 +7,20 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 {
     public class ParserTests
     {
-        [Fact]
-        public void TestParseBinaryExpressionBasic()
+        private static TExpression ParseExpression<TExpression>(string sourceText)
+            where TExpression : Expression
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString("1 + 2 + 3"));
+            var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
             var parser = new Parser(syntaxTree);
             parser.Lex();
 
-            var binaryExpression = parser.ParseBinaryExpression() as BinaryExpression;
+            return parser.ParseExpression() as TExpression;
+        }
+
+        [Fact]
+        public void TestParseBinaryExpressionBasic()
+        {
+            var binaryExpression = ParseExpression<BinaryExpression>("1 + 2 + 3");
             binaryExpression.Should().NotBeNull();
             binaryExpression.Operator.Text.Should().Be("+");
             (binaryExpression.Right as LiteralExpression).Text.Should().Be("3");
@@ -29,11 +35,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestParseBinaryExpressionWithPrecedence()
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString("1 + 2 * 3 - 4"));
-            var parser = new Parser(syntaxTree);
-            parser.Lex();
-
-            var binaryExpression = parser.ParseBinaryExpression() as BinaryExpression;
+            var binaryExpression = ParseExpression<BinaryExpression>("1 + 2 * 3 - 4");
             binaryExpression.Should().NotBeNull();
             binaryExpression.Operator.Text.Should().Be("-");
             (binaryExpression.Right as LiteralExpression).Text.Should().Be("4");
@@ -53,11 +55,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestParseBinaryExpressionWithParenthesis()
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString("(1 + 2) * 3 - 4"));
-            var parser = new Parser(syntaxTree);
-            parser.Lex();
-
-            var binaryExpression = parser.ParseBinaryExpression() as BinaryExpression;
+            var binaryExpression = ParseExpression<BinaryExpression>("(1 + 2) * 3 - 4");
             binaryExpression.Should().NotBeNull();
             binaryExpression.Operator.Text.Should().Be("-");
             (binaryExpression.Right as LiteralExpression).Text.Should().Be("4");
@@ -80,11 +78,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestParseBinaryExpressionWithEquality()
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString("3 == 1 + 2"));
-            var parser = new Parser(syntaxTree);
-            parser.Lex();
-
-            var binaryExpression = parser.ParseBinaryExpression() as BinaryExpression;
+            var binaryExpression = ParseExpression<BinaryExpression>("3 == 1 + 2");
             binaryExpression.Should().NotBeNull();
             binaryExpression.Operator.Text.Should().Be("==");
             (binaryExpression.Left as LiteralExpression).Text.Should().Be("3");
@@ -99,11 +93,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestParseBinaryExpressionWithInequality()
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString("5 != 1 + 2"));
-            var parser = new Parser(syntaxTree);
-            parser.Lex();
-
-            var binaryExpression = parser.ParseBinaryExpression() as BinaryExpression;
+            var binaryExpression = ParseExpression<BinaryExpression>("5 != 1 + 2");
             binaryExpression.Should().NotBeNull();
             binaryExpression.Operator.Text.Should().Be("!=");
             (binaryExpression.Left as LiteralExpression).Text.Should().Be("5");
@@ -118,11 +108,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestParseBinaryExpressionWithNameAndUnaryExpression()
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString("(++a + 2) * 3 + 4"));
-            var parser = new Parser(syntaxTree);
-            parser.Lex();
-
-            var binaryExpression = parser.ParseBinaryExpression() as BinaryExpression;
+            var binaryExpression = ParseExpression<BinaryExpression>("(++a + 2) * 3 + 4");
             binaryExpression.Should().NotBeNull();
             binaryExpression.Operator.Text.Should().Be("+");
             (binaryExpression.Right as LiteralExpression).Text.Should().Be("4");
@@ -148,11 +134,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestParseBinaryExpressionWithNameAndTrailingUnaryExpression()
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString("(a++ + 2) * 3"));
-            var parser = new Parser(syntaxTree);
-            parser.Lex();
-
-            var binaryExpression = parser.ParseBinaryExpression() as BinaryExpression;
+            var binaryExpression = ParseExpression<BinaryExpression>("(a++ + 2) * 3");
             binaryExpression.Should().NotBeNull();
             binaryExpression.Operator.Text.Should().Be("*");
             (binaryExpression.Right as LiteralExpression).Text.Should().Be("3");

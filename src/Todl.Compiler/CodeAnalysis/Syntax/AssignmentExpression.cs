@@ -40,7 +40,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
     public sealed partial class Parser
     {
-        public AssignmentExpression ParseAssignmentExpression()
+        private AssignmentExpression ParseAssignmentExpression()
         {
             var identifierToken = this.ExpectToken(SyntaxKind.IdentifierToken);
             var assignmentOperator = this.ExpectToken(Current.Kind);
