@@ -17,7 +17,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             parser.Lex();
 
             var expression = parser.ParseExpression();
-            var binder = new Binder(BoundScope.GlobalScope);
+            var binder = new Binder(BoundScope.GlobalScope, BinderFlags.None);
 
             var boundBinaryExpression = binder.BindExpression(expression) as BoundBinaryExpression;
             boundBinaryExpression.Should().NotBeNull();
@@ -44,7 +44,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             parser.Lex();
 
             var expression = parser.ParseExpression();
-            var binder = new Binder(BoundScope.GlobalScope);
+            var binder = new Binder(BoundScope.GlobalScope, BinderFlags.None);
 
             var boundConstant = binder.BindExpression(expression) as BoundConstant;
             boundConstant.Should().NotBeNull();

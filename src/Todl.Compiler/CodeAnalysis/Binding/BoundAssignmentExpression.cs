@@ -55,7 +55,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        public BoundExpression BindAssignmentExpression(AssignmentExpression assignmentExpression)
+        private BoundExpression BindAssignmentExpression(AssignmentExpression assignmentExpression)
         {
             var variableName = assignmentExpression.IdentifierToken.Text.ToString();
             var variable = this.boundScope.LookupVariable(variableName);
@@ -64,13 +64,19 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (variable == null)
             {
-                this.diagnostics.Add(
-                    new Diagnostic(
-                        message: $"Undeclared variable {assignmentExpression.IdentifierToken.Text}",
-                        level: DiagnosticLevel.Error,
-                        textLocation: assignmentExpression.IdentifierToken.GetTextLocation()));
-                variable = new VariableSymbol(variableName, false, boundExpression.ResultType);
-                this.boundScope.DeclareVariable(variable);
+                if (this.binderFlags.Includes(BinderFlags.AllowVariableDeclarationInAssignment))
+                {
+                    variable = new VariableSymbol(variableName, false, boundExpression.ResultType);
+                    this.boundScope.DeclareVariable(variable);
+                }
+                else
+                {
+                    return this.ReportErrorExpression(
+                        new Diagnostic(
+                            message: $"Undeclared variable {assignmentExpression.IdentifierToken.Text}",
+                            level: DiagnosticLevel.Error,
+                            textLocation: assignmentExpression.IdentifierToken.GetTextLocation()));
+                }
             }
             else if (variable.ReadOnly)
             {
@@ -84,7 +90,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 return this.ReportErrorExpression(
                     new Diagnostic(
-                        message: $"Variable {assignmentExpression.IdentifierToken.Text} is read-only",
+                        message: $"Variable {assignmentExpression.IdentifierToken.Text} cannot be assigned to type {boundExpression.ResultType}",
                         level: DiagnosticLevel.Error,
                         textLocation: assignmentExpression.IdentifierToken.GetTextLocation()));
             }

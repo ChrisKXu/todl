@@ -17,7 +17,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        public BoundExpression BindNameExpression(NameExpression nameExpression)
+        private BoundExpression BindNameExpression(NameExpression nameExpression)
         {
             var variable = this.boundScope.LookupVariable(nameExpression.IdentifierToken.Text.ToString());
             if (variable == null)

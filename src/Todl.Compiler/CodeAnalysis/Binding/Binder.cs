@@ -17,15 +17,17 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private readonly List<Diagnostic> diagnostics = new();
         private readonly BoundScope boundScope;
+        private readonly BinderFlags binderFlags;
 
         public IReadOnlyList<Diagnostic> Diagnostics => diagnostics;
 
-        public Binder(BoundScope boundScope)
+        internal Binder(BoundScope boundScope, BinderFlags binderFlags)
         {
             this.boundScope = boundScope;
+            this.binderFlags = binderFlags;
         }
 
-        public BoundErrorExpression ReportErrorExpression(Diagnostic diagnostic)
+        private BoundErrorExpression ReportErrorExpression(Diagnostic diagnostic)
         {
             this.diagnostics.Add(diagnostic);
             return new BoundErrorExpression();

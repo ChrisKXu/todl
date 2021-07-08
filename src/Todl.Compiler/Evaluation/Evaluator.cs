@@ -15,7 +15,7 @@ namespace Todl.Compiler.Evaluation
     /// </summary>
     public class Evaluator
     {
-        private readonly Binder binder = new(BoundScope.GlobalScope);
+        private readonly Binder binder = new(BoundScope.GlobalScope, BinderFlags.AllowVariableDeclarationInAssignment);
         private readonly Dictionary<VariableSymbol, object> variables = new();
 
         public EvaluatorResult Evaluate(SourceText sourceText)
