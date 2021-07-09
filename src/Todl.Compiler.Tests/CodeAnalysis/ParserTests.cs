@@ -150,6 +150,32 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             unaryExpression.Trailing.Should().Be(true);
         }
 
+        [Theory]
+        [InlineData("=", SyntaxKind.EqualsToken)]
+        [InlineData("+=", SyntaxKind.PlusEqualsToken)]
+        [InlineData("-=", SyntaxKind.MinusEqualsToken)]
+        [InlineData("*=", SyntaxKind.StarEqualsToken)]
+        [InlineData("/=", SyntaxKind.SlashEqualsToken)]
+        public void TestAssignmentOperators(string operatorToken, SyntaxKind expectedTokenKind)
+        {
+            var assignmentExpression = ParseExpression<AssignmentExpression>($"a {operatorToken} (b + 3) * 2");
+            assignmentExpression.Should().NotBeNull();
+            assignmentExpression.IdentifierToken.Text.Should().Be("a");
+            assignmentExpression.AssignmentOperator.Text.Should().Be(operatorToken);
+            assignmentExpression.AssignmentOperator.Kind.Should().Be(expectedTokenKind);
+
+            var binaryExpression = assignmentExpression.Expression as BinaryExpression;
+            binaryExpression.Should().NotBeNull();
+            binaryExpression.Operator.Text.Should().Be("*");
+            (binaryExpression.Right as LiteralExpression).LiteralToken.Text.Should().Be("2");
+
+            var left = ((binaryExpression.Left as ParethesizedExpression).InnerExpression) as BinaryExpression;
+            left.Should().NotBeNull();
+            (left.Left as NameExpression).IdentifierToken.Text.Should().Be("b");
+            (left.Right as LiteralExpression).LiteralToken.Text.Should().Be("3");
+            left.Operator.Text.Should().Be("+");
+        }
+
         [Fact]
         public void TestParserWithDiagnostics()
         {

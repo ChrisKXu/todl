@@ -64,7 +64,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (variable == null)
             {
-                if (this.binderFlags.Includes(BinderFlags.AllowVariableDeclarationInAssignment))
+                if (boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment
+                    && this.binderFlags.Includes(BinderFlags.AllowVariableDeclarationInAssignment))
                 {
                     variable = new VariableSymbol(variableName, false, boundExpression.ResultType);
                     this.boundScope.DeclareVariable(variable);
