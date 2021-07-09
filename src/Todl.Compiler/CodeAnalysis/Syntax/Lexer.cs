@@ -291,11 +291,23 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     }
                     break;
                 case '(':
-                    kind = SyntaxKind.LeftParenthesisToken;
+                    kind = SyntaxKind.OpenParenthesisToken;
                     ++this.position;
                     break;
                 case ')':
-                    kind = SyntaxKind.RightParenthesisToken;
+                    kind = SyntaxKind.CloseParenthesisToken;
+                    ++this.position;
+                    break;
+                case '{':
+                    kind = SyntaxKind.OpenBraceToken;
+                    ++this.position;
+                    break;
+                case '}':
+                    kind = SyntaxKind.CloseBraceToken;
+                    ++this.position;
+                    break;
+                case ';':
+                    kind = SyntaxKind.SemicolonToken;
                     ++this.position;
                     break;
                 case '=':
