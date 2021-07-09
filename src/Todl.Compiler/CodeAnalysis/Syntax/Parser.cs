@@ -38,7 +38,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var index = this.position + offset;
             if (index >= this.SyntaxTokens.Count)
             {
-                return this.SyntaxTokens.Last();
+                return this.SyntaxTokens[SyntaxTokens.Count - 1];
             }
 
             return this.SyntaxTokens[index];
@@ -104,6 +104,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     return new LiteralExpression(this.syntaxTree, this.ExpectToken(Current.Kind));
                 case SyntaxKind.LeftParenthesisToken:
                     return this.ParseTrailingUnaryExpression(this.ParseParethesizedExpression());
+                case SyntaxKind.IdentifierToken:
+                    if (AssignmentExpression.AssignmentOperators.Contains(Peak.Kind))
+                    {
+                        return this.ParseAssignmentExpression();
+                    }
+
+                    return this.ParseTrailingUnaryExpression(new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken)));
                 default:
                     return this.ParseTrailingUnaryExpression(new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken)));
             }

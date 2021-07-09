@@ -29,7 +29,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
     public sealed partial class Parser
     {
-        internal Expression ParseBinaryExpression(int parentPrecedence = 0)
+        private Expression ParseBinaryExpression(int parentPrecedence = 0)
         {
             Expression left;
             var unaryPrecedence = SyntaxFacts.UnaryOperatorPrecedence.GetValueOrDefault(Current.Kind, 0);

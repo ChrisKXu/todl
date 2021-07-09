@@ -57,7 +57,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             lexer.SyntaxTokens.Count.Should().Be(2); // the expected token + EndOfFileToken
             lexer.Diagnostics.Should().BeEmpty();
 
-            var token = lexer.SyntaxTokens.First();
+            var token = lexer.SyntaxTokens[0];
             token.Kind.Should().Be(kind);
             token.Text.Should().Be(text);
         }
@@ -81,7 +81,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             lexer.SyntaxTokens.Count.Should().Be(2); // the expected token + EndOfFileToken
             lexer.Diagnostics.Should().BeEmpty();
 
-            var token = lexer.SyntaxTokens.First();
+            var token = lexer.SyntaxTokens[0];
             token.Kind.Should().Be(SyntaxKind.StringToken);
             token.Text.Should().Be(text);
         }

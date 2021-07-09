@@ -29,6 +29,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             yield break;
         }
 
-        public TextLocation GetTextLocation() => new TextLocation(this.SyntaxTree.SourceText, this.Text);
+        public TextLocation GetTextLocation() => new(this.SyntaxTree.SourceText, this.Text);
     }
 }

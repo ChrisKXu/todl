@@ -17,9 +17,9 @@ namespace Todl.Compiler.Tests
         public void TestEvaluationPositive(string input, object expectedOutput)
         {
             var sourceText = SourceText.FromString(input);
-            var evaluator = new Evaluator(sourceText);
+            var evaluator = new Evaluator();
 
-            var result = evaluator.Evaluate();
+            var result = evaluator.Evaluate(sourceText);
             result.DiagnosticsOutput.Should().BeEmpty();
             result.EvaluationOutput.Should().Be(expectedOutput);
         }

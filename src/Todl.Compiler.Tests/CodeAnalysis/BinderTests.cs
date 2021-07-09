@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Collections.Generic;
+using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -9,17 +10,24 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 {
     public sealed class BinderTests
     {
-        [Fact]
-        public void TestBindBinaryExpression()
+        public static TBoundExpression BindExpression<TBoundExpression>(string inputText, Binder binder)
+            where TBoundExpression : BoundExpression
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString("1 + 2 + 3"));
+            var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
             var parser = new Parser(syntaxTree);
             parser.Lex();
 
             var expression = parser.ParseExpression();
-            var binder = new Binder();
+            return binder.BindExpression(expression) as TBoundExpression;
+        }
 
-            var boundBinaryExpression = binder.BindExpression(expression) as BoundBinaryExpression;
+        [Fact]
+        public void TestBindBinaryExpression()
+        {
+            var boundBinaryExpression = BindExpression<BoundBinaryExpression>(
+                inputText: "1 + 2 + 3",
+                binder: new Binder(BoundScope.GlobalScope, BinderFlags.None));
+
             boundBinaryExpression.Should().NotBeNull();
             boundBinaryExpression.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition);
             (boundBinaryExpression.Right as BoundConstant).Value.Should().Be(3);
@@ -39,17 +47,35 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("@\"ab\\\"cd\"", "ab\\\"cd")]
         public void TestBindStringConstant(string input, string expectedOutput)
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString(input));
-            var parser = new Parser(syntaxTree);
-            parser.Lex();
+            var boundConstant = BindExpression<BoundConstant>(
+                inputText: input,
+                binder: new Binder(BoundScope.GlobalScope, BinderFlags.None));
 
-            var expression = parser.ParseExpression();
-            var binder = new Binder();
-
-            var boundConstant = binder.BindExpression(expression) as BoundConstant;
             boundConstant.Should().NotBeNull();
             boundConstant.ResultType.Should().Be(TypeSymbol.ClrString);
             boundConstant.Value.Should().Be(expectedOutput);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetTestBindAssignmentExpressionDataWithEqualsToken))]
+        public void TestBindAssignmentExpressionEqualsToken(string input, string variableName, TypeSymbol expectedResultType)
+        {
+            var binder = new Binder(BoundScope.GlobalScope, BinderFlags.AllowVariableDeclarationInAssignment);
+            var boundAssignmentExpression = BindExpression<BoundAssignmentExpression>(input, binder);
+
+            binder.Diagnostics.Should().BeEmpty();
+            boundAssignmentExpression.Should().NotBeNull();
+            boundAssignmentExpression.Variable.Name.Should().Be(variableName);
+            boundAssignmentExpression.Variable.ReadOnly.Should().BeFalse();
+            boundAssignmentExpression.Operator.SyntaxKind.Should().Be(SyntaxKind.EqualsToken);
+            boundAssignmentExpression.Variable.Type.Should().Be(expectedResultType);
+            boundAssignmentExpression.ResultType.Should().Be(expectedResultType);
+        }
+
+        public static IEnumerable<object[]> GetTestBindAssignmentExpressionDataWithEqualsToken()
+        {
+            yield return new object[] { "n = 0", "n", TypeSymbol.ClrInt32 };
+            yield return new object[] { "abcd = \"abcde\"", "abcd", TypeSymbol.ClrString };
         }
     }
 }

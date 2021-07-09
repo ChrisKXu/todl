@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -59,7 +60,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             { Tuple.Create(TypeSymbol.ClrBoolean, SyntaxKind.BangToken, false), new BoundUnaryOperator(SyntaxKind.BangToken, BoundUnaryOperatorKind.LogicalNegation, TypeSymbol.ClrBoolean) }
         };
 
-        public static BoundUnaryOperator MatchUnaryOperator(TypeSymbol operandResultType, SyntaxKind syntaxKind, bool trailing)
+        internal static BoundUnaryOperator MatchUnaryOperator(TypeSymbol operandResultType, SyntaxKind syntaxKind, bool trailing)
             => BoundUnaryExpression.supportedUnaryOperators.GetValueOrDefault(Tuple.Create(operandResultType, syntaxKind, trailing), null);
 
         public BoundUnaryOperator Operator { get; }
@@ -75,7 +76,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundUnaryExpression BindUnaryExpression(UnaryExpression unaryExpression)
+        private BoundExpression BindUnaryExpression(UnaryExpression unaryExpression)
         {
             var boundOperand = this.BindExpression(unaryExpression.Operand);
             var boundUnaryOperator = BoundUnaryExpression.MatchUnaryOperator(
@@ -85,7 +86,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (boundUnaryOperator == null)
             {
-                throw new NotSupportedException($"Operator {unaryExpression.Operator.Text} is not supported on type {boundOperand.ResultType.Name}");
+                return this.ReportErrorExpression(
+                    new Diagnostic(
+                        message: $"Operator {unaryExpression.Operator.Text} is not supported on type {boundOperand.ResultType.Name}",
+                        level: DiagnosticLevel.Error,
+                        textLocation: unaryExpression.Operator.GetTextLocation()));
             }
 
             return new BoundUnaryExpression(boundUnaryOperator, boundOperand);

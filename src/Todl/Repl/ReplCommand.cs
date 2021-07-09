@@ -13,6 +13,8 @@ namespace Todl.Repl
 {
     sealed class ReplCommand : Command, ICommandHandler
     {
+        private readonly Evaluator evaluator = new();
+
         public ReplCommand()
             : base("repl", "Interactive Shell")
         {
@@ -35,15 +37,14 @@ namespace Todl.Repl
                         return 0;
                     }
 
-                    var evaluator = new Evaluator(SourceText.FromString(input));
-                    var evaluatorResult = evaluator.Evaluate();
+                    var evaluatorResult = this.evaluator.Evaluate(SourceText.FromString(input));
 
                     WriteEvaluationResult(evaluatorResult);
                 }
             });
         }
 
-        private void WriteEvaluationResult(EvaluatorResult evaluatorResult)
+        private static void WriteEvaluationResult(EvaluatorResult evaluatorResult)
         {
             if (evaluatorResult.DiagnosticsOutput.Any())
             {

@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.Evaluation
 {
@@ -13,19 +15,15 @@ namespace Todl.Compiler.Evaluation
     /// </summary>
     public class Evaluator
     {
-        private readonly SourceText sourceText;
+        private readonly Binder binder = new(BoundScope.GlobalScope, BinderFlags.AllowVariableDeclarationInAssignment);
+        private readonly Dictionary<VariableSymbol, object> variables = new();
 
-        public Evaluator(SourceText sourceText)
+        public EvaluatorResult Evaluate(SourceText sourceText)
         {
-            this.sourceText = sourceText;
-        }
-
-        public EvaluatorResult Evaluate()
-        {
-            var syntaxTree = new SyntaxTree(this.sourceText);
+            var syntaxTree = new SyntaxTree(sourceText);
             var parser = new Parser(syntaxTree);
             parser.Lex();
-            var binaryExpression = parser.ParseBinaryExpression();
+            var expression = parser.ParseExpression();
 
             var diagnosticsOutput = parser.Diagnostics.Select(diagnostics => diagnostics.Message).ToList();
 
@@ -39,79 +37,117 @@ namespace Todl.Compiler.Evaluation
                 };
             }
 
-            var binder = new Binder();
-            var boundExpression = binder.BindExpression(binaryExpression);
+            var boundExpression = this.binder.BindExpression(expression);
 
             return new EvaluatorResult()
             {
-                DiagnosticsOutput = diagnosticsOutput,
+                DiagnosticsOutput = this.binder.Diagnostics.Select(diagnostics => diagnostics.Message).ToList(),
                 EvaluationOutput = EvaluateBoundExpression(boundExpression),
                 ResultType = boundExpression.ResultType
             };
         }
 
-        public object EvaluateBoundExpression(BoundExpression boundExpression)
+        private object EvaluateBoundExpression(BoundExpression boundExpression)
         {
-            switch (boundExpression)
+            return boundExpression switch
             {
-                case BoundConstant boundConstant:
-                    return boundConstant.Value;
-                case BoundUnaryExpression boundUnaryExpression:
-                    return EvaluateBoundUnaryExpression(boundUnaryExpression);
-                case BoundBinaryExpression boundBinaryExpression:
-                    return EvaluateBoundBinaryExpression(boundBinaryExpression);
-            }
-
-            throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation");
+                BoundConstant boundConstant => boundConstant.Value,
+                BoundUnaryExpression boundUnaryExpression => EvaluateBoundUnaryExpression(boundUnaryExpression),
+                BoundBinaryExpression boundBinaryExpression => EvaluateBoundBinaryExpression(boundBinaryExpression),
+                BoundAssignmentExpression boundAssignmentExpression => EvaluateBoundAssignmentExpression(boundAssignmentExpression),
+                BoundVariableExpression boundVariableExpression => EvaluateBoundVariableExpression(boundVariableExpression),
+                BoundErrorExpression => null,
+                _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
+            };
         }
 
-        public object EvaluateBoundUnaryExpression(BoundUnaryExpression boundUnaryExpression)
+        private object EvaluateBoundUnaryExpression(BoundUnaryExpression boundUnaryExpression)
         {
             var operandValue = this.EvaluateBoundExpression(boundUnaryExpression.Operand);
 
             Debug.Assert(operandValue != null);
 
-            switch (boundUnaryExpression.Operator.BoundUnaryOperatorKind)
+            return boundUnaryExpression.Operator.BoundUnaryOperatorKind switch
             {
-                case BoundUnaryExpression.BoundUnaryOperatorKind.Identity:
-                    return operandValue;
-                case BoundUnaryExpression.BoundUnaryOperatorKind.Negation:
-                    return -(int)operandValue;
-                case BoundUnaryExpression.BoundUnaryOperatorKind.LogicalNegation:
-                    return !(bool)operandValue;
-            }
-
-            throw new NotSupportedException($"Unary operator {boundUnaryExpression.Operator.SyntaxKind} not supported for evaluation");
+                BoundUnaryExpression.BoundUnaryOperatorKind.Identity => operandValue,
+                BoundUnaryExpression.BoundUnaryOperatorKind.Negation => -(int)operandValue,
+                BoundUnaryExpression.BoundUnaryOperatorKind.LogicalNegation => !(bool)operandValue,
+                _ => this.EvaluateBoundUnaryExpressionWithSideEffects(boundUnaryExpression)
+            };
         }
 
-        public object EvaluateBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
+        private object EvaluateBoundUnaryExpressionWithSideEffects(BoundUnaryExpression boundUnaryExpression)
+        {
+            if (boundUnaryExpression.Operand is BoundVariableExpression boundVariableExpression)
+            {
+                var variable = boundVariableExpression.Variable;
+                var oldValue = this.variables[variable];
+
+                switch (boundUnaryExpression.Operator.BoundUnaryOperatorKind)
+                {
+                    case BoundUnaryExpression.BoundUnaryOperatorKind.PreIncrement:
+                        return SetVariableValue(variable, (int)oldValue + 1);
+                    case BoundUnaryExpression.BoundUnaryOperatorKind.PostIncrement:
+                        SetVariableValue(variable, (int)oldValue + 1);
+                        return oldValue;
+                    case BoundUnaryExpression.BoundUnaryOperatorKind.PreDecrement:
+                        return SetVariableValue(variable, (int)oldValue - 1);
+                    case BoundUnaryExpression.BoundUnaryOperatorKind.PostDecrement:
+                        SetVariableValue(variable, (int)oldValue - 1);
+                        return oldValue;
+                }
+            }
+
+            return null;
+        }
+
+        private object EvaluateBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
         {
             var leftValue = this.EvaluateBoundExpression(boundBinaryExpression.Left);
             var rightValue = this.EvaluateBoundExpression(boundBinaryExpression.Right);
 
             Debug.Assert(leftValue != null && rightValue != null);
 
-            switch (boundBinaryExpression.Operator.BoundBinaryOperatorKind)
+            return boundBinaryExpression.Operator.BoundBinaryOperatorKind switch
             {
-                case BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition:
-                    return (int)leftValue + (int)rightValue;
-                case BoundBinaryExpression.BoundBinaryOperatorKind.NumericSubstraction:
-                    return (int)leftValue - (int)rightValue;
-                case BoundBinaryExpression.BoundBinaryOperatorKind.NumericMultiplication:
-                    return (int)leftValue * (int)rightValue;
-                case BoundBinaryExpression.BoundBinaryOperatorKind.NumericDivision:
-                    return (int)leftValue / (int)rightValue;
+                BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition => (int)leftValue + (int)rightValue,
+                BoundBinaryExpression.BoundBinaryOperatorKind.NumericSubstraction => (int)leftValue - (int)rightValue,
+                BoundBinaryExpression.BoundBinaryOperatorKind.NumericMultiplication => (int)leftValue * (int)rightValue,
+                BoundBinaryExpression.BoundBinaryOperatorKind.NumericDivision => (int)leftValue / (int)rightValue,
+                BoundBinaryExpression.BoundBinaryOperatorKind.LogicalAnd => (bool)leftValue && (bool)rightValue,
+                BoundBinaryExpression.BoundBinaryOperatorKind.LogicalOr => (bool)leftValue || (bool)rightValue,
+                BoundBinaryExpression.BoundBinaryOperatorKind.StringConcatenation => (string)leftValue + (string)rightValue,
+                _ => null
+            };
+        }
 
-                case BoundBinaryExpression.BoundBinaryOperatorKind.LogicalAnd:
-                    return (bool)leftValue && (bool)rightValue;
-                case BoundBinaryExpression.BoundBinaryOperatorKind.LogicalOr:
-                    return (bool)leftValue || (bool)rightValue;
+        private object EvaluateBoundAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
+        {
+            var result = this.EvaluateBoundExpression(boundAssignmentExpression.BoundExpression);
+            var variable = boundAssignmentExpression.Variable;
 
-                case BoundBinaryExpression.BoundBinaryOperatorKind.StringConcatenation:
-                    return (string)leftValue + (string)rightValue;
+            return boundAssignmentExpression.Operator.BoundAssignmentOperatorKind switch
+            {
+                BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment => SetVariableValue(variable, result),
+                BoundAssignmentExpression.BoundAssignmentOperatorKind.AdditionInline => SetVariableValue(variable, (int)this.variables[variable] + (int)result),
+                BoundAssignmentExpression.BoundAssignmentOperatorKind.SubstractionInline => SetVariableValue(variable, (int)this.variables[variable] - (int)result),
+                BoundAssignmentExpression.BoundAssignmentOperatorKind.MultiplicationInline => SetVariableValue(variable, (int)this.variables[variable] * (int)result),
+                BoundAssignmentExpression.BoundAssignmentOperatorKind.DivisionInline => SetVariableValue(variable, (int)this.variables[variable] / (int)result),
+                _ => null
+            };
+        }
+
+        private object EvaluateBoundVariableExpression(BoundVariableExpression boundVariableExpression)
+        {
+            if (this.variables.ContainsKey(boundVariableExpression.Variable))
+            {
+                return this.variables[boundVariableExpression.Variable];
             }
 
-            throw new NotSupportedException($"Binary operator {boundBinaryExpression.Operator.SyntaxKind} not supported for evaluation");
+            return null;
         }
+
+        private object SetVariableValue(VariableSymbol variable, object value)
+            => this.variables[variable] = value;
     }
 }
