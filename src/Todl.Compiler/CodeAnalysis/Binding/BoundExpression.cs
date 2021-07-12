@@ -15,16 +15,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        internal BoundExpression BindExpression(Expression expression)
+        internal BoundExpression BindExpression(BoundScope scope, Expression expression)
         {
             return expression switch
             {
                 LiteralExpression literalExpression => this.BindLiteralExpression(literalExpression),
-                BinaryExpression binaryExpression => this.BindBinaryExpression(binaryExpression),
-                UnaryExpression unaryExpression => this.BindUnaryExpression(unaryExpression),
-                ParethesizedExpression parethesizedExpression => this.BindExpression(parethesizedExpression.InnerExpression),
-                AssignmentExpression assignmentExpression => this.BindAssignmentExpression(assignmentExpression),
-                NameExpression nameExpression => this.BindNameExpression(nameExpression),
+                BinaryExpression binaryExpression => this.BindBinaryExpression(scope, binaryExpression),
+                UnaryExpression unaryExpression => this.BindUnaryExpression(scope, unaryExpression),
+                ParethesizedExpression parethesizedExpression => this.BindExpression(scope, parethesizedExpression.InnerExpression),
+                AssignmentExpression assignmentExpression => this.BindAssignmentExpression(scope, assignmentExpression),
+                NameExpression nameExpression => this.BindNameExpression(scope, nameExpression),
                 _ => throw new NotImplementedException()
             };
         }

@@ -35,8 +35,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData(SyntaxKind.StarEqualsToken, "*=")]
         [InlineData(SyntaxKind.SlashToken, "/")]
         [InlineData(SyntaxKind.SlashEqualsToken, "/=")]
-        [InlineData(SyntaxKind.LeftParenthesisToken, "(")]
-        [InlineData(SyntaxKind.RightParenthesisToken, ")")]
+        [InlineData(SyntaxKind.OpenParenthesisToken, "(")]
+        [InlineData(SyntaxKind.CloseParenthesisToken, ")")]
         [InlineData(SyntaxKind.EqualsToken, "=")]
         [InlineData(SyntaxKind.EqualsEqualsToken, "==")]
         [InlineData(SyntaxKind.BangToken, "!")]
@@ -47,6 +47,9 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData(SyntaxKind.PipePipeToken, "||")]
         [InlineData(SyntaxKind.TrueKeywordToken, "true")]
         [InlineData(SyntaxKind.FalseKeywordToken, "false")]
+        [InlineData(SyntaxKind.OpenBraceToken, "{")]
+        [InlineData(SyntaxKind.CloseBraceToken, "}")]
+        [InlineData(SyntaxKind.SemicolonToken, ";")]
         public void TestSingleToken(SyntaxKind kind, string text)
         {
             var sourceText = SourceText.FromString(text);

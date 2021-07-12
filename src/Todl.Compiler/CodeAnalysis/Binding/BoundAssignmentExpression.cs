@@ -55,12 +55,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundExpression BindAssignmentExpression(AssignmentExpression assignmentExpression)
+        private BoundExpression BindAssignmentExpression(BoundScope scope, AssignmentExpression assignmentExpression)
         {
             var variableName = assignmentExpression.IdentifierToken.Text.ToString();
-            var variable = this.boundScope.LookupVariable(variableName);
+            var variable = scope.LookupVariable(variableName);
             var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
-            var boundExpression = this.BindExpression(assignmentExpression.Expression);
+            var boundExpression = this.BindExpression(scope, assignmentExpression.Expression);
 
             if (variable == null)
             {
@@ -68,7 +68,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     && this.binderFlags.Includes(BinderFlags.AllowVariableDeclarationInAssignment))
                 {
                     variable = new VariableSymbol(variableName, false, boundExpression.ResultType);
-                    this.boundScope.DeclareVariable(variable);
+                    scope.DeclareVariable(variable);
                 }
                 else
                 {

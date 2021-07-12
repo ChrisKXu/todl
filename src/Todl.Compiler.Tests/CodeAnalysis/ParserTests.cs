@@ -17,6 +17,16 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             return parser.ParseExpression() as TExpression;
         }
 
+        private static TStatement ParseStatement<TStatement>(string sourceText)
+            where TStatement : Statement
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            return parser.ParseStatement() as TStatement;
+        }
+
         [Fact]
         public void TestParseBinaryExpressionBasic()
         {
@@ -174,6 +184,28 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             (left.Left as NameExpression).IdentifierToken.Text.Should().Be("b");
             (left.Right as LiteralExpression).LiteralToken.Text.Should().Be("3");
             left.Operator.Text.Should().Be("+");
+        }
+
+        [Fact]
+        public void TestParseBlockStatementBasic()
+        {
+            var inputText = @"
+            {
+                a = 1 + 2;
+                ++a;
+                b = a;
+            }
+            ";
+            var blockStatement = ParseStatement<BlockStatement>(inputText);
+
+            blockStatement.Should().NotBeNull();
+            blockStatement.InnerStatements.Should().NotBeNullOrEmpty();
+            blockStatement.InnerStatements.Count.Should().Be(3);
+
+            foreach (var statement in blockStatement.InnerStatements)
+            {
+                (statement as ExpressionStatement).Should().NotBeNull();
+            }
         }
 
         [Fact]

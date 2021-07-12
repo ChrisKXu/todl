@@ -34,9 +34,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         private ParethesizedExpression ParseParethesizedExpression()
         {
-            var leftParenthesisToken = this.ExpectToken(SyntaxKind.LeftParenthesisToken);
+            var leftParenthesisToken = this.ExpectToken(SyntaxKind.OpenParenthesisToken);
             var innerExpression = ParseBinaryExpression();
-            var rightParenthesisToken = this.ExpectToken(SyntaxKind.RightParenthesisToken);
+            var rightParenthesisToken = this.ExpectToken(SyntaxKind.CloseParenthesisToken);
 
             return new ParethesizedExpression(this.syntaxTree, leftParenthesisToken, innerExpression, rightParenthesisToken);
         }

@@ -102,7 +102,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 case SyntaxKind.TrueKeywordToken:
                 case SyntaxKind.FalseKeywordToken:
                     return new LiteralExpression(this.syntaxTree, this.ExpectToken(Current.Kind));
-                case SyntaxKind.LeftParenthesisToken:
+                case SyntaxKind.OpenParenthesisToken:
                     return this.ParseTrailingUnaryExpression(this.ParseParethesizedExpression());
                 case SyntaxKind.IdentifierToken:
                     if (AssignmentExpression.AssignmentOperators.Contains(Peak.Kind))

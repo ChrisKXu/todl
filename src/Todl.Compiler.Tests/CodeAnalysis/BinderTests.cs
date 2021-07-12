@@ -10,7 +10,10 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 {
     public sealed class BinderTests
     {
-        public static TBoundExpression BindExpression<TBoundExpression>(string inputText, Binder binder)
+        public static TBoundExpression BindExpression<TBoundExpression>(
+            string inputText,
+            Binder binder,
+            BoundScope scope)
             where TBoundExpression : BoundExpression
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
@@ -18,7 +21,21 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             parser.Lex();
 
             var expression = parser.ParseExpression();
-            return binder.BindExpression(expression) as TBoundExpression;
+            return binder.BindExpression(scope, expression) as TBoundExpression;
+        }
+
+        public static TBoundStatement BindStatement<TBoundStatement>(
+            string inputText,
+            Binder binder,
+            BoundScope scope)
+            where TBoundStatement : BoundStatement
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            var statement = parser.ParseStatement();
+            return binder.BindStatement(scope, statement) as TBoundStatement;
         }
 
         [Fact]
@@ -26,7 +43,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundBinaryExpression = BindExpression<BoundBinaryExpression>(
                 inputText: "1 + 2 + 3",
-                binder: new Binder(BoundScope.GlobalScope, BinderFlags.None));
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
 
             boundBinaryExpression.Should().NotBeNull();
             boundBinaryExpression.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition);
@@ -49,7 +67,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundConstant = BindExpression<BoundConstant>(
                 inputText: input,
-                binder: new Binder(BoundScope.GlobalScope, BinderFlags.None));
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
 
             boundConstant.Should().NotBeNull();
             boundConstant.ResultType.Should().Be(TypeSymbol.ClrString);
@@ -60,8 +79,11 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [MemberData(nameof(GetTestBindAssignmentExpressionDataWithEqualsToken))]
         public void TestBindAssignmentExpressionEqualsToken(string input, string variableName, TypeSymbol expectedResultType)
         {
-            var binder = new Binder(BoundScope.GlobalScope, BinderFlags.AllowVariableDeclarationInAssignment);
-            var boundAssignmentExpression = BindExpression<BoundAssignmentExpression>(input, binder);
+            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
+            var boundAssignmentExpression = BindExpression<BoundAssignmentExpression>(
+                inputText: input,
+                binder: binder,
+                scope: BoundScope.GlobalScope);
 
             binder.Diagnostics.Should().BeEmpty();
             boundAssignmentExpression.Should().NotBeNull();
@@ -76,6 +98,34 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             yield return new object[] { "n = 0", "n", TypeSymbol.ClrInt32 };
             yield return new object[] { "abcd = \"abcde\"", "abcd", TypeSymbol.ClrString };
+        }
+
+        [Fact]
+        public void TestBindBlockStatement()
+        {
+            var input = @"
+            {
+                a = 0;
+                b = a + 10;
+            }
+            ";
+            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
+            var boundBlockStatement = BindStatement<BoundBlockStatement>(
+                inputText: input,
+                binder: binder,
+                scope: BoundScope.GlobalScope);
+
+            boundBlockStatement.Should().NotBeNull();
+            boundBlockStatement.Statements.Count.Should().Be(2);
+            boundBlockStatement.Scope.LookupVariable("a").Type.Should().Be(TypeSymbol.ClrInt32);
+            boundBlockStatement.Scope.LookupVariable("b").Type.Should().Be(TypeSymbol.ClrInt32);
+
+            var firstExpression = boundBlockStatement.Statements[0] as BoundExpressionStatement;
+            (firstExpression.Expression as BoundAssignmentExpression).Should().NotBeNull();
+
+            var secondExpression = boundBlockStatement.Statements[1] as BoundExpressionStatement;
+            var binaryExpression = (secondExpression.Expression as BoundAssignmentExpression).BoundExpression as BoundBinaryExpression;
+            binaryExpression.Should().NotBeNull();
         }
     }
 }

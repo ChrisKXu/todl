@@ -11,7 +11,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         public BoundScopeKind BoundScopeKind { get; }
 
-        public BoundScope(BoundScope parent, BoundScopeKind boundScopeKind)
+        private BoundScope(BoundScope parent, BoundScopeKind boundScopeKind)
         {
             this.parent = parent;
             this.BoundScopeKind = boundScopeKind;
@@ -38,6 +38,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             var symbol = this.symbols.Where(s => s.Name == name).OfType<TSymbol>().FirstOrDefault();
             return symbol ?? parent?.LookupSymbol<TSymbol>(name);
         }
+
+        public BoundScope CreateChildScope(BoundScopeKind boundScopeKind) => new(this, boundScopeKind);
 
         public static readonly BoundScope GlobalScope = new(null, BoundScopeKind.Global);
     }

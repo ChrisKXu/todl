@@ -15,7 +15,7 @@ namespace Todl.Compiler.Evaluation
     /// </summary>
     public class Evaluator
     {
-        private readonly Binder binder = new(BoundScope.GlobalScope, BinderFlags.AllowVariableDeclarationInAssignment);
+        private readonly Binder binder = new(BinderFlags.AllowVariableDeclarationInAssignment);
         private readonly Dictionary<VariableSymbol, object> variables = new();
 
         public EvaluatorResult Evaluate(SourceText sourceText)
@@ -37,7 +37,7 @@ namespace Todl.Compiler.Evaluation
                 };
             }
 
-            var boundExpression = this.binder.BindExpression(expression);
+            var boundExpression = this.binder.BindExpression(BoundScope.GlobalScope, expression);
 
             return new EvaluatorResult()
             {
