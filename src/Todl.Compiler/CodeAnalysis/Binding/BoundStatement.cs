@@ -15,6 +15,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 ExpressionStatement expressionStatement => BindExpressionStatement(scope, expressionStatement),
                 BlockStatement blockStatement => BindBlockStatement(scope, blockStatement),
+                VariableDeclarationStatement variableDeclarationStatement => BindVariableDeclarationStatement(scope, variableDeclarationStatement),
                 _ => null
             };
         }
