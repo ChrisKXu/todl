@@ -76,9 +76,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundExpression BindUnaryExpression(UnaryExpression unaryExpression)
+        private BoundExpression BindUnaryExpression(BoundScope scope, UnaryExpression unaryExpression)
         {
-            var boundOperand = this.BindExpression(unaryExpression.Operand);
+            var boundOperand = this.BindExpression(scope, unaryExpression.Operand);
             var boundUnaryOperator = BoundUnaryExpression.MatchUnaryOperator(
                 operandResultType: boundOperand.ResultType,
                 syntaxKind: unaryExpression.Operator.Kind,

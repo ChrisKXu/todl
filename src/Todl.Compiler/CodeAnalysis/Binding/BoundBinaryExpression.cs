@@ -74,10 +74,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundExpression BindBinaryExpression(BinaryExpression binaryExpression)
+        private BoundExpression BindBinaryExpression(BoundScope scope, BinaryExpression binaryExpression)
         {
-            var boundLeft = this.BindExpression(binaryExpression.Left);
-            var boundRight = this.BindExpression(binaryExpression.Right);
+            var boundLeft = this.BindExpression(scope, binaryExpression.Left);
+            var boundRight = this.BindExpression(scope, binaryExpression.Right);
             var boundBinaryOperator = BoundBinaryExpression.MatchBinaryOperator(boundLeft.ResultType, boundRight.ResultType, binaryExpression.Operator.Kind);
 
             if (boundBinaryOperator == null)

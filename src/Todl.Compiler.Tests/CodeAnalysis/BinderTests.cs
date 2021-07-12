@@ -10,7 +10,10 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 {
     public sealed class BinderTests
     {
-        public static TBoundExpression BindExpression<TBoundExpression>(string inputText, Binder binder)
+        public static TBoundExpression BindExpression<TBoundExpression>(
+            string inputText,
+            Binder binder,
+            BoundScope scope)
             where TBoundExpression : BoundExpression
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
@@ -18,7 +21,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             parser.Lex();
 
             var expression = parser.ParseExpression();
-            return binder.BindExpression(expression) as TBoundExpression;
+            return binder.BindExpression(scope, expression) as TBoundExpression;
         }
 
         [Fact]
@@ -26,7 +29,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundBinaryExpression = BindExpression<BoundBinaryExpression>(
                 inputText: "1 + 2 + 3",
-                binder: new Binder(BoundScope.GlobalScope, BinderFlags.None));
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
 
             boundBinaryExpression.Should().NotBeNull();
             boundBinaryExpression.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition);
@@ -49,7 +53,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundConstant = BindExpression<BoundConstant>(
                 inputText: input,
-                binder: new Binder(BoundScope.GlobalScope, BinderFlags.None));
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
 
             boundConstant.Should().NotBeNull();
             boundConstant.ResultType.Should().Be(TypeSymbol.ClrString);
@@ -60,8 +65,11 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [MemberData(nameof(GetTestBindAssignmentExpressionDataWithEqualsToken))]
         public void TestBindAssignmentExpressionEqualsToken(string input, string variableName, TypeSymbol expectedResultType)
         {
-            var binder = new Binder(BoundScope.GlobalScope, BinderFlags.AllowVariableDeclarationInAssignment);
-            var boundAssignmentExpression = BindExpression<BoundAssignmentExpression>(input, binder);
+            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
+            var boundAssignmentExpression = BindExpression<BoundAssignmentExpression>(
+                inputText: input,
+                binder: binder,
+                scope: BoundScope.GlobalScope);
 
             binder.Diagnostics.Should().BeEmpty();
             boundAssignmentExpression.Should().NotBeNull();
