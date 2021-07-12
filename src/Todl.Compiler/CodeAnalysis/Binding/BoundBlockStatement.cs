@@ -7,9 +7,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     public sealed class BoundBlockStatement : BoundStatement
     {
         public BoundScope Scope { get; }
-        public IReadOnlyCollection<BoundStatement> Statements { get; }
+        public IReadOnlyList<BoundStatement> Statements { get; }
 
-        public BoundBlockStatement(BoundScope scope, IReadOnlyCollection<BoundStatement> statements)
+        public BoundBlockStatement(BoundScope scope, IReadOnlyList<BoundStatement> statements)
         {
             this.Scope = scope;
             this.Statements = statements;

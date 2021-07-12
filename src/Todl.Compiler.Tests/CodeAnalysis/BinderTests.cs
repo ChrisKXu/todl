@@ -24,6 +24,20 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             return binder.BindExpression(scope, expression) as TBoundExpression;
         }
 
+        public static TBoundStatement BindStatement<TBoundStatement>(
+            string inputText,
+            Binder binder,
+            BoundScope scope)
+            where TBoundStatement : BoundStatement
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            var statement = parser.ParseStatement();
+            return binder.BindStatement(scope, statement) as TBoundStatement;
+        }
+
         [Fact]
         public void TestBindBinaryExpression()
         {
@@ -84,6 +98,34 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             yield return new object[] { "n = 0", "n", TypeSymbol.ClrInt32 };
             yield return new object[] { "abcd = \"abcde\"", "abcd", TypeSymbol.ClrString };
+        }
+
+        [Fact]
+        public void TestBindBlockStatement()
+        {
+            var input = @"
+            {
+                a = 0;
+                b = a + 10;
+            }
+            ";
+            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
+            var boundBlockStatement = BindStatement<BoundBlockStatement>(
+                inputText: input,
+                binder: binder,
+                scope: BoundScope.GlobalScope);
+
+            boundBlockStatement.Should().NotBeNull();
+            boundBlockStatement.Statements.Count.Should().Be(2);
+            boundBlockStatement.Scope.LookupVariable("a").Type.Should().Be(TypeSymbol.ClrInt32);
+            boundBlockStatement.Scope.LookupVariable("b").Type.Should().Be(TypeSymbol.ClrInt32);
+
+            var firstExpression = boundBlockStatement.Statements[0] as BoundExpressionStatement;
+            (firstExpression.Expression as BoundAssignmentExpression).Should().NotBeNull();
+
+            var secondExpression = boundBlockStatement.Statements[1] as BoundExpressionStatement;
+            var binaryExpression = (secondExpression.Expression as BoundAssignmentExpression).BoundExpression as BoundBinaryExpression;
+            binaryExpression.Should().NotBeNull();
         }
     }
 }
