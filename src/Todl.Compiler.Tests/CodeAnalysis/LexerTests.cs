@@ -50,6 +50,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData(SyntaxKind.OpenBraceToken, "{")]
         [InlineData(SyntaxKind.CloseBraceToken, "}")]
         [InlineData(SyntaxKind.SemicolonToken, ";")]
+        [InlineData(SyntaxKind.LetKeywordToken, "let")]
+        [InlineData(SyntaxKind.ConstKeywordToken, "const")]
         public void TestSingleToken(SyntaxKind kind, string text)
         {
             var sourceText = SourceText.FromString(text);

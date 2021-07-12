@@ -34,7 +34,10 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public static readonly IReadOnlyDictionary<string, SyntaxKind> KeywordMap = new Dictionary<string, SyntaxKind>()
         {
             { "true", SyntaxKind.TrueKeywordToken },
-            { "false", SyntaxKind.FalseKeywordToken }
+            { "false", SyntaxKind.FalseKeywordToken },
+
+            { "const", SyntaxKind.ConstKeywordToken },
+            { "let", SyntaxKind.LetKeywordToken }
         };
     }
 }
