@@ -209,6 +209,26 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
+        public void TestParseVariableDeclarationStatementBasic()
+        {
+            var inputText = @"
+            {
+                const a = 0;
+                let b = a;
+            }
+            ";
+            var blockStatement = ParseStatement<BlockStatement>(inputText);
+            var constStatement = blockStatement.InnerStatements[0] as VariableDeclarationStatement;
+            var letStatement = blockStatement.InnerStatements[1] as VariableDeclarationStatement;
+
+            constStatement.IdentifierToken.Text.Should().Be("a");
+            letStatement.IdentifierToken.Text.Should().Be("b");
+
+            (constStatement.InitializerExpression as LiteralExpression).LiteralToken.Text.Should().Be("0");
+            (letStatement.InitializerExpression as NameExpression).IdentifierToken.Text.Should().Be("a");
+        }
+
+        [Fact]
         public void TestParserWithDiagnostics()
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString("(1 + 2 * 3 - 4")); // missing a ")"

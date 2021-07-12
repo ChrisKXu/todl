@@ -16,6 +16,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             return Current.Kind switch
             {
                 SyntaxKind.OpenBraceToken => this.ParseBlockStatement(),
+                SyntaxKind.ConstKeywordToken or SyntaxKind.LetKeywordToken => this.ParseVariableDeclarationStatement(),
                 _ => this.ParseExpressionStatement()
             };
         }
