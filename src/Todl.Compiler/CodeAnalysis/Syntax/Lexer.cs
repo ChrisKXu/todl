@@ -191,7 +191,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 ++this.position;
             }
 
-            var token = this.SourceText.Text.Substring(start, this.position - start);
+            var token = this.SourceText.Text[start..this.position];
             return SyntaxFacts.KeywordMap.GetValueOrDefault(token, SyntaxKind.IdentifierToken);
         }
 

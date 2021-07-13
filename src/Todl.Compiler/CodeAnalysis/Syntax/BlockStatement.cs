@@ -6,12 +6,12 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         public SyntaxToken OpenBraceToken { get; }
         public SyntaxToken CloseBraceToken { get; }
-        public IReadOnlyCollection<Statement> InnerStatements { get; }
+        public IReadOnlyList<Statement> InnerStatements { get; }
 
         public BlockStatement(
             SyntaxTree syntaxTree,
             SyntaxToken openBraceToken,
-            IReadOnlyCollection<Statement> innerStatements,
+            IReadOnlyList<Statement> innerStatements,
             SyntaxToken closeBraceToken)
             : base(syntaxTree)
         {

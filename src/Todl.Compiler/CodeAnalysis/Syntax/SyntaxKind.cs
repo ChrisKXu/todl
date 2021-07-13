@@ -35,6 +35,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         // Keywords
         TrueKeywordToken,
         FalseKeywordToken,
+        ConstKeywordToken,
+        LetKeywordToken,
 
         // Trivia
         WhitespaceTrivia,

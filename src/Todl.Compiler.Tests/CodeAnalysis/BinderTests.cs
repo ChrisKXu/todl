@@ -127,5 +127,60 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var binaryExpression = (secondExpression.Expression as BoundAssignmentExpression).BoundExpression as BoundBinaryExpression;
             binaryExpression.Should().NotBeNull();
         }
+
+        [Fact]
+        public void TestBindVariableDeclarationStatementBasic()
+        {
+            var input = @"
+            {
+                const a = 0;
+                let b = a + 4;
+            }
+            ";
+            var binder = new Binder(BinderFlags.None);
+            var boundBlockStatement = BindStatement<BoundBlockStatement>(
+                inputText: input,
+                binder: binder,
+                scope: BoundScope.GlobalScope);
+
+            boundBlockStatement.Should().NotBeNull();
+            boundBlockStatement.Statements.Count.Should().Be(2);
+            boundBlockStatement.Scope.LookupVariable("a").Type.Should().Be(TypeSymbol.ClrInt32);
+            boundBlockStatement.Scope.LookupVariable("b").Type.Should().Be(TypeSymbol.ClrInt32);
+        }
+
+        [Fact]
+        public void TestBindVariableDeclarationStatementWithNestedScope()
+        {
+            var input = @"
+            {
+                const a = 0;
+                let b = a + 4;
+                {
+                    let a = true;
+                    b = 20;
+                }
+                b = a + 5;
+            }
+            ";
+            var binder = new Binder(BinderFlags.None);
+            var boundBlockStatement = BindStatement<BoundBlockStatement>(
+                inputText: input,
+                binder: binder,
+                scope: BoundScope.GlobalScope);
+
+            boundBlockStatement.Should().NotBeNull();
+            boundBlockStatement.Statements.Count.Should().Be(4);
+
+            var scope = boundBlockStatement.Scope;
+            var childScope = (boundBlockStatement.Statements[2] as BoundBlockStatement).Scope;
+            childScope.Parent.Should().Be(scope);
+
+            scope.LookupVariable("a").Type.Should().Be(TypeSymbol.ClrInt32);
+            scope.LookupVariable("b").Type.Should().Be(TypeSymbol.ClrInt32);
+
+            childScope.LookupVariable("a").Type.Should().Be(TypeSymbol.ClrBoolean);
+            childScope.LookupVariable("b").Type.Should().Be(TypeSymbol.ClrInt32);
+        }
     }
 }

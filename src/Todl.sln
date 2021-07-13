@@ -1,13 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30114.105
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31423.177
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Todl", "Todl\Todl.csproj", "{64E86474-7250-49F7-A81E-8C5E692537A3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Todl", "Todl\Todl.csproj", "{64E86474-7250-49F7-A81E-8C5E692537A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Todl.Compiler", "Todl.Compiler\Todl.Compiler.csproj", "{B144FB80-167A-434D-8521-CCF33F532D54}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Todl.Compiler", "Todl.Compiler\Todl.Compiler.csproj", "{B144FB80-167A-434D-8521-CCF33F532D54}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Todl.Compiler.Tests", "Todl.Compiler.Tests\Todl.Compiler.Tests.csproj", "{94B62601-81DA-4A89-8C5E-7ED7B1393871}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Todl.Compiler.Tests", "Todl.Compiler.Tests\Todl.Compiler.Tests.csproj", "{94B62601-81DA-4A89-8C5E-7ED7B1393871}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{36EE290C-163F-4732-ACEA-EE552259562F}"
+	ProjectSection(SolutionItems) = preProject
+		..\.editorconfig = ..\.editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,9 +22,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{64E86474-7250-49F7-A81E-8C5E692537A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -58,5 +60,11 @@ Global
 		{94B62601-81DA-4A89-8C5E-7ED7B1393871}.Release|x64.Build.0 = Release|Any CPU
 		{94B62601-81DA-4A89-8C5E-7ED7B1393871}.Release|x86.ActiveCfg = Release|Any CPU
 		{94B62601-81DA-4A89-8C5E-7ED7B1393871}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {98E8417C-3119-4156-832E-E2F3624127B7}
 	EndGlobalSection
 EndGlobal
