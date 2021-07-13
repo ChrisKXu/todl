@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -30,7 +30,11 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
-            throw new System.NotImplementedException();
+            yield return this.DeclarationKeyword;
+            yield return this.IdentifierToken;
+            yield return this.AssignmentToken;
+            yield return this.InitializerExpression;
+            yield return this.SemicolonToken;
         }
     }
 
