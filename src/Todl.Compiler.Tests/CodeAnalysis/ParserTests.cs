@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
@@ -31,88 +31,103 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         public void TestParseBinaryExpressionBasic()
         {
             var binaryExpression = ParseExpression<BinaryExpression>("1 + 2 + 3");
-            binaryExpression.Should().NotBeNull();
-            binaryExpression.Operator.Text.Should().Be("+");
-            (binaryExpression.Right as LiteralExpression).Text.Should().Be("3");
 
-            var left = binaryExpression.Left as BinaryExpression;
-            left.Should().NotBeNull();
-            left.Operator.Text.Should().Be("+");
-            (left.Left as LiteralExpression).Text.Should().Be("1");
-            (left.Right as LiteralExpression).Text.Should().Be("2");
+            binaryExpression.Should().HaveChildren(
+                left =>
+                {
+                    left.Should().HaveChildren(
+                        innerLeft => innerLeft.As<LiteralExpression>().Text.Should().Be("1"),
+                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
+                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
+                },
+                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
+                right => right.As<LiteralExpression>().Text.Should().Be("3"));
         }
 
         [Fact]
         public void TestParseBinaryExpressionWithPrecedence()
         {
             var binaryExpression = ParseExpression<BinaryExpression>("1 + 2 * 3 - 4");
-            binaryExpression.Should().NotBeNull();
-            binaryExpression.Operator.Text.Should().Be("-");
-            (binaryExpression.Right as LiteralExpression).Text.Should().Be("4");
 
-            var left = binaryExpression.Left as BinaryExpression;
-            left.Should().NotBeNull();
-            left.Operator.Text.Should().Be("+");
-            (left.Left as LiteralExpression).Text.Should().Be("1");
-
-            var multiplicationExpression = left.Right as BinaryExpression;
-            multiplicationExpression.Should().NotBeNull();
-            multiplicationExpression.Operator.Text.Should().Be("*");
-            (multiplicationExpression.Left as LiteralExpression).Text.Should().Be("2");
-            (multiplicationExpression.Right as LiteralExpression).Text.Should().Be("3");
+            binaryExpression.Should().HaveChildren(
+                left =>
+                {
+                    left.Should().HaveChildren(
+                        left => left.As<LiteralExpression>().Text.Should().Be("1"),
+                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
+                        multiplication =>
+                        {
+                            multiplication.Should().HaveChildren(
+                                left => left.As<LiteralExpression>().Text.Should().Be("2"),
+                                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("*"),
+                                right => right.As<LiteralExpression>().Text.Should().Be("3"));
+                        });
+                },
+                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("-"),
+                right => right.As<LiteralExpression>().Text.Should().Be("4"));
         }
 
         [Fact]
         public void TestParseBinaryExpressionWithParenthesis()
         {
             var binaryExpression = ParseExpression<BinaryExpression>("(1 + 2) * 3 - 4");
-            binaryExpression.Should().NotBeNull();
-            binaryExpression.Operator.Text.Should().Be("-");
-            (binaryExpression.Right as LiteralExpression).Text.Should().Be("4");
 
-            var left = binaryExpression.Left as BinaryExpression;
-            left.Should().NotBeNull();
-            left.Operator.Text.Should().Be("*");
-            (left.Right as LiteralExpression).Text.Should().Be("3");
-
-            var parenthesizedExpression = left.Left as ParethesizedExpression;
-            parenthesizedExpression.Should().NotBeNull();
-
-            var innerExpression = parenthesizedExpression.InnerExpression as BinaryExpression;
-            innerExpression.Should().NotBeNull();
-            (innerExpression.Left as LiteralExpression).Text.Should().Be("1");
-            (innerExpression.Right as LiteralExpression).Text.Should().Be("2");
-            innerExpression.Operator.Text.Should().Be("+");
+            binaryExpression.Should().HaveChildren(
+                left =>
+                {
+                    left.Should().HaveChildren(
+                        left =>
+                        {
+                            left.Should().HaveChildren(
+                                openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
+                                binaryExpression =>
+                                {
+                                    binaryExpression.Should().HaveChildren(
+                                        left => left.As<LiteralExpression>().Text.Should().Be("1"),
+                                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
+                                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
+                                },
+                                closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken));
+                        },
+                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("*"),
+                        right => right.As<LiteralExpression>().Text.Should().Be("3"));
+                },
+                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("-"),
+                right => right.As<LiteralExpression>().Text.Should().Be("4"));
         }
 
         [Fact]
         public void TestParseBinaryExpressionWithEquality()
         {
             var binaryExpression = ParseExpression<BinaryExpression>("3 == 1 + 2");
-            binaryExpression.Should().NotBeNull();
-            binaryExpression.Operator.Text.Should().Be("==");
-            (binaryExpression.Left as LiteralExpression).Text.Should().Be("3");
 
-            var right = binaryExpression.Right as BinaryExpression;
-            right.Should().NotBeNull();
-            right.Operator.Text.Should().Be("+");
-            (right.Left as LiteralExpression).Text.Should().Be("1");
-            (right.Right as LiteralExpression).Text.Should().Be("2");
+            binaryExpression.Should().HaveChildren(
+                left => left.As<LiteralExpression>().Text.Should().Be("3"),
+                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("=="),
+                right =>
+                {
+                    right.Should().HaveChildren(
+                        left => left.As<LiteralExpression>().Text.Should().Be("1"),
+                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
+                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
+                });
         }
 
         [Fact]
         public void TestParseBinaryExpressionWithInequality()
         {
             var binaryExpression = ParseExpression<BinaryExpression>("5 != 1 + 2");
-            binaryExpression.Should().NotBeNull();
-            binaryExpression.Operator.Text.Should().Be("!=");
-            (binaryExpression.Left as LiteralExpression).Text.Should().Be("5");
 
-            var right = binaryExpression.Right as BinaryExpression;
-            right.Should().NotBeNull();
-            right.Operator.Text.Should().Be("+");
-            (right.Left as LiteralExpression).Text.Should().Be("1");
-            (right.Right as LiteralExpression).Text.Should().Be("2");
+            binaryExpression.Should().HaveChildren(
+                left => left.As<LiteralExpression>().Text.Should().Be("5"),
+                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("!="),
+                right =>
+                {
+                    right.Should().HaveChildren(
+                        left => left.As<LiteralExpression>().Text.Should().Be("1"),
+                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
+                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
+                });
         }
 
         [Fact]
