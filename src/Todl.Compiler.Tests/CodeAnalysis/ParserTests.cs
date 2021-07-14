@@ -134,45 +134,53 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         public void TestParseBinaryExpressionWithNameAndUnaryExpression()
         {
             var binaryExpression = ParseExpression<BinaryExpression>("(++a + 2) * 3 + 4");
-            binaryExpression.Should().NotBeNull();
-            binaryExpression.Operator.Text.Should().Be("+");
-            (binaryExpression.Right as LiteralExpression).Text.Should().Be("4");
 
-            var left = binaryExpression.Left as BinaryExpression;
-            left.Should().NotBeNull();
-            left.Operator.Text.Should().Be("*");
-            (left.Right as LiteralExpression).Text.Should().Be("3");
-
-            var parethesizedExpression = left.Left as ParethesizedExpression;
-            var innerExpression = parethesizedExpression.InnerExpression as BinaryExpression;
-            innerExpression.Should().NotBeNull();
-            innerExpression.Operator.Text.Should().Be("+");
-            (innerExpression.Right as LiteralExpression).Text.Should().Be("2");
-
-            var unaryExpression = innerExpression.Left as UnaryExpression;
-            unaryExpression.Should().NotBeNull();
-            (unaryExpression.Operand as NameExpression).IdentifierToken.Text.Should().Be("a");
-            unaryExpression.Operator.Text.Should().Be("++");
-            unaryExpression.Trailing.Should().Be(false);
+            binaryExpression.Should().HaveChildren(
+                left =>
+                {
+                    left.Should().HaveChildren(
+                        left =>
+                        {
+                            left.As<ParethesizedExpression>().InnerExpression.Should().HaveChildren(
+                                left =>
+                                {
+                                    var unaryExpression = left.As<UnaryExpression>();
+                                    unaryExpression.Operator.Text.Should().Be("++");
+                                    unaryExpression.Operand.As<NameExpression>().IdentifierToken.Text.Should().Be("a");
+                                    unaryExpression.Trailing.Should().Be(false);
+                                },
+                                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
+                                right => right.As<LiteralExpression>().Text.Should().Be("2"));
+                        },
+                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("*"),
+                        right => right.As<LiteralExpression>().Text.Should().Be("3"));
+                },
+                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
+                right => right.As<LiteralExpression>().Text.Should().Be("4"));
         }
 
         [Fact]
         public void TestParseBinaryExpressionWithNameAndTrailingUnaryExpression()
         {
             var binaryExpression = ParseExpression<BinaryExpression>("(a++ + 2) * 3");
-            binaryExpression.Should().NotBeNull();
-            binaryExpression.Operator.Text.Should().Be("*");
-            (binaryExpression.Right as LiteralExpression).Text.Should().Be("3");
 
-            var innerExpression = (binaryExpression.Left as ParethesizedExpression).InnerExpression as BinaryExpression;
-            innerExpression.Should().NotBeNull();
-            innerExpression.Operator.Text.Should().Be("+");
-            (innerExpression.Right as LiteralExpression).Text.Should().Be("2");
+            binaryExpression.Should().HaveChildren(
+                left =>
+                {
+                    left.As<ParethesizedExpression>().InnerExpression.Should().HaveChildren(
+                        left =>
+                        {
+                            var unaryExpression = left.As<UnaryExpression>();
+                            unaryExpression.Operand.As<NameExpression>().IdentifierToken.Text.Should().Be("a");
+                            unaryExpression.Operator.Text.Should().Be("++");
+                            unaryExpression.Trailing.Should().Be(true);
 
-            var unaryExpression = innerExpression.Left as UnaryExpression;
-            unaryExpression.Operator.Text.Should().Be("++");
-            (unaryExpression.Operand as NameExpression).IdentifierToken.Text.Should().Be("a");
-            unaryExpression.Trailing.Should().Be(true);
+                        },
+                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
+                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
+                },
+                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("*"),
+                right => right.As<LiteralExpression>().Text.Should().Be("3"));
         }
 
         [Theory]
@@ -181,24 +189,31 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("-=", SyntaxKind.MinusEqualsToken)]
         [InlineData("*=", SyntaxKind.StarEqualsToken)]
         [InlineData("/=", SyntaxKind.SlashEqualsToken)]
-        public void TestAssignmentOperators(string operatorToken, SyntaxKind expectedTokenKind)
+        public void TestAssignmentOperators(string expectedOperatorToken, SyntaxKind expectedTokenKind)
         {
-            var assignmentExpression = ParseExpression<AssignmentExpression>($"a {operatorToken} (b + 3) * 2");
-            assignmentExpression.Should().NotBeNull();
-            assignmentExpression.IdentifierToken.Text.Should().Be("a");
-            assignmentExpression.AssignmentOperator.Text.Should().Be(operatorToken);
-            assignmentExpression.AssignmentOperator.Kind.Should().Be(expectedTokenKind);
+            var assignmentExpression = ParseExpression<AssignmentExpression>($"a {expectedOperatorToken} (b + 3) * 2");
 
-            var binaryExpression = assignmentExpression.Expression as BinaryExpression;
-            binaryExpression.Should().NotBeNull();
-            binaryExpression.Operator.Text.Should().Be("*");
-            (binaryExpression.Right as LiteralExpression).LiteralToken.Text.Should().Be("2");
-
-            var left = ((binaryExpression.Left as ParethesizedExpression).InnerExpression) as BinaryExpression;
-            left.Should().NotBeNull();
-            (left.Left as NameExpression).IdentifierToken.Text.Should().Be("b");
-            (left.Right as LiteralExpression).LiteralToken.Text.Should().Be("3");
-            left.Operator.Text.Should().Be("+");
+            assignmentExpression.Should().HaveChildren(
+                identifierToken => identifierToken.As<SyntaxToken>().Text.Should().Be("a"),
+                operatorToken =>
+                {
+                    var assignmentOperator = operatorToken.As<SyntaxToken>();
+                    assignmentOperator.Text.Should().Be(expectedOperatorToken);
+                    assignmentOperator.Kind.Should().Be(expectedTokenKind);
+                },
+                expression =>
+                {
+                    expression.Should().HaveChildren(
+                        left =>
+                        {
+                            var innerExpression = left.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>();
+                            innerExpression.Left.As<NameExpression>().IdentifierToken.Text.Should().Be("b");
+                            innerExpression.Operator.Text.Should().Be("+");
+                            innerExpression.Right.As<LiteralExpression>().LiteralToken.Text.Should().Be("3");
+                        },
+                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("*"),
+                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
+                });
         }
 
         [Fact]
@@ -213,14 +228,12 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             ";
             var blockStatement = ParseStatement<BlockStatement>(inputText);
 
-            blockStatement.Should().NotBeNull();
-            blockStatement.InnerStatements.Should().NotBeNullOrEmpty();
-            blockStatement.InnerStatements.Count.Should().Be(3);
-
-            foreach (var statement in blockStatement.InnerStatements)
-            {
-                (statement as ExpressionStatement).Should().NotBeNull();
-            }
+            blockStatement.Should().HaveChildren(
+                openBrace => openBrace.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenBraceToken),
+                _0 => _0.As<ExpressionStatement>().Should().NotBeNull(),
+                _1 => _1.As<ExpressionStatement>().Should().NotBeNull(),
+                _2 => _2.As<ExpressionStatement>().Should().NotBeNull(),
+                closeBrace => closeBrace.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseBraceToken));
         }
 
         [Fact]
@@ -233,14 +246,22 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             }
             ";
             var blockStatement = ParseStatement<BlockStatement>(inputText);
-            var constStatement = blockStatement.InnerStatements[0] as VariableDeclarationStatement;
-            var letStatement = blockStatement.InnerStatements[1] as VariableDeclarationStatement;
 
-            constStatement.IdentifierToken.Text.Should().Be("a");
-            letStatement.IdentifierToken.Text.Should().Be("b");
-
-            (constStatement.InitializerExpression as LiteralExpression).LiteralToken.Text.Should().Be("0");
-            (letStatement.InitializerExpression as NameExpression).IdentifierToken.Text.Should().Be("a");
+            blockStatement.Should().HaveChildren(
+                openBrace => openBrace.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenBraceToken),
+                _0 =>
+                {
+                    var constStatement = _0.As<VariableDeclarationStatement>();
+                    constStatement.IdentifierToken.Text.Should().Be("a");
+                    constStatement.InitializerExpression.As<LiteralExpression>().LiteralToken.Text.Should().Be("0");
+                },
+                _1 =>
+                {
+                    var letStatement = _1.As<VariableDeclarationStatement>();
+                    letStatement.IdentifierToken.Text.Should().Be("b");
+                    letStatement.InitializerExpression.As<NameExpression>().IdentifierToken.Text.Should().Be("a");
+                },
+                closeBrace => closeBrace.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseBraceToken));
         }
 
         [Fact]
