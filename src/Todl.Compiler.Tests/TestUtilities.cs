@@ -14,7 +14,7 @@ namespace Todl.Compiler.Tests
         public static TreeWalkableAssertions<TNode> Should<TNode>(
             this ITreeWalkable<TNode> treeWalkable)
             where TNode : ITreeWalkable<TNode>
-            => new TreeWalkableAssertions<TNode>(treeWalkable);
+            => new(treeWalkable);
 
         public class TreeWalkableAssertions<TNode> : ObjectAssertions
             where TNode : ITreeWalkable<TNode>
@@ -25,9 +25,9 @@ namespace Todl.Compiler.Tests
             {
                 var nodes = Subject.As<ITreeWalkable<TNode>>().GetChildren().ToList();
 
-                nodes.Count.Should().BeGreaterOrEqualTo(asserts.Count());
+                nodes.Count.Should().BeGreaterOrEqualTo(asserts.Length);
 
-                for (var i = 0; i < asserts.Count(); ++i)
+                for (var i = 0; i < asserts.Length; ++i)
                 {
                     asserts[i].Invoke(nodes[i]);
                 }
