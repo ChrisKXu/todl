@@ -174,7 +174,6 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                             unaryExpression.Operand.As<NameExpression>().IdentifierToken.Text.Should().Be("a");
                             unaryExpression.Operator.Text.Should().Be("++");
                             unaryExpression.Trailing.Should().Be(true);
-
                         },
                         operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
                         right => right.As<LiteralExpression>().Text.Should().Be("2"));

@@ -53,6 +53,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData(SyntaxKind.SemicolonToken, ";")]
         [InlineData(SyntaxKind.LetKeywordToken, "let")]
         [InlineData(SyntaxKind.ConstKeywordToken, "const")]
+        [InlineData(SyntaxKind.ImportKeywordToken, "import")]
+        [InlineData(SyntaxKind.FromKeywordToken, "from")]
         public void TestSingleToken(SyntaxKind kind, string text)
         {
             var sourceText = SourceText.FromString(text);
