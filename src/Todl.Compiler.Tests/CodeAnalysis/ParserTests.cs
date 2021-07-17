@@ -216,6 +216,19 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 });
         }
 
+        [Theory]
+        [InlineData("System.Threading.Tasks.Task")]
+        [InlineData("(1 + 2).ToString")]
+        [InlineData("\"abc\".Length")]
+        public void TestMemberAccessExpressionBasic(string inputText)
+        {
+            var memberAccessExpression = ParseExpression<MemberAccessExpression>(inputText);
+            memberAccessExpression.Should().NotBeNull();
+
+            var memberName = inputText[(inputText.LastIndexOf('.') + 1)..^0];
+            memberAccessExpression.MemberIdentifierToken.Text.Should().Be(memberName);
+        }
+
         [Fact]
         public void TestParseBlockStatementBasic()
         {
