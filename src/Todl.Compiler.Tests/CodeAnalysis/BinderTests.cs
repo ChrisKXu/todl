@@ -87,10 +87,13 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
             binder.Diagnostics.Should().BeEmpty();
             boundAssignmentExpression.Should().NotBeNull();
-            boundAssignmentExpression.Variable.Name.Should().Be(variableName);
-            boundAssignmentExpression.Variable.ReadOnly.Should().BeFalse();
+
+            var variable = (boundAssignmentExpression.Left as BoundVariableExpression).Variable;
+
+            variable.Name.Should().Be(variableName);
+            variable.ReadOnly.Should().BeFalse();
             boundAssignmentExpression.Operator.SyntaxKind.Should().Be(SyntaxKind.EqualsToken);
-            boundAssignmentExpression.Variable.Type.Should().Be(expectedResultType);
+            variable.Type.Should().Be(expectedResultType);
             boundAssignmentExpression.ResultType.Should().Be(expectedResultType);
         }
 
@@ -124,7 +127,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             (firstExpression.Expression as BoundAssignmentExpression).Should().NotBeNull();
 
             var secondExpression = boundBlockStatement.Statements[1] as BoundExpressionStatement;
-            var binaryExpression = (secondExpression.Expression as BoundAssignmentExpression).BoundExpression as BoundBinaryExpression;
+            var binaryExpression = (secondExpression.Expression as BoundAssignmentExpression).Right as BoundBinaryExpression;
             binaryExpression.Should().NotBeNull();
         }
 

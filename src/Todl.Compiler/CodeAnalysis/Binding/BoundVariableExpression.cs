@@ -8,6 +8,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         public VariableSymbol Variable { get; }
         public override TypeSymbol ResultType => this.Variable.Type;
+        public override bool LValue => true;
 
         public BoundVariableExpression(VariableSymbol variable)
         {

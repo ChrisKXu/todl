@@ -358,6 +358,10 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                         ++this.position;
                     }
                     break;
+                case '.':
+                    kind = SyntaxKind.DotToken;
+                    ++this.position;
+                    break;
                 default:
                     // identifiers in todl can only start with a letter and not a digit or underscore
                     if (char.IsLetter(Current))

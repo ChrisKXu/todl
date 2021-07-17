@@ -194,7 +194,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var assignmentExpression = ParseExpression<AssignmentExpression>($"a {expectedOperatorToken} (b + 3) * 2");
 
             assignmentExpression.Should().HaveChildren(
-                identifierToken => identifierToken.As<SyntaxToken>().Text.Should().Be("a"),
+                left => left.As<NameExpression>().IdentifierToken.Text.Should().Be("a"),
                 operatorToken =>
                 {
                     var assignmentOperator = operatorToken.As<SyntaxToken>();
@@ -214,6 +214,19 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                         operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("*"),
                         right => right.As<LiteralExpression>().Text.Should().Be("2"));
                 });
+        }
+
+        [Theory]
+        [InlineData("System.Threading.Tasks.Task")]
+        [InlineData("(1 + 2).ToString")]
+        [InlineData("\"abc\".Length")]
+        public void TestMemberAccessExpressionBasic(string inputText)
+        {
+            var memberAccessExpression = ParseExpression<MemberAccessExpression>(inputText);
+            memberAccessExpression.Should().NotBeNull();
+
+            var memberName = inputText[(inputText.LastIndexOf('.') + 1)..^0];
+            memberAccessExpression.MemberIdentifierToken.Text.Should().Be(memberName);
         }
 
         [Fact]

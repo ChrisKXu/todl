@@ -45,6 +45,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData(SyntaxKind.AmpersandAmpersandToken, "&&")]
         [InlineData(SyntaxKind.PipeToken, "|")]
         [InlineData(SyntaxKind.PipePipeToken, "||")]
+        [InlineData(SyntaxKind.DotToken, ".")]
         [InlineData(SyntaxKind.TrueKeywordToken, "true")]
         [InlineData(SyntaxKind.FalseKeywordToken, "false")]
         [InlineData(SyntaxKind.OpenBraceToken, "{")]

@@ -95,25 +95,47 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         private Expression ParsePrimaryExpression()
         {
+            Expression baseExpression;
+
             switch (Current.Kind)
             {
                 case SyntaxKind.NumberToken:
                 case SyntaxKind.StringToken:
                 case SyntaxKind.TrueKeywordToken:
                 case SyntaxKind.FalseKeywordToken:
-                    return new LiteralExpression(this.syntaxTree, this.ExpectToken(Current.Kind));
+                    baseExpression = new LiteralExpression(this.syntaxTree, this.ExpectToken(Current.Kind));
+                    break;
                 case SyntaxKind.OpenParenthesisToken:
-                    return this.ParseTrailingUnaryExpression(this.ParseParethesizedExpression());
+                    baseExpression = ParseTrailingUnaryExpression(this.ParseParethesizedExpression());
+                    break;
                 case SyntaxKind.IdentifierToken:
-                    if (AssignmentExpression.AssignmentOperators.Contains(Peak.Kind))
-                    {
-                        return this.ParseAssignmentExpression();
-                    }
-
-                    return this.ParseTrailingUnaryExpression(new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken)));
                 default:
-                    return this.ParseTrailingUnaryExpression(new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken)));
+                    var nameExpression = new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken));
+                    baseExpression = ParseTrailingUnaryExpression(nameExpression);
+                    break;
             }
+
+            while (true)
+            {
+                if (AssignmentExpression.AssignmentOperators.Contains(Current.Kind))
+                {
+                    baseExpression = ParseAssignmentExpression(baseExpression);
+                }
+                else if (Current.Kind == SyntaxKind.DotToken && Peak.Kind == SyntaxKind.IdentifierToken)
+                {
+                    baseExpression = new MemberAccessExpression(
+                        syntaxTree: this.syntaxTree,
+                        baseExpression: baseExpression,
+                        dotToken: ExpectToken(SyntaxKind.DotToken),
+                        memberIdentifierToken: ExpectToken(SyntaxKind.IdentifierToken));
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return baseExpression;
         }
 
         private void ReportUnexpectedToken(SyntaxKind expectedSyntaxKind)

@@ -5,27 +5,27 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class AssignmentExpression : Expression
     {
-        public SyntaxToken IdentifierToken { get; }
+        public Expression Left { get; }
         public SyntaxToken AssignmentOperator { get; }
-        public Expression Expression { get; }
+        public Expression Right { get; }
 
         public AssignmentExpression(
             SyntaxTree syntaxTree,
-            SyntaxToken identifierToken,
+            Expression left,
             SyntaxToken assignmentOperator,
-            Expression expression)
+            Expression right)
             : base(syntaxTree)
         {
-            this.IdentifierToken = identifierToken;
+            this.Left = left;
             this.AssignmentOperator = assignmentOperator;
-            this.Expression = expression;
+            this.Right = right;
         }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
-            yield return this.IdentifierToken;
+            yield return this.Left;
             yield return this.AssignmentOperator;
-            yield return this.Expression;
+            yield return this.Right;
         }
 
         public static readonly IReadOnlySet<SyntaxKind> AssignmentOperators = new HashSet<SyntaxKind>()
@@ -40,17 +40,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
     public sealed partial class Parser
     {
-        private AssignmentExpression ParseAssignmentExpression()
+        private AssignmentExpression ParseAssignmentExpression(Expression left)
         {
-            var identifierToken = this.ExpectToken(SyntaxKind.IdentifierToken);
-            var assignmentOperator = this.ExpectToken(Current.Kind);
-            var expression = this.ParseExpression();
-
             return new AssignmentExpression(
                 syntaxTree: this.syntaxTree,
-                identifierToken: identifierToken,
-                assignmentOperator: assignmentOperator,
-                expression: expression);
+                left: left,
+                assignmentOperator: ExpectToken(Current.Kind),
+                right: ParseExpression());
         }
     }
 }

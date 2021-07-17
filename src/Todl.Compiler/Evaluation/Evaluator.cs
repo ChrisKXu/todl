@@ -123,8 +123,8 @@ namespace Todl.Compiler.Evaluation
 
         private object EvaluateBoundAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
         {
-            var result = this.EvaluateBoundExpression(boundAssignmentExpression.BoundExpression);
-            var variable = boundAssignmentExpression.Variable;
+            var result = this.EvaluateBoundExpression(boundAssignmentExpression.Right);
+            var variable = (boundAssignmentExpression.Left as BoundVariableExpression).Variable;
 
             return boundAssignmentExpression.Operator.BoundAssignmentOperatorKind switch
             {
