@@ -11,6 +11,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     public abstract class BoundExpression
     {
         public abstract TypeSymbol ResultType { get; }
+        public virtual bool LValue => false;
     }
 
     public sealed partial class Binder

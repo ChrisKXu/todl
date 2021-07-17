@@ -75,7 +75,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     }
                     else
                     {
-                        return this.ReportErrorExpression(
+                        return ReportErrorExpression(
                             new Diagnostic(
                                 message: $"Undeclared variable {variableName}",
                                 level: DiagnosticLevel.Error,
@@ -84,7 +84,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
                 else if (variable.ReadOnly)
                 {
-                    return this.ReportErrorExpression(
+                    return ReportErrorExpression(
                         new Diagnostic(
                             message: $"Variable {variableName} is read-only",
                             level: DiagnosticLevel.Error,
@@ -92,7 +92,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
                 else if (!variable.Type.Equals(right.ResultType))
                 {
-                    return this.ReportErrorExpression(
+                    return ReportErrorExpression(
                         new Diagnostic(
                             message: $"Variable {variableName} cannot be assigned to type {right.ResultType}",
                             level: DiagnosticLevel.Error,
@@ -100,8 +100,18 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
             }
 
+            var left = BindExpression(scope, assignmentExpression.Left);
+            if (!left.LValue)
+            {
+                return this.ReportErrorExpression(
+                    new Diagnostic(
+                        message: $"The left-hand side of an assignment must be a variable, property or indexer",
+                        level: DiagnosticLevel.Error,
+                        textLocation: default));
+            }
+
             return new BoundAssignmentExpression(
-                left: BindExpression(scope, assignmentExpression.Left),
+                left: left,
                 boundAssignmentOperator: boundAssignmentOperator,
                 right: right);
         }
