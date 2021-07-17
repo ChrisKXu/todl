@@ -105,14 +105,14 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 case SyntaxKind.OpenParenthesisToken:
                     return this.ParseTrailingUnaryExpression(this.ParseParethesizedExpression());
                 case SyntaxKind.IdentifierToken:
-                    if (AssignmentExpression.AssignmentOperators.Contains(Peak.Kind))
+                default:
+                    var nameExpression = new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken));
+                    if (AssignmentExpression.AssignmentOperators.Contains(Current.Kind))
                     {
-                        return this.ParseAssignmentExpression();
+                        return this.ParseAssignmentExpression(nameExpression);
                     }
 
-                    return this.ParseTrailingUnaryExpression(new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken)));
-                default:
-                    return this.ParseTrailingUnaryExpression(new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken)));
+                    return this.ParseTrailingUnaryExpression(nameExpression);
             }
         }
 

@@ -40,16 +40,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         internal static BoundAssignmentOperator MatchAssignmentOperator(SyntaxKind syntaxKind)
             => BoundAssignmentExpression.supportedAssignmentOperators.GetValueOrDefault(syntaxKind, null);
 
-        public VariableSymbol Variable { get; }
+        public BoundExpression Left { get; }
         public BoundAssignmentOperator Operator { get; }
-        public BoundExpression BoundExpression { get; }
-        public override TypeSymbol ResultType => this.BoundExpression.ResultType;
+        public BoundExpression Right { get; }
+        public override TypeSymbol ResultType => Right.ResultType;
 
-        public BoundAssignmentExpression(VariableSymbol variable, BoundAssignmentOperator boundAssignmentOperator, BoundExpression boundExpression)
+        public BoundAssignmentExpression(BoundExpression left, BoundAssignmentOperator boundAssignmentOperator, BoundExpression right)
         {
-            this.Variable = variable;
+            this.Left = left;
             this.Operator = boundAssignmentOperator;
-            this.BoundExpression = boundExpression;
+            this.Right = right;
         }
     }
 
@@ -57,49 +57,53 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundExpression BindAssignmentExpression(BoundScope scope, AssignmentExpression assignmentExpression)
         {
-            var variableName = assignmentExpression.IdentifierToken.Text.ToString();
-            var variable = scope.LookupVariable(variableName);
             var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
-            var boundExpression = this.BindExpression(scope, assignmentExpression.Expression);
+            var right = BindExpression(scope, assignmentExpression.Right);
 
-            if (variable == null)
+            if (assignmentExpression.Left is NameExpression nameExpression)
             {
-                if (boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment
-                    && this.binderFlags.Includes(BinderFlags.AllowVariableDeclarationInAssignment))
+                var variableName = nameExpression.IdentifierToken.Text.ToString();
+                var variable = scope.LookupVariable(variableName);
+
+                if (variable == null)
                 {
-                    variable = new VariableSymbol(variableName, false, boundExpression.ResultType);
-                    scope.DeclareVariable(variable);
+                    if (boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment
+                        && this.binderFlags.Includes(BinderFlags.AllowVariableDeclarationInAssignment))
+                    {
+                        variable = new VariableSymbol(variableName, false, right.ResultType);
+                        scope.DeclareVariable(variable);
+                    }
+                    else
+                    {
+                        return this.ReportErrorExpression(
+                            new Diagnostic(
+                                message: $"Undeclared variable {variableName}",
+                                level: DiagnosticLevel.Error,
+                                textLocation: nameExpression.IdentifierToken.GetTextLocation()));
+                    }
                 }
-                else
+                else if (variable.ReadOnly)
                 {
                     return this.ReportErrorExpression(
                         new Diagnostic(
-                            message: $"Undeclared variable {assignmentExpression.IdentifierToken.Text}",
+                            message: $"Variable {variableName} is read-only",
                             level: DiagnosticLevel.Error,
-                            textLocation: assignmentExpression.IdentifierToken.GetTextLocation()));
+                            textLocation: nameExpression.IdentifierToken.GetTextLocation()));
                 }
-            }
-            else if (variable.ReadOnly)
-            {
-                return this.ReportErrorExpression(
-                    new Diagnostic(
-                        message: $"Variable {assignmentExpression.IdentifierToken.Text} is read-only",
-                        level: DiagnosticLevel.Error,
-                        textLocation: assignmentExpression.IdentifierToken.GetTextLocation()));
-            }
-            else if (!variable.Type.Equals(boundExpression.ResultType))
-            {
-                return this.ReportErrorExpression(
-                    new Diagnostic(
-                        message: $"Variable {assignmentExpression.IdentifierToken.Text} cannot be assigned to type {boundExpression.ResultType}",
-                        level: DiagnosticLevel.Error,
-                        textLocation: assignmentExpression.IdentifierToken.GetTextLocation()));
+                else if (!variable.Type.Equals(right.ResultType))
+                {
+                    return this.ReportErrorExpression(
+                        new Diagnostic(
+                            message: $"Variable {variableName} cannot be assigned to type {right.ResultType}",
+                            level: DiagnosticLevel.Error,
+                            textLocation: nameExpression.IdentifierToken.GetTextLocation()));
+                }
             }
 
             return new BoundAssignmentExpression(
-                variable: variable,
+                left: BindExpression(scope, assignmentExpression.Left),
                 boundAssignmentOperator: boundAssignmentOperator,
-                boundExpression: boundExpression);
+                right: right);
         }
     }
 }

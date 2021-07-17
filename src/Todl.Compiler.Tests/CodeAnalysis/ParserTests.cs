@@ -194,7 +194,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var assignmentExpression = ParseExpression<AssignmentExpression>($"a {expectedOperatorToken} (b + 3) * 2");
 
             assignmentExpression.Should().HaveChildren(
-                identifierToken => identifierToken.As<SyntaxToken>().Text.Should().Be("a"),
+                left => left.As<NameExpression>().IdentifierToken.Text.Should().Be("a"),
                 operatorToken =>
                 {
                     var assignmentOperator = operatorToken.As<SyntaxToken>();
