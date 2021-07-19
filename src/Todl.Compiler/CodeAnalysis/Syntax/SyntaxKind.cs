@@ -31,6 +31,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         PipeToken,
         PipePipeToken,
         DotToken,
+        CommaToken,
         IdentifierToken,
 
         // Keywords

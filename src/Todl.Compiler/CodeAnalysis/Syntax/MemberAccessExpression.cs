@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
@@ -7,6 +8,19 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public Expression BaseExpression { get; }
         public SyntaxToken DotToken { get; }
         public SyntaxToken MemberIdentifierToken { get; }
+
+        public string QualifiedName
+        {
+            get
+            {
+                return BaseExpression switch
+                {
+                    NameExpression nameExpression => $"{nameExpression.IdentifierToken.Text}.{MemberIdentifierToken.Text}",
+                    MemberAccessExpression memberAccessExpression => $"{memberAccessExpression.QualifiedName}.{MemberIdentifierToken.Text}",
+                    _ => throw new NotSupportedException()
+                };
+            }
+        }
 
         public MemberAccessExpression(
             SyntaxTree syntaxTree,
