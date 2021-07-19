@@ -87,6 +87,11 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 return;
             }
 
+            while (Current.Kind == SyntaxKind.ImportKeywordToken)
+            {
+                ParseDirective();
+            }
+
             while (Current.Kind != SyntaxKind.EndOfFileToken)
             {
                 ParseExpression();

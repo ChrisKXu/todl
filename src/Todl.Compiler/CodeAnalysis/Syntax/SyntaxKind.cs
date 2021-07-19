@@ -31,6 +31,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         PipeToken,
         PipePipeToken,
         DotToken,
+        CommaToken,
         IdentifierToken,
 
         // Keywords
@@ -38,6 +39,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         FalseKeywordToken,
         ConstKeywordToken,
         LetKeywordToken,
+        ImportKeywordToken,
+        FromKeywordToken,
 
         // Trivia
         WhitespaceTrivia,

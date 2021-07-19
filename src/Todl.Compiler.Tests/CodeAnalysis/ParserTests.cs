@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Linq;
+using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
@@ -25,6 +26,16 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             parser.Lex();
 
             return parser.ParseStatement() as TStatement;
+        }
+
+        private static TDirective ParseDirective<TDirective>(string sourceText)
+            where TDirective : Directive
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            return parser.ParseDirective() as TDirective;
         }
 
         [Fact]
@@ -174,7 +185,6 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                             unaryExpression.Operand.As<NameExpression>().IdentifierToken.Text.Should().Be("a");
                             unaryExpression.Operator.Text.Should().Be("++");
                             unaryExpression.Trailing.Should().Be(true);
-
                         },
                         operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
                         right => right.As<LiteralExpression>().Text.Should().Be("2"));
@@ -275,6 +285,38 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                     letStatement.InitializerExpression.As<NameExpression>().IdentifierToken.Text.Should().Be("a");
                 },
                 closeBrace => closeBrace.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseBraceToken));
+        }
+
+        [Theory]
+        [InlineData("import * from System;")]
+        [InlineData("import * from System.Collection.Generic;")]
+        [InlineData("import { Task } from System.Threading.Tasks;")]
+        [InlineData("import { ConcurrentBag, ConcurrentDictionary, ConcurrentQueue } from System.Collections.Concurrent;")]
+        public void TestParseImportDirective(string inputText)
+        {
+            var directive = ParseDirective<ImportDirective>(inputText);
+
+            // calculate namespace by directly parsing the text to see
+            // if match with the parser results
+            var fromPosition = inputText.IndexOf("from");
+            var semicolonPosition = inputText.IndexOf(";");
+            var expectedNamespace = inputText[(fromPosition + 5)..semicolonPosition]; // assuming only one space character after 'from'
+
+            directive.Should().NotBeNull();
+            directive.ImportAll.Should().Be(inputText.Contains("*"));
+            directive.Namespace.Should().Be(expectedNamespace);
+
+            if (!directive.ImportAll)
+            {
+                var openBracePosition = inputText.IndexOf("{");
+                var closeBracePosition = inputText.IndexOf("}");
+                var importedNames =
+                    inputText[(openBracePosition + 1)..closeBracePosition]
+                    .Split(",")
+                    .Select(name => name.Trim());
+
+                directive.ImportedNames.Should().BeEquivalentTo(importedNames);
+            }
         }
 
         [Fact]

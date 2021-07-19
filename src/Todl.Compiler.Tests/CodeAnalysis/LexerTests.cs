@@ -46,6 +46,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData(SyntaxKind.PipeToken, "|")]
         [InlineData(SyntaxKind.PipePipeToken, "||")]
         [InlineData(SyntaxKind.DotToken, ".")]
+        [InlineData(SyntaxKind.CommaToken, ",")]
         [InlineData(SyntaxKind.TrueKeywordToken, "true")]
         [InlineData(SyntaxKind.FalseKeywordToken, "false")]
         [InlineData(SyntaxKind.OpenBraceToken, "{")]
@@ -53,6 +54,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData(SyntaxKind.SemicolonToken, ";")]
         [InlineData(SyntaxKind.LetKeywordToken, "let")]
         [InlineData(SyntaxKind.ConstKeywordToken, "const")]
+        [InlineData(SyntaxKind.ImportKeywordToken, "import")]
+        [InlineData(SyntaxKind.FromKeywordToken, "from")]
         public void TestSingleToken(SyntaxKind kind, string text)
         {
             var sourceText = SourceText.FromString(text);
