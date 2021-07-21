@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -184,6 +185,21 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
             childScope.LookupVariable("a").Type.Should().Be(TypeSymbol.ClrBoolean);
             childScope.LookupVariable("b").Type.Should().Be(TypeSymbol.ClrInt32);
+        }
+
+        [Fact]
+        public void TestBindImportDirectiveSingle()
+        {
+            var binder = new Binder(BinderFlags.None);
+            var syntaxTree = new SyntaxTree(SourceText.FromString("import { Task } from System.Threading.Tasks;"));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            var importDirective = parser.ParseDirective().As<ImportDirective>();
+            var boundImportDirective = binder.BindImportDirective(importDirective);
+            var taskType = boundImportDirective.ImportedTypes["Task"];
+            taskType.Should().Be(typeof(System.Threading.Tasks.Task));
+            boundImportDirective.Namespace.Should().Be("System.Threading.Tasks");
         }
     }
 }
