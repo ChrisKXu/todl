@@ -39,6 +39,18 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             return binder.BindStatement(scope, statement) as TBoundStatement;
         }
 
+        public static BoundImportDirective BindImportDirective(
+            string inputText,
+            Binder binder)
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            var importDirective = parser.ParseDirective().As<ImportDirective>();
+            return binder.BindImportDirective(importDirective);
+        }
+
         [Fact]
         public void TestBindBinaryExpression()
         {
@@ -190,16 +202,40 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestBindImportDirectiveSingle()
         {
-            var binder = new Binder(BinderFlags.None);
-            var syntaxTree = new SyntaxTree(SourceText.FromString("import { Task } from System.Threading.Tasks;"));
-            var parser = new Parser(syntaxTree);
-            parser.Lex();
+            var boundImportDirective = BindImportDirective(
+                inputText: "import { Task } from System.Threading.Tasks;",
+                binder: new Binder(BinderFlags.None));
 
-            var importDirective = parser.ParseDirective().As<ImportDirective>();
-            var boundImportDirective = binder.BindImportDirective(importDirective);
+            boundImportDirective.Namespace.Should().Be("System.Threading.Tasks");
             var taskType = boundImportDirective.ImportedTypes["Task"];
             taskType.Should().Be(typeof(System.Threading.Tasks.Task));
-            boundImportDirective.Namespace.Should().Be("System.Threading.Tasks");
+        }
+
+        [Fact]
+        public void TestBindImportDirectiveMultiple()
+        {
+            var boundImportDirective = BindImportDirective(
+                inputText: "import { BinaryReader, BinaryWriter, FileStream } from System.IO;",
+                binder: new Binder(BinderFlags.None));
+
+            boundImportDirective.Namespace.Should().Be("System.IO");
+            boundImportDirective.ImportedTypes.Count.Should().Be(3);
+            boundImportDirective.ImportedTypes["BinaryReader"].Should().Be(typeof(System.IO.BinaryReader));
+            boundImportDirective.ImportedTypes["BinaryWriter"].Should().Be(typeof(System.IO.BinaryWriter));
+            boundImportDirective.ImportedTypes["FileStream"].Should().Be(typeof(System.IO.FileStream));
+        }
+
+        [Fact]
+        public void TestBindImportDirectiveWildcard()
+        {
+            var boundImportDirective = BindImportDirective(
+                inputText: "import * from System.Runtime.Loader;",
+                binder: new Binder(BinderFlags.None));
+
+            boundImportDirective.Namespace.Should().Be("System.Runtime.Loader");
+            boundImportDirective.ImportedTypes.Count.Should().Be(2);
+            boundImportDirective.ImportedTypes["AssemblyDependencyResolver"].Should().Be(typeof(System.Runtime.Loader.AssemblyDependencyResolver));
+            boundImportDirective.ImportedTypes["AssemblyLoadContext"].Should().Be(typeof(System.Runtime.Loader.AssemblyLoadContext));
         }
     }
 }

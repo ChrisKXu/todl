@@ -17,7 +17,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             var availableTypes = loadedAssemblies
                 .SelectMany(a => a.GetTypes())
-                .Where(t => t.IsClass && t.IsPublic && t.Namespace == importDirective.Namespace);
+                .Where(t => t.IsPublic && t.Namespace == importDirective.Namespace);
 
             if (importDirective.ImportedNames.Any())
             {
