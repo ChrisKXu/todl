@@ -6,7 +6,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 {
     public sealed class BoundScope
     {
-        private readonly ICollection<Symbol> symbols = new HashSet<Symbol>();
+        private readonly HashSet<Symbol> symbols = new();
 
         public BoundScope Parent { get; }
         public BoundScopeKind BoundScopeKind { get; }

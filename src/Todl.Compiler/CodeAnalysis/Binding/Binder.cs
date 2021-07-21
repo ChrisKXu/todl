@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -17,6 +18,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private readonly List<Diagnostic> diagnostics = new();
         private readonly BinderFlags binderFlags;
+        private readonly List<Assembly> loadedAssemblies = new()
+        {
+            Assembly.GetAssembly(typeof(int)) // mscorlib
+        };
 
         public IReadOnlyList<Diagnostic> Diagnostics => diagnostics;
 

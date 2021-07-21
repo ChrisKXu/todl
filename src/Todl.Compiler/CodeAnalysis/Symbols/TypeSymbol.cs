@@ -53,10 +53,13 @@ namespace Todl.Compiler.CodeAnalysis.Symbols
         }
 
         public static TypeSymbol MapClrType<T>()
+            => MapClrType(typeof(T));
+
+        public static TypeSymbol MapClrType(Type type)
         {
             return new TypeSymbol()
             {
-                ClrType = typeof(T),
+                ClrType = type,
                 IsNative = true
             };
         }
