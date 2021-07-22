@@ -56,6 +56,7 @@ namespace Todl.Compiler.Evaluation
                 BoundBinaryExpression boundBinaryExpression => EvaluateBoundBinaryExpression(boundBinaryExpression),
                 BoundAssignmentExpression boundAssignmentExpression => EvaluateBoundAssignmentExpression(boundAssignmentExpression),
                 BoundVariableExpression boundVariableExpression => EvaluateBoundVariableExpression(boundVariableExpression),
+                BoundMemberAccessExpression boundMemberAccessExpression => EvaluateBoundMemberAccessExpression(boundMemberAccessExpression),
                 BoundErrorExpression => null,
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };
@@ -145,6 +146,17 @@ namespace Todl.Compiler.Evaluation
             }
 
             return null;
+        }
+
+        private object EvaluateBoundMemberAccessExpression(BoundMemberAccessExpression boundMemberAccessExpression)
+        {
+            var baseObject = EvaluateBoundExpression(boundMemberAccessExpression.BoundBaseExpression);
+            if (boundMemberAccessExpression.BoundMemberAccessKind == BoundMemberAccessKind.Property)
+            {
+                return baseObject.GetType().GetProperty(boundMemberAccessExpression.MemberName.Text.ToString()).GetValue(baseObject);
+            }
+
+            return baseObject;
         }
 
         private object SetVariableValue(VariableSymbol variable, object value)

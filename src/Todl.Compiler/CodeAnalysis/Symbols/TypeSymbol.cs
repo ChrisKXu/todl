@@ -21,6 +21,7 @@ namespace Todl.Compiler.CodeAnalysis.Symbols
         public static readonly TypeSymbol ClrDouble = TypeSymbol.MapClrType<Double>(); // double
         public static readonly TypeSymbol ClrChar = TypeSymbol.MapClrType<Char>(); // char
         public static readonly TypeSymbol ClrString = TypeSymbol.MapClrType<String>(); // string
+        public static readonly TypeSymbol ClrVoid = TypeSymbol.MapClrType(typeof(void)); // void
 
         #endregion
 
@@ -46,7 +47,7 @@ namespace Todl.Compiler.CodeAnalysis.Symbols
         {
             if (other is TypeSymbol typeSymbol)
             {
-                return object.ReferenceEquals(this, typeSymbol);
+                return this.ClrType.Equals(typeSymbol.ClrType);
             }
 
             return false;
