@@ -13,6 +13,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public BoundMemberAccessKind BoundMemberAccessKind { get; internal init; }
         public SyntaxToken MemberName { get; internal init; }
         public override TypeSymbol ResultType { get; internal init; }
+        public bool IsStatic { get; internal init; }
     }
 
     public enum BoundMemberAccessKind
@@ -30,10 +31,26 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             var boundBaseExpression = BindExpression(scope, memberAccessExpression.BaseExpression);
 
-            if (boundBaseExpression is BoundNamespaceExpression boundNamespaceExpression
-                && loadedNamespaces.Contains(memberAccessExpression.QualifiedName))
+            if (boundBaseExpression is BoundNamespaceExpression boundNamespaceExpression)
             {
-                return new BoundNamespaceExpression() { Namespace = memberAccessExpression.QualifiedName };
+                if (loadedNamespaces.Contains(memberAccessExpression.QualifiedName))
+                {
+                    return new BoundNamespaceExpression() { Namespace = memberAccessExpression.QualifiedName };
+                }
+
+                if (loadedTypes.ContainsKey(memberAccessExpression.QualifiedName))
+                {
+                    return new BoundTypeExpression()
+                    {
+                        ResultType = ClrTypeSymbol.MapClrType(loadedTypes[memberAccessExpression.QualifiedName])
+                    };
+                }
+
+                return ReportErrorExpression(
+                    new Diagnostic(
+                        message: $"Invalid member {memberAccessExpression.MemberIdentifierToken.Text}",
+                        level: DiagnosticLevel.Error,
+                        memberAccessExpression.MemberIdentifierToken.GetTextLocation()));
             }
 
             if (boundBaseExpression is BoundMemberAccessExpression boundMemberAccessExpression)
@@ -58,6 +75,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             }
 
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
+            var isStatic = boundBaseExpression is BoundTypeExpression;
             var memberInfo = type.GetMember(memberAccessExpression.MemberIdentifierToken.Text.ToString());
 
             if (!memberInfo.Any())
@@ -86,7 +104,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     BoundBaseExpression = boundBaseExpression,
                     MemberName = memberAccessExpression.MemberIdentifierToken,
                     ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as PropertyInfo).PropertyType),
-                    BoundMemberAccessKind = BoundMemberAccessKind.Property
+                    BoundMemberAccessKind = BoundMemberAccessKind.Property,
+                    IsStatic = isStatic
                 },
 
                 MemberTypes.Field => new BoundMemberAccessExpression()
@@ -94,7 +113,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     BoundBaseExpression = boundBaseExpression,
                     MemberName = memberAccessExpression.MemberIdentifierToken,
                     ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as FieldInfo).FieldType),
-                    BoundMemberAccessKind = BoundMemberAccessKind.Field
+                    BoundMemberAccessKind = BoundMemberAccessKind.Field,
+                    IsStatic = isStatic
                 },
 
                 MemberTypes.Method => new BoundMemberAccessExpression()
@@ -102,7 +122,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     BoundBaseExpression = boundBaseExpression,
                     MemberName = memberAccessExpression.MemberIdentifierToken,
                     ResultType = TypeSymbol.ClrVoid, // note that this is not the return type of the function
-                    BoundMemberAccessKind = BoundMemberAccessKind.Function
+                    BoundMemberAccessKind = BoundMemberAccessKind.Function,
+                    IsStatic = isStatic
                 },
 
                 _ => null

@@ -58,7 +58,7 @@ namespace Todl.Compiler.Evaluation
                 BoundVariableExpression boundVariableExpression => EvaluateBoundVariableExpression(boundVariableExpression),
                 BoundMemberAccessExpression boundMemberAccessExpression => EvaluateBoundMemberAccessExpression(boundMemberAccessExpression),
                 BoundNamespaceExpression boundNamespaceExpression => boundNamespaceExpression.Namespace,
-                BoundTypeExpression boundTypeExpression => boundTypeExpression.BoundType.Name,
+                BoundTypeExpression boundTypeExpression => boundTypeExpression.ResultType.Name,
                 BoundErrorExpression => null,
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };
@@ -153,12 +153,20 @@ namespace Todl.Compiler.Evaluation
         private object EvaluateBoundMemberAccessExpression(BoundMemberAccessExpression boundMemberAccessExpression)
         {
             var baseObject = EvaluateBoundExpression(boundMemberAccessExpression.BoundBaseExpression);
-            if (boundMemberAccessExpression.BoundMemberAccessKind == BoundMemberAccessKind.Property)
-            {
-                return baseObject.GetType().GetProperty(boundMemberAccessExpression.MemberName.Text.ToString()).GetValue(baseObject);
-            }
+            var invokingObject = boundMemberAccessExpression.IsStatic ? null : baseObject;
+            var memberName = boundMemberAccessExpression.MemberName.Text.ToString();
+            var type = (boundMemberAccessExpression.BoundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
 
-            return baseObject;
+            return boundMemberAccessExpression.BoundMemberAccessKind switch
+            {
+                BoundMemberAccessKind.Property =>
+                    type.GetProperty(memberName).GetValue(invokingObject),
+
+                BoundMemberAccessKind.Field =>
+                    type.GetField(memberName).GetValue(invokingObject),
+
+                _ => baseObject
+            };
         }
 
         private object SetVariableValue(VariableSymbol variable, object value)
