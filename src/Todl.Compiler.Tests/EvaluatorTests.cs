@@ -14,6 +14,7 @@ namespace Todl.Compiler.Tests
         [InlineData("(1 + 2) * 3 + 4", 13)]
         [InlineData("true && false", false)]
         [InlineData("false || true", true)]
+        [InlineData("\"abc\".Length", 3)]
         public void TestEvaluationPositive(string input, object expectedOutput)
         {
             var sourceText = SourceText.FromString(input);

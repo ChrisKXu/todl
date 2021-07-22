@@ -237,5 +237,18 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             boundImportDirective.ImportedTypes["AssemblyDependencyResolver"].Should().Be(typeof(System.Runtime.Loader.AssemblyDependencyResolver));
             boundImportDirective.ImportedTypes["AssemblyLoadContext"].Should().Be(typeof(System.Runtime.Loader.AssemblyLoadContext));
         }
+
+        [Fact]
+        public void TestBindMemberAccessExpression()
+        {
+            var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>(
+                inputText: "\"abc\".Length",
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
+
+            boundMemberAccessExpression.BoundMemberAccessKind.Should().Be(BoundMemberAccessKind.Property);
+            boundMemberAccessExpression.MemberName.Text.Should().Be("Length");
+            boundMemberAccessExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
+        }
     }
 }
