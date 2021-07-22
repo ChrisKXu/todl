@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Todl.Compiler.Diagnostics;
+using Todl.Compiler.Utilities;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -12,6 +14,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private readonly List<Diagnostic> diagnostics = new();
         private readonly BinderFlags binderFlags;
+        private readonly IReadOnlySet<string> loadedNamespaces;
         private readonly List<Assembly> loadedAssemblies = new()
         {
             Assembly.GetAssembly(typeof(int)) // mscorlib
@@ -22,6 +25,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         internal Binder(BinderFlags binderFlags)
         {
             this.binderFlags = binderFlags;
+
+            var n = loadedAssemblies
+                .SelectMany(a => a.GetTypes())
+                .Where(t => !string.IsNullOrEmpty(t.Namespace))
+                .Select(t => t.Namespace);
+            this.loadedNamespaces = NamespaceUtilities.GetFullNamespaces(n);
         }
 
         private BoundErrorExpression ReportErrorExpression(Diagnostic diagnostic)

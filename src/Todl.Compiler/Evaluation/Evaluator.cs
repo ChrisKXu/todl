@@ -57,6 +57,8 @@ namespace Todl.Compiler.Evaluation
                 BoundAssignmentExpression boundAssignmentExpression => EvaluateBoundAssignmentExpression(boundAssignmentExpression),
                 BoundVariableExpression boundVariableExpression => EvaluateBoundVariableExpression(boundVariableExpression),
                 BoundMemberAccessExpression boundMemberAccessExpression => EvaluateBoundMemberAccessExpression(boundMemberAccessExpression),
+                BoundNamespaceExpression boundNamespaceExpression => boundNamespaceExpression.Namespace,
+                BoundTypeExpression boundTypeExpression => boundTypeExpression.BoundType.Name,
                 BoundErrorExpression => null,
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };

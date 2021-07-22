@@ -30,6 +30,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             var boundBaseExpression = BindExpression(scope, memberAccessExpression.BaseExpression);
 
+            if (boundBaseExpression is BoundNamespaceExpression boundNamespaceExpression
+                && loadedNamespaces.Contains(memberAccessExpression.QualifiedName))
+            {
+                return new BoundNamespaceExpression() { Namespace = memberAccessExpression.QualifiedName };
+            }
+
             if (boundBaseExpression is BoundMemberAccessExpression boundMemberAccessExpression)
             {
                 if (boundMemberAccessExpression.BoundMemberAccessKind == BoundMemberAccessKind.Function)
