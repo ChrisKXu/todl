@@ -42,7 +42,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
             }
 
-            var type = boundBaseExpression.ResultType.ClrType;
+            if (!boundBaseExpression.ResultType.IsNative)
+            {
+                return ReportErrorExpression(
+                    new Diagnostic(
+                        message: $"Type {boundBaseExpression.ResultType} is not supported.",
+                        level: DiagnosticLevel.Error,
+                        memberAccessExpression.MemberIdentifierToken.GetTextLocation()));
+            }
+
+            var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
             var memberInfo = type.GetMember(memberAccessExpression.MemberIdentifierToken.Text.ToString());
 
             if (!memberInfo.Any())
@@ -70,7 +79,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 {
                     BoundBaseExpression = boundBaseExpression,
                     MemberName = memberAccessExpression.MemberIdentifierToken,
-                    ResultType = TypeSymbol.MapClrType((memberInfo[0] as PropertyInfo).PropertyType),
+                    ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as PropertyInfo).PropertyType),
                     BoundMemberAccessKind = BoundMemberAccessKind.Property
                 },
 
@@ -78,7 +87,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 {
                     BoundBaseExpression = boundBaseExpression,
                     MemberName = memberAccessExpression.MemberIdentifierToken,
-                    ResultType = TypeSymbol.MapClrType((memberInfo[0] as FieldInfo).FieldType),
+                    ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as FieldInfo).FieldType),
                     BoundMemberAccessKind = BoundMemberAccessKind.Field
                 },
 
