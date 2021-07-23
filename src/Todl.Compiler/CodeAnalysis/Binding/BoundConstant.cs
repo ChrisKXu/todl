@@ -11,7 +11,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 {
     public sealed class BoundConstant : BoundExpression
     {
-        public override TypeSymbol ResultType { get; }
+        public override TypeSymbol ResultType { get; internal init; }
 
         public object Value { get; }
 

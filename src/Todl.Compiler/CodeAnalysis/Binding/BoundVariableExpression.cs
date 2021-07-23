@@ -6,31 +6,32 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 {
     public sealed class BoundVariableExpression : BoundExpression
     {
-        public VariableSymbol Variable { get; }
-        public override TypeSymbol ResultType => this.Variable.Type;
+        public VariableSymbol Variable { get; internal init; }
+        public override TypeSymbol ResultType => Variable.Type;
         public override bool LValue => true;
-
-        public BoundVariableExpression(VariableSymbol variable)
-        {
-            this.Variable = variable;
-        }
     }
 
     public sealed partial class Binder
     {
         private BoundExpression BindNameExpression(BoundScope scope, NameExpression nameExpression)
         {
-            var variable = scope.LookupVariable(nameExpression.IdentifierToken.Text.ToString());
+            var name = nameExpression.IdentifierToken.Text.ToString();
+            if (loadedNamespaces.Contains(name))
+            {
+                return new BoundNamespaceExpression() { Namespace = name };
+            }
+
+            var variable = scope.LookupVariable(name);
             if (variable == null)
             {
-                return this.ReportErrorExpression(
+                return ReportErrorExpression(
                     new Diagnostic(
                         message: $"Undeclared variable {nameExpression.IdentifierToken.Text}",
                         level: DiagnosticLevel.Error,
                         textLocation: nameExpression.IdentifierToken.GetTextLocation()));
             }
 
-            return new BoundVariableExpression(variable);
+            return new BoundVariableExpression() { Variable = variable };
         }
     }
 }

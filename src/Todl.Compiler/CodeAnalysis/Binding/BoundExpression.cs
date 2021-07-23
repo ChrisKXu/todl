@@ -10,7 +10,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 {
     public abstract class BoundExpression
     {
-        public abstract TypeSymbol ResultType { get; }
+        public virtual TypeSymbol ResultType { get; internal init; }
         public virtual bool LValue => false;
     }
 
@@ -20,12 +20,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             return expression switch
             {
-                LiteralExpression literalExpression => this.BindLiteralExpression(literalExpression),
-                BinaryExpression binaryExpression => this.BindBinaryExpression(scope, binaryExpression),
-                UnaryExpression unaryExpression => this.BindUnaryExpression(scope, unaryExpression),
-                ParethesizedExpression parethesizedExpression => this.BindExpression(scope, parethesizedExpression.InnerExpression),
-                AssignmentExpression assignmentExpression => this.BindAssignmentExpression(scope, assignmentExpression),
-                NameExpression nameExpression => this.BindNameExpression(scope, nameExpression),
+                LiteralExpression literalExpression => BindLiteralExpression(literalExpression),
+                BinaryExpression binaryExpression => BindBinaryExpression(scope, binaryExpression),
+                UnaryExpression unaryExpression => BindUnaryExpression(scope, unaryExpression),
+                ParethesizedExpression parethesizedExpression => BindExpression(scope, parethesizedExpression.InnerExpression),
+                AssignmentExpression assignmentExpression => BindAssignmentExpression(scope, assignmentExpression),
+                NameExpression nameExpression => BindNameExpression(scope, nameExpression),
+                MemberAccessExpression memberAccessExpression => BindMemberAccessExpression(scope, memberAccessExpression),
                 _ => throw new NotImplementedException()
             };
         }

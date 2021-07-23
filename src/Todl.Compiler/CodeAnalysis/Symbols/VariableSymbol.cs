@@ -1,3 +1,5 @@
+using System;
+
 namespace Todl.Compiler.CodeAnalysis.Symbols
 {
     public sealed class VariableSymbol : Symbol
@@ -26,5 +28,7 @@ namespace Todl.Compiler.CodeAnalysis.Symbols
 
             return false;
         }
+
+        public override int GetHashCode() => HashCode.Combine(Name, Type);
     }
 }

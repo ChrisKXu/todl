@@ -56,6 +56,9 @@ namespace Todl.Compiler.Evaluation
                 BoundBinaryExpression boundBinaryExpression => EvaluateBoundBinaryExpression(boundBinaryExpression),
                 BoundAssignmentExpression boundAssignmentExpression => EvaluateBoundAssignmentExpression(boundAssignmentExpression),
                 BoundVariableExpression boundVariableExpression => EvaluateBoundVariableExpression(boundVariableExpression),
+                BoundMemberAccessExpression boundMemberAccessExpression => EvaluateBoundMemberAccessExpression(boundMemberAccessExpression),
+                BoundNamespaceExpression boundNamespaceExpression => boundNamespaceExpression.Namespace,
+                BoundTypeExpression boundTypeExpression => boundTypeExpression.ResultType.Name,
                 BoundErrorExpression => null,
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };
@@ -145,6 +148,25 @@ namespace Todl.Compiler.Evaluation
             }
 
             return null;
+        }
+
+        private object EvaluateBoundMemberAccessExpression(BoundMemberAccessExpression boundMemberAccessExpression)
+        {
+            var baseObject = EvaluateBoundExpression(boundMemberAccessExpression.BoundBaseExpression);
+            var invokingObject = boundMemberAccessExpression.IsStatic ? null : baseObject;
+            var memberName = boundMemberAccessExpression.MemberName.Text.ToString();
+            var type = (boundMemberAccessExpression.BoundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
+
+            return boundMemberAccessExpression.BoundMemberAccessKind switch
+            {
+                BoundMemberAccessKind.Property =>
+                    type.GetProperty(memberName).GetValue(invokingObject),
+
+                BoundMemberAccessKind.Field =>
+                    type.GetField(memberName).GetValue(invokingObject),
+
+                _ => baseObject
+            };
         }
 
         private object SetVariableValue(VariableSymbol variable, object value)
