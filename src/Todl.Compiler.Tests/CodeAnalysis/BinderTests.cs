@@ -239,7 +239,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
-        public void TestBindMemberAccessExpression()
+        public void TestBindMemberAccessExpressionInstanceProperty()
         {
             var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>(
                 inputText: "\"abc\".Length",
@@ -249,6 +249,21 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             boundMemberAccessExpression.BoundMemberAccessKind.Should().Be(BoundMemberAccessKind.Property);
             boundMemberAccessExpression.MemberName.Text.Should().Be("Length");
             boundMemberAccessExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
+            boundMemberAccessExpression.IsStatic.Should().Be(false);
+        }
+
+        [Fact]
+        public void TestBindMemberAccessExpressionStaticField()
+        {
+            var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>(
+                inputText: "System.Int32.MaxValue",
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
+
+            boundMemberAccessExpression.BoundMemberAccessKind.Should().Be(BoundMemberAccessKind.Field);
+            boundMemberAccessExpression.MemberName.Text.Should().Be("MaxValue");
+            boundMemberAccessExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
+            boundMemberAccessExpression.IsStatic.Should().Be(true);
         }
     }
 }
