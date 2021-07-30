@@ -116,7 +116,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             // will revisit this part and support other formats as well
             while (true)
             {
-                if (char.IsDigit(Current) || Current == '.')
+                if (char.IsDigit(Current)
+                    || (Current == '.' && char.IsDigit(Peak)))
                 {
                     ++this.position;
                 }

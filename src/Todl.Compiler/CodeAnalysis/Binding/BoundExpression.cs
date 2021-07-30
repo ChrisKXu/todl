@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -27,7 +28,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 AssignmentExpression assignmentExpression => BindAssignmentExpression(scope, assignmentExpression),
                 NameExpression nameExpression => BindNameExpression(scope, nameExpression),
                 MemberAccessExpression memberAccessExpression => BindMemberAccessExpression(scope, memberAccessExpression),
-                _ => throw new NotImplementedException()
+                FunctionCallExpression functionCallExpression => BindFunctionCallExpression(scope, functionCallExpression),
+                _ => ReportErrorExpression(new Diagnostic(
+                    message: $"Unsupported expression type",
+                    level: DiagnosticLevel.Error,
+                    textLocation: default))
             };
         }
     }

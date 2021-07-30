@@ -59,6 +59,7 @@ namespace Todl.Compiler.Evaluation
                 BoundMemberAccessExpression boundMemberAccessExpression => EvaluateBoundMemberAccessExpression(boundMemberAccessExpression),
                 BoundNamespaceExpression boundNamespaceExpression => boundNamespaceExpression.Namespace,
                 BoundTypeExpression boundTypeExpression => boundTypeExpression.ResultType.Name,
+                BoundFunctionCallExpression boundFunctionCallExpression => EvaluateBoundFunctionCallExpression(boundFunctionCallExpression),
                 BoundErrorExpression => null,
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };
@@ -167,6 +168,20 @@ namespace Todl.Compiler.Evaluation
 
                 _ => baseObject
             };
+        }
+
+        private object EvaluateBoundFunctionCallExpression(BoundFunctionCallExpression boundFunctionCallExpression)
+        {
+            if (boundFunctionCallExpression.BoundBaseExpression is BoundMemberAccessExpression boundMemberAccessExpression)
+            {
+                var baseObject = EvaluateBoundExpression(boundMemberAccessExpression.BoundBaseExpression);
+                var invokingObject = boundMemberAccessExpression.IsStatic ? null : baseObject;
+
+                // assuming the BoundMemberAccessKind is Function since it's checked in Binder
+                return boundFunctionCallExpression.MethodInfo.Invoke(invokingObject, Array.Empty<object>());
+            }
+
+            throw new NotSupportedException("Not supported expression");
         }
 
         private object SetVariableValue(VariableSymbol variable, object value)

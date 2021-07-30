@@ -134,6 +134,10 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                         dotToken: ExpectToken(SyntaxKind.DotToken),
                         memberIdentifierToken: ExpectToken(SyntaxKind.IdentifierToken));
                 }
+                else if (Current.Kind == SyntaxKind.OpenParenthesisToken)
+                {
+                    baseExpression = ParseFunctionCallExpression(baseExpression);
+                }
                 else
                 {
                     break;
