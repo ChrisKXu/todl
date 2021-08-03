@@ -240,6 +240,20 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
+        public void TestParseFunctionCallExpression()
+        {
+            var inputText = "a.ToString()";
+            var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
+            functionCallExpression.Should().NotBeNull();
+
+            functionCallExpression.Should().HaveChildren(
+                memberAccessExpression =>
+                    memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("ToString"),
+                openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
+                closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken));
+        }
+
+        [Fact]
         public void TestParseBlockStatementBasic()
         {
             var inputText = @"

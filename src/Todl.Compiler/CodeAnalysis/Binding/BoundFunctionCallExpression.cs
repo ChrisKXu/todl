@@ -19,6 +19,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             var boundBaseExpression = BindExpression(scope, functionCallExpression.BaseExpression);
 
+            if (!boundBaseExpression.ResultType.IsNative)
+            {
+                return ReportErrorExpression(
+                    new Diagnostic(
+                        message: $"Type {boundBaseExpression.ResultType} is not supported.",
+                        level: DiagnosticLevel.Error,
+                        textLocation: default));
+            }
+
             if (boundBaseExpression is BoundMemberAccessExpression boundMemberAccessExpression)
             {
                 if (boundMemberAccessExpression.BoundMemberAccessKind != BoundMemberAccessKind.Function)
@@ -27,15 +36,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                         message: $"Member {boundMemberAccessExpression.MemberName} is not a function",
                         level: DiagnosticLevel.Error,
                         textLocation: default));
-                }
-
-                if (!boundMemberAccessExpression.ResultType.IsNative)
-                {
-                    return ReportErrorExpression(
-                        new Diagnostic(
-                            message: $"Type {boundMemberAccessExpression.ResultType} is not supported.",
-                            level: DiagnosticLevel.Error,
-                            textLocation: default));
                 }
 
                 var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
