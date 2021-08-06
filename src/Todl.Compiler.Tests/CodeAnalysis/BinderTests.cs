@@ -265,5 +265,17 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             boundMemberAccessExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
             boundMemberAccessExpression.IsStatic.Should().Be(true);
         }
+
+        [Fact]
+        public void TestBindFunctionCallExpression()
+        {
+            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
+                inputText: "100.ToString()",
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
+
+            boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
+            boundFunctionCallExpression.MethodInfo.Name.Should().Be("ToString");
+        }
     }
 }

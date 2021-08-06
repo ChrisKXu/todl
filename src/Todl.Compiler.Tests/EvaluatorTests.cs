@@ -16,6 +16,7 @@ namespace Todl.Compiler.Tests
         [InlineData("false || true", true)]
         [InlineData("\"abc\".Length", 3)]
         [InlineData("System.Int32.MaxValue", int.MaxValue)]
+        [InlineData("10.ToString()", "10")]
         public void TestEvaluationPositive(string input, object expectedOutput)
         {
             var sourceText = SourceText.FromString(input);
