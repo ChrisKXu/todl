@@ -3,6 +3,7 @@ using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
@@ -240,7 +241,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
-        public void TestParseFunctionCallExpression()
+        public void TestParseFunctionCallExpressionWithoutArguments()
         {
             var inputText = "a.ToString()";
             var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
@@ -250,6 +251,50 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 memberAccessExpression =>
                     memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("ToString"),
                 openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
+                closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken));
+        }
+
+        [Fact]
+        public void TestParseFunctionCallExpressionWithOnePositionalArgument()
+        {
+            var inputText = "System.Int32.Parse(\"123\")";
+            var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
+            functionCallExpression.Should().NotBeNull();
+
+            functionCallExpression.Should().HaveChildren(
+                memberAccessExpression =>
+                    memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("Parse"),
+                openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
+                _0 =>
+                {
+                    var argument = _0.As<FunctionCallExpression.Argument>();
+                    argument.IsNamedArgument.Should().Be(false);
+                    argument.CommaToken.Should().BeNull();
+                    argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
+                },
+                closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken));
+        }
+
+        [Fact]
+        public void TestParseFunctionCallExpressionWithOneNamedArgument()
+        {
+            var inputText = "System.Int32.Parse(s: \"123\")";
+            var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
+            functionCallExpression.Should().NotBeNull();
+
+            functionCallExpression.Should().HaveChildren(
+                memberAccessExpression =>
+                    memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("Parse"),
+                openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
+                _0 =>
+                {
+                    var argument = _0.As<FunctionCallExpression.Argument>();
+                    argument.IsNamedArgument.Should().Be(true);
+                    argument.CommaToken.Should().BeNull();
+                    argument.Identifier.Text.Should().Be("s");
+                    argument.ColonToken.Kind.Should().Be(SyntaxKind.ColonToken);
+                    argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
+                },
                 closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken));
         }
 

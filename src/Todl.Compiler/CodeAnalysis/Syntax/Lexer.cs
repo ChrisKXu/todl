@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
@@ -309,6 +309,10 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     break;
                 case ';':
                     kind = SyntaxKind.SemicolonToken;
+                    ++this.position;
+                    break;
+                case ':':
+                    kind = SyntaxKind.ColonToken;
                     ++this.position;
                     break;
                 case '=':
