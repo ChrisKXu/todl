@@ -177,8 +177,21 @@ namespace Todl.Compiler.Evaluation
                 var baseObject = EvaluateBoundExpression(boundMemberAccessExpression.BoundBaseExpression);
                 var invokingObject = boundMemberAccessExpression.IsStatic ? null : baseObject;
 
+                var arguments = Array.Empty<object>();
+
+                if (boundFunctionCallExpression.BoundArguments.Any())
+                {
+                    var parameters = boundFunctionCallExpression.MethodInfo.GetParameters();
+                    arguments = new object[parameters.Length];
+
+                    foreach (var parameter in parameters)
+                    {
+                        arguments[parameter.Position] = EvaluateBoundExpression(boundFunctionCallExpression.BoundArguments[parameter.Name]);
+                    }
+                }
+
                 // assuming the BoundMemberAccessKind is Function since it's checked in Binder
-                return boundFunctionCallExpression.MethodInfo.Invoke(invokingObject, Array.Empty<object>());
+                return boundFunctionCallExpression.MethodInfo.Invoke(invokingObject, arguments);
             }
 
             throw new NotSupportedException("Not supported expression");

@@ -13,7 +13,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public Expression BaseExpression { get; internal init; }
         public SyntaxToken OpenParenthesisToken { get; internal init; }
-        public IReadOnlyCollection<Argument> Arguments { get; internal init; }
+        public IReadOnlyList<Argument> Arguments { get; internal init; }
         public SyntaxToken CloseParenthesisToken { get; internal init; }
 
         public override IEnumerable<SyntaxNode> GetChildren()
