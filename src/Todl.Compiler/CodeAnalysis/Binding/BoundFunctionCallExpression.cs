@@ -151,7 +151,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 return ReportNoMatchingCandidate();
             }
 
-            return ReportNoMatchingCandidate();
+            var parameters = candidate.GetParameters();
+
+            return new BoundFunctionCallExpression()
+            {
+                BoundBaseExpression = boundBaseExpression,
+                MethodInfo = candidate,
+                BoundArguments = parameters.ToDictionary(
+                    keySelector: p => p.Name,
+                    elementSelector: p => boundArguments[p.Position])
+            };
         }
 
         private BoundErrorExpression ReportNoMatchingCandidate()
