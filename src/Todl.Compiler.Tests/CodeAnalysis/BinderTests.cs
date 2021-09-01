@@ -265,5 +265,88 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             boundMemberAccessExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
             boundMemberAccessExpression.IsStatic.Should().Be(true);
         }
+
+        [Fact]
+        public void TestBindFunctionCallExpressionWithNoArguments()
+        {
+            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
+                inputText: "100.ToString()",
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
+
+            boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
+            boundFunctionCallExpression.MethodInfo.Name.Should().Be("ToString");
+            boundFunctionCallExpression.IsStatic.Should().Be(false);
+        }
+
+        [Fact]
+        public void TestBindFunctionCallExpressionWithOnePositionalArgument()
+        {
+            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
+                inputText: "System.Math.Abs(-10)",
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
+
+            boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
+            boundFunctionCallExpression.MethodInfo.Name.Should().Be("Abs");
+            boundFunctionCallExpression.IsStatic.Should().Be(true);
+            boundFunctionCallExpression.BoundArguments.Count.Should().Be(1);
+
+            var argument = boundFunctionCallExpression.BoundArguments["value"].As<BoundUnaryExpression>();
+            argument.Operator.BoundUnaryOperatorKind.Should().Be(BoundUnaryExpression.BoundUnaryOperatorKind.Negation);
+            argument.Operand.As<BoundConstant>().Value.Should().Be(10);
+        }
+
+        [Fact]
+        public void TestBindFunctionCallExpressionWithOneNamedArgument()
+        {
+            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
+                inputText: "100.ToString(format: \"G\")",
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
+
+            boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
+            boundFunctionCallExpression.MethodInfo.Name.Should().Be("ToString");
+            boundFunctionCallExpression.IsStatic.Should().Be(false);
+            boundFunctionCallExpression.BoundArguments.Count.Should().Be(1);
+
+            var argument = boundFunctionCallExpression.BoundArguments["format"].As<BoundConstant>();
+            argument.Value.Should().Be("G");
+        }
+
+        [Fact]
+        public void TestBindFunctionCallExpressionWithMultiplePositionalArguments()
+        {
+            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
+                inputText: "\"abcde\".IndexOf(\"ab\", 1, 2)",
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
+
+            boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
+            boundFunctionCallExpression.MethodInfo.Name.Should().Be("IndexOf");
+            boundFunctionCallExpression.IsStatic.Should().Be(false);
+            boundFunctionCallExpression.BoundArguments.Count.Should().Be(3);
+
+            boundFunctionCallExpression.BoundArguments["value"].As<BoundConstant>().Value.Should().Be("ab");
+            boundFunctionCallExpression.BoundArguments["startIndex"].As<BoundConstant>().Value.Should().Be(1);
+            boundFunctionCallExpression.BoundArguments["count"].As<BoundConstant>().Value.Should().Be(2);
+        }
+
+        [Fact]
+        public void TestBindFunctionCallExpressionWithMultipleNamedArguments()
+        {
+            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
+                inputText: "\"abcde\".Substring(startIndex: 1, length: 2)",
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
+
+            boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
+            boundFunctionCallExpression.MethodInfo.Name.Should().Be("Substring");
+            boundFunctionCallExpression.IsStatic.Should().Be(false);
+            boundFunctionCallExpression.BoundArguments.Count.Should().Be(2);
+
+            boundFunctionCallExpression.BoundArguments["startIndex"].As<BoundConstant>().Value.Should().Be(1);
+            boundFunctionCallExpression.BoundArguments["length"].As<BoundConstant>().Value.Should().Be(2);
+        }
     }
 }

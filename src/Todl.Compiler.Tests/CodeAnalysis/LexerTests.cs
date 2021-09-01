@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using System.Collections.Generic;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -52,6 +52,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData(SyntaxKind.OpenBraceToken, "{")]
         [InlineData(SyntaxKind.CloseBraceToken, "}")]
         [InlineData(SyntaxKind.SemicolonToken, ";")]
+        [InlineData(SyntaxKind.ColonToken, ":")]
         [InlineData(SyntaxKind.LetKeywordToken, "let")]
         [InlineData(SyntaxKind.ConstKeywordToken, "const")]
         [InlineData(SyntaxKind.ImportKeywordToken, "import")]

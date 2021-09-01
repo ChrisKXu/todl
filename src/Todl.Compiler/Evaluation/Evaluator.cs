@@ -59,6 +59,7 @@ namespace Todl.Compiler.Evaluation
                 BoundMemberAccessExpression boundMemberAccessExpression => EvaluateBoundMemberAccessExpression(boundMemberAccessExpression),
                 BoundNamespaceExpression boundNamespaceExpression => boundNamespaceExpression.Namespace,
                 BoundTypeExpression boundTypeExpression => boundTypeExpression.ResultType.Name,
+                BoundFunctionCallExpression boundFunctionCallExpression => EvaluateBoundFunctionCallExpression(boundFunctionCallExpression),
                 BoundErrorExpression => null,
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };
@@ -167,6 +168,33 @@ namespace Todl.Compiler.Evaluation
 
                 _ => baseObject
             };
+        }
+
+        private object EvaluateBoundFunctionCallExpression(BoundFunctionCallExpression boundFunctionCallExpression)
+        {
+            if (boundFunctionCallExpression.BoundBaseExpression is BoundMemberAccessExpression boundMemberAccessExpression)
+            {
+                var baseObject = EvaluateBoundExpression(boundMemberAccessExpression.BoundBaseExpression);
+                var invokingObject = boundMemberAccessExpression.IsStatic ? null : baseObject;
+
+                var arguments = Array.Empty<object>();
+
+                if (boundFunctionCallExpression.BoundArguments.Any())
+                {
+                    var parameters = boundFunctionCallExpression.MethodInfo.GetParameters();
+                    arguments = new object[parameters.Length];
+
+                    foreach (var parameter in parameters)
+                    {
+                        arguments[parameter.Position] = EvaluateBoundExpression(boundFunctionCallExpression.BoundArguments[parameter.Name]);
+                    }
+                }
+
+                // assuming the BoundMemberAccessKind is Function since it's checked in Binder
+                return boundFunctionCallExpression.MethodInfo.Invoke(invokingObject, arguments);
+            }
+
+            throw new NotSupportedException("Not supported expression");
         }
 
         private object SetVariableValue(VariableSymbol variable, object value)

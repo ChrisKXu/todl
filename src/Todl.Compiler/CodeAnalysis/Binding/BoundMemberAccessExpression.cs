@@ -71,7 +71,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     new Diagnostic(
                         message: $"Type {boundBaseExpression.ResultType} is not supported.",
                         level: DiagnosticLevel.Error,
-                        memberAccessExpression.MemberIdentifierToken.GetTextLocation()));
+                        textLocation: memberAccessExpression.MemberIdentifierToken.GetTextLocation()));
             }
 
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;

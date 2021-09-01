@@ -1,4 +1,4 @@
-namespace Todl.Compiler.CodeAnalysis.Syntax
+﻿namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public enum SyntaxKind
     {
@@ -22,6 +22,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         OpenBraceToken,
         CloseBraceToken,
         SemicolonToken,
+        ColonToken,
         EqualsToken,
         EqualsEqualsToken,
         BangToken,
