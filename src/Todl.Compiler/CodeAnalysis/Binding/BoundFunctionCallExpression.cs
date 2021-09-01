@@ -14,6 +14,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public MethodInfo MethodInfo { get; internal init; }
         public IReadOnlyDictionary<string, BoundExpression> BoundArguments { get; internal init; }
         public override TypeSymbol ResultType { get => ClrTypeSymbol.MapClrType(MethodInfo.ReturnType); }
+        public bool IsStatic => MethodInfo.IsStatic;
     }
 
     public sealed partial class Binder
@@ -54,8 +55,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 {
                     return BindFunctionCallWithNoArgumentsInternal(
                         boundBaseExpression: boundBaseExpression,
-                        candidates: candidates,
-                        functionCallExpression: functionCallExpression);
+                        candidates: candidates);
                 }
 
                 // Since all or none of the arguments of a FunctionCallExpression needs to be named,
@@ -84,8 +84,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         private BoundExpression BindFunctionCallWithNoArgumentsInternal(
             BoundExpression boundBaseExpression,
-            IEnumerable<MethodInfo> candidates,
-            FunctionCallExpression functionCallExpression)
+            IEnumerable<MethodInfo> candidates)
         {
             var candidate = candidates.FirstOrDefault();
 
