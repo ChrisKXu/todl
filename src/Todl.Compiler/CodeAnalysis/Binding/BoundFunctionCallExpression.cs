@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -23,24 +24,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             var boundBaseExpression = BindExpression(scope, functionCallExpression.BaseExpression);
 
-            if (!boundBaseExpression.ResultType.IsNative)
-            {
-                return ReportErrorExpression(
-                    new Diagnostic(
-                        message: $"Type {boundBaseExpression.ResultType} is not supported.",
-                        level: DiagnosticLevel.Error,
-                        textLocation: default));
-            }
+            Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
             if (boundBaseExpression is BoundMemberAccessExpression boundMemberAccessExpression)
             {
-                if (boundMemberAccessExpression.BoundMemberAccessKind != BoundMemberAccessKind.Function)
-                {
-                    return ReportErrorExpression(new Diagnostic(
-                        message: $"Member {boundMemberAccessExpression.MemberName} is not a function",
-                        level: DiagnosticLevel.Error,
-                        textLocation: default));
-                }
+                Debug.Assert(boundMemberAccessExpression.BoundMemberAccessKind == BoundMemberAccessKind.Function);
 
                 var type = (boundMemberAccessExpression.BoundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
                 var candidates = type
@@ -60,7 +48,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
                 // Since all or none of the arguments of a FunctionCallExpression needs to be named,
                 // we only need to check the first argument to see if it's a named argument to determine the others
-                if (functionCallExpression.Arguments.First().IsNamedArgument)
+                if (functionCallExpression.Arguments[0].IsNamedArgument)
                 {
                     return BindFunctionCallWithNamedArgumentsInternal(
                         scope: scope,
@@ -76,10 +64,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     functionCallExpression: functionCallExpression);
             }
 
-            return ReportErrorExpression(new Diagnostic(
-                message: $"Unsupported bound expression type",
-                level: DiagnosticLevel.Error,
-                textLocation: default));
+            Debug.Fail("Unsupported bound expression type");
+            return new BoundErrorExpression();
         }
 
         private BoundExpression BindFunctionCallWithNoArgumentsInternal(
@@ -165,10 +151,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private BoundErrorExpression ReportNoMatchingCandidate()
         {
             return ReportErrorExpression(
-                new Diagnostic(
-                    message: $"No matching function found.",
-                    level: DiagnosticLevel.Error,
-                    textLocation: default));
+                new Diagnostic()
+                {
+                    Message = $"No matching function found.",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = default,
+                    ErrorCode = ErrorCode.NoMatchingCandidate
+                });
         }
     }
 }

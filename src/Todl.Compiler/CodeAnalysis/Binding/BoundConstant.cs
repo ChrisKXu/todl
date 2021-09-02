@@ -32,11 +32,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 SyntaxKind.StringToken => this.BindStringConstant(literalExpression.LiteralToken),
                 SyntaxKind.TrueKeywordToken or SyntaxKind.FalseKeywordToken
                     => new BoundConstant(TypeSymbol.ClrBoolean, bool.Parse(literalExpression.LiteralToken.Text.ToReadOnlyTextSpan())),
-                _ => this.ReportErrorExpression(
-                        new Diagnostic(
-                            message: $"Literal value {literalExpression.LiteralToken.Text} is not supported",
-                            level: DiagnosticLevel.Error,
-                            textLocation: literalExpression.LiteralToken.GetTextLocation()))
+                _ => ReportUnsupportedLiteral(literalExpression.LiteralToken)
             };
         }
 
@@ -54,11 +50,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 return new BoundConstant(TypeSymbol.ClrDouble, parsedDouble);
             }
 
-            return this.ReportErrorExpression(
-                new Diagnostic(
-                    message: $"Literal value {syntaxToken.Text} is not supported",
-                    level: DiagnosticLevel.Error,
-                    textLocation: syntaxToken.GetTextLocation()));
+            return ReportUnsupportedLiteral(syntaxToken);
         }
 
         private BoundExpression BindStringConstant(SyntaxToken syntaxToken)
@@ -90,11 +82,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                             builder.Append('"');
                             break;
                         default:
-                            return this.ReportErrorExpression(
-                                new Diagnostic(
-                                    message: $"Literal value {syntaxToken.Text} is not supported",
-                                    level: DiagnosticLevel.Error,
-                                    textLocation: syntaxToken.GetTextLocation()));
+                            return ReportUnsupportedLiteral(syntaxToken);
                     }
                 }
                 else
@@ -105,5 +93,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             return new BoundConstant(TypeSymbol.ClrString, builder.ToString());
         }
+
+        private BoundErrorExpression ReportUnsupportedLiteral(SyntaxToken syntaxToken)
+            => ReportErrorExpression(
+                new Diagnostic()
+                {
+                    Message = $"Literal value {syntaxToken.Text} is not supported",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = syntaxToken.GetTextLocation(),
+                    ErrorCode = ErrorCode.UnsupportedLiteral
+                });
     }
 }

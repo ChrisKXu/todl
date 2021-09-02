@@ -29,10 +29,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 NameExpression nameExpression => BindNameExpression(scope, nameExpression),
                 MemberAccessExpression memberAccessExpression => BindMemberAccessExpression(scope, memberAccessExpression),
                 FunctionCallExpression functionCallExpression => BindFunctionCallExpression(scope, functionCallExpression),
-                _ => ReportErrorExpression(new Diagnostic(
-                    message: $"Unsupported expression type",
-                    level: DiagnosticLevel.Error,
-                    textLocation: default))
+                _ => new BoundErrorExpression()
             };
         }
     }

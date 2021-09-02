@@ -1,4 +1,4 @@
-using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -47,10 +47,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
 
                 return ReportErrorExpression(
-                    new Diagnostic(
-                        message: $"Invalid member {memberAccessExpression.MemberIdentifierToken.Text}",
-                        level: DiagnosticLevel.Error,
-                        memberAccessExpression.MemberIdentifierToken.GetTextLocation()));
+                    new Diagnostic()
+                    {
+                        Message = $"Member {memberAccessExpression.MemberIdentifierToken.Text} is not found in namespace {boundNamespaceExpression.Namespace}",
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = memberAccessExpression.MemberIdentifierToken.GetTextLocation(),
+                        ErrorCode = ErrorCode.MemberNotFound
+                    });
             }
 
             if (boundBaseExpression is BoundMemberAccessExpression boundMemberAccessExpression)
@@ -58,21 +61,17 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 if (boundMemberAccessExpression.BoundMemberAccessKind == BoundMemberAccessKind.Function)
                 {
                     return ReportErrorExpression(
-                        new Diagnostic(
-                            message: $"Invalid member {memberAccessExpression.MemberIdentifierToken.Text}",
-                            level: DiagnosticLevel.Error,
-                            memberAccessExpression.MemberIdentifierToken.GetTextLocation()));
+                        new Diagnostic()
+                        {
+                            Message = $"Invalid member {memberAccessExpression.MemberIdentifierToken.Text}",
+                            Level = DiagnosticLevel.Error,
+                            TextLocation = memberAccessExpression.MemberIdentifierToken.GetTextLocation(),
+                            ErrorCode = ErrorCode.MemberNotFound
+                        });
                 }
             }
 
-            if (!boundBaseExpression.ResultType.IsNative)
-            {
-                return ReportErrorExpression(
-                    new Diagnostic(
-                        message: $"Type {boundBaseExpression.ResultType} is not supported.",
-                        level: DiagnosticLevel.Error,
-                        textLocation: memberAccessExpression.MemberIdentifierToken.GetTextLocation()));
-            }
+            Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
             var isStatic = boundBaseExpression is BoundTypeExpression;
@@ -81,21 +80,17 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             if (!memberInfo.Any())
             {
                 return ReportErrorExpression(
-                    new Diagnostic(
-                        message: $"Member {memberAccessExpression.MemberIdentifierToken.Text} does not exist",
-                        level: DiagnosticLevel.Error,
-                        memberAccessExpression.MemberIdentifierToken.GetTextLocation()));
+                    new Diagnostic()
+                    {
+                        Message = $"Member {memberAccessExpression.MemberIdentifierToken.Text} does not exist in type {type.FullName}",
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = memberAccessExpression.MemberIdentifierToken.GetTextLocation(),
+                        ErrorCode = ErrorCode.MemberNotFound
+                    });
             }
 
             // if there are multiple members, make sure these are all overloads of the same method
-            if (memberInfo.Length > 1 && memberInfo.Any(m => m.MemberType != MemberTypes.Method))
-            {
-                return ReportErrorExpression(
-                    new Diagnostic(
-                        message: $"Member {memberAccessExpression.MemberIdentifierToken.Text} is not unique",
-                        level: DiagnosticLevel.Error,
-                        memberAccessExpression.MemberIdentifierToken.GetTextLocation()));
-            }
+            Debug.Assert(memberInfo.Length == 1 || memberInfo.All(m => m.MemberType == MemberTypes.Method));
 
             return memberInfo[0].MemberType switch
             {
@@ -126,7 +121,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     IsStatic = isStatic
                 },
 
-                _ => null
+                _ => new BoundErrorExpression()
             };
         }
     }
