@@ -25,10 +25,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             if (variable == null)
             {
                 return ReportErrorExpression(
-                    new Diagnostic(
-                        message: $"Undeclared variable {nameExpression.IdentifierToken.Text}",
-                        level: DiagnosticLevel.Error,
-                        textLocation: nameExpression.IdentifierToken.GetTextLocation()));
+                    new Diagnostic()
+                    {
+                        Message = $"Undeclared variable {nameExpression.IdentifierToken.Text}",
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = nameExpression.IdentifierToken.GetTextLocation(),
+                        ErrorCode = ErrorCode.UndeclaredVariable
+                    });
             }
 
             return new BoundVariableExpression() { Variable = variable };

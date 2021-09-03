@@ -87,10 +87,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             if (boundUnaryOperator == null)
             {
                 return this.ReportErrorExpression(
-                    new Diagnostic(
-                        message: $"Operator {unaryExpression.Operator.Text} is not supported on type {boundOperand.ResultType.Name}",
-                        level: DiagnosticLevel.Error,
-                        textLocation: unaryExpression.Operator.GetTextLocation()));
+                    new Diagnostic()
+                    {
+                        Message = $"Operator {unaryExpression.Operator.Text} is not supported on type {boundOperand.ResultType.Name}",
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = unaryExpression.Operator.GetTextLocation(),
+                        ErrorCode = ErrorCode.UnsupportedOperator
+                    });
             }
 
             return new BoundUnaryExpression(boundUnaryOperator, boundOperand);

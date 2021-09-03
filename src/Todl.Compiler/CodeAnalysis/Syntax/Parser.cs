@@ -149,7 +149,14 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         private void ReportUnexpectedToken(SyntaxKind expectedSyntaxKind)
         {
-            this.diagnostics.Add(new Diagnostic($"Unexpected token found: {Current.Text}. Expecting {expectedSyntaxKind}", DiagnosticLevel.Error, Current.GetTextLocation()));
+            this.diagnostics.Add(
+                new Diagnostic()
+                {
+                    Message = $"Unexpected token found: {Current.Text}. Expecting {expectedSyntaxKind}",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = Current.GetTextLocation(),
+                    ErrorCode = ErrorCode.UnexpectedToken
+                });
         }
     }
 }

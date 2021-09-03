@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -83,10 +80,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             if (boundBinaryOperator == null)
             {
                 return this.ReportErrorExpression(
-                    new Diagnostic(
-                        message: $"Operator {binaryExpression.Operator.Text} is not supported on types {boundLeft.ResultType.Name} and {boundRight.ResultType.Name}",
-                        level: DiagnosticLevel.Error,
-                        textLocation: binaryExpression.Operator.GetTextLocation()));
+                    new Diagnostic()
+                    {
+                        Message = $"Operator {binaryExpression.Operator.Text} is not supported on types {boundLeft.ResultType.Name} and {boundRight.ResultType.Name}",
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = binaryExpression.Operator.GetTextLocation(),
+                        ErrorCode = ErrorCode.UnsupportedOperator
+                    });
             }
 
             return new BoundBinaryExpression(boundBinaryOperator, boundLeft, boundRight);

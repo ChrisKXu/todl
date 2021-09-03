@@ -76,27 +76,36 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     else
                     {
                         return ReportErrorExpression(
-                            new Diagnostic(
-                                message: $"Undeclared variable {variableName}",
-                                level: DiagnosticLevel.Error,
-                                textLocation: nameExpression.IdentifierToken.GetTextLocation()));
+                            new Diagnostic()
+                            {
+                                Message = $"Undeclared variable {variableName}",
+                                Level = DiagnosticLevel.Error,
+                                TextLocation = nameExpression.IdentifierToken.GetTextLocation(),
+                                ErrorCode = ErrorCode.UndeclaredVariable
+                            });
                     }
                 }
                 else if (variable.ReadOnly)
                 {
                     return ReportErrorExpression(
-                        new Diagnostic(
-                            message: $"Variable {variableName} is read-only",
-                            level: DiagnosticLevel.Error,
-                            textLocation: nameExpression.IdentifierToken.GetTextLocation()));
+                        new Diagnostic()
+                        {
+                            Message = $"Variable {variableName} is read-only",
+                            Level = DiagnosticLevel.Error,
+                            TextLocation = nameExpression.IdentifierToken.GetTextLocation(),
+                            ErrorCode = ErrorCode.ReadOnlyVariable
+                        });
                 }
                 else if (!variable.Type.Equals(right.ResultType))
                 {
                     return ReportErrorExpression(
-                        new Diagnostic(
-                            message: $"Variable {variableName} cannot be assigned to type {right.ResultType}",
-                            level: DiagnosticLevel.Error,
-                            textLocation: nameExpression.IdentifierToken.GetTextLocation()));
+                        new Diagnostic()
+                        {
+                            Message = $"Variable {variableName} cannot be assigned to type {right.ResultType}",
+                            Level = DiagnosticLevel.Error,
+                            TextLocation = nameExpression.IdentifierToken.GetTextLocation(),
+                            ErrorCode = ErrorCode.TypeMismatch
+                        });
                 }
             }
 
@@ -104,10 +113,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             if (!left.LValue)
             {
                 return this.ReportErrorExpression(
-                    new Diagnostic(
-                        message: $"The left-hand side of an assignment must be a variable, property or indexer",
-                        level: DiagnosticLevel.Error,
-                        textLocation: default));
+                    new Diagnostic()
+                    {
+                        Message = $"The left-hand side of an assignment must be a variable, property or indexer",
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = default,
+                        ErrorCode = ErrorCode.NotAnLValue
+                    });
             }
 
             return new BoundAssignmentExpression(

@@ -152,10 +152,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     case '\r':
                     case '\n':
                         diagnostics.Add(
-                            new Diagnostic(
-                                message: "Unexpected EndOfFileToken",
-                                level: DiagnosticLevel.Error,
-                                textLocation: new TextLocation(this.SourceText, new TextSpan(this.SourceText, Current, 0))));
+                            new Diagnostic()
+                            {
+                                Message = "Unexpected EndOfFileToken",
+                                Level = DiagnosticLevel.Error,
+                                TextLocation = new TextLocation(this.SourceText, new TextSpan(this.SourceText, Current, 0)),
+                                ErrorCode = ErrorCode.UnexpectedEndOfFile
+                            });
                         return SyntaxKind.BadToken;
                     case '"':
                         ++this.position;
@@ -165,10 +168,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                         if (Peak == '\0')
                         {
                             diagnostics.Add(
-                                new Diagnostic(
-                                    message: "Unexpected EndOfFileToken",
-                                    level: DiagnosticLevel.Error,
-                                    textLocation: new TextLocation(this.SourceText, new TextSpan(this.SourceText, Current, 0))));
+                                new Diagnostic()
+                                {
+                                    Message = "Unexpected EndOfFileToken",
+                                    Level = DiagnosticLevel.Error,
+                                    TextLocation = new TextLocation(this.SourceText, new TextSpan(this.SourceText, Current, 0)),
+                                    ErrorCode = ErrorCode.UnexpectedEndOfFile
+                                });
                             return SyntaxKind.BadToken;
                         }
 
@@ -409,7 +415,14 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
                 if (token.Kind == SyntaxKind.BadToken)
                 {
-                    diagnostics.Add(new Diagnostic("Bad token", DiagnosticLevel.Error, token.GetTextLocation()));
+                    diagnostics.Add(
+                        new Diagnostic()
+                        {
+                            Message = $"Token '{token.Text}' is not recognized",
+                            ErrorCode = ErrorCode.UnrecognizedToken,
+                            TextLocation = token.GetTextLocation(),
+                            Level = DiagnosticLevel.Error
+                        });
                     break;
                 }
 

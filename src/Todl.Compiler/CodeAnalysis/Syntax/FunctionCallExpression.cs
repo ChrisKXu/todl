@@ -104,13 +104,16 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var closeParenthesisToken = ExpectToken(SyntaxKind.CloseParenthesisToken);
 
             var namedArguments = arguments.Where(p => p.IsNamedArgument);
-            if (namedArguments.Any() && namedArguments.Count() != arguments.Count())
+            if (namedArguments.Any() && namedArguments.Count() != arguments.Count)
             {
                 diagnostics.Add(
-                    new Diagnostic(
-                        message: "Either all or none of the arguments should be named arguments",
-                        level: DiagnosticLevel.Error,
-                        textLocation: openParenthesisToken.GetTextLocation()));
+                    new Diagnostic()
+                    {
+                        Message = "Either all or none of the arguments should be named arguments",
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = openParenthesisToken.GetTextLocation(),
+                        ErrorCode = ErrorCode.MixedPositionalAndNamedArguments
+                    });
             }
 
             return new FunctionCallExpression(syntaxTree)
