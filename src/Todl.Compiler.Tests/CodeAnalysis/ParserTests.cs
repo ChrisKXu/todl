@@ -250,8 +250,9 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             functionCallExpression.Should().HaveChildren(
                 memberAccessExpression =>
                     memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("ToString"),
-                openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
-                closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken));
+                arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
+                    openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
+                    closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken)));
         }
 
         [Fact]
@@ -264,15 +265,16 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             functionCallExpression.Should().HaveChildren(
                 memberAccessExpression =>
                     memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("Parse"),
-                openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
-                _0 =>
-                {
-                    var argument = _0.As<FunctionCallExpression.Argument>();
-                    argument.IsNamedArgument.Should().Be(false);
-                    argument.CommaToken.Should().BeNull();
-                    argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
-                },
-                closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken));
+                arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
+                    openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
+                    _0 =>
+                    {
+                        var argument = _0.As<Argument>();
+                        argument.IsNamedArgument.Should().Be(false);
+                        argument.CommaToken.Should().BeNull();
+                        argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
+                    },
+                    closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken)));
         }
 
         [Fact]
@@ -285,17 +287,18 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             functionCallExpression.Should().HaveChildren(
                 memberAccessExpression =>
                     memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("Parse"),
-                openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
-                _0 =>
-                {
-                    var argument = _0.As<FunctionCallExpression.Argument>();
-                    argument.IsNamedArgument.Should().Be(true);
-                    argument.CommaToken.Should().BeNull();
-                    argument.Identifier.Text.Should().Be("s");
-                    argument.ColonToken.Kind.Should().Be(SyntaxKind.ColonToken);
-                    argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
-                },
-                closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken));
+                arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
+                    openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
+                    _0 =>
+                    {
+                        var argument = _0.As<Argument>();
+                        argument.IsNamedArgument.Should().Be(true);
+                        argument.CommaToken.Should().BeNull();
+                        argument.Identifier.Text.Should().Be("s");
+                        argument.ColonToken.Kind.Should().Be(SyntaxKind.ColonToken);
+                        argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
+                    },
+                    closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken)));
         }
 
         [Fact]
