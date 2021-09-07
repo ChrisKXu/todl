@@ -42,6 +42,7 @@
         LetKeywordToken,
         ImportKeywordToken,
         FromKeywordToken,
+        NewKeywordToken,
 
         // Trivia
         WhitespaceTrivia,

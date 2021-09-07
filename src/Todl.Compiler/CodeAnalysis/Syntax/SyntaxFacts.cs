@@ -39,7 +39,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             { "const", SyntaxKind.ConstKeywordToken },
             { "let", SyntaxKind.LetKeywordToken },
             { "import", SyntaxKind.ImportKeywordToken },
-            { "from", SyntaxKind.FromKeywordToken }
+            { "from", SyntaxKind.FromKeywordToken },
+            { "new", SyntaxKind.NewKeywordToken }
         };
     }
 }
