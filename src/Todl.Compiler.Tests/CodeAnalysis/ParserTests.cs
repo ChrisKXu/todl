@@ -3,7 +3,6 @@ using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
