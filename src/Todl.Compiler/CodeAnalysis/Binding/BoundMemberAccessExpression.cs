@@ -31,31 +31,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             var boundBaseExpression = BindExpression(scope, memberAccessExpression.BaseExpression);
 
-            if (boundBaseExpression is BoundNamespaceExpression boundNamespaceExpression)
-            {
-                if (loadedNamespaces.Contains(memberAccessExpression.QualifiedName))
-                {
-                    return new BoundNamespaceExpression() { Namespace = memberAccessExpression.QualifiedName };
-                }
-
-                if (loadedTypes.ContainsKey(memberAccessExpression.QualifiedName))
-                {
-                    return new BoundTypeExpression()
-                    {
-                        ResultType = ClrTypeSymbol.MapClrType(loadedTypes[memberAccessExpression.QualifiedName])
-                    };
-                }
-
-                return ReportErrorExpression(
-                    new Diagnostic()
-                    {
-                        Message = $"Member {memberAccessExpression.MemberIdentifierToken.Text} is not found in namespace {boundNamespaceExpression.Namespace}",
-                        Level = DiagnosticLevel.Error,
-                        TextLocation = memberAccessExpression.MemberIdentifierToken.GetTextLocation(),
-                        ErrorCode = ErrorCode.MemberNotFound
-                    });
-            }
-
             if (boundBaseExpression is BoundMemberAccessExpression boundMemberAccessExpression)
             {
                 if (boundMemberAccessExpression.BoundMemberAccessKind == BoundMemberAccessKind.Function)

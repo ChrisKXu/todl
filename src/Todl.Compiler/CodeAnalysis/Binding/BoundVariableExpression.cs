@@ -16,10 +16,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private BoundExpression BindNameExpression(BoundScope scope, NameExpression nameExpression)
         {
             var name = nameExpression.QualifiedName.ToString();
-            if (loadedNamespaces.Contains(name))
-            {
-                return new BoundNamespaceExpression() { Namespace = name };
-            }
 
             if (loadedTypes.ContainsKey(name))
             {

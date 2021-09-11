@@ -57,7 +57,6 @@ namespace Todl.Compiler.Evaluation
                 BoundAssignmentExpression boundAssignmentExpression => EvaluateBoundAssignmentExpression(boundAssignmentExpression),
                 BoundVariableExpression boundVariableExpression => EvaluateBoundVariableExpression(boundVariableExpression),
                 BoundMemberAccessExpression boundMemberAccessExpression => EvaluateBoundMemberAccessExpression(boundMemberAccessExpression),
-                BoundNamespaceExpression boundNamespaceExpression => boundNamespaceExpression.Namespace,
                 BoundTypeExpression boundTypeExpression => boundTypeExpression.ResultType.Name,
                 BoundFunctionCallExpression boundFunctionCallExpression => EvaluateBoundFunctionCallExpression(boundFunctionCallExpression),
                 BoundErrorExpression => null,
