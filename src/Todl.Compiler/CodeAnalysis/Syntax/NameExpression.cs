@@ -53,11 +53,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     break;
                 }
 
-                if (Seek(2).Kind == SyntaxKind.OpenParenthesisToken)
-                {
-                    break;
-                }
-
                 syntaxTokens.Add(ExpectToken(SyntaxKind.DotToken));
 
                 var identifierToken = ExpectToken(SyntaxKind.IdentifierToken);
