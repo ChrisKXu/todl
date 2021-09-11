@@ -15,10 +15,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundExpression BindNameExpression(BoundScope scope, NameExpression nameExpression)
         {
-            var name = nameExpression.IdentifierToken.Text.ToString();
+            var name = nameExpression.QualifiedName.ToString();
             if (loadedNamespaces.Contains(name))
             {
                 return new BoundNamespaceExpression() { Namespace = name };
+            }
+
+            if (loadedTypes.ContainsKey(name))
+            {
+                return new BoundTypeExpression() { ResultType = ClrTypeSymbol.MapClrType(loadedTypes[name]) };
             }
 
             var variable = scope.LookupVariable(name);
@@ -27,9 +32,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 return ReportErrorExpression(
                     new Diagnostic()
                     {
-                        Message = $"Undeclared variable {nameExpression.IdentifierToken.Text}",
+                        Message = $"Undeclared variable {nameExpression.QualifiedName}",
                         Level = DiagnosticLevel.Error,
-                        TextLocation = nameExpression.IdentifierToken.GetTextLocation(),
+                        TextLocation = nameExpression.SyntaxTokens[0].GetTextLocation(),
                         ErrorCode = ErrorCode.UndeclaredVariable
                     });
             }

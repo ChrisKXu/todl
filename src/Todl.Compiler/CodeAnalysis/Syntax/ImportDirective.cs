@@ -12,23 +12,12 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public IReadOnlyList<SyntaxToken> ImportedTokens { get; internal init; }
         public SyntaxToken CloseBraceToken { get; internal init; }
         public SyntaxToken FromKeywordToken { get; internal init; }
-        public Expression NamespaceExpression { get; internal init; }
+        public NameExpression NamespaceExpression { get; internal init; }
         public SyntaxToken SemicolonToken { get; internal init; }
 
         public bool ImportAll => StarToken != null;
 
-        public string Namespace
-        {
-            get
-            {
-                return NamespaceExpression switch
-                {
-                    NameExpression nameExpression => nameExpression.IdentifierToken.Text.ToString(),
-                    MemberAccessExpression memberAccessExpression => memberAccessExpression.QualifiedName,
-                    _ => throw new NotSupportedException()
-                };
-            }
-        }
+        public string Namespace => NamespaceExpression.QualifiedName.ToString();
 
         public IEnumerable<string> ImportedNames
         {
@@ -85,7 +74,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             }
 
             var fromKeyword = ExpectToken(SyntaxKind.FromKeywordToken);
-            var namespaceExpression = ParseExpression();
+            var namespaceExpression = ParseNameExpression();
             var semicolonToken = ExpectToken(SyntaxKind.SemicolonToken);
 
             return new ImportDirective(syntaxTree)
