@@ -119,7 +119,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         private Expression ParsePrimaryExpression()
         {
-            Expression baseExpression = null;
+            Expression baseExpression;
 
             switch (Current.Kind)
             {
