@@ -171,29 +171,24 @@ namespace Todl.Compiler.Evaluation
 
         private object EvaluateBoundFunctionCallExpression(BoundFunctionCallExpression boundFunctionCallExpression)
         {
-            if (boundFunctionCallExpression.BoundBaseExpression is BoundMemberAccessExpression boundMemberAccessExpression)
+            var isStatic = boundFunctionCallExpression.MethodInfo.IsStatic;
+            var invokingObject = isStatic ? null : EvaluateBoundExpression(boundFunctionCallExpression.BoundBaseExpression);
+
+            var arguments = Array.Empty<object>();
+
+            if (boundFunctionCallExpression.BoundArguments.Any())
             {
-                var baseObject = EvaluateBoundExpression(boundMemberAccessExpression.BoundBaseExpression);
-                var invokingObject = boundMemberAccessExpression.IsStatic ? null : baseObject;
+                var parameters = boundFunctionCallExpression.MethodInfo.GetParameters();
+                arguments = new object[parameters.Length];
 
-                var arguments = Array.Empty<object>();
-
-                if (boundFunctionCallExpression.BoundArguments.Any())
+                foreach (var parameter in parameters)
                 {
-                    var parameters = boundFunctionCallExpression.MethodInfo.GetParameters();
-                    arguments = new object[parameters.Length];
-
-                    foreach (var parameter in parameters)
-                    {
-                        arguments[parameter.Position] = EvaluateBoundExpression(boundFunctionCallExpression.BoundArguments[parameter.Name]);
-                    }
+                    arguments[parameter.Position] = EvaluateBoundExpression(boundFunctionCallExpression.BoundArguments[parameter.Name]);
                 }
-
-                // assuming the BoundMemberAccessKind is Function since it's checked in Binder
-                return boundFunctionCallExpression.MethodInfo.Invoke(invokingObject, arguments);
             }
 
-            throw new NotSupportedException("Not supported expression");
+            // assuming the BoundMemberAccessKind is Function since it's checked in Binder
+            return boundFunctionCallExpression.MethodInfo.Invoke(invokingObject, arguments);
         }
 
         private object SetVariableValue(VariableSymbol variable, object value)

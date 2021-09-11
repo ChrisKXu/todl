@@ -244,11 +244,11 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var inputText = "a.ToString()";
             var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
-            functionCallExpression.Should().NotBeNull();
 
             functionCallExpression.Should().HaveChildren(
-                memberAccessExpression =>
-                    memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("ToString"),
+                _0 => _0.As<NameExpression>().QualifiedName.Should().Be("a"),
+                _1 => _1.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.DotToken),
+                _2 => _2.As<SyntaxToken>().Text.Should().Be("ToString"),
                 arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
                     openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
                     closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken)));
@@ -262,8 +262,9 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             functionCallExpression.Should().NotBeNull();
 
             functionCallExpression.Should().HaveChildren(
-                memberAccessExpression =>
-                    memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("Parse"),
+                _0 => _0.As<NameExpression>().QualifiedName.Should().Be("System.Int32"),
+                _1 => _1.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.DotToken),
+                _2 => _2.As<SyntaxToken>().Text.Should().Be("Parse"),
                 arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
                     openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
                     _0 =>
@@ -284,8 +285,9 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             functionCallExpression.Should().NotBeNull();
 
             functionCallExpression.Should().HaveChildren(
-                memberAccessExpression =>
-                    memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("Parse"),
+                _0 => _0.As<NameExpression>().QualifiedName.Should().Be("System.Int32"),
+                _1 => _1.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.DotToken),
+                _2 => _2.As<SyntaxToken>().Text.Should().Be("Parse"),
                 arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
                     openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
                     _0 =>

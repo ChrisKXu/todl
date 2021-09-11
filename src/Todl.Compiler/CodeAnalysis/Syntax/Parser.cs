@@ -91,7 +91,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var n = allTypes
                 .Where(t => !string.IsNullOrEmpty(t.Namespace))
                 .Select(t => t.Namespace);
-            this.loadedNamespaces = NamespaceUtilities.GetFullNamespaces(n);
+            loadedNamespaces = NamespaceUtilities.GetFullNamespaces(n);
         }
 
         // Giving unit tests access to lexer.Lex()
@@ -119,7 +119,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         private Expression ParsePrimaryExpression()
         {
-            Expression baseExpression;
+            Expression baseExpression = null;
 
             switch (Current.Kind)
             {
@@ -134,8 +134,20 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     break;
                 case SyntaxKind.IdentifierToken:
                 default:
-                    var nameExpression = ParseNameExpression();
-                    baseExpression = ParseTrailingUnaryExpression(nameExpression);
+                    if (Peak.Kind == SyntaxKind.OpenParenthesisToken)
+                    {
+                        baseExpression = new FunctionCallExpression(syntaxTree)
+                        {
+                            NameToken = ExpectToken(SyntaxKind.IdentifierToken),
+                            Arguments = ParseArgumentsList()
+                        };
+                    }
+                    else
+                    {
+                        var nameExpression = ParseNameExpression();
+                        baseExpression = ParseTrailingUnaryExpression(nameExpression);
+                    }
+
                     break;
             }
 
@@ -147,15 +159,27 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 }
                 else if (Current.Kind == SyntaxKind.DotToken && Peak.Kind == SyntaxKind.IdentifierToken)
                 {
+                    var dotToken = ExpectToken(SyntaxKind.DotToken);
+                    var identifierToken = ExpectToken(SyntaxKind.IdentifierToken);
+
+                    if (Current.Kind == SyntaxKind.OpenParenthesisToken)
+                    {
+                        baseExpression = new FunctionCallExpression(syntaxTree)
+                        {
+                            BaseExpression = baseExpression,
+                            DotToken = dotToken,
+                            NameToken = identifierToken,
+                            Arguments = ParseArgumentsList()
+                        };
+
+                        break;
+                    }
+
                     baseExpression = new MemberAccessExpression(
-                        syntaxTree: this.syntaxTree,
+                        syntaxTree: syntaxTree,
                         baseExpression: baseExpression,
-                        dotToken: ExpectToken(SyntaxKind.DotToken),
-                        memberIdentifierToken: ExpectToken(SyntaxKind.IdentifierToken));
-                }
-                else if (Current.Kind == SyntaxKind.OpenParenthesisToken)
-                {
-                    baseExpression = ParseFunctionCallExpression(baseExpression);
+                        dotToken: dotToken,
+                        memberIdentifierToken: identifierToken);
                 }
                 else
                 {

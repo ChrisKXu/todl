@@ -9,26 +9,19 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public FunctionCallExpression(SyntaxTree syntaxTree) : base(syntaxTree) { }
 
         public Expression BaseExpression { get; internal init; }
+        public SyntaxToken DotToken { get; internal init; }
+        public SyntaxToken NameToken { get; internal init; }
         public ArgumentsList Arguments { get; internal init; }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
-            yield return BaseExpression;
-            yield return Arguments;
-        }
-    }
-
-    public sealed partial class Parser
-    {
-        private FunctionCallExpression ParseFunctionCallExpression(Expression baseExpression)
-        {
-            var argumentsList = ParseArgumentsList();
-
-            return new FunctionCallExpression(syntaxTree)
+            if (BaseExpression != null && DotToken != null)
             {
-                BaseExpression = baseExpression,
-                Arguments = argumentsList
-            };
+                yield return BaseExpression;
+                yield return DotToken;
+            }
+            yield return NameToken;
+            yield return Arguments;
         }
     }
 }
