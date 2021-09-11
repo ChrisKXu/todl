@@ -3,7 +3,6 @@ using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
@@ -158,7 +157,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                                 {
                                     var unaryExpression = left.As<UnaryExpression>();
                                     unaryExpression.Operator.Text.Should().Be("++");
-                                    unaryExpression.Operand.As<NameExpression>().IdentifierToken.Text.Should().Be("a");
+                                    unaryExpression.Operand.As<NameExpression>().QualifiedName.Should().Be("a");
                                     unaryExpression.Trailing.Should().Be(false);
                                 },
                                 operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
@@ -183,7 +182,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                         left =>
                         {
                             var unaryExpression = left.As<UnaryExpression>();
-                            unaryExpression.Operand.As<NameExpression>().IdentifierToken.Text.Should().Be("a");
+                            unaryExpression.Operand.As<NameExpression>().QualifiedName.Should().Be("a");
                             unaryExpression.Operator.Text.Should().Be("++");
                             unaryExpression.Trailing.Should().Be(true);
                         },
@@ -205,7 +204,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var assignmentExpression = ParseExpression<AssignmentExpression>($"a {expectedOperatorToken} (b + 3) * 2");
 
             assignmentExpression.Should().HaveChildren(
-                left => left.As<NameExpression>().IdentifierToken.Text.Should().Be("a"),
+                left => left.As<NameExpression>().QualifiedName.Should().Be("a"),
                 operatorToken =>
                 {
                     var assignmentOperator = operatorToken.As<SyntaxToken>();
@@ -218,7 +217,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                         left =>
                         {
                             var innerExpression = left.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>();
-                            innerExpression.Left.As<NameExpression>().IdentifierToken.Text.Should().Be("b");
+                            innerExpression.Left.As<NameExpression>().QualifiedName.Should().Be("b");
                             innerExpression.Operator.Text.Should().Be("+");
                             innerExpression.Right.As<LiteralExpression>().LiteralToken.Text.Should().Be("3");
                         },
@@ -228,7 +227,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Theory]
-        [InlineData("System.Threading.Tasks.Task")]
+        [InlineData("System.Threading.Tasks.Task.WhenAny")]
         [InlineData("(1 + 2).ToString")]
         [InlineData("\"abc\".Length")]
         public void TestMemberAccessExpressionBasic(string inputText)
@@ -245,11 +244,11 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var inputText = "a.ToString()";
             var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
-            functionCallExpression.Should().NotBeNull();
 
             functionCallExpression.Should().HaveChildren(
-                memberAccessExpression =>
-                    memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("ToString"),
+                _0 => _0.As<NameExpression>().QualifiedName.Should().Be("a"),
+                _1 => _1.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.DotToken),
+                _2 => _2.As<SyntaxToken>().Text.Should().Be("ToString"),
                 arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
                     openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
                     closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken)));
@@ -263,8 +262,9 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             functionCallExpression.Should().NotBeNull();
 
             functionCallExpression.Should().HaveChildren(
-                memberAccessExpression =>
-                    memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("Parse"),
+                _0 => _0.As<NameExpression>().QualifiedName.Should().Be("System.Int32"),
+                _1 => _1.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.DotToken),
+                _2 => _2.As<SyntaxToken>().Text.Should().Be("Parse"),
                 arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
                     openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
                     _0 =>
@@ -285,8 +285,9 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             functionCallExpression.Should().NotBeNull();
 
             functionCallExpression.Should().HaveChildren(
-                memberAccessExpression =>
-                    memberAccessExpression.As<MemberAccessExpression>().MemberIdentifierToken.Text.Should().Be("Parse"),
+                _0 => _0.As<NameExpression>().QualifiedName.Should().Be("System.Int32"),
+                _1 => _1.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.DotToken),
+                _2 => _2.As<SyntaxToken>().Text.Should().Be("Parse"),
                 arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
                     openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
                     _0 =>
@@ -344,14 +345,14 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 {
                     var letStatement = _1.As<VariableDeclarationStatement>();
                     letStatement.IdentifierToken.Text.Should().Be("b");
-                    letStatement.InitializerExpression.As<NameExpression>().IdentifierToken.Text.Should().Be("a");
+                    letStatement.InitializerExpression.As<NameExpression>().QualifiedName.Should().Be("a");
                 },
                 closeBrace => closeBrace.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseBraceToken));
         }
 
         [Theory]
         [InlineData("import * from System;")]
-        [InlineData("import * from System.Collection.Generic;")]
+        [InlineData("import * from System.Threading.Tasks;")]
         [InlineData("import { Task } from System.Threading.Tasks;")]
         [InlineData("import { ConcurrentBag, ConcurrentDictionary, ConcurrentQueue } from System.Collections.Concurrent;")]
         public void TestParseImportDirective(string inputText)

@@ -26,46 +26,39 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
-            if (boundBaseExpression is BoundMemberAccessExpression boundMemberAccessExpression)
+            var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
+            var isStatic = boundBaseExpression is BoundTypeExpression;
+            var candidates = type
+                .GetMethods()
+                .Where(m => m.Name == functionCallExpression.NameToken.Text.ToString()
+                    && m.IsStatic == isStatic
+                    && !m.ContainsGenericParameters
+                    && m.IsPublic
+                    && m.GetParameters().Length == functionCallExpression.Arguments.Count);
+
+            if (!functionCallExpression.Arguments.Any())
             {
-                Debug.Assert(boundMemberAccessExpression.BoundMemberAccessKind == BoundMemberAccessKind.Function);
+                return BindFunctionCallWithNoArgumentsInternal(
+                    boundBaseExpression: boundBaseExpression,
+                    candidates: candidates);
+            }
 
-                var type = (boundMemberAccessExpression.BoundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
-                var candidates = type
-                    .GetMethods()
-                    .Where(m => m.Name == boundMemberAccessExpression.MemberName.Text.ToString()
-                        && m.IsStatic == boundMemberAccessExpression.IsStatic
-                        && !m.ContainsGenericParameters
-                        && m.IsPublic
-                        && m.GetParameters().Length == functionCallExpression.Arguments.Count);
-
-                if (!functionCallExpression.Arguments.Any())
-                {
-                    return BindFunctionCallWithNoArgumentsInternal(
-                        boundBaseExpression: boundBaseExpression,
-                        candidates: candidates);
-                }
-
-                // Since all or none of the arguments of a FunctionCallExpression needs to be named,
-                // we only need to check the first argument to see if it's a named argument to determine the others
-                if (functionCallExpression.Arguments[0].IsNamedArgument)
-                {
-                    return BindFunctionCallWithNamedArgumentsInternal(
-                        scope: scope,
-                        boundBaseExpression: boundBaseExpression,
-                        candidates: candidates,
-                        functionCallExpression: functionCallExpression);
-                }
-
-                return BindFunctionCallWithPositionalArgumentsInternal(
+            // Since all or none of the arguments of a FunctionCallExpression needs to be named,
+            // we only need to check the first argument to see if it's a named argument to determine the others
+            if (functionCallExpression.Arguments[0].IsNamedArgument)
+            {
+                return BindFunctionCallWithNamedArgumentsInternal(
                     scope: scope,
                     boundBaseExpression: boundBaseExpression,
                     candidates: candidates,
                     functionCallExpression: functionCallExpression);
             }
 
-            Debug.Fail("Unsupported bound expression type");
-            return new BoundErrorExpression();
+            return BindFunctionCallWithPositionalArgumentsInternal(
+                scope: scope,
+                boundBaseExpression: boundBaseExpression,
+                candidates: candidates,
+                functionCallExpression: functionCallExpression);
         }
 
         private BoundExpression BindFunctionCallWithNoArgumentsInternal(

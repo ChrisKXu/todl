@@ -62,7 +62,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (assignmentExpression.Left is NameExpression nameExpression)
             {
-                var variableName = nameExpression.IdentifierToken.Text.ToString();
+                var variableName = nameExpression.QualifiedName.ToString();
                 var variable = scope.LookupVariable(variableName);
 
                 if (variable == null)
@@ -80,7 +80,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                             {
                                 Message = $"Undeclared variable {variableName}",
                                 Level = DiagnosticLevel.Error,
-                                TextLocation = nameExpression.IdentifierToken.GetTextLocation(),
+                                TextLocation = nameExpression.SyntaxTokens[0].GetTextLocation(),
                                 ErrorCode = ErrorCode.UndeclaredVariable
                             });
                     }
@@ -92,7 +92,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                         {
                             Message = $"Variable {variableName} is read-only",
                             Level = DiagnosticLevel.Error,
-                            TextLocation = nameExpression.IdentifierToken.GetTextLocation(),
+                            TextLocation = nameExpression.SyntaxTokens[0].GetTextLocation(),
                             ErrorCode = ErrorCode.ReadOnlyVariable
                         });
                 }
@@ -103,7 +103,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                         {
                             Message = $"Variable {variableName} cannot be assigned to type {right.ResultType}",
                             Level = DiagnosticLevel.Error,
-                            TextLocation = nameExpression.IdentifierToken.GetTextLocation(),
+                            TextLocation = nameExpression.SyntaxTokens[0].GetTextLocation(),
                             ErrorCode = ErrorCode.TypeMismatch
                         });
                 }

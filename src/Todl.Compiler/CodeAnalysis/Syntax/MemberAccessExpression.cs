@@ -15,7 +15,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             {
                 return BaseExpression switch
                 {
-                    NameExpression nameExpression => $"{nameExpression.IdentifierToken.Text}.{MemberIdentifierToken.Text}",
+                    NameExpression nameExpression => $"{nameExpression.QualifiedName}.{MemberIdentifierToken.Text}",
                     MemberAccessExpression memberAccessExpression => $"{memberAccessExpression.QualifiedName}.{MemberIdentifierToken.Text}",
                     _ => throw new NotSupportedException()
                 };

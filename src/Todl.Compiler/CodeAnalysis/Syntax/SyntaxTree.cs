@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
@@ -8,6 +9,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         private readonly Parser parser;
 
         public SourceText SourceText { get; }
+        public IReadOnlyList<Directive> Directives => parser.Directives;
+        public IReadOnlyList<Statement> Statements => parser.Statements;
 
         internal SyntaxTree(SourceText sourceText)
         {

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Todl.Compiler.Diagnostics;
+using Todl.Compiler.Utilities;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -13,6 +15,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         private readonly SyntaxTree syntaxTree;
         private readonly Lexer lexer;
         private readonly List<Diagnostic> diagnostics = new();
+        private readonly List<Directive> directives = new();
+        private readonly List<Statement> statements = new();
         private int position = 0;
 
         private IReadOnlyList<SyntaxToken> SyntaxTokens => this.lexer.SyntaxTokens;
@@ -32,6 +36,14 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 return this.diagnostics;
             }
         }
+
+        public IReadOnlyList<Directive> Directives => directives;
+        public IReadOnlyList<Statement> Statements => statements;
+        private readonly IReadOnlySet<string> loadedNamespaces;
+        private readonly List<Assembly> loadedAssemblies = new()
+        {
+            Assembly.GetAssembly(typeof(int)) // mscorlib
+        };
 
         private SyntaxToken Seek(int offset)
         {
@@ -73,6 +85,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         {
             this.syntaxTree = syntaxTree;
             this.lexer = new Lexer(syntaxTree);
+
+            var allTypes = loadedAssemblies.SelectMany(a => a.GetTypes());
+
+            var n = allTypes
+                .Where(t => !string.IsNullOrEmpty(t.Namespace))
+                .Select(t => t.Namespace);
+            loadedNamespaces = NamespaceUtilities.GetFullNamespaces(n);
         }
 
         // Giving unit tests access to lexer.Lex()
@@ -89,12 +108,12 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
             while (Current.Kind == SyntaxKind.ImportKeywordToken)
             {
-                ParseDirective();
+                directives.Add(ParseDirective());
             }
 
             while (Current.Kind != SyntaxKind.EndOfFileToken)
             {
-                ParseExpression();
+                statements.Add(ParseStatement());
             }
         }
 
@@ -115,8 +134,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     break;
                 case SyntaxKind.IdentifierToken:
                 default:
-                    var nameExpression = new NameExpression(this.syntaxTree, this.ExpectToken(SyntaxKind.IdentifierToken));
+                    var nameExpression = ParseNameExpression();
                     baseExpression = ParseTrailingUnaryExpression(nameExpression);
+
                     break;
             }
 
@@ -129,7 +149,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 else if (Current.Kind == SyntaxKind.DotToken && Peak.Kind == SyntaxKind.IdentifierToken)
                 {
                     baseExpression = new MemberAccessExpression(
-                        syntaxTree: this.syntaxTree,
+                        syntaxTree: syntaxTree,
                         baseExpression: baseExpression,
                         dotToken: ExpectToken(SyntaxKind.DotToken),
                         memberIdentifierToken: ExpectToken(SyntaxKind.IdentifierToken));
@@ -137,6 +157,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 else if (Current.Kind == SyntaxKind.OpenParenthesisToken)
                 {
                     baseExpression = ParseFunctionCallExpression(baseExpression);
+                    break;
                 }
                 else
                 {

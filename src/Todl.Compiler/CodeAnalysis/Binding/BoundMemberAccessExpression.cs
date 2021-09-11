@@ -13,14 +13,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public BoundMemberAccessKind BoundMemberAccessKind { get; internal init; }
         public SyntaxToken MemberName { get; internal init; }
         public override TypeSymbol ResultType { get; internal init; }
-        public bool IsStatic { get; internal init; }
+        public bool IsStatic => BoundBaseExpression is BoundTypeExpression;
     }
 
     public enum BoundMemberAccessKind
     {
         Property,
-        Field,
-        Function
+        Field
     }
 
     public sealed partial class Binder
@@ -31,50 +30,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             var boundBaseExpression = BindExpression(scope, memberAccessExpression.BaseExpression);
 
-            if (boundBaseExpression is BoundNamespaceExpression boundNamespaceExpression)
-            {
-                if (loadedNamespaces.Contains(memberAccessExpression.QualifiedName))
-                {
-                    return new BoundNamespaceExpression() { Namespace = memberAccessExpression.QualifiedName };
-                }
-
-                if (loadedTypes.ContainsKey(memberAccessExpression.QualifiedName))
-                {
-                    return new BoundTypeExpression()
-                    {
-                        ResultType = ClrTypeSymbol.MapClrType(loadedTypes[memberAccessExpression.QualifiedName])
-                    };
-                }
-
-                return ReportErrorExpression(
-                    new Diagnostic()
-                    {
-                        Message = $"Member {memberAccessExpression.MemberIdentifierToken.Text} is not found in namespace {boundNamespaceExpression.Namespace}",
-                        Level = DiagnosticLevel.Error,
-                        TextLocation = memberAccessExpression.MemberIdentifierToken.GetTextLocation(),
-                        ErrorCode = ErrorCode.MemberNotFound
-                    });
-            }
-
-            if (boundBaseExpression is BoundMemberAccessExpression boundMemberAccessExpression)
-            {
-                if (boundMemberAccessExpression.BoundMemberAccessKind == BoundMemberAccessKind.Function)
-                {
-                    return ReportErrorExpression(
-                        new Diagnostic()
-                        {
-                            Message = $"Invalid member {memberAccessExpression.MemberIdentifierToken.Text}",
-                            Level = DiagnosticLevel.Error,
-                            TextLocation = memberAccessExpression.MemberIdentifierToken.GetTextLocation(),
-                            ErrorCode = ErrorCode.MemberNotFound
-                        });
-                }
-            }
-
             Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
-            var isStatic = boundBaseExpression is BoundTypeExpression;
             var memberInfo = type.GetMember(memberAccessExpression.MemberIdentifierToken.Text.ToString());
 
             if (!memberInfo.Any())
@@ -99,8 +57,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     BoundBaseExpression = boundBaseExpression,
                     MemberName = memberAccessExpression.MemberIdentifierToken,
                     ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as PropertyInfo).PropertyType),
-                    BoundMemberAccessKind = BoundMemberAccessKind.Property,
-                    IsStatic = isStatic
+                    BoundMemberAccessKind = BoundMemberAccessKind.Property
                 },
 
                 MemberTypes.Field => new BoundMemberAccessExpression()
@@ -108,17 +65,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     BoundBaseExpression = boundBaseExpression,
                     MemberName = memberAccessExpression.MemberIdentifierToken,
                     ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as FieldInfo).FieldType),
-                    BoundMemberAccessKind = BoundMemberAccessKind.Field,
-                    IsStatic = isStatic
-                },
-
-                MemberTypes.Method => new BoundMemberAccessExpression()
-                {
-                    BoundBaseExpression = boundBaseExpression,
-                    MemberName = memberAccessExpression.MemberIdentifierToken,
-                    ResultType = TypeSymbol.ClrVoid, // note that this is not the return type of the function
-                    BoundMemberAccessKind = BoundMemberAccessKind.Function,
-                    IsStatic = isStatic
+                    BoundMemberAccessKind = BoundMemberAccessKind.Field
                 },
 
                 _ => new BoundErrorExpression()
