@@ -303,6 +303,36 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
+        public void TestParseNewExpressionBasic()
+        {
+            var inputText = "new System.Int32()";
+            var newExpression = ParseExpression<NewExpression>(inputText);
+
+            newExpression.Should().HaveChildren(
+                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
+                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Int32"),
+                _2 => _2.As<ArgumentsList>().Arguments.Should().BeEmpty());
+        }
+
+        [Fact]
+        public void TestParseNewExpressionBasicWithOneArgument()
+        {
+            var inputText = "new System.Uri(\"https://google.com\")";
+            var newExpression = ParseExpression<NewExpression>(inputText);
+
+            newExpression.Should().HaveChildren(
+                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
+                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
+                _2 =>
+                {
+                    var arguments = _2.As<ArgumentsList>().Arguments;
+                    arguments.Should().HaveCount(1);
+                    arguments[0].IsNamedArgument.Should().BeFalse();
+                    arguments[0].Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("\"https://google.com\"");
+                });
+        }
+
+        [Fact]
         public void TestParseBlockStatementBasic()
         {
             var inputText = @"
