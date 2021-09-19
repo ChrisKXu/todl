@@ -174,18 +174,7 @@ namespace Todl.Compiler.Evaluation
             var isStatic = boundFunctionCallExpression.MethodInfo.IsStatic;
             var invokingObject = isStatic ? null : EvaluateBoundExpression(boundFunctionCallExpression.BoundBaseExpression);
 
-            var arguments = Array.Empty<object>();
-
-            if (boundFunctionCallExpression.BoundArguments.Any())
-            {
-                var parameters = boundFunctionCallExpression.MethodInfo.GetParameters();
-                arguments = new object[parameters.Length];
-
-                foreach (var parameter in parameters)
-                {
-                    arguments[parameter.Position] = EvaluateBoundExpression(boundFunctionCallExpression.BoundArguments[parameter.Name]);
-                }
-            }
+            var arguments = boundFunctionCallExpression.BoundArguments.Select(EvaluateBoundExpression).ToArray();
 
             // assuming the BoundMemberAccessKind is Function since it's checked in Binder
             return boundFunctionCallExpression.MethodInfo.Invoke(invokingObject, arguments);
