@@ -20,6 +20,7 @@ namespace Todl.Compiler.Diagnostics
         UnsupportedOperator,
         UnsupportedLiteral,
         NoMatchingCandidate,
-        MemberNotFound
+        MemberNotFound,
+        TypeNotFound
     }
 }
