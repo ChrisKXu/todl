@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -36,33 +37,68 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 return BindNewExpressionWithPositionalArgumentsInternal(
                     scope: scope,
                     targetType: boundTypeExpression.ResultType,
-                    arguments: newExpression.Arguments
-                );
+                    argumentsList: newExpression.Arguments);
             }
 
-            return new BoundObjectCreationExpression()
-            {
-                ResultType = boundTypeExpression.ResultType
-            };
+            return BindNewExpressionWithNamedArgumentsInternal(
+                scope: scope,
+                targetType: boundTypeExpression.ResultType,
+                argumentsList: newExpression.Arguments);
         }
 
         private BoundExpression BindNewExpressionWithPositionalArgumentsInternal(
             BoundScope scope,
             TypeSymbol targetType,
-            ArgumentsList arguments)
+            ArgumentsList argumentsList)
         {
             Debug.Assert(targetType.IsNative);
 
             var clrType = (targetType as ClrTypeSymbol).ClrType;
-            var boundArguments = arguments.Select(a => BindExpression(scope, a.Expression));
+            var boundArguments = argumentsList.Select(a => BindExpression(scope, a.Expression));
             var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
 
             var constructorInfo = clrType.GetConstructor(argumentTypes);
 
             if (constructorInfo is null)
             {
-                ReportNoMatchingCandidate();
+                return ReportNoMatchingCandidate();
             }
+
+            return new BoundObjectCreationExpression()
+            {
+                ConstructorInfo = constructorInfo,
+                ResultType = targetType,
+                BoundArguments = boundArguments.ToList()
+            };
+        }
+
+        private BoundExpression BindNewExpressionWithNamedArgumentsInternal(
+            BoundScope scope,
+            TypeSymbol targetType,
+            ArgumentsList argumentsList)
+        {
+            Debug.Assert(targetType.IsNative);
+
+            var clrType = (targetType as ClrTypeSymbol).ClrType;
+            var candidates = clrType.GetConstructors()
+                .Where(c => c.IsPublic && c.GetParameters().Length == argumentsList.Count);
+            var arguments = argumentsList.ToDictionary(
+                keySelector: a => a.Identifier.Text.ToString(),
+                elementSelector: a => BindExpression(scope, a.Expression));
+            var nameAndTypes = arguments.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
+
+            var constructorInfo = candidates.FirstOrDefault(c =>
+            {
+                var parameters = c.GetParameters().Select(p => new Tuple<string, Type>(p.Name, p.ParameterType));
+                return nameAndTypes.SetEquals(parameters);
+            });
+
+            if (constructorInfo is null)
+            {
+                return ReportNoMatchingCandidate();
+            }
+
+            var boundArguments = constructorInfo.GetParameters().OrderBy(p => p.Position).Select(p => arguments[p.Name]).ToList();
 
             return new BoundObjectCreationExpression()
             {
