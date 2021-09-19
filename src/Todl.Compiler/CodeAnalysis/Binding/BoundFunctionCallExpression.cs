@@ -13,7 +13,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         public BoundExpression BoundBaseExpression { get; internal init; }
         public MethodInfo MethodInfo { get; internal init; }
-        public IReadOnlyDictionary<string, BoundExpression> BoundArguments { get; internal init; }
+        public IReadOnlyList<BoundExpression> BoundArguments { get; internal init; }
         public override TypeSymbol ResultType { get => ClrTypeSymbol.MapClrType(MethodInfo.ReturnType); }
         public bool IsStatic => MethodInfo.IsStatic;
     }
@@ -24,6 +24,27 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             var boundBaseExpression = BindExpression(scope, functionCallExpression.BaseExpression);
 
+            // Since all or none of the arguments of a FunctionCallExpression needs to be named,
+            // we only need to check the first argument to see if it's a named argument to determine the others
+            if (functionCallExpression.Arguments.Any() && functionCallExpression.Arguments[0].IsNamedArgument)
+            {
+                return BindFunctionCallWithNamedArgumentsInternal(
+                    scope: scope,
+                    boundBaseExpression: boundBaseExpression,
+                    functionCallExpression: functionCallExpression);
+            }
+
+            return BindFunctionCallWithPositionalArgumentsInternal(
+                scope: scope,
+                boundBaseExpression: boundBaseExpression,
+                functionCallExpression: functionCallExpression);
+        }
+
+        private BoundExpression BindFunctionCallWithNamedArgumentsInternal(
+            BoundScope scope,
+            BoundExpression boundBaseExpression,
+            FunctionCallExpression functionCallExpression)
+        {
             Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
@@ -36,72 +57,24 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     && m.IsPublic
                     && m.GetParameters().Length == functionCallExpression.Arguments.Count);
 
-            if (!functionCallExpression.Arguments.Any())
-            {
-                return BindFunctionCallWithNoArgumentsInternal(
-                    boundBaseExpression: boundBaseExpression,
-                    candidates: candidates);
-            }
-
-            // Since all or none of the arguments of a FunctionCallExpression needs to be named,
-            // we only need to check the first argument to see if it's a named argument to determine the others
-            if (functionCallExpression.Arguments[0].IsNamedArgument)
-            {
-                return BindFunctionCallWithNamedArgumentsInternal(
-                    scope: scope,
-                    boundBaseExpression: boundBaseExpression,
-                    candidates: candidates,
-                    functionCallExpression: functionCallExpression);
-            }
-
-            return BindFunctionCallWithPositionalArgumentsInternal(
-                scope: scope,
-                boundBaseExpression: boundBaseExpression,
-                candidates: candidates,
-                functionCallExpression: functionCallExpression);
-        }
-
-        private BoundExpression BindFunctionCallWithNoArgumentsInternal(
-            BoundExpression boundBaseExpression,
-            IEnumerable<MethodInfo> candidates)
-        {
-            var candidate = candidates.FirstOrDefault();
-
-            if (candidate == default)
-            {
-                return ReportNoMatchingCandidate();
-            }
-
-            return new BoundFunctionCallExpression()
-            {
-                BoundBaseExpression = boundBaseExpression,
-                MethodInfo = candidate,
-                BoundArguments = new Dictionary<string, BoundExpression>()
-            };
-        }
-
-        private BoundExpression BindFunctionCallWithNamedArgumentsInternal(
-            BoundScope scope,
-            BoundExpression boundBaseExpression,
-            IEnumerable<MethodInfo> candidates,
-            FunctionCallExpression functionCallExpression)
-        {
-            var boundArguments = functionCallExpression.Arguments.ToDictionary(
+            var arguments = functionCallExpression.Arguments.ToDictionary(
                 keySelector: a => a.Identifier.Text.ToString(),
                 elementSelector: a => BindExpression(scope, a.Expression));
 
-            var namedArguments = boundArguments.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
+            var nameAndTypes = arguments.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
 
             var candidate = candidates.FirstOrDefault(methodInfo =>
             {
-                var namedParameters = methodInfo.GetParameters().Select(p => new Tuple<string, Type>(p.Name, p.ParameterType));
-                return namedArguments.SetEquals(namedParameters);
+                var parameters = methodInfo.GetParameters().Select(p => new Tuple<string, Type>(p.Name, p.ParameterType));
+                return nameAndTypes.SetEquals(parameters);
             });
 
-            if (candidate == default)
+            if (candidate is null)
             {
                 return ReportNoMatchingCandidate();
             }
+
+            var boundArguments = candidate.GetParameters().OrderBy(p => p.Position).Select(p => arguments[p.Name]).ToList();
 
             return new BoundFunctionCallExpression()
             {
@@ -114,30 +87,30 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private BoundExpression BindFunctionCallWithPositionalArgumentsInternal(
             BoundScope scope,
             BoundExpression boundBaseExpression,
-            IEnumerable<MethodInfo> candidates,
             FunctionCallExpression functionCallExpression)
         {
-            var boundArguments = functionCallExpression.Arguments.Select(a => BindExpression(scope, a.Expression)).ToList();
+            Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
-            var candidate = candidates.FirstOrDefault(methodInfo =>
-            {
-                return Array.TrueForAll(methodInfo.GetParameters(), p => p.ParameterType == ((ClrTypeSymbol)boundArguments[p.Position].ResultType).ClrType);
-            });
+            var boundArguments = functionCallExpression.Arguments.Select(a => BindExpression(scope, a.Expression));
+            var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
 
-            if (candidate == default)
+            var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
+
+            var candidate = type.GetMethod(
+                name: functionCallExpression.NameToken.Text.ToString(),
+                genericParameterCount: 0,
+                types: argumentTypes);
+
+            if (candidate is null)
             {
                 return ReportNoMatchingCandidate();
             }
-
-            var parameters = candidate.GetParameters();
 
             return new BoundFunctionCallExpression()
             {
                 BoundBaseExpression = boundBaseExpression,
                 MethodInfo = candidate,
-                BoundArguments = parameters.ToDictionary(
-                    keySelector: p => p.Name,
-                    elementSelector: p => boundArguments[p.Position])
+                BoundArguments = boundArguments.ToList()
             };
         }
 
