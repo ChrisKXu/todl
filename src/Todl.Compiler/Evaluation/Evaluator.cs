@@ -59,6 +59,7 @@ namespace Todl.Compiler.Evaluation
                 BoundMemberAccessExpression boundMemberAccessExpression => EvaluateBoundMemberAccessExpression(boundMemberAccessExpression),
                 BoundTypeExpression boundTypeExpression => boundTypeExpression.ResultType.Name,
                 BoundFunctionCallExpression boundFunctionCallExpression => EvaluateBoundFunctionCallExpression(boundFunctionCallExpression),
+                BoundObjectCreationExpression boundObjectCreationExpression => EvaluateBoundObjectCreationExpression(boundObjectCreationExpression),
                 BoundErrorExpression => null,
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };
@@ -178,6 +179,12 @@ namespace Todl.Compiler.Evaluation
 
             // assuming the BoundMemberAccessKind is Function since it's checked in Binder
             return boundFunctionCallExpression.MethodInfo.Invoke(invokingObject, arguments);
+        }
+
+        private object EvaluateBoundObjectCreationExpression(BoundObjectCreationExpression boundObjectCreationExpression)
+        {
+            var arguments = boundObjectCreationExpression.BoundArguments.Select(a => EvaluateBoundExpression(a));
+            return boundObjectCreationExpression.ConstructorInfo.Invoke(arguments.ToArray());
         }
 
         private object SetVariableValue(VariableSymbol variable, object value)

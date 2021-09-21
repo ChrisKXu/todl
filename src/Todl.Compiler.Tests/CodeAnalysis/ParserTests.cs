@@ -303,6 +303,103 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
+        public void TestParseNewExpressionBasicWithNoArguments()
+        {
+            var inputText = "new System.Exception()";
+            var newExpression = ParseExpression<NewExpression>(inputText);
+
+            newExpression.Should().HaveChildren(
+                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
+                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Exception"),
+                _2 => _2.As<ArgumentsList>().Arguments.Should().BeEmpty());
+        }
+
+        [Fact]
+        public void TestParseNewExpressionBasicWithOnePositionalArgument()
+        {
+            var inputText = "new System.Uri(\"https://google.com\")";
+            var newExpression = ParseExpression<NewExpression>(inputText);
+
+            newExpression.Should().HaveChildren(
+                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
+                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
+                _2 =>
+                {
+                    var arguments = _2.As<ArgumentsList>().Arguments;
+                    arguments.Should().HaveCount(1);
+                    arguments[0].IsNamedArgument.Should().BeFalse();
+                    arguments[0].Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("\"https://google.com\"");
+                });
+        }
+
+        [Fact]
+        public void TestParseNewExpressionBasicWithOneNamedArgument()
+        {
+            var inputText = "new System.Uri(uriString: \"https://google.com\")";
+            var newExpression = ParseExpression<NewExpression>(inputText);
+
+            newExpression.Should().HaveChildren(
+                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
+                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
+                _2 =>
+                {
+                    var arguments = _2.As<ArgumentsList>().Arguments;
+                    arguments.Should().HaveCount(1);
+
+                    var uriString = arguments[0];
+                    uriString.IsNamedArgument.Should().BeTrue();
+                    uriString.Identifier.Text.Should().Be("uriString");
+                    uriString.Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("\"https://google.com\"");
+                });
+        }
+
+        [Fact]
+        public void TestParseNewExpressionBasicWithMultiplePositionalArguments()
+        {
+            var inputText = "new System.Uri(\"https://google.com\", false)";
+            var newExpression = ParseExpression<NewExpression>(inputText);
+
+            newExpression.Should().HaveChildren(
+                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
+                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
+                _2 =>
+                {
+                    var arguments = _2.As<ArgumentsList>().Arguments;
+                    arguments.Should().HaveCount(2);
+                    arguments[0].IsNamedArgument.Should().BeFalse();
+                    arguments[0].Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("\"https://google.com\"");
+                    arguments[1].IsNamedArgument.Should().BeFalse();
+                    arguments[1].Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("false");
+                });
+        }
+
+        [Fact]
+        public void TestParseNewExpressionBasicWithMultipleNamedArguments()
+        {
+            var inputText = "new System.Uri(uriString: \"https://google.com\", dontEscape: false)";
+            var newExpression = ParseExpression<NewExpression>(inputText);
+
+            newExpression.Should().HaveChildren(
+                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
+                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
+                _2 =>
+                {
+                    var arguments = _2.As<ArgumentsList>().Arguments;
+                    arguments.Should().HaveCount(2);
+
+                    var uriString = arguments[0];
+                    uriString.IsNamedArgument.Should().BeTrue();
+                    uriString.Identifier.Text.Should().Be("uriString");
+                    uriString.Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("\"https://google.com\"");
+
+                    var dontEscape = arguments[1];
+                    dontEscape.IsNamedArgument.Should().BeTrue();
+                    dontEscape.Identifier.Text.Should().Be("dontEscape");
+                    dontEscape.Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("false");
+                });
+        }
+
+        [Fact]
         public void TestParseBlockStatementBasic()
         {
             var inputText = @"

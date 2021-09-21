@@ -132,6 +132,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 case SyntaxKind.OpenParenthesisToken:
                     baseExpression = ParseTrailingUnaryExpression(this.ParseParethesizedExpression());
                     break;
+                case SyntaxKind.NewKeywordToken:
+                    baseExpression = ParseNewExpression();
+                    break;
                 case SyntaxKind.IdentifierToken:
                 default:
                     var nameExpression = ParseNameExpression();
