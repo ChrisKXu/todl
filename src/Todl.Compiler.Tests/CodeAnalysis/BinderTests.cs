@@ -352,5 +352,36 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             boundArguments[0].As<BoundConstant>().Value.Should().Be(1);
             boundArguments[1].As<BoundConstant>().Value.Should().Be(2);
         }
+
+        [Fact]
+        public void TestBoundObjectCreationExpressionWithNoArguments()
+        {
+            var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>(
+                inputText: "new System.Exception()",
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
+
+            boundObjectCreationExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(System.Exception));
+            boundObjectCreationExpression.ConstructorInfo.Should().NotBeNull();
+            boundObjectCreationExpression.BoundArguments.Should().BeEmpty();
+        }
+
+        [Theory]
+        [InlineData("new System.Exception(\"exception message\")")]
+        [InlineData("new System.Exception(message: \"exception message\")")]
+        public void TestBoundObjectCreationExpressionWithOneArgument(string inputText)
+        {
+            var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>(
+                inputText: inputText,
+                binder: new Binder(BinderFlags.None),
+                scope: BoundScope.GlobalScope);
+
+            boundObjectCreationExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(System.Exception));
+            boundObjectCreationExpression.ConstructorInfo.Should().NotBeNull();
+            boundObjectCreationExpression.BoundArguments.Count.Should().Be(1);
+
+            var message = boundObjectCreationExpression.BoundArguments[0].As<BoundConstant>();
+            message.Value.Should().Be("exception message");
+        }
     }
 }

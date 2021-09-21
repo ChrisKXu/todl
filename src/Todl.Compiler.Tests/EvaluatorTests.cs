@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Collections.Generic;
+using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Evaluation;
 using Xunit;
@@ -19,6 +20,7 @@ namespace Todl.Compiler.Tests
         [InlineData("10.ToString()", "10")]
         [InlineData("System.Math.Max(20, System.Int32.MaxValue)", int.MaxValue)]
         [InlineData("System.Math.Max(val1: 20, val2: System.Int32.MaxValue)", int.MaxValue)]
+        [MemberData(nameof(GetTestEvaluationPositiveMemberData))]
         public void TestEvaluationPositive(string input, object expectedOutput)
         {
             var sourceText = SourceText.FromString(input);
@@ -26,7 +28,14 @@ namespace Todl.Compiler.Tests
 
             var result = evaluator.Evaluate(sourceText);
             result.DiagnosticsOutput.Should().BeEmpty();
-            result.EvaluationOutput.Should().Be(expectedOutput);
+            result.EvaluationOutput.Should().BeEquivalentTo(expectedOutput);
+        }
+
+        public static IEnumerable<object[]> GetTestEvaluationPositiveMemberData()
+        {
+            yield return new object[] { "new System.Exception()", new System.Exception() };
+            yield return new object[] { "new System.Exception(\"This is an exception\")", new System.Exception("This is an exception") };
+            yield return new object[] { "new System.Exception(message: \"This is an exception\")", new System.Exception("This is an exception") };
         }
     }
 }
