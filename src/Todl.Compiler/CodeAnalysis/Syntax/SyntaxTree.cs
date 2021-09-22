@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Text;
 
@@ -11,17 +11,17 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SourceText SourceText { get; }
         public IReadOnlyList<Directive> Directives => parser.Directives;
         public IReadOnlyList<Statement> Statements => parser.Statements;
+        public ClrTypeCache ClrTypeCache { get; }
 
         internal SyntaxTree(SourceText sourceText)
         {
-            this.SourceText = sourceText;
-            this.parser = new Parser(this);
+            parser = new Parser(this);
+
+            SourceText = sourceText;
+            ClrTypeCache = ClrTypeCache.Default;
         }
 
-        private void Parse()
-        {
-            this.parser.Parse();
-        }
+        private void Parse() => parser.Parse();
 
         public static SyntaxTree Parse(SourceText sourceText)
         {

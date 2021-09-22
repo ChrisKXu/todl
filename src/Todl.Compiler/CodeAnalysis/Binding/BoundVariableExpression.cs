@@ -1,3 +1,4 @@
+﻿using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -16,6 +17,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private BoundExpression BindNameExpression(BoundScope scope, NameExpression nameExpression)
         {
             var name = nameExpression.QualifiedName.ToString();
+            var loadedTypes = clrTypeCache.Types.ToDictionary(t => t.FullName);
 
             if (loadedTypes.ContainsKey(name))
             {

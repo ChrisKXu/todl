@@ -48,7 +48,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
             while (Current.Kind == SyntaxKind.DotToken && Peak.Kind == SyntaxKind.IdentifierToken)
             {
-                if (!loadedNamespaces.Contains(builder.ToString()))
+                if (!syntaxTree.ClrTypeCache.Namespaces.Contains(builder.ToString()))
                 {
                     break;
                 }

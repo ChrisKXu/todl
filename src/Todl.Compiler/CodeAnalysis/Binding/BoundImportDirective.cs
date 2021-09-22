@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -15,8 +15,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         internal BoundImportDirective BindImportDirective(ImportDirective importDirective)
         {
-            var availableTypes = loadedAssemblies
-                .SelectMany(a => a.GetTypes())
+            var availableTypes = clrTypeCache.Types
                 .Where(t => t.IsPublic && t.Namespace == importDirective.Namespace);
 
             if (importDirective.ImportedNames.Any())
