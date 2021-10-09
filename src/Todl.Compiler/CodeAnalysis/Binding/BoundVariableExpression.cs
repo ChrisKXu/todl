@@ -17,11 +17,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private BoundExpression BindNameExpression(BoundScope scope, NameExpression nameExpression)
         {
             var name = nameExpression.QualifiedName.ToString();
-            var loadedTypes = clrTypeCache.Types.ToDictionary(t => t.FullName);
+            var type = clrTypeCacheView.ResolveType(name);
 
-            if (loadedTypes.ContainsKey(name))
+            if (type != null)
             {
-                return new BoundTypeExpression() { ResultType = ClrTypeSymbol.MapClrType(loadedTypes[name]) };
+                return new BoundTypeExpression() { ResultType = ClrTypeSymbol.MapClrType(type) };
             }
 
             var variable = scope.LookupVariable(name);

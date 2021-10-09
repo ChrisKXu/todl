@@ -13,7 +13,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
     {
         public static TBoundExpression BindExpression<TBoundExpression>(
             string inputText,
-            Binder binder,
+            BinderFlags binderFlags,
             BoundScope scope)
             where TBoundExpression : BoundExpression
         {
@@ -22,12 +22,13 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             parser.Lex();
 
             var expression = parser.ParseExpression();
+            var binder = new Binder(binderFlags, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));
             return binder.BindExpression(scope, expression) as TBoundExpression;
         }
 
         public static TBoundStatement BindStatement<TBoundStatement>(
             string inputText,
-            Binder binder,
+            BinderFlags binderFlags,
             BoundScope scope)
             where TBoundStatement : BoundStatement
         {
@@ -36,19 +37,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             parser.Lex();
 
             var statement = parser.ParseStatement();
+            var binder = new Binder(binderFlags, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));
             return binder.BindStatement(scope, statement) as TBoundStatement;
-        }
-
-        public static BoundImportDirective BindImportDirective(
-            string inputText,
-            Binder binder)
-        {
-            var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
-            var parser = new Parser(syntaxTree);
-            parser.Lex();
-
-            var importDirective = parser.ParseDirective().As<ImportDirective>();
-            return binder.BindImportDirective(importDirective);
         }
 
         [Fact]
@@ -56,7 +46,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundBinaryExpression = BindExpression<BoundBinaryExpression>(
                 inputText: "1 + 2 + 3",
-                binder: new Binder(BinderFlags.None),
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundBinaryExpression.Should().NotBeNull();
@@ -80,7 +70,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundConstant = BindExpression<BoundConstant>(
                 inputText: input,
-                binder: new Binder(BinderFlags.None),
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundConstant.Should().NotBeNull();
@@ -92,13 +82,11 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [MemberData(nameof(GetTestBindAssignmentExpressionDataWithEqualsToken))]
         public void TestBindAssignmentExpressionEqualsToken(string input, string variableName, TypeSymbol expectedResultType)
         {
-            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
             var boundAssignmentExpression = BindExpression<BoundAssignmentExpression>(
                 inputText: input,
-                binder: binder,
+                binderFlags: BinderFlags.AllowVariableDeclarationInAssignment,
                 scope: BoundScope.GlobalScope);
 
-            binder.Diagnostics.Should().BeEmpty();
             boundAssignmentExpression.Should().NotBeNull();
 
             var variable = (boundAssignmentExpression.Left as BoundVariableExpression).Variable;
@@ -125,10 +113,10 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 b = a + 10;
             }
             ";
-            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
+
             var boundBlockStatement = BindStatement<BoundBlockStatement>(
                 inputText: input,
-                binder: binder,
+                binderFlags: BinderFlags.AllowVariableDeclarationInAssignment,
                 scope: BoundScope.GlobalScope);
 
             boundBlockStatement.Should().NotBeNull();
@@ -153,10 +141,9 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 let b = a + 4;
             }
             ";
-            var binder = new Binder(BinderFlags.None);
             var boundBlockStatement = BindStatement<BoundBlockStatement>(
                 inputText: input,
-                binder: binder,
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundBlockStatement.Should().NotBeNull();
@@ -179,10 +166,10 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 b = a + 5;
             }
             ";
-            var binder = new Binder(BinderFlags.None);
+
             var boundBlockStatement = BindStatement<BoundBlockStatement>(
                 inputText: input,
-                binder: binder,
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundBlockStatement.Should().NotBeNull();
@@ -200,50 +187,11 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
-        public void TestBindImportDirectiveSingle()
-        {
-            var boundImportDirective = BindImportDirective(
-                inputText: "import { Task } from System.Threading.Tasks;",
-                binder: new Binder(BinderFlags.None));
-
-            boundImportDirective.Namespace.Should().Be("System.Threading.Tasks");
-            var taskType = boundImportDirective.ImportedTypes["Task"];
-            taskType.Should().Be(typeof(System.Threading.Tasks.Task));
-        }
-
-        [Fact]
-        public void TestBindImportDirectiveMultiple()
-        {
-            var boundImportDirective = BindImportDirective(
-                inputText: "import { BinaryReader, BinaryWriter, FileStream } from System.IO;",
-                binder: new Binder(BinderFlags.None));
-
-            boundImportDirective.Namespace.Should().Be("System.IO");
-            boundImportDirective.ImportedTypes.Count.Should().Be(3);
-            boundImportDirective.ImportedTypes["BinaryReader"].Should().Be(typeof(System.IO.BinaryReader));
-            boundImportDirective.ImportedTypes["BinaryWriter"].Should().Be(typeof(System.IO.BinaryWriter));
-            boundImportDirective.ImportedTypes["FileStream"].Should().Be(typeof(System.IO.FileStream));
-        }
-
-        [Fact]
-        public void TestBindImportDirectiveWildcard()
-        {
-            var boundImportDirective = BindImportDirective(
-                inputText: "import * from System.Runtime.Loader;",
-                binder: new Binder(BinderFlags.None));
-
-            boundImportDirective.Namespace.Should().Be("System.Runtime.Loader");
-            boundImportDirective.ImportedTypes.Count.Should().Be(2);
-            boundImportDirective.ImportedTypes["AssemblyDependencyResolver"].Should().Be(typeof(System.Runtime.Loader.AssemblyDependencyResolver));
-            boundImportDirective.ImportedTypes["AssemblyLoadContext"].Should().Be(typeof(System.Runtime.Loader.AssemblyLoadContext));
-        }
-
-        [Fact]
         public void TestBindMemberAccessExpressionInstanceProperty()
         {
             var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>(
                 inputText: "\"abc\".Length",
-                binder: new Binder(BinderFlags.None),
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundMemberAccessExpression.BoundMemberAccessKind.Should().Be(BoundMemberAccessKind.Property);
@@ -257,7 +205,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>(
                 inputText: "System.Int32.MaxValue",
-                binder: new Binder(BinderFlags.None),
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundMemberAccessExpression.BoundMemberAccessKind.Should().Be(BoundMemberAccessKind.Field);
@@ -271,7 +219,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
                 inputText: "100.ToString()",
-                binder: new Binder(BinderFlags.None),
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
@@ -284,7 +232,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
                 inputText: "System.Math.Abs(-10)",
-                binder: new Binder(BinderFlags.None),
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
@@ -302,7 +250,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
                 inputText: "100.ToString(format: \"G\")",
-                binder: new Binder(BinderFlags.None),
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
@@ -319,7 +267,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
                 inputText: "\"abcde\".IndexOf(\"ab\", 1, 2)",
-                binder: new Binder(BinderFlags.None),
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
@@ -340,7 +288,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
                 inputText: inputText,
-                binder: new Binder(BinderFlags.None),
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
@@ -358,7 +306,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>(
                 inputText: "new System.Exception()",
-                binder: new Binder(BinderFlags.None),
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundObjectCreationExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(System.Exception));
@@ -373,7 +321,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>(
                 inputText: inputText,
-                binder: new Binder(BinderFlags.None),
+                binderFlags: BinderFlags.None,
                 scope: BoundScope.GlobalScope);
 
             boundObjectCreationExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(System.Exception));

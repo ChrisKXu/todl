@@ -15,13 +15,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private readonly List<Diagnostic> diagnostics = new();
         private readonly BinderFlags binderFlags;
-        private readonly ClrTypeCache clrTypeCache = ClrTypeCache.Default;
+        private readonly ClrTypeCacheView clrTypeCacheView;
 
         public IReadOnlyList<Diagnostic> Diagnostics => diagnostics;
 
-        internal Binder(BinderFlags binderFlags)
+        internal Binder(
+            BinderFlags binderFlags,
+            ClrTypeCacheView clrTypeCacheView)
         {
             this.binderFlags = binderFlags;
+            this.clrTypeCacheView = clrTypeCacheView;
         }
 
         private BoundErrorExpression ReportErrorExpression(Diagnostic diagnostic)

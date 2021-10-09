@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis
 {
-    public class ClrTypeCache
+    public sealed class ClrTypeCache
     {
         private readonly HashSet<string> loadedNamespaces = new();
 
@@ -47,6 +48,8 @@ namespace Todl.Compiler.CodeAnalysis
 
             return new ClrTypeCache(assemblies);
         }
+
+        public ClrTypeCacheView CreateView(IEnumerable<ImportDirective> importDirectives) => new ClrTypeCacheView(this, importDirectives);
 
         public static ClrTypeCache FromAssemblies(IEnumerable<Assembly> assemblies)
             => new ClrTypeCache(assemblies);

@@ -1,6 +1,6 @@
-namespace Todl.Compiler.CodeAnalysis.Binding
+﻿namespace Todl.Compiler.CodeAnalysis.Binding
 {
-    internal enum BinderFlags : uint
+    public enum BinderFlags : uint
     {
         None = 0,
         AllowVariableDeclarationInAssignment = 1 // used in repl
