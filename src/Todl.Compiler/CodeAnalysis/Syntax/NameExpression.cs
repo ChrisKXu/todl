@@ -39,6 +39,17 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         private NameExpression ParseNameExpression()
         {
+            if (SyntaxFacts.BuiltInTypes.Contains(Current.Kind))
+            {
+                return new NameExpression(syntaxTree)
+                {
+                    SyntaxTokens = new List<SyntaxToken>()
+                    {
+                        ExpectToken(Current.Kind)
+                    }
+                };
+            }
+
             var syntaxTokens = new List<SyntaxToken>
             {
                 ExpectToken(SyntaxKind.IdentifierToken)

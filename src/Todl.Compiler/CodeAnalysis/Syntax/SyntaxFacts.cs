@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -40,7 +40,24 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             { "let", SyntaxKind.LetKeywordToken },
             { "import", SyntaxKind.ImportKeywordToken },
             { "from", SyntaxKind.FromKeywordToken },
-            { "new", SyntaxKind.NewKeywordToken }
+            { "new", SyntaxKind.NewKeywordToken },
+
+            { "bool", SyntaxKind.BoolKeywordToken },
+            { "byte", SyntaxKind.ByteKeywordToken },
+            { "char", SyntaxKind.CharKeywordToken },
+            { "int", SyntaxKind.IntKeywordToken },
+            { "long", SyntaxKind.LongKeywordToken },
+            { "string", SyntaxKind.StringKeywordToken }
+        };
+
+        public static readonly IReadOnlySet<SyntaxKind> BuiltInTypes = new HashSet<SyntaxKind>()
+        {
+            SyntaxKind.BoolKeywordToken,
+            SyntaxKind.ByteKeywordToken,
+            SyntaxKind.CharKeywordToken,
+            SyntaxKind.IntKeywordToken,
+            SyntaxKind.LongKeywordToken,
+            SyntaxKind.StringKeywordToken
         };
     }
 }

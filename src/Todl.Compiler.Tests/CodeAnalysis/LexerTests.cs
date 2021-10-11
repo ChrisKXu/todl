@@ -56,6 +56,12 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData(SyntaxKind.ImportKeywordToken, "import")]
         [InlineData(SyntaxKind.FromKeywordToken, "from")]
         [InlineData(SyntaxKind.NewKeywordToken, "new")]
+        [InlineData(SyntaxKind.BoolKeywordToken, "bool")]
+        [InlineData(SyntaxKind.ByteKeywordToken, "byte")]
+        [InlineData(SyntaxKind.CharKeywordToken, "char")]
+        [InlineData(SyntaxKind.IntKeywordToken, "int")]
+        [InlineData(SyntaxKind.LongKeywordToken, "long")]
+        [InlineData(SyntaxKind.StringKeywordToken, "string")]
         public void TestSingleToken(SyntaxKind kind, string text)
         {
             var sourceText = SourceText.FromString(text);

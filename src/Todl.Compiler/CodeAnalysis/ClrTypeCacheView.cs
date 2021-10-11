@@ -10,11 +10,26 @@ namespace Todl.Compiler.CodeAnalysis
         private readonly ClrTypeCache clrTypeCache;
         private readonly IDictionary<string, Type> typeAliases;
 
+        private static readonly IDictionary<string, Type> builtInTypes = new Dictionary<string, Type>()
+        {
+            { "bool", typeof(bool) },
+            { "byte", typeof(byte) },
+            { "char", typeof(char) },
+            { "int", typeof(int) },
+            { "long", typeof(long) },
+            { "string", typeof(string) }
+        };
+
         public Type ResolveType(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
                 throw new ArgumentNullException(nameof(name));
+            }
+
+            if (builtInTypes.ContainsKey(name))
+            {
+                return builtInTypes[name];
             }
 
             if (typeAliases.ContainsKey(name))
