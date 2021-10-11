@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -39,11 +39,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public IReadOnlyList<Directive> Directives => directives;
         public IReadOnlyList<Statement> Statements => statements;
-        private readonly IReadOnlySet<string> loadedNamespaces;
-        private readonly List<Assembly> loadedAssemblies = new()
-        {
-            Assembly.GetAssembly(typeof(int)) // mscorlib
-        };
 
         private SyntaxToken Seek(int offset)
         {
@@ -85,13 +80,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         {
             this.syntaxTree = syntaxTree;
             this.lexer = new Lexer(syntaxTree);
-
-            var allTypes = loadedAssemblies.SelectMany(a => a.GetTypes());
-
-            var n = allTypes
-                .Where(t => !string.IsNullOrEmpty(t.Namespace))
-                .Select(t => t.Namespace);
-            loadedNamespaces = NamespaceUtilities.GetFullNamespaces(n);
         }
 
         // Giving unit tests access to lexer.Lex()

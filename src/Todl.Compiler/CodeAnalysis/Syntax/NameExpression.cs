@@ -39,6 +39,17 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         private NameExpression ParseNameExpression()
         {
+            if (SyntaxFacts.BuiltInTypes.Contains(Current.Kind))
+            {
+                return new NameExpression(syntaxTree)
+                {
+                    SyntaxTokens = new List<SyntaxToken>()
+                    {
+                        ExpectToken(Current.Kind)
+                    }
+                };
+            }
+
             var syntaxTokens = new List<SyntaxToken>
             {
                 ExpectToken(SyntaxKind.IdentifierToken)
@@ -48,7 +59,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
             while (Current.Kind == SyntaxKind.DotToken && Peak.Kind == SyntaxKind.IdentifierToken)
             {
-                if (!loadedNamespaces.Contains(builder.ToString()))
+                if (!syntaxTree.ClrTypeCache.Namespaces.Contains(builder.ToString()))
                 {
                     break;
                 }

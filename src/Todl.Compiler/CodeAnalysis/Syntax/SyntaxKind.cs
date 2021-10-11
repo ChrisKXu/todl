@@ -43,6 +43,12 @@
         ImportKeywordToken,
         FromKeywordToken,
         NewKeywordToken,
+        BoolKeywordToken,
+        ByteKeywordToken,
+        CharKeywordToken,
+        IntKeywordToken,
+        LongKeywordToken,
+        StringKeywordToken,
 
         // Trivia
         WhitespaceTrivia,
