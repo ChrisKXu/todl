@@ -484,7 +484,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString("(1 + 2 * 3 - 4")); // missing a ")"
             var parser = new Parser(syntaxTree);
-            parser.Parse();
+            parser.Lex();
+            parser.ParseExpression();
 
             parser.Diagnostics.Should().NotBeEmpty();
             parser.Diagnostics[0].TextLocation.TextSpan.Start.Should().Be(14);

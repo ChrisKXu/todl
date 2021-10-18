@@ -16,7 +16,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         private readonly Lexer lexer;
         private readonly List<Diagnostic> diagnostics = new();
         private readonly List<Directive> directives = new();
-        private readonly List<Statement> statements = new();
+        private readonly List<Member> members = new();
         private int position = 0;
 
         private IReadOnlyList<SyntaxToken> SyntaxTokens => this.lexer.SyntaxTokens;
@@ -38,7 +38,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         }
 
         public IReadOnlyList<Directive> Directives => directives;
-        public IReadOnlyList<Statement> Statements => statements;
+        public IReadOnlyList<Member> Members => members;
 
         private SyntaxToken Seek(int offset)
         {
@@ -101,7 +101,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
             while (Current.Kind != SyntaxKind.EndOfFileToken)
             {
-                statements.Add(ParseStatement());
+                members.Add(ParseMember());
             }
         }
 
