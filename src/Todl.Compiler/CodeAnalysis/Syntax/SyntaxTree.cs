@@ -10,7 +10,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public SourceText SourceText { get; }
         public IReadOnlyList<Directive> Directives => parser.Directives;
-        public IReadOnlyList<Statement> Statements => parser.Statements;
+        public IReadOnlyList<Member> Statements => parser.Members;
         public ClrTypeCache ClrTypeCache { get; }
 
         internal SyntaxTree(SourceText sourceText)
