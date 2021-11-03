@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
-    public class ParserTests
+    public partial class ParserTests
     {
         private static TExpression ParseExpression<TExpression>(string sourceText)
             where TExpression : Expression
@@ -15,7 +15,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var parser = new Parser(syntaxTree);
             parser.Lex();
 
-            return parser.ParseExpression() as TExpression;
+            return parser.ParseExpression().As<TExpression>();
         }
 
         private static TStatement ParseStatement<TStatement>(string sourceText)
@@ -25,7 +25,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var parser = new Parser(syntaxTree);
             parser.Lex();
 
-            return parser.ParseStatement() as TStatement;
+            return parser.ParseStatement().As<TStatement>();
         }
 
         private static TDirective ParseDirective<TDirective>(string sourceText)
@@ -35,7 +35,17 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var parser = new Parser(syntaxTree);
             parser.Lex();
 
-            return parser.ParseDirective() as TDirective;
+            return parser.ParseDirective().As<TDirective>();
+        }
+
+        private static TMember ParseMember<TMember>(string sourceText)
+            where TMember : Member
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            return parser.ParseMember().As<TMember>();
         }
 
         [Fact]

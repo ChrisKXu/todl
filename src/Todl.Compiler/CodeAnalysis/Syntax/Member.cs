@@ -9,7 +9,12 @@
     {
         internal Member ParseMember()
         {
-            return ParseVariableDeclarationMember();
+            if (Current.Kind == SyntaxKind.ConstKeywordToken || Current.Kind == SyntaxKind.LetKeywordToken)
+            {
+                return ParseVariableDeclarationMember();
+            }
+
+            return ParseFunctionDeclarationMember();
         }
     }
 }
