@@ -1,4 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -6,7 +8,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         public SyntaxToken NewKeywordToken { get; internal init; }
         public NameExpression TypeNameExpression { get; internal init; }
-        public ArgumentsList Arguments { get; internal init; }
+        public CommaSeparatedSyntaxList<Argument> Arguments { get; internal init; }
 
         public NewExpression(SyntaxTree syntaxTree) : base(syntaxTree) { }
 
@@ -22,11 +24,28 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         private NewExpression ParseNewExpression()
         {
+            var newKeywordToken = ExpectToken(SyntaxKind.NewKeywordToken);
+            var typeNameExpression = ParseNameExpression();
+            var arguments = ParseCommaSeparatedSyntaxList(ParseArgument);
+
+            var namedArguments = arguments.Items.Where(p => p.IsNamedArgument);
+            if (namedArguments.Any() && namedArguments.Count() != arguments.Items.Count)
+            {
+                diagnostics.Add(
+                    new Diagnostic()
+                    {
+                        Message = "Either all or none of the arguments should be named arguments",
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = arguments.OpenParenthesisToken.GetTextLocation(),
+                        ErrorCode = ErrorCode.MixedPositionalAndNamedArguments
+                    });
+            }
+
             return new NewExpression(syntaxTree)
             {
-                NewKeywordToken = ExpectToken(SyntaxKind.NewKeywordToken),
-                TypeNameExpression = ParseNameExpression(),
-                Arguments = ParseArgumentsList()
+                NewKeywordToken = newKeywordToken,
+                TypeNameExpression = typeNameExpression,
+                Arguments = arguments
             };
         }
     }

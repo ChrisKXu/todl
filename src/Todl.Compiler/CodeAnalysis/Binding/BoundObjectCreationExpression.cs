@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -32,29 +32,29 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             }
 
             // Treating no arguments as the same way of positional arguments
-            if (!newExpression.Arguments.Any() || !newExpression.Arguments[0].IsNamedArgument)
+            if (!newExpression.Arguments.Items.Any() || !newExpression.Arguments.Items[0].IsNamedArgument)
             {
                 return BindNewExpressionWithPositionalArgumentsInternal(
                     scope: scope,
                     targetType: boundTypeExpression.ResultType,
-                    argumentsList: newExpression.Arguments);
+                    arguments: newExpression.Arguments);
             }
 
             return BindNewExpressionWithNamedArgumentsInternal(
                 scope: scope,
                 targetType: boundTypeExpression.ResultType,
-                argumentsList: newExpression.Arguments);
+                arguments: newExpression.Arguments);
         }
 
         private BoundExpression BindNewExpressionWithPositionalArgumentsInternal(
             BoundScope scope,
             TypeSymbol targetType,
-            ArgumentsList argumentsList)
+            CommaSeparatedSyntaxList<Argument> arguments)
         {
             Debug.Assert(targetType.IsNative);
 
             var clrType = (targetType as ClrTypeSymbol).ClrType;
-            var boundArguments = argumentsList.Select(a => BindExpression(scope, a.Expression));
+            var boundArguments = arguments.Items.Select(a => BindExpression(scope, a.Expression));
             var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
 
             var constructorInfo = clrType.GetConstructor(argumentTypes);
@@ -75,17 +75,17 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private BoundExpression BindNewExpressionWithNamedArgumentsInternal(
             BoundScope scope,
             TypeSymbol targetType,
-            ArgumentsList argumentsList)
+            CommaSeparatedSyntaxList<Argument> arguments)
         {
             Debug.Assert(targetType.IsNative);
 
             var clrType = (targetType as ClrTypeSymbol).ClrType;
             var candidates = clrType.GetConstructors()
-                .Where(c => c.IsPublic && c.GetParameters().Length == argumentsList.Count);
-            var arguments = argumentsList.ToDictionary(
+                .Where(c => c.IsPublic && c.GetParameters().Length == arguments.Items.Count);
+            var argumentsDictionary = arguments.Items.ToDictionary(
                 keySelector: a => a.Identifier.Text.ToString(),
                 elementSelector: a => BindExpression(scope, a.Expression));
-            var nameAndTypes = arguments.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
+            var nameAndTypes = argumentsDictionary.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
 
             var constructorInfo = candidates.FirstOrDefault(c =>
             {
@@ -98,7 +98,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 return ReportNoMatchingCandidate();
             }
 
-            var boundArguments = constructorInfo.GetParameters().OrderBy(p => p.Position).Select(p => arguments[p.Name]).ToList();
+            var boundArguments = constructorInfo.GetParameters().OrderBy(p => p.Position).Select(p => argumentsDictionary[p.Name]).ToList();
 
             return new BoundObjectCreationExpression()
             {

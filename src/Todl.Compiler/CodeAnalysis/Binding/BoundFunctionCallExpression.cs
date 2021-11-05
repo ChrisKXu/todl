@@ -26,7 +26,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             // Since all or none of the arguments of a FunctionCallExpression needs to be named,
             // we only need to check the first argument to see if it's a named argument to determine the others
-            if (functionCallExpression.Arguments.Any() && functionCallExpression.Arguments[0].IsNamedArgument)
+            if (functionCallExpression.Arguments.Items.Any() && functionCallExpression.Arguments.Items[0].IsNamedArgument)
             {
                 return BindFunctionCallWithNamedArgumentsInternal(
                     scope: scope,
@@ -55,9 +55,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     && m.IsStatic == isStatic
                     && !m.ContainsGenericParameters
                     && m.IsPublic
-                    && m.GetParameters().Length == functionCallExpression.Arguments.Count);
+                    && m.GetParameters().Length == functionCallExpression.Arguments.Items.Count);
 
-            var arguments = functionCallExpression.Arguments.ToDictionary(
+            var arguments = functionCallExpression.Arguments.Items.ToDictionary(
                 keySelector: a => a.Identifier.Text.ToString(),
                 elementSelector: a => BindExpression(scope, a.Expression));
 
@@ -91,7 +91,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
-            var boundArguments = functionCallExpression.Arguments.Select(a => BindExpression(scope, a.Expression));
+            var boundArguments = functionCallExpression.Arguments.Items.Select(a => BindExpression(scope, a.Expression));
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
 
             var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();

@@ -6,6 +6,8 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
+    using ArgumentsList = CommaSeparatedSyntaxList<Argument>;
+
     public partial class ParserTests
     {
         private static TExpression ParseExpression<TExpression>(string sourceText)
@@ -281,7 +283,6 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                     {
                         var argument = _0.As<Argument>();
                         argument.IsNamedArgument.Should().Be(false);
-                        argument.CommaToken.Should().BeNull();
                         argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
                     },
                     closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken)));
@@ -304,7 +305,6 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                     {
                         var argument = _0.As<Argument>();
                         argument.IsNamedArgument.Should().Be(true);
-                        argument.CommaToken.Should().BeNull();
                         argument.Identifier.Text.Should().Be("s");
                         argument.ColonToken.Kind.Should().Be(SyntaxKind.ColonToken);
                         argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
@@ -321,7 +321,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             newExpression.Should().HaveChildren(
                 _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
                 _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Exception"),
-                _2 => _2.As<ArgumentsList>().Arguments.Should().BeEmpty());
+                _2 => _2.As<ArgumentsList>().Items.Should().BeEmpty());
         }
 
         [Fact]
@@ -335,7 +335,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
                 _2 =>
                 {
-                    var arguments = _2.As<ArgumentsList>().Arguments;
+                    var arguments = _2.As<ArgumentsList>().Items;
                     arguments.Should().HaveCount(1);
                     arguments[0].IsNamedArgument.Should().BeFalse();
                     arguments[0].Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("\"https://google.com\"");
@@ -353,7 +353,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
                 _2 =>
                 {
-                    var arguments = _2.As<ArgumentsList>().Arguments;
+                    var arguments = _2.As<ArgumentsList>().Items;
                     arguments.Should().HaveCount(1);
 
                     var uriString = arguments[0];
@@ -374,7 +374,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
                 _2 =>
                 {
-                    var arguments = _2.As<ArgumentsList>().Arguments;
+                    var arguments = _2.As<ArgumentsList>().Items;
                     arguments.Should().HaveCount(2);
                     arguments[0].IsNamedArgument.Should().BeFalse();
                     arguments[0].Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("\"https://google.com\"");
@@ -394,7 +394,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
                 _2 =>
                 {
-                    var arguments = _2.As<ArgumentsList>().Arguments;
+                    var arguments = _2.As<ArgumentsList>().Items;
                     arguments.Should().HaveCount(2);
 
                     var uriString = arguments[0];
