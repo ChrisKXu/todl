@@ -1,17 +1,65 @@
-﻿using Todl.Compiler.CodeAnalysis.Syntax;
+﻿using FluentAssertions;
+using Todl.Compiler.CodeAnalysis.Syntax;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
     public partial class ParserTests
     {
-        [Theory]
-        [InlineData("int Function(){}")]
-        [InlineData("System.Uri Function(){}")]
-        public void ParseFunctionDeclarationMemberBasic(string inputText)
+        [Fact]
+        public void ParseFunctionDeclarationMemberWithSimpleReturnType()
         {
-            var function = ParseMember<FunctionDeclarationMember>(inputText);
+            var function = ParseMember<FunctionDeclarationMember>("int Function(){}");
             function.Should().NotBeNull();
+            function.Name.Text.Should().Be("Function");
+            function.ReturnType.QualifiedName.Should().Be("int");
+            function.Parameters.Items.Should().BeEmpty();
+            function.Body.InnerStatements.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void ParseFunctionDeclarationMemberWithQualifiedReturnType()
+        {
+            var function = ParseMember<FunctionDeclarationMember>("System.Uri Function(){}");
+            function.Should().NotBeNull();
+            function.Name.Text.Should().Be("Function");
+            function.ReturnType.QualifiedName.Should().Be("System.Uri");
+            function.Parameters.Items.Should().BeEmpty();
+            function.Body.InnerStatements.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void ParseFunctionDeclarationMemberWithSingleParameter()
+        {
+            var function = ParseMember<FunctionDeclarationMember>("void Function(int a){}");
+            function.Should().NotBeNull();
+            function.Name.Text.Should().Be("Function");
+            function.ReturnType.QualifiedName.Should().Be("void");
+            function.Parameters.Items.Count.Should().Be(1);
+            function.Body.InnerStatements.Should().BeEmpty();
+
+            var a = function.Parameters.Items[0];
+            a.ParameterType.QualifiedName.Should().Be("int");
+            a.Identifier.Text.Should().Be("a");
+        }
+
+        [Fact]
+        public void ParseFunctionDeclarationMemberWithMultipleParameters()
+        {
+            var function = ParseMember<FunctionDeclarationMember>("void Function(int a, System.Uri b){}");
+            function.Should().NotBeNull();
+            function.Name.Text.Should().Be("Function");
+            function.ReturnType.QualifiedName.Should().Be("void");
+            function.Parameters.Items.Count.Should().Be(2);
+            function.Body.InnerStatements.Should().BeEmpty();
+
+            var a = function.Parameters.Items[0];
+            a.ParameterType.QualifiedName.Should().Be("int");
+            a.Identifier.Text.Should().Be("a");
+
+            var b = function.Parameters.Items[1];
+            b.ParameterType.QualifiedName.Should().Be("System.Uri");
+            b.Identifier.Text.Should().Be("b");
         }
     }
 }

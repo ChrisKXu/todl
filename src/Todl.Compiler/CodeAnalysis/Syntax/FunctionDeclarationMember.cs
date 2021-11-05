@@ -4,7 +4,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class Parameter : SyntaxNode
     {
-        public SyntaxToken CommaToken { get; internal init; }
         public NameExpression ParameterType { get; internal init; }
         public SyntaxToken Identifier { get; internal init; }
 
@@ -12,34 +11,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
-            if (CommaToken != null)
-            {
-                yield return CommaToken;
-            }
-
             yield return ParameterType;
             yield return Identifier;
-        }
-    }
-
-    public sealed class ParameterList : SyntaxNode
-    {
-        public SyntaxToken OpenParenthesisToken { get; internal init; }
-        public IReadOnlyList<Parameter> Parameters { get; internal init; }
-        public SyntaxToken CloseParenthesisToken { get; internal init; }
-
-        public ParameterList(SyntaxTree syntaxTree) : base(syntaxTree) { }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return OpenParenthesisToken;
-
-            foreach (var parameter in Parameters)
-            {
-                yield return parameter;
-            }
-
-            yield return CloseParenthesisToken;
         }
     }
 
@@ -47,7 +20,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         public NameExpression ReturnType { get; internal init; }
         public SyntaxToken Name { get; internal init; }
-        public ParameterList ParameterList { get; internal init; }
+        public CommaSeparatedSyntaxList<Parameter> Parameters { get; internal init; }
         public BlockStatement Body { get; internal init; }
 
         public FunctionDeclarationMember(SyntaxTree syntaxTree) : base(syntaxTree) { }
@@ -56,24 +29,19 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         {
             yield return ReturnType;
             yield return Name;
-            yield return ParameterList;
+            yield return Parameters;
             yield return Body;
         }
     }
 
     public sealed partial class Parser
     {
-        private ParameterList ParseParameterList()
+        private Parameter ParseParemeter()
         {
-            var openParenthesisToken = ExpectToken(SyntaxKind.OpenParenthesisToken);
-            var parameters = new List<Parameter>();
-            var closeParenthesisToken = ExpectToken(SyntaxKind.CloseParenthesisToken);
-
-            return new ParameterList(syntaxTree)
+            return new Parameter(syntaxTree)
             {
-                OpenParenthesisToken = openParenthesisToken,
-                Parameters = parameters,
-                CloseParenthesisToken = closeParenthesisToken
+                ParameterType = ParseNameExpression(),
+                Identifier = ExpectToken(SyntaxKind.IdentifierToken)
             };
         }
 
@@ -81,14 +49,14 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         {
             var returnType = ParseNameExpression();
             var name = ExpectToken(SyntaxKind.IdentifierToken);
-            var parameterList = ParseParameterList();
+            var parameters = ParseCommaSeparatedSyntaxList(ParseParemeter);
             var body = ParseBlockStatement();
 
             return new FunctionDeclarationMember(syntaxTree)
             {
                 ReturnType = returnType,
                 Name = name,
-                ParameterList = parameterList,
+                Parameters = parameters,
                 Body = body
             };
         }
