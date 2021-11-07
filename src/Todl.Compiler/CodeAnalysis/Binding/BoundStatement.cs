@@ -1,4 +1,4 @@
-using Todl.Compiler.CodeAnalysis.Syntax;
+﻿using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -14,7 +14,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             return statement switch
             {
                 ExpressionStatement expressionStatement => BindExpressionStatement(scope, expressionStatement),
-                BlockStatement blockStatement => BindBlockStatement(scope, blockStatement),
+                BlockStatement blockStatement => BindBlockStatement(scope.CreateChildScope(BoundScopeKind.BlockStatement), blockStatement),
                 VariableDeclarationStatement variableDeclarationStatement => BindVariableDeclarationStatement(scope, variableDeclarationStatement),
                 _ => null
             };

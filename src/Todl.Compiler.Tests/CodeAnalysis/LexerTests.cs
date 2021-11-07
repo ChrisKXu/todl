@@ -62,6 +62,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData(SyntaxKind.IntKeywordToken, "int")]
         [InlineData(SyntaxKind.LongKeywordToken, "long")]
         [InlineData(SyntaxKind.StringKeywordToken, "string")]
+        [InlineData(SyntaxKind.VoidKeywordToken, "void")]
         public void TestSingleToken(SyntaxKind kind, string text)
         {
             var sourceText = SourceText.FromString(text);

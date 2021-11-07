@@ -17,7 +17,8 @@ namespace Todl.Compiler.CodeAnalysis
             { "char", typeof(char) },
             { "int", typeof(int) },
             { "long", typeof(long) },
-            { "string", typeof(string) }
+            { "string", typeof(string) },
+            { "void", typeof(void) }
         };
 
         public Type ResolveType(string name)
@@ -39,6 +40,9 @@ namespace Todl.Compiler.CodeAnalysis
 
             return clrTypeCache.Types.FirstOrDefault(t => t.FullName == name);
         }
+
+        public Type ResolveType(NameExpression name)
+            => ResolveType(name.QualifiedName.ToString());
 
         private IDictionary<string, Type> ImportTypeAliases(IEnumerable<ImportDirective> importDirectives)
         {

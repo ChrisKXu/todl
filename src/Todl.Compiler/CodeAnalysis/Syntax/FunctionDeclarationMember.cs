@@ -1,0 +1,64 @@
+﻿using System.Collections.Generic;
+
+namespace Todl.Compiler.CodeAnalysis.Syntax
+{
+    public sealed class Parameter : SyntaxNode
+    {
+        public NameExpression ParameterType { get; internal init; }
+        public SyntaxToken Identifier { get; internal init; }
+
+        public Parameter(SyntaxTree syntaxTree) : base(syntaxTree) { }
+
+        public override IEnumerable<SyntaxNode> GetChildren()
+        {
+            yield return ParameterType;
+            yield return Identifier;
+        }
+    }
+
+    public sealed class FunctionDeclarationMember : Member
+    {
+        public NameExpression ReturnType { get; internal init; }
+        public SyntaxToken Name { get; internal init; }
+        public CommaSeparatedSyntaxList<Parameter> Parameters { get; internal init; }
+        public BlockStatement Body { get; internal init; }
+
+        public FunctionDeclarationMember(SyntaxTree syntaxTree) : base(syntaxTree) { }
+
+        public override IEnumerable<SyntaxNode> GetChildren()
+        {
+            yield return ReturnType;
+            yield return Name;
+            yield return Parameters;
+            yield return Body;
+        }
+    }
+
+    public sealed partial class Parser
+    {
+        private Parameter ParseParemeter()
+        {
+            return new Parameter(syntaxTree)
+            {
+                ParameterType = ParseNameExpression(),
+                Identifier = ExpectToken(SyntaxKind.IdentifierToken)
+            };
+        }
+
+        private FunctionDeclarationMember ParseFunctionDeclarationMember()
+        {
+            var returnType = ParseNameExpression();
+            var name = ExpectToken(SyntaxKind.IdentifierToken);
+            var parameters = ParseCommaSeparatedSyntaxList(ParseParemeter);
+            var body = ParseBlockStatement();
+
+            return new FunctionDeclarationMember(syntaxTree)
+            {
+                ReturnType = returnType,
+                Name = name,
+                Parameters = parameters,
+                Body = body
+            };
+        }
+    }
+}
