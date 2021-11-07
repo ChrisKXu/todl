@@ -9,9 +9,9 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
-    public sealed class BinderTests
+    public sealed partial class BinderTests
     {
-        public static TBoundExpression BindExpression<TBoundExpression>(
+        private static TBoundExpression BindExpression<TBoundExpression>(
             string inputText,
             BinderFlags binderFlags,
             BoundScope scope)
@@ -23,10 +23,10 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
             var expression = parser.ParseExpression();
             var binder = new Binder(binderFlags, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));
-            return binder.BindExpression(scope, expression) as TBoundExpression;
+            return binder.BindExpression(scope, expression).As<TBoundExpression>();
         }
 
-        public static TBoundStatement BindStatement<TBoundStatement>(
+        private static TBoundStatement BindStatement<TBoundStatement>(
             string inputText,
             BinderFlags binderFlags,
             BoundScope scope)
@@ -39,6 +39,21 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var statement = parser.ParseStatement();
             var binder = new Binder(binderFlags, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));
             return binder.BindStatement(scope, statement) as TBoundStatement;
+        }
+
+        private static TBoundMember BindMember<TBoundMember>(
+            string inputText,
+            BinderFlags binderFlags,
+            BoundScope scope)
+            where TBoundMember : BoundMember
+        {
+            var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
+            var parser = new Parser(syntaxTree);
+            parser.Lex();
+
+            var member = parser.ParseMember();
+            var binder = new Binder(binderFlags, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));
+            return binder.BindMember(scope, member).As<TBoundMember>();
         }
 
         [Fact]

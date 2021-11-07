@@ -8,7 +8,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 {
     using ArgumentsList = CommaSeparatedSyntaxList<Argument>;
 
-    public partial class ParserTests
+    public sealed partial class ParserTests
     {
         private static TExpression ParseExpression<TExpression>(string sourceText)
             where TExpression : Expression

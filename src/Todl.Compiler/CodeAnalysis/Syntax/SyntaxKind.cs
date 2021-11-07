@@ -49,6 +49,7 @@
         IntKeywordToken,
         LongKeywordToken,
         StringKeywordToken,
+        VoidKeywordToken,
 
         // Trivia
         WhitespaceTrivia,

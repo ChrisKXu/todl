@@ -4,12 +4,12 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
-    public partial class ParserTests
+    public sealed partial class ParserTests
     {
         [Fact]
         public void ParseFunctionDeclarationMemberWithSimpleReturnType()
         {
-            var function = ParseMember<FunctionDeclarationMember>("int Function(){}");
+            var function = ParseMember<FunctionDeclarationMember>("int Function() {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.QualifiedName.Should().Be("int");
@@ -20,7 +20,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithQualifiedReturnType()
         {
-            var function = ParseMember<FunctionDeclarationMember>("System.Uri Function(){}");
+            var function = ParseMember<FunctionDeclarationMember>("System.Uri Function() {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.QualifiedName.Should().Be("System.Uri");
@@ -31,7 +31,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithSingleParameter()
         {
-            var function = ParseMember<FunctionDeclarationMember>("void Function(int a){}");
+            var function = ParseMember<FunctionDeclarationMember>("void Function(int a) {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.QualifiedName.Should().Be("void");
@@ -46,7 +46,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithMultipleParameters()
         {
-            var function = ParseMember<FunctionDeclarationMember>("void Function(int a, System.Uri b){}");
+            var function = ParseMember<FunctionDeclarationMember>("void Function(int a, System.Uri b) {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.QualifiedName.Should().Be("void");
