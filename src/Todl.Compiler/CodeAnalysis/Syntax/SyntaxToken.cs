@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
@@ -6,7 +6,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     public sealed class SyntaxToken : SyntaxNode
     {
         public SyntaxKind Kind { get; }
-        public TextSpan Text { get; }
+        public override TextSpan Text { get; }
         public IReadOnlyCollection<SyntaxTrivia> LeadingTrivia { get; }
         public IReadOnlyCollection<SyntaxTrivia> TrailingTrivia { get; }
 
@@ -29,6 +29,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             yield break;
         }
 
-        public TextLocation GetTextLocation() => new(this.SyntaxTree.SourceText, this.Text);
+        public TextLocation GetTextLocation() => new(SyntaxTree.SourceText, Text);
     }
 }

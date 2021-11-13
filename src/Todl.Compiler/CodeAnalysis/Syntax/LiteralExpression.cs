@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
@@ -7,16 +7,16 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         public SyntaxToken LiteralToken { get; }
 
-        public TextSpan Text => this.LiteralToken.Text;
+        public override TextSpan Text => LiteralToken.Text;
 
         public LiteralExpression(SyntaxTree syntaxTree, SyntaxToken token) : base(syntaxTree)
         {
-            this.LiteralToken = token;
+            LiteralToken = token;
         }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
-            yield return this.LiteralToken;
+            yield return LiteralToken;
         }
     }
 }

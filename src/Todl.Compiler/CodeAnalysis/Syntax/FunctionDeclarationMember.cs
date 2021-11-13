@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -22,6 +23,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken Name { get; internal init; }
         public CommaSeparatedSyntaxList<Parameter> Parameters { get; internal init; }
         public BlockStatement Body { get; internal init; }
+
+        public override TextSpan Text => TextSpan.FromTextSpans(ReturnType.Text, Body.Text);
 
         public FunctionDeclarationMember(SyntaxTree syntaxTree) : base(syntaxTree) { }
 

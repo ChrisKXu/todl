@@ -1,14 +1,15 @@
 ﻿using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class ParethesizedExpression : Expression
     {
         public SyntaxToken LeftParenthesisToken { get; }
-
         public Expression InnerExpression { get; }
-
         public SyntaxToken RightParenthesisToken { get; }
+
+        public override TextSpan Text => TextSpan.FromTextSpans(LeftParenthesisToken.Text, RightParenthesisToken.Text);
 
         public ParethesizedExpression(
             SyntaxTree syntaxTree,

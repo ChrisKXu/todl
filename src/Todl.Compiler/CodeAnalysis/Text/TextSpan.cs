@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Text
 {
@@ -10,17 +11,18 @@ namespace Todl.Compiler.CodeAnalysis.Text
         public SourceText SourceText { get; }
         public int Start { get; }
         public int Length { get; }
+        public int End => Start + Length;
 
         internal TextSpan(SourceText sourceText, int start, int length)
         {
-            this.SourceText = sourceText;
-            this.Start = start;
-            this.Length = length;
+            SourceText = sourceText;
+            Start = start;
+            Length = length;
         }
 
         public override string ToString()
         {
-            return this.SourceText.Text.Substring(this.Start, this.Length);
+            return SourceText.Text.Substring(Start, Length);
         }
 
         public override int GetHashCode()
@@ -40,7 +42,14 @@ namespace Todl.Compiler.CodeAnalysis.Text
 
         public ReadOnlySpan<char> ToReadOnlyTextSpan()
         {
-            return this.SourceText.Text.AsSpan(this.Start, this.Length);
+            return this.SourceText.Text.AsSpan(Start, Length);
+        }
+
+        public static TextSpan FromTextSpans(TextSpan start, TextSpan end)
+        {
+            Debug.Assert(start.SourceText == end.SourceText);
+
+            return start.SourceText.GetTextSpan(start.Start, end.End - start.Start);
         }
     }
 }

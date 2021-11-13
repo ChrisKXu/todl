@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -19,6 +20,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             this.InnerStatements = innerStatements;
             this.CloseBraceToken = closeBraceToken;
         }
+
+        public override TextSpan Text
+            => TextSpan.FromTextSpans(OpenBraceToken.Text, CloseBraceToken.Text);
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
