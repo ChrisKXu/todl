@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -8,6 +9,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken OpenParenthesisToken { get; internal init; }
         public IReadOnlyList<T> Items { get; internal init; }
         public SyntaxToken CloseParenthesisToken { get; internal init; }
+
+        public override TextSpan Text => TextSpan.FromTextSpans(OpenParenthesisToken.Text, CloseParenthesisToken.Text);
 
         public CommaSeparatedSyntaxList(SyntaxTree syntaxTree) : base(syntaxTree) { }
 
