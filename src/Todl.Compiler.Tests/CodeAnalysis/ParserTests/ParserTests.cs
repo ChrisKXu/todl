@@ -159,7 +159,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var expectedNamespace = inputText[(fromPosition + 5)..semicolonPosition]; // assuming only one space character after 'from'
 
             directive.Should().NotBeNull();
-            directive.ImportAll.Should().Be(inputText.Contains("*"));
+            directive.ImportAll.Should().Be(inputText.Contains('*'));
             directive.Namespace.Should().Be(expectedNamespace);
 
             if (!directive.ImportAll)

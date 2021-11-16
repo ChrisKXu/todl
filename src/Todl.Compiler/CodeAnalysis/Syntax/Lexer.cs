@@ -13,7 +13,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         private readonly SyntaxTree syntaxTree;
         private readonly List<SyntaxToken> syntaxTokens = new();
-        private readonly List<Diagnostic> diagnostics = new();
         private int position = 0;
 
         private SourceText SourceText => this.syntaxTree.SourceText;
@@ -21,7 +20,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         private char Peak => this.Seek(1);
 
         public IReadOnlyList<SyntaxToken> SyntaxTokens => syntaxTokens;
-        public IReadOnlyList<Diagnostic> Diagnostics => diagnostics;
+        public IReadOnlyList<Diagnostic> Diagnostics => SyntaxTokens.Where(t => t.Diagnostic != null).Select(t => t.Diagnostic).ToList();
 
         public Lexer(SyntaxTree syntaxTree)
         {
@@ -130,7 +129,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             return SyntaxKind.NumberToken;
         }
 
-        private SyntaxKind ReadString()
+        private (SyntaxKind, ErrorCode) ReadString()
         {
             switch (Current)
             {
@@ -151,15 +150,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     case '\0':
                     case '\r':
                     case '\n':
-                        diagnostics.Add(
-                            new Diagnostic()
-                            {
-                                Message = "Unexpected EndOfFileToken",
-                                Level = DiagnosticLevel.Error,
-                                TextLocation = new TextLocation(this.SourceText, new TextSpan(this.SourceText, Current, 0)),
-                                ErrorCode = ErrorCode.UnexpectedEndOfFile
-                            });
-                        return SyntaxKind.BadToken;
+                        return (SyntaxKind.BadToken, ErrorCode.UnexpectedEndOfFile);
                     case '"':
                         ++this.position;
                         done = true;
@@ -167,15 +158,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     case '\\':
                         if (Peak == '\0')
                         {
-                            diagnostics.Add(
-                                new Diagnostic()
-                                {
-                                    Message = "Unexpected EndOfFileToken",
-                                    Level = DiagnosticLevel.Error,
-                                    TextLocation = new TextLocation(this.SourceText, new TextSpan(this.SourceText, Current, 0)),
-                                    ErrorCode = ErrorCode.UnexpectedEndOfFile
-                                });
-                            return SyntaxKind.BadToken;
+                            return (SyntaxKind.BadToken, ErrorCode.UnexpectedEndOfFile);
                         }
 
                         this.position += 2;
@@ -186,7 +169,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 }
             }
 
-            return SyntaxKind.StringToken;
+            return (SyntaxKind.StringToken, ErrorCode.Invalid);
         }
 
         private SyntaxKind ReadKeywordOrIdentifier()
@@ -212,6 +195,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             // read token
             var start = this.position;
             var kind = SyntaxKind.BadToken;
+            var errorCode = ErrorCode.UnrecognizedToken;
 
             switch (Current)
             {
@@ -231,12 +215,12 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     kind = ReadNumber();
                     break;
                 case '"':
-                    kind = ReadString();
+                    (kind, errorCode) = ReadString();
                     break;
                 case '@':
                     if (Peak == '"')
                     {
-                        kind = ReadString();
+                        (kind, errorCode) = ReadString();
                     }
                     break;
                 case '+':
@@ -390,13 +374,47 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var length = this.position - start;
 
             var trailingTrivia = ReadTrailingSyntaxTrivia();
+            var text = SourceText.GetTextSpan(start, length);
 
-            return new SyntaxToken(
-                kind: kind,
-                text: SourceText.GetTextSpan(start, length),
-                leadingTrivia: leadingTrivia,
-                trailingTrivia: trailingTrivia
-            );
+            if (kind == SyntaxKind.BadToken)
+            {
+                return new()
+                {
+                    Kind = kind,
+                    Text = text,
+                    LeadingTrivia = leadingTrivia,
+                    TrailingTrivia = trailingTrivia,
+                    Diagnostic = GetDiagnosticFromErrorCode(errorCode, text)
+                };
+            }
+
+            return new()
+            {
+                Kind = kind,
+                Text = text,
+                LeadingTrivia = leadingTrivia,
+                TrailingTrivia = trailingTrivia
+            };
+        }
+
+        private static Diagnostic GetDiagnosticFromErrorCode(
+            ErrorCode errorCode,
+            TextSpan text)
+        {
+            var message = errorCode switch
+            {
+                ErrorCode.UnrecognizedToken => $"Token '{text}' is not recognized",
+                ErrorCode.UnexpectedEndOfFile => "Unexpected EndOfFileToken",
+                _ => string.Empty
+            };
+
+            return new Diagnostic()
+            {
+                Message = message,
+                ErrorCode = errorCode,
+                TextLocation = new() { TextSpan = text },
+                Level = DiagnosticLevel.Error
+            };
         }
 
         public void Lex()
@@ -407,29 +425,15 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 return;
             }
 
-            while (true)
+            SyntaxToken token;
+
+            do
             {
-                var token = GetNextToken();
+                token = GetNextToken();
                 syntaxTokens.Add(token);
-
-                if (token.Kind == SyntaxKind.BadToken)
-                {
-                    diagnostics.Add(
-                        new Diagnostic()
-                        {
-                            Message = $"Token '{token.Text}' is not recognized",
-                            ErrorCode = ErrorCode.UnrecognizedToken,
-                            TextLocation = token.GetTextLocation(),
-                            Level = DiagnosticLevel.Error
-                        });
-                    break;
-                }
-
-                if (token.Kind == SyntaxKind.EndOfFileToken)
-                {
-                    break;
-                }
             }
+            while (token.Kind != SyntaxKind.BadToken
+                && token.Kind != SyntaxKind.EndOfFileToken);
         }
     }
 }

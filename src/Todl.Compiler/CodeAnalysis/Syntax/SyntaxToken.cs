@@ -1,27 +1,18 @@
 ﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public readonly struct SyntaxToken
     {
-        public SyntaxKind Kind { get; }
-        public TextSpan Text { get; }
-        public IReadOnlyCollection<SyntaxTrivia> LeadingTrivia { get; }
-        public IReadOnlyCollection<SyntaxTrivia> TrailingTrivia { get; }
+        public SyntaxKind Kind { get; internal init; }
+        public TextSpan Text { get; internal init; }
+        public IReadOnlyCollection<SyntaxTrivia> LeadingTrivia { get; internal init; }
+        public IReadOnlyCollection<SyntaxTrivia> TrailingTrivia { get; internal init; }
+        public bool Missing { get; internal init; }
+        public Diagnostic Diagnostic { get; internal init; }
 
-        public SyntaxToken(
-            SyntaxKind kind,
-            TextSpan text,
-            IReadOnlyCollection<SyntaxTrivia> leadingTrivia,
-            IReadOnlyCollection<SyntaxTrivia> trailingTrivia)
-        {
-            this.Kind = kind;
-            this.Text = text;
-            this.LeadingTrivia = leadingTrivia;
-            this.TrailingTrivia = trailingTrivia;
-        }
-
-        public TextLocation GetTextLocation() => new(Text.SourceText, Text);
+        public TextLocation GetTextLocation() => new() { TextSpan = Text };
     }
 }
