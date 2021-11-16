@@ -58,7 +58,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     && m.GetParameters().Length == functionCallExpression.Arguments.Items.Count);
 
             var arguments = functionCallExpression.Arguments.Items.ToDictionary(
-                keySelector: a => a.Identifier.Text.ToString(),
+                keySelector: a => a.Identifier.Value.Text.ToString(),
                 elementSelector: a => BindExpression(scope, a.Expression));
 
             var nameAndTypes = arguments.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();

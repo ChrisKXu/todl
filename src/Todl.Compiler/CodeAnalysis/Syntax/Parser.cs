@@ -68,7 +68,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
             // return a fake syntax token of the expected kind, with a text span at the current location with 0 length 
             return new SyntaxToken(
-                syntaxTree: this.syntaxTree,
                 kind: syntaxKind,
                 text: this.syntaxTree.SourceText.GetTextSpan(this.Current.GetTextLocation().TextSpan.Start, 0),
                 leadingTrivia: Array.Empty<SyntaxTrivia>(),

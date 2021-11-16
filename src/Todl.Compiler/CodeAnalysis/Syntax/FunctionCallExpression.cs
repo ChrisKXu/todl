@@ -8,11 +8,11 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class Argument : SyntaxNode
     {
-        public SyntaxToken Identifier { get; internal init; }
-        public SyntaxToken ColonToken { get; internal init; }
+        public SyntaxToken? Identifier { get; internal init; }
+        public SyntaxToken? ColonToken { get; internal init; }
         public Expression Expression { get; internal init; }
 
-        public bool IsNamedArgument => Identifier != null;
+        public bool IsNamedArgument => Identifier.HasValue;
 
         public override TextSpan Text
         {
@@ -20,7 +20,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             {
                 if (IsNamedArgument)
                 {
-                    return TextSpan.FromTextSpans(Identifier.Text, Expression.Text);
+                    return TextSpan.FromTextSpans(Identifier.Value.Text, Expression.Text);
                 }
 
                 return Expression.Text;

@@ -54,7 +54,7 @@ public sealed partial class ParserTests
         newExpression.Arguments.Items.Should().SatisfyRespectively(argument =>
         {
             argument.IsNamedArgument.Should().BeTrue();
-            argument.Identifier.Text.Should().Be("uriString");
+            argument.Identifier?.Text.Should().Be("uriString");
             argument.Expression.As<LiteralExpression>().Text.Should().Be("\"https://google.com\"");
         });
     }
@@ -94,13 +94,13 @@ public sealed partial class ParserTests
             uriString =>
             {
                 uriString.IsNamedArgument.Should().BeTrue();
-                uriString.Identifier.Text.Should().Be("uriString");
+                uriString.Identifier?.Text.Should().Be("uriString");
                 uriString.Expression.As<LiteralExpression>().Text.Should().Be("\"https://google.com\"");
             },
             dontEscape =>
             {
                 dontEscape.IsNamedArgument.Should().BeTrue();
-                dontEscape.Identifier.Text.Should().Be("dontEscape");
+                dontEscape.Identifier?.Text.Should().Be("dontEscape");
                 dontEscape.Expression.As<LiteralExpression>().Text.Should().Be("false");
             });
     }

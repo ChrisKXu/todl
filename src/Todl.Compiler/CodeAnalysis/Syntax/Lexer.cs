@@ -392,9 +392,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var trailingTrivia = ReadTrailingSyntaxTrivia();
 
             return new SyntaxToken(
-                syntaxTree: this.syntaxTree,
                 kind: kind,
-                text: this.SourceText.GetTextSpan(start, length),
+                text: SourceText.GetTextSpan(start, length),
                 leadingTrivia: leadingTrivia,
                 trailingTrivia: trailingTrivia
             );

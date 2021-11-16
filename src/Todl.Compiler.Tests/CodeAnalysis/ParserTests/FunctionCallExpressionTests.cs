@@ -65,10 +65,10 @@ public sealed partial class ParserTests
         functionCallExpression.Arguments.Items.Should().SatisfyRespectively(argument =>
         {
             argument.IsNamedArgument.Should().Be(true);
-            argument.Identifier.Text.Should().Be("s");
-            argument.Identifier.Kind.Should().Be(SyntaxKind.IdentifierToken);
-            argument.ColonToken.Text.Should().Be(":");
-            argument.ColonToken.Kind.Should().Be(SyntaxKind.ColonToken);
+            argument.Identifier?.Text.Should().Be("s");
+            argument.Identifier?.Kind.Should().Be(SyntaxKind.IdentifierToken);
+            argument.ColonToken?.Text.Should().Be(":");
+            argument.ColonToken?.Kind.Should().Be(SyntaxKind.ColonToken);
             argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
         });
     }

@@ -8,10 +8,10 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     public sealed class ImportDirective : Directive
     {
         public SyntaxToken ImportKeywordToken { get; internal init; }
-        public SyntaxToken StarToken { get; internal init; }
-        public SyntaxToken OpenBraceToken { get; internal init; }
+        public SyntaxToken? StarToken { get; internal init; }
+        public SyntaxToken? OpenBraceToken { get; internal init; }
         public IReadOnlyList<SyntaxToken> ImportedTokens { get; internal init; }
-        public SyntaxToken CloseBraceToken { get; internal init; }
+        public SyntaxToken? CloseBraceToken { get; internal init; }
         public SyntaxToken FromKeywordToken { get; internal init; }
         public NameExpression NamespaceExpression { get; internal init; }
         public SyntaxToken SemicolonToken { get; internal init; }
@@ -47,7 +47,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         private ImportDirective ParseImportDirective()
         {
             var importKeyword = ExpectToken(SyntaxKind.ImportKeywordToken);
-            SyntaxToken starToken = null, openBraceToken = null, closeBraceToken = null;
+            SyntaxToken? starToken = null, openBraceToken = null, closeBraceToken = null;
             List<SyntaxToken> importedTokens = null;
 
             if (Current.Kind == SyntaxKind.StarToken)
