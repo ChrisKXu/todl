@@ -16,8 +16,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public bool IsSimpleName => SyntaxTokens.Count == 1;
 
-        public NameExpression(SyntaxTree syntaxTree) : base(syntaxTree) { }
-
         public override IEnumerable<SyntaxNode> GetChildren() => SyntaxTokens;
     }
 
@@ -27,8 +25,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         {
             if (SyntaxFacts.BuiltInTypes.Contains(Current.Kind))
             {
-                return new NameExpression(syntaxTree)
+                return new NameExpression()
                 {
+                    SyntaxTree = syntaxTree,
                     SyntaxTokens = new List<SyntaxToken>()
                     {
                         ExpectToken(Current.Kind)
@@ -57,8 +56,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 builder.Append($".{identifierToken.Text}");
             }
 
-            return new NameExpression(syntaxTree)
+            return new NameExpression()
             {
+                SyntaxTree = syntaxTree,
                 SyntaxTokens = syntaxTokens
             };
         }

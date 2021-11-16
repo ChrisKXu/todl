@@ -1,23 +1,12 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class BinaryExpression : Expression
     {
-        public Expression Left { get; }
-        public Expression Right { get; }
-        public SyntaxToken Operator { get; }
-
-        public BinaryExpression(
-            SyntaxTree syntaxTree,
-            Expression left,
-            SyntaxToken operatorToken,
-            Expression right) : base(syntaxTree)
-        {
-            this.Left = left;
-            this.Operator = operatorToken;
-            this.Right = right;
-        }
+        public Expression Left { get; internal init; }
+        public Expression Right { get; internal init; }
+        public SyntaxToken Operator { get; internal init; }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
@@ -40,7 +29,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             else
             {
                 var operatorToken = ExpectToken(Current.Kind);
-                left = new UnaryExpression(this.syntaxTree, operatorToken, this.ParsePrimaryExpression(), false);
+                left = new UnaryExpression()
+                {
+                    SyntaxTree = syntaxTree,
+                    Operator = operatorToken,
+                    Operand = ParsePrimaryExpression(),
+                    Trailing = false
+                };
             }
 
             while (true)
@@ -54,7 +49,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 var operatorToken = this.NextToken();
                 var right = ParseBinaryExpression(binaryPrecedence);
 
-                left = new BinaryExpression(this.syntaxTree, left, operatorToken, right);
+                left = new BinaryExpression()
+                {
+                    SyntaxTree = syntaxTree,
+                    Left = left,
+                    Right = right,
+                    Operator = operatorToken
+                };
             }
 
             return left;

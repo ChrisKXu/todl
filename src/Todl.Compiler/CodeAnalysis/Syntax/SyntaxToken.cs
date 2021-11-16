@@ -16,8 +16,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             TextSpan text,
             IReadOnlyCollection<SyntaxTrivia> leadingTrivia,
             IReadOnlyCollection<SyntaxTrivia> trailingTrivia)
-            : base(syntaxTree)
+            : base()
         {
+            this.SyntaxTree = syntaxTree;
             this.Kind = kind;
             this.Text = text;
             this.LeadingTrivia = leadingTrivia;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -33,8 +33,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     .Select(token => token.Text.ToString());
             }
         }
-
-        public ImportDirective(SyntaxTree syntaxTree) : base(syntaxTree) { }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
@@ -77,8 +75,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var namespaceExpression = ParseNameExpression();
             var semicolonToken = ExpectToken(SyntaxKind.SemicolonToken);
 
-            return new ImportDirective(syntaxTree)
+            return new ImportDirective()
             {
+                SyntaxTree = syntaxTree,
                 ImportKeywordToken = importKeyword,
                 StarToken = starToken,
                 OpenBraceToken = openBraceToken,

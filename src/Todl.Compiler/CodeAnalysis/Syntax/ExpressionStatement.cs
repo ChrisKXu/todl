@@ -1,18 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class ExpressionStatement : Statement
     {
-        public Expression Expression { get; }
-        public SyntaxToken SemicolonToken { get; }
-
-        public ExpressionStatement(SyntaxTree syntaxTree, Expression expression, SyntaxToken semicolonToken)
-            : base(syntaxTree)
-        {
-            this.Expression = expression;
-            this.SemicolonToken = semicolonToken;
-        }
+        public Expression Expression { get; internal init; }
+        public SyntaxToken SemicolonToken { get; internal init; }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
@@ -24,11 +17,11 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     public sealed partial class Parser
     {
         private ExpressionStatement ParseExpressionStatement()
-        {
-            return new ExpressionStatement(
-                syntaxTree: syntaxTree,
-                expression: this.ParseExpression(),
-                semicolonToken: this.ExpectToken(SyntaxKind.SemicolonToken));
-        }
+            => new()
+            {
+                SyntaxTree = syntaxTree,
+                Expression = ParseExpression(),
+                SemicolonToken = ExpectToken(SyntaxKind.SemicolonToken)
+            };
     }
 }

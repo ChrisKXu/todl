@@ -1,24 +1,13 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class UnaryExpression : Expression
     {
-        public SyntaxToken Operator { get; }
-        public Expression Operand { get; }
-        public bool Trailing { get; }
-
-        public UnaryExpression(
-            SyntaxTree syntaxTree,
-            SyntaxToken operatorToken,
-            Expression operand,
-            bool trailing) : base(syntaxTree)
-        {
-            this.Operator = operatorToken;
-            this.Operand = operand;
-            this.Trailing = trailing;
-        }
+        public SyntaxToken Operator { get; internal init; }
+        public Expression Operand { get; internal init; }
+        public bool Trailing { get; internal init; }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
@@ -41,7 +30,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         {
             if (Current.Kind == SyntaxKind.PlusPlusToken || Current.Kind == SyntaxKind.MinusMinusToken)
             {
-                return new UnaryExpression(this.syntaxTree, this.ExpectToken(Current.Kind), expression, true);
+                return new UnaryExpression()
+                {
+                    SyntaxTree = syntaxTree,
+                    Operator = ExpectToken(Current.Kind),
+                    Operand = expression,
+                    Trailing = true
+                };
             }
 
             return expression;

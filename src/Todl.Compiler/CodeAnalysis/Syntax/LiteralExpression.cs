@@ -5,14 +5,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public class LiteralExpression : Expression
     {
-        public SyntaxToken LiteralToken { get; }
+        public SyntaxToken LiteralToken { get; internal init; }
 
         public override TextSpan Text => LiteralToken.Text;
-
-        public LiteralExpression(SyntaxTree syntaxTree, SyntaxToken token) : base(syntaxTree)
-        {
-            LiteralToken = token;
-        }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {

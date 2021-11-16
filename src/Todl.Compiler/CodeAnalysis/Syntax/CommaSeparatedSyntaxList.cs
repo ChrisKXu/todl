@@ -12,8 +12,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public override TextSpan Text => TextSpan.FromTextSpans(OpenParenthesisToken.Text, CloseParenthesisToken.Text);
 
-        public CommaSeparatedSyntaxList(SyntaxTree syntaxTree) : base(syntaxTree) { }
-
         public override IEnumerable<SyntaxNode> GetChildren()
         {
             yield return OpenParenthesisToken;
@@ -47,8 +45,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
             var closeParenthesisToken = ExpectToken(SyntaxKind.CloseParenthesisToken);
 
-            return new CommaSeparatedSyntaxList<T>(syntaxTree)
+            return new CommaSeparatedSyntaxList<T>()
             {
+                SyntaxTree = syntaxTree,
                 OpenParenthesisToken = openParenthesisToken,
                 Items = items,
                 CloseParenthesisToken = closeParenthesisToken

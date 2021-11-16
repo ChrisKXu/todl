@@ -7,12 +7,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public abstract class SyntaxNode : ITreeWalkable<SyntaxNode>
     {
-        public SyntaxTree SyntaxTree { get; }
-
-        protected SyntaxNode(SyntaxTree syntaxTree)
-        {
-            this.SyntaxTree = syntaxTree;
-        }
+        public SyntaxTree SyntaxTree { get; internal init; }
 
         public abstract IEnumerable<SyntaxNode> GetChildren();
 

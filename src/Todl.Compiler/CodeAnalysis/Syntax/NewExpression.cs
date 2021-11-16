@@ -10,8 +10,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public NameExpression TypeNameExpression { get; internal init; }
         public CommaSeparatedSyntaxList<Argument> Arguments { get; internal init; }
 
-        public NewExpression(SyntaxTree syntaxTree) : base(syntaxTree) { }
-
         public override IEnumerable<SyntaxNode> GetChildren()
         {
             yield return NewKeywordToken;
@@ -41,8 +39,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     });
             }
 
-            return new NewExpression(syntaxTree)
+            return new NewExpression()
             {
+                SyntaxTree = syntaxTree,
                 NewKeywordToken = newKeywordToken,
                 TypeNameExpression = typeNameExpression,
                 Arguments = arguments

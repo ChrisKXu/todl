@@ -31,6 +31,14 @@ public sealed class SyntaxNodeTests
         syntaxNode.Text.ToString().Should().Be(inputText);
     }
 
+    [Theory]
+    [MemberData(nameof(GetAllSyntaxNodesForTest))]
+    [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
+    public void SyntaxTreePropertyShouldNotBeNull(string inputTextIgnored, SyntaxNode syntaxNode)
+    {
+        syntaxNode.SyntaxTree.Should().NotBeNull();
+    }
+
     [Fact]
     public void AllSyntaxNodeTypesNeedsToBeCoveredInTests()
     {
