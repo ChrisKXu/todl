@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
@@ -11,19 +10,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken MemberIdentifierToken { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(BaseExpression.Text, MemberIdentifierToken.Text);
-
-        public string QualifiedName
-        {
-            get
-            {
-                return BaseExpression switch
-                {
-                    NameExpression nameExpression => $"{nameExpression.QualifiedName}.{MemberIdentifierToken.Text}",
-                    MemberAccessExpression memberAccessExpression => $"{memberAccessExpression.QualifiedName}.{MemberIdentifierToken.Text}",
-                    _ => throw new NotSupportedException()
-                };
-            }
-        }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {
