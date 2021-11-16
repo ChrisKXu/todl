@@ -1,13 +1,6 @@
-﻿using Todl.Compiler.CodeAnalysis.Text;
-
-namespace Todl.Compiler.CodeAnalysis.Syntax
+﻿namespace Todl.Compiler.CodeAnalysis.Syntax
 {
-    public abstract class Expression : SyntaxNode
-    {
-        protected Expression(SyntaxTree syntaxTree) : base(syntaxTree)
-        {
-        }
-    }
+    public abstract class Expression : SyntaxNode { }
 
     public sealed partial class Parser
     {

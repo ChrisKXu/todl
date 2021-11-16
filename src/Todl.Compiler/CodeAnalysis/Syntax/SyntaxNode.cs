@@ -1,29 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
-using Todl.Compiler.Utilities;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
-    public abstract class SyntaxNode : ITreeWalkable<SyntaxNode>
+    public abstract class SyntaxNode
     {
-        public SyntaxTree SyntaxTree { get; }
+        public SyntaxTree SyntaxTree { get; internal init; }
 
-        protected SyntaxNode(SyntaxTree syntaxTree)
-        {
-            this.SyntaxTree = syntaxTree;
-        }
-
-        public abstract IEnumerable<SyntaxNode> GetChildren();
-
-        public virtual TextSpan Text
-        {
-            get
-            {
-                var children = GetChildren();
-
-                return TextSpan.FromTextSpans(children.First().Text, children.Last().Text);
-            }
-        }
+        public abstract TextSpan Text { get; }
     }
 }

@@ -1,34 +1,18 @@
 ﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
-    public sealed class SyntaxToken : SyntaxNode
+    public readonly struct SyntaxToken
     {
-        public SyntaxKind Kind { get; }
-        public override TextSpan Text { get; }
-        public IReadOnlyCollection<SyntaxTrivia> LeadingTrivia { get; }
-        public IReadOnlyCollection<SyntaxTrivia> TrailingTrivia { get; }
+        public SyntaxKind Kind { get; internal init; }
+        public TextSpan Text { get; internal init; }
+        public IReadOnlyCollection<SyntaxTrivia> LeadingTrivia { get; internal init; }
+        public IReadOnlyCollection<SyntaxTrivia> TrailingTrivia { get; internal init; }
+        public bool Missing { get; internal init; }
+        public Diagnostic Diagnostic { get; internal init; }
 
-        public SyntaxToken(
-            SyntaxTree syntaxTree,
-            SyntaxKind kind,
-            TextSpan text,
-            IReadOnlyCollection<SyntaxTrivia> leadingTrivia,
-            IReadOnlyCollection<SyntaxTrivia> trailingTrivia)
-            : base(syntaxTree)
-        {
-            this.Kind = kind;
-            this.Text = text;
-            this.LeadingTrivia = leadingTrivia;
-            this.TrailingTrivia = trailingTrivia;
-        }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield break;
-        }
-
-        public TextLocation GetTextLocation() => new(SyntaxTree.SourceText, Text);
+        public TextLocation GetTextLocation() => new() { TextSpan = Text };
     }
 }

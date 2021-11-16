@@ -11,20 +11,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken CloseParenthesisToken { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(OpenParenthesisToken.Text, CloseParenthesisToken.Text);
-
-        public CommaSeparatedSyntaxList(SyntaxTree syntaxTree) : base(syntaxTree) { }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return OpenParenthesisToken;
-
-            foreach (var item in Items)
-            {
-                yield return item;
-            }
-
-            yield return CloseParenthesisToken;
-        }
     }
 
     public sealed partial class Parser
@@ -47,8 +33,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
             var closeParenthesisToken = ExpectToken(SyntaxKind.CloseParenthesisToken);
 
-            return new CommaSeparatedSyntaxList<T>(syntaxTree)
+            return new CommaSeparatedSyntaxList<T>()
             {
+                SyntaxTree = syntaxTree,
                 OpenParenthesisToken = openParenthesisToken,
                 Items = items,
                 CloseParenthesisToken = closeParenthesisToken

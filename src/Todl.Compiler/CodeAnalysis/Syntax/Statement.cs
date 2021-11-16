@@ -1,13 +1,6 @@
-using System;
-
-namespace Todl.Compiler.CodeAnalysis.Syntax
+﻿namespace Todl.Compiler.CodeAnalysis.Syntax
 {
-    public abstract class Statement : SyntaxNode
-    {
-        protected Statement(SyntaxTree syntaxTree) : base(syntaxTree)
-        {
-        }
-    }
+    public abstract class Statement : SyntaxNode { }
 
     public sealed partial class Parser
     {

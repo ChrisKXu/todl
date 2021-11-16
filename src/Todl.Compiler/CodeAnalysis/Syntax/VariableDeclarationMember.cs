@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -10,19 +7,15 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         public VariableDeclarationStatement VariableDeclarationStatement { get; init; }
 
-        public VariableDeclarationMember(SyntaxTree syntaxTree) : base(syntaxTree) { }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return VariableDeclarationStatement;
-        }
+        public override TextSpan Text => VariableDeclarationStatement.Text;
     }
 
     public sealed partial class Parser
     {
         private VariableDeclarationMember ParseVariableDeclarationMember()
-            => new VariableDeclarationMember(syntaxTree)
+            => new()
             {
+                SyntaxTree = syntaxTree,
                 VariableDeclarationStatement = ParseVariableDeclarationStatement()
             };
     }

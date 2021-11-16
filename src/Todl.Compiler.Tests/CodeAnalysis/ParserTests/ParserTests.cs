@@ -50,161 +50,6 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             return parser.ParseMember().As<TMember>();
         }
 
-        [Fact]
-        public void TestParseBinaryExpressionBasic()
-        {
-            var binaryExpression = ParseExpression<BinaryExpression>("1 + 2 + 3");
-
-            binaryExpression.Should().HaveChildren(
-                left =>
-                {
-                    left.Should().HaveChildren(
-                        innerLeft => innerLeft.As<LiteralExpression>().Text.Should().Be("1"),
-                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
-                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
-                },
-                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
-                right => right.As<LiteralExpression>().Text.Should().Be("3"));
-        }
-
-        [Fact]
-        public void TestParseBinaryExpressionWithPrecedence()
-        {
-            var binaryExpression = ParseExpression<BinaryExpression>("1 + 2 * 3 - 4");
-
-            binaryExpression.Should().HaveChildren(
-                left =>
-                {
-                    left.Should().HaveChildren(
-                        left => left.As<LiteralExpression>().Text.Should().Be("1"),
-                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
-                        multiplication =>
-                        {
-                            multiplication.Should().HaveChildren(
-                                left => left.As<LiteralExpression>().Text.Should().Be("2"),
-                                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("*"),
-                                right => right.As<LiteralExpression>().Text.Should().Be("3"));
-                        });
-                },
-                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("-"),
-                right => right.As<LiteralExpression>().Text.Should().Be("4"));
-        }
-
-        [Fact]
-        public void TestParseBinaryExpressionWithParenthesis()
-        {
-            var binaryExpression = ParseExpression<BinaryExpression>("(1 + 2) * 3 - 4");
-
-            binaryExpression.Should().HaveChildren(
-                left =>
-                {
-                    left.Should().HaveChildren(
-                        left =>
-                        {
-                            left.Should().HaveChildren(
-                                openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
-                                binaryExpression =>
-                                {
-                                    binaryExpression.Should().HaveChildren(
-                                        left => left.As<LiteralExpression>().Text.Should().Be("1"),
-                                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
-                                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
-                                },
-                                closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken));
-                        },
-                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("*"),
-                        right => right.As<LiteralExpression>().Text.Should().Be("3"));
-                },
-                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("-"),
-                right => right.As<LiteralExpression>().Text.Should().Be("4"));
-        }
-
-        [Fact]
-        public void TestParseBinaryExpressionWithEquality()
-        {
-            var binaryExpression = ParseExpression<BinaryExpression>("3 == 1 + 2");
-
-            binaryExpression.Should().HaveChildren(
-                left => left.As<LiteralExpression>().Text.Should().Be("3"),
-                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("=="),
-                right =>
-                {
-                    right.Should().HaveChildren(
-                        left => left.As<LiteralExpression>().Text.Should().Be("1"),
-                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
-                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
-                });
-        }
-
-        [Fact]
-        public void TestParseBinaryExpressionWithInequality()
-        {
-            var binaryExpression = ParseExpression<BinaryExpression>("5 != 1 + 2");
-
-            binaryExpression.Should().HaveChildren(
-                left => left.As<LiteralExpression>().Text.Should().Be("5"),
-                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("!="),
-                right =>
-                {
-                    right.Should().HaveChildren(
-                        left => left.As<LiteralExpression>().Text.Should().Be("1"),
-                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
-                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
-                });
-        }
-
-        [Fact]
-        public void TestParseBinaryExpressionWithNameAndUnaryExpression()
-        {
-            var binaryExpression = ParseExpression<BinaryExpression>("(++a + 2) * 3 + 4");
-
-            binaryExpression.Should().HaveChildren(
-                left =>
-                {
-                    left.Should().HaveChildren(
-                        left =>
-                        {
-                            left.As<ParethesizedExpression>().InnerExpression.Should().HaveChildren(
-                                left =>
-                                {
-                                    var unaryExpression = left.As<UnaryExpression>();
-                                    unaryExpression.Operator.Text.Should().Be("++");
-                                    unaryExpression.Operand.As<NameExpression>().QualifiedName.Should().Be("a");
-                                    unaryExpression.Trailing.Should().Be(false);
-                                },
-                                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
-                                right => right.As<LiteralExpression>().Text.Should().Be("2"));
-                        },
-                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("*"),
-                        right => right.As<LiteralExpression>().Text.Should().Be("3"));
-                },
-                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
-                right => right.As<LiteralExpression>().Text.Should().Be("4"));
-        }
-
-        [Fact]
-        public void TestParseBinaryExpressionWithNameAndTrailingUnaryExpression()
-        {
-            var binaryExpression = ParseExpression<BinaryExpression>("(a++ + 2) * 3");
-
-            binaryExpression.Should().HaveChildren(
-                left =>
-                {
-                    left.As<ParethesizedExpression>().InnerExpression.Should().HaveChildren(
-                        left =>
-                        {
-                            var unaryExpression = left.As<UnaryExpression>();
-                            unaryExpression.Operand.As<NameExpression>().QualifiedName.Should().Be("a");
-                            unaryExpression.Operator.Text.Should().Be("++");
-                            unaryExpression.Trailing.Should().Be(true);
-                        },
-                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("+"),
-                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
-                },
-                operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("*"),
-                right => right.As<LiteralExpression>().Text.Should().Be("3"));
-        }
-
         [Theory]
         [InlineData("=", SyntaxKind.EqualsToken)]
         [InlineData("+=", SyntaxKind.PlusEqualsToken)]
@@ -215,27 +60,24 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var assignmentExpression = ParseExpression<AssignmentExpression>($"a {expectedOperatorToken} (b + 3) * 2");
 
-            assignmentExpression.Should().HaveChildren(
-                left => left.As<NameExpression>().QualifiedName.Should().Be("a"),
-                operatorToken =>
+            assignmentExpression.Left.As<NameExpression>().Text.Should().Be("a");
+            assignmentExpression.AssignmentOperator.Text.Should().Be(expectedOperatorToken);
+            assignmentExpression.AssignmentOperator.Kind.Should().Be(expectedTokenKind);
+
+            assignmentExpression.Right.As<BinaryExpression>().Invoking(expression =>
+            {
+                expression.Left.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>().Invoking(innerExpression =>
                 {
-                    var assignmentOperator = operatorToken.As<SyntaxToken>();
-                    assignmentOperator.Text.Should().Be(expectedOperatorToken);
-                    assignmentOperator.Kind.Should().Be(expectedTokenKind);
-                },
-                expression =>
-                {
-                    expression.Should().HaveChildren(
-                        left =>
-                        {
-                            var innerExpression = left.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>();
-                            innerExpression.Left.As<NameExpression>().QualifiedName.Should().Be("b");
-                            innerExpression.Operator.Text.Should().Be("+");
-                            innerExpression.Right.As<LiteralExpression>().LiteralToken.Text.Should().Be("3");
-                        },
-                        operatorToken => operatorToken.As<SyntaxToken>().Text.Should().Be("*"),
-                        right => right.As<LiteralExpression>().Text.Should().Be("2"));
+                    innerExpression.Left.As<NameExpression>().Text.Should().Be("b");
+                    innerExpression.Operator.Text.Should().Be("+");
+                    innerExpression.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
+                    innerExpression.Right.As<LiteralExpression>().LiteralToken.Text.Should().Be("3");
                 });
+
+                expression.Operator.Text.Should().Be("*");
+                expression.Operator.Kind.Should().Be(SyntaxKind.StarToken);
+                expression.Right.As<LiteralExpression>().Text.Should().Be("2");
+            });
         }
 
         [Theory]
@@ -252,164 +94,6 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
-        public void TestParseFunctionCallExpressionWithoutArguments()
-        {
-            var inputText = "a.ToString()";
-            var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
-
-            functionCallExpression.Should().HaveChildren(
-                _0 => _0.As<NameExpression>().QualifiedName.Should().Be("a"),
-                _1 => _1.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.DotToken),
-                _2 => _2.As<SyntaxToken>().Text.Should().Be("ToString"),
-                arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
-                    openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
-                    closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken)));
-        }
-
-        [Fact]
-        public void TestParseFunctionCallExpressionWithOnePositionalArgument()
-        {
-            var inputText = "System.Int32.Parse(\"123\")";
-            var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
-            functionCallExpression.Should().NotBeNull();
-
-            functionCallExpression.Should().HaveChildren(
-                _0 => _0.As<NameExpression>().QualifiedName.Should().Be("System.Int32"),
-                _1 => _1.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.DotToken),
-                _2 => _2.As<SyntaxToken>().Text.Should().Be("Parse"),
-                arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
-                    openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
-                    _0 =>
-                    {
-                        var argument = _0.As<Argument>();
-                        argument.IsNamedArgument.Should().Be(false);
-                        argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
-                    },
-                    closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken)));
-        }
-
-        [Fact]
-        public void TestParseFunctionCallExpressionWithOneNamedArgument()
-        {
-            var inputText = "System.Int32.Parse(s: \"123\")";
-            var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
-            functionCallExpression.Should().NotBeNull();
-
-            functionCallExpression.Should().HaveChildren(
-                _0 => _0.As<NameExpression>().QualifiedName.Should().Be("System.Int32"),
-                _1 => _1.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.DotToken),
-                _2 => _2.As<SyntaxToken>().Text.Should().Be("Parse"),
-                arguments => arguments.As<ArgumentsList>().Should().HaveChildren(
-                    openParenthesisToken => openParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenParenthesisToken),
-                    _0 =>
-                    {
-                        var argument = _0.As<Argument>();
-                        argument.IsNamedArgument.Should().Be(true);
-                        argument.Identifier.Text.Should().Be("s");
-                        argument.ColonToken.Kind.Should().Be(SyntaxKind.ColonToken);
-                        argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
-                    },
-                    closeParenthesisToken => closeParenthesisToken.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseParenthesisToken)));
-        }
-
-        [Fact]
-        public void TestParseNewExpressionBasicWithNoArguments()
-        {
-            var inputText = "new System.Exception()";
-            var newExpression = ParseExpression<NewExpression>(inputText);
-
-            newExpression.Should().HaveChildren(
-                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
-                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Exception"),
-                _2 => _2.As<ArgumentsList>().Items.Should().BeEmpty());
-        }
-
-        [Fact]
-        public void TestParseNewExpressionBasicWithOnePositionalArgument()
-        {
-            var inputText = "new System.Uri(\"https://google.com\")";
-            var newExpression = ParseExpression<NewExpression>(inputText);
-
-            newExpression.Should().HaveChildren(
-                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
-                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
-                _2 =>
-                {
-                    var arguments = _2.As<ArgumentsList>().Items;
-                    arguments.Should().HaveCount(1);
-                    arguments[0].IsNamedArgument.Should().BeFalse();
-                    arguments[0].Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("\"https://google.com\"");
-                });
-        }
-
-        [Fact]
-        public void TestParseNewExpressionBasicWithOneNamedArgument()
-        {
-            var inputText = "new System.Uri(uriString: \"https://google.com\")";
-            var newExpression = ParseExpression<NewExpression>(inputText);
-
-            newExpression.Should().HaveChildren(
-                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
-                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
-                _2 =>
-                {
-                    var arguments = _2.As<ArgumentsList>().Items;
-                    arguments.Should().HaveCount(1);
-
-                    var uriString = arguments[0];
-                    uriString.IsNamedArgument.Should().BeTrue();
-                    uriString.Identifier.Text.Should().Be("uriString");
-                    uriString.Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("\"https://google.com\"");
-                });
-        }
-
-        [Fact]
-        public void TestParseNewExpressionBasicWithMultiplePositionalArguments()
-        {
-            var inputText = "new System.Uri(\"https://google.com\", false)";
-            var newExpression = ParseExpression<NewExpression>(inputText);
-
-            newExpression.Should().HaveChildren(
-                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
-                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
-                _2 =>
-                {
-                    var arguments = _2.As<ArgumentsList>().Items;
-                    arguments.Should().HaveCount(2);
-                    arguments[0].IsNamedArgument.Should().BeFalse();
-                    arguments[0].Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("\"https://google.com\"");
-                    arguments[1].IsNamedArgument.Should().BeFalse();
-                    arguments[1].Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("false");
-                });
-        }
-
-        [Fact]
-        public void TestParseNewExpressionBasicWithMultipleNamedArguments()
-        {
-            var inputText = "new System.Uri(uriString: \"https://google.com\", dontEscape: false)";
-            var newExpression = ParseExpression<NewExpression>(inputText);
-
-            newExpression.Should().HaveChildren(
-                _0 => _0.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.NewKeywordToken),
-                _1 => _1.As<NameExpression>().QualifiedName.Should().Be("System.Uri"),
-                _2 =>
-                {
-                    var arguments = _2.As<ArgumentsList>().Items;
-                    arguments.Should().HaveCount(2);
-
-                    var uriString = arguments[0];
-                    uriString.IsNamedArgument.Should().BeTrue();
-                    uriString.Identifier.Text.Should().Be("uriString");
-                    uriString.Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("\"https://google.com\"");
-
-                    var dontEscape = arguments[1];
-                    dontEscape.IsNamedArgument.Should().BeTrue();
-                    dontEscape.Identifier.Text.Should().Be("dontEscape");
-                    dontEscape.Expression.As<LiteralExpression>().LiteralToken.Text.Should().Be("false");
-                });
-        }
-
-        [Fact]
         public void TestParseBlockStatementBasic()
         {
             var inputText = @"
@@ -421,12 +105,16 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             ";
             var blockStatement = ParseStatement<BlockStatement>(inputText);
 
-            blockStatement.Should().HaveChildren(
-                openBrace => openBrace.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenBraceToken),
+            blockStatement.OpenBraceToken.Text.Should().Be("{");
+            blockStatement.OpenBraceToken.Kind.Should().Be(SyntaxKind.OpenBraceToken);
+
+            blockStatement.InnerStatements.Should().SatisfyRespectively(
                 _0 => _0.As<ExpressionStatement>().Should().NotBeNull(),
                 _1 => _1.As<ExpressionStatement>().Should().NotBeNull(),
-                _2 => _2.As<ExpressionStatement>().Should().NotBeNull(),
-                closeBrace => closeBrace.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseBraceToken));
+                _2 => _2.As<ExpressionStatement>().Should().NotBeNull());
+
+            blockStatement.CloseBraceToken.Text.Should().Be("}");
+            blockStatement.CloseBraceToken.Kind.Should().Be(SyntaxKind.CloseBraceToken);
         }
 
         [Fact]
@@ -440,8 +128,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             ";
             var blockStatement = ParseStatement<BlockStatement>(inputText);
 
-            blockStatement.Should().HaveChildren(
-                openBrace => openBrace.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.OpenBraceToken),
+            blockStatement.InnerStatements.Should().SatisfyRespectively(
                 _0 =>
                 {
                     var constStatement = _0.As<VariableDeclarationStatement>();
@@ -453,8 +140,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                     var letStatement = _1.As<VariableDeclarationStatement>();
                     letStatement.IdentifierToken.Text.Should().Be("b");
                     letStatement.InitializerExpression.As<NameExpression>().QualifiedName.Should().Be("a");
-                },
-                closeBrace => closeBrace.As<SyntaxToken>().Kind.Should().Be(SyntaxKind.CloseBraceToken));
+                });
         }
 
         [Theory]
@@ -473,7 +159,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var expectedNamespace = inputText[(fromPosition + 5)..semicolonPosition]; // assuming only one space character after 'from'
 
             directive.Should().NotBeNull();
-            directive.ImportAll.Should().Be(inputText.Contains("*"));
+            directive.ImportAll.Should().Be(inputText.Contains('*'));
             directive.Namespace.Should().Be(expectedNamespace);
 
             if (!directive.ImportAll)

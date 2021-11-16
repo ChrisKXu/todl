@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Todl.Compiler.Diagnostics;
-using Todl.Compiler.Utilities;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -65,15 +64,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 return this.NextToken();
             }
 
-            ReportUnexpectedToken(syntaxKind);
-
-            // return a fake syntax token of the expected kind, with a text span at the current location with 0 length 
-            return new SyntaxToken(
-                syntaxTree: this.syntaxTree,
-                kind: syntaxKind,
-                text: this.syntaxTree.SourceText.GetTextSpan(this.Current.GetTextLocation().TextSpan.Start, 0),
-                leadingTrivia: Array.Empty<SyntaxTrivia>(),
-                trailingTrivia: Array.Empty<SyntaxTrivia>());
+            return ReportUnexpectedToken(syntaxKind);
         }
 
         internal Parser(SyntaxTree syntaxTree)
@@ -115,7 +106,11 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 case SyntaxKind.StringToken:
                 case SyntaxKind.TrueKeywordToken:
                 case SyntaxKind.FalseKeywordToken:
-                    baseExpression = new LiteralExpression(this.syntaxTree, this.ExpectToken(Current.Kind));
+                    baseExpression = new LiteralExpression()
+                    {
+                        SyntaxTree = syntaxTree,
+                        LiteralToken = ExpectToken(Current.Kind)
+                    };
                     break;
                 case SyntaxKind.OpenParenthesisToken:
                     baseExpression = ParseTrailingUnaryExpression(this.ParseParethesizedExpression());
@@ -139,11 +134,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 }
                 else if (Current.Kind == SyntaxKind.DotToken && Peak.Kind == SyntaxKind.IdentifierToken)
                 {
-                    baseExpression = new MemberAccessExpression(
-                        syntaxTree: syntaxTree,
-                        baseExpression: baseExpression,
-                        dotToken: ExpectToken(SyntaxKind.DotToken),
-                        memberIdentifierToken: ExpectToken(SyntaxKind.IdentifierToken));
+                    baseExpression = new MemberAccessExpression()
+                    {
+                        SyntaxTree = syntaxTree,
+                        BaseExpression = baseExpression,
+                        DotToken = ExpectToken(SyntaxKind.DotToken),
+                        MemberIdentifierToken = ExpectToken(SyntaxKind.IdentifierToken)
+                    };
                 }
                 else if (Current.Kind == SyntaxKind.OpenParenthesisToken)
                 {
@@ -159,16 +156,27 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             return baseExpression;
         }
 
-        private void ReportUnexpectedToken(SyntaxKind expectedSyntaxKind)
+        private SyntaxToken ReportUnexpectedToken(SyntaxKind expectedSyntaxKind)
         {
-            this.diagnostics.Add(
-                new Diagnostic()
-                {
-                    Message = $"Unexpected token found: {Current.Text}. Expecting {expectedSyntaxKind}",
-                    Level = DiagnosticLevel.Error,
-                    TextLocation = Current.GetTextLocation(),
-                    ErrorCode = ErrorCode.UnexpectedToken
-                });
+            var diagnostic = new Diagnostic()
+            {
+                Message = $"Unexpected token found: {Current.Text}. Expecting {expectedSyntaxKind}",
+                Level = DiagnosticLevel.Error,
+                TextLocation = Current.GetTextLocation(),
+                ErrorCode = ErrorCode.UnexpectedToken
+            };
+            diagnostics.Add(diagnostic);
+
+            // return a fake syntax token of the expected kind, with a text span at the current location with 0 length 
+            return new()
+            {
+                Kind = expectedSyntaxKind,
+                Text = syntaxTree.SourceText.GetTextSpan(Current.Text.Start, 0),
+                LeadingTrivia = Array.Empty<SyntaxTrivia>(),
+                TrailingTrivia = Array.Empty<SyntaxTrivia>(),
+                Missing = true,
+                Diagnostic = diagnostic
+            };
         }
     }
 }

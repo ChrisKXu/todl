@@ -13,22 +13,17 @@ public sealed class SyntaxNodeTests
 {
     [Theory]
     [MemberData(nameof(GetAllSyntaxNodesForTest))]
-    [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
-    public void GetChildrenShouldReturnOrderedSyntaxNodes(string inputTextIgnored, SyntaxNode syntaxNode)
+    public void TextShouldBeRepeatable(string inputText, SyntaxNode syntaxNode)
     {
-        var children = syntaxNode.GetChildren().ToArray();
-
-        Array.ForEach(children, c => c.Text.Length.Should().BeGreaterThan(0));
-
-        children.Should().BeInAscendingOrder(node => node.Text.Start);
-        children.Should().BeInAscendingOrder(node => node.Text.End);
+        syntaxNode.Text.ToString().Should().Be(inputText);
     }
 
     [Theory]
     [MemberData(nameof(GetAllSyntaxNodesForTest))]
-    public void TextShouldBeRepeatable(string inputText, SyntaxNode syntaxNode)
+    [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
+    public void SyntaxTreePropertyShouldNotBeNull(string inputTextIgnored, SyntaxNode syntaxNode)
     {
-        syntaxNode.Text.ToString().Should().Be(inputText);
+        syntaxNode.SyntaxTree.Should().NotBeNull();
     }
 
     [Fact]

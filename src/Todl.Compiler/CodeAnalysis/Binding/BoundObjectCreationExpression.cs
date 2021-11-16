@@ -83,7 +83,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             var candidates = clrType.GetConstructors()
                 .Where(c => c.IsPublic && c.GetParameters().Length == arguments.Items.Count);
             var argumentsDictionary = arguments.Items.ToDictionary(
-                keySelector: a => a.Identifier.Text.ToString(),
+                keySelector: a => a.Identifier.Value.Text.ToString(),
                 elementSelector: a => BindExpression(scope, a.Expression));
             var nameAndTypes = argumentsDictionary.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
 

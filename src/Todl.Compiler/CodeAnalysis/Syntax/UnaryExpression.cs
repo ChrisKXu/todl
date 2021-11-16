@@ -1,36 +1,24 @@
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class UnaryExpression : Expression
     {
-        public SyntaxToken Operator { get; }
-        public Expression Operand { get; }
-        public bool Trailing { get; }
+        public SyntaxToken Operator { get; internal init; }
+        public Expression Operand { get; internal init; }
+        public bool Trailing { get; internal init; }
 
-        public UnaryExpression(
-            SyntaxTree syntaxTree,
-            SyntaxToken operatorToken,
-            Expression operand,
-            bool trailing) : base(syntaxTree)
+        public override TextSpan Text
         {
-            this.Operator = operatorToken;
-            this.Operand = operand;
-            this.Trailing = trailing;
-        }
+            get
+            {
+                if (Trailing)
+                {
+                    return TextSpan.FromTextSpans(Operand.Text, Operator.Text);
+                }
 
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            if (this.Trailing)
-            {
-                yield return Operand;
-                yield return Operator;
-            }
-            else
-            {
-                yield return Operator;
-                yield return Operand;
+                return TextSpan.FromTextSpans(Operator.Text, Operand.Text);
             }
         }
     }
@@ -41,7 +29,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         {
             if (Current.Kind == SyntaxKind.PlusPlusToken || Current.Kind == SyntaxKind.MinusMinusToken)
             {
-                return new UnaryExpression(this.syntaxTree, this.ExpectToken(Current.Kind), expression, true);
+                return new UnaryExpression()
+                {
+                    SyntaxTree = syntaxTree,
+                    Operator = ExpectToken(Current.Kind),
+                    Operand = expression,
+                    Trailing = true
+                };
             }
 
             return expression;

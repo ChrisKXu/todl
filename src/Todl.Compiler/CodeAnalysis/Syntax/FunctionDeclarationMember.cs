@@ -8,13 +8,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public NameExpression ParameterType { get; internal init; }
         public SyntaxToken Identifier { get; internal init; }
 
-        public Parameter(SyntaxTree syntaxTree) : base(syntaxTree) { }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return ParameterType;
-            yield return Identifier;
-        }
+        public override TextSpan Text => TextSpan.FromTextSpans(ParameterType.Text, Identifier.Text);
     }
 
     public sealed class FunctionDeclarationMember : Member
@@ -25,24 +19,15 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public BlockStatement Body { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(ReturnType.Text, Body.Text);
-
-        public FunctionDeclarationMember(SyntaxTree syntaxTree) : base(syntaxTree) { }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return ReturnType;
-            yield return Name;
-            yield return Parameters;
-            yield return Body;
-        }
     }
 
     public sealed partial class Parser
     {
         private Parameter ParseParemeter()
         {
-            return new Parameter(syntaxTree)
+            return new Parameter
             {
+                SyntaxTree = syntaxTree,
                 ParameterType = ParseNameExpression(),
                 Identifier = ExpectToken(SyntaxKind.IdentifierToken)
             };
@@ -55,8 +40,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var parameters = ParseCommaSeparatedSyntaxList(ParseParemeter);
             var body = ParseBlockStatement();
 
-            return new FunctionDeclarationMember(syntaxTree)
+            return new FunctionDeclarationMember()
             {
+                SyntaxTree = syntaxTree,
                 ReturnType = returnType,
                 Name = name,
                 Parameters = parameters,

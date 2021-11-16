@@ -5,41 +5,22 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class ParethesizedExpression : Expression
     {
-        public SyntaxToken LeftParenthesisToken { get; }
-        public Expression InnerExpression { get; }
-        public SyntaxToken RightParenthesisToken { get; }
+        public SyntaxToken LeftParenthesisToken { get; internal init; }
+        public Expression InnerExpression { get; internal init; }
+        public SyntaxToken RightParenthesisToken { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(LeftParenthesisToken.Text, RightParenthesisToken.Text);
-
-        public ParethesizedExpression(
-            SyntaxTree syntaxTree,
-            SyntaxToken leftParenthesisToken,
-            Expression innerExpression,
-            SyntaxToken rightParenthesisToken)
-            : base(syntaxTree)
-        {
-            this.LeftParenthesisToken = leftParenthesisToken;
-            this.InnerExpression = innerExpression;
-            this.RightParenthesisToken = rightParenthesisToken;
-        }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return this.LeftParenthesisToken;
-            yield return this.InnerExpression;
-            yield return this.RightParenthesisToken;
-        }
     }
 
     public sealed partial class Parser
     {
         private ParethesizedExpression ParseParethesizedExpression()
-        {
-            var leftParenthesisToken = this.ExpectToken(SyntaxKind.OpenParenthesisToken);
-            var innerExpression = ParseBinaryExpression();
-            var rightParenthesisToken = this.ExpectToken(SyntaxKind.CloseParenthesisToken);
-
-            return new ParethesizedExpression(this.syntaxTree, leftParenthesisToken, innerExpression, rightParenthesisToken);
-        }
+            => new()
+            {
+                SyntaxTree = syntaxTree,
+                LeftParenthesisToken = ExpectToken(SyntaxKind.OpenParenthesisToken),
+                InnerExpression = ParseBinaryExpression(),
+                RightParenthesisToken = ExpectToken(SyntaxKind.CloseParenthesisToken)
+            };
     }
 }

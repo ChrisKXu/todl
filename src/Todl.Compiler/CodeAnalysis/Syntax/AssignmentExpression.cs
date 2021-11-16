@@ -1,32 +1,15 @@
-using System.Collections.Generic;
-using Todl.Compiler.Diagnostics;
+﻿using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class AssignmentExpression : Expression
     {
-        public Expression Left { get; }
-        public SyntaxToken AssignmentOperator { get; }
-        public Expression Right { get; }
+        public Expression Left { get; internal init; }
+        public SyntaxToken AssignmentOperator { get; internal init; }
+        public Expression Right { get; internal init; }
 
-        public AssignmentExpression(
-            SyntaxTree syntaxTree,
-            Expression left,
-            SyntaxToken assignmentOperator,
-            Expression right)
-            : base(syntaxTree)
-        {
-            this.Left = left;
-            this.AssignmentOperator = assignmentOperator;
-            this.Right = right;
-        }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return this.Left;
-            yield return this.AssignmentOperator;
-            yield return this.Right;
-        }
+        public override TextSpan Text => TextSpan.FromTextSpans(Left.Text, Right.Text);
 
         public static readonly IReadOnlySet<SyntaxKind> AssignmentOperators = new HashSet<SyntaxKind>()
         {
@@ -41,12 +24,12 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     public sealed partial class Parser
     {
         private AssignmentExpression ParseAssignmentExpression(Expression left)
-        {
-            return new AssignmentExpression(
-                syntaxTree: this.syntaxTree,
-                left: left,
-                assignmentOperator: ExpectToken(Current.Kind),
-                right: ParseExpression());
-        }
+            => new()
+            {
+                SyntaxTree = syntaxTree,
+                Left = left,
+                AssignmentOperator = ExpectToken(Current.Kind),
+                Right = ParseExpression()
+            };
     }
 }

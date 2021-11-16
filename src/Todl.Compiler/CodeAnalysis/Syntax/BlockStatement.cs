@@ -5,34 +5,12 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 {
     public sealed class BlockStatement : Statement
     {
-        public SyntaxToken OpenBraceToken { get; }
-        public SyntaxToken CloseBraceToken { get; }
-        public IReadOnlyList<Statement> InnerStatements { get; }
-
-        public BlockStatement(
-            SyntaxTree syntaxTree,
-            SyntaxToken openBraceToken,
-            IReadOnlyList<Statement> innerStatements,
-            SyntaxToken closeBraceToken)
-            : base(syntaxTree)
-        {
-            this.OpenBraceToken = openBraceToken;
-            this.InnerStatements = innerStatements;
-            this.CloseBraceToken = closeBraceToken;
-        }
+        public SyntaxToken OpenBraceToken { get; internal init; }
+        public SyntaxToken CloseBraceToken { get; internal init; }
+        public IReadOnlyList<Statement> InnerStatements { get; internal init; }
 
         public override TextSpan Text
             => TextSpan.FromTextSpans(OpenBraceToken.Text, CloseBraceToken.Text);
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return this.OpenBraceToken;
-            foreach (var statement in this.InnerStatements)
-            {
-                yield return statement;
-            }
-            yield return this.CloseBraceToken;
-        }
     }
 
     public sealed partial class Parser
@@ -49,11 +27,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
             var closeBraceToken = this.ExpectToken(SyntaxKind.CloseBraceToken);
 
-            return new BlockStatement(
-                syntaxTree: this.syntaxTree,
-                openBraceToken: openBraceToken,
-                innerStatements: innerStatements,
-                closeBraceToken: closeBraceToken);
+            return new BlockStatement()
+            {
+                SyntaxTree = syntaxTree,
+                OpenBraceToken = openBraceToken,
+                CloseBraceToken = closeBraceToken,
+                InnerStatements = innerStatements
+            };
         }
     }
 }

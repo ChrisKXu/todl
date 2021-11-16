@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -7,35 +8,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     public sealed class VariableDeclarationStatement : Statement
     {
         // const or let
-        public SyntaxToken DeclarationKeyword { get; }
-        public SyntaxToken IdentifierToken { get; }
-        public SyntaxToken AssignmentToken { get; }
-        public Expression InitializerExpression { get; }
-        public SyntaxToken SemicolonToken { get; }
+        public SyntaxToken DeclarationKeyword { get; internal init; }
+        public SyntaxToken IdentifierToken { get; internal init; }
+        public SyntaxToken AssignmentToken { get; internal init; }
+        public Expression InitializerExpression { get; internal init; }
+        public SyntaxToken SemicolonToken { get; internal init; }
 
-        public VariableDeclarationStatement(
-            SyntaxTree syntaxTree,
-            SyntaxToken declarationKeyword,
-            SyntaxToken identifierToken,
-            SyntaxToken assignmentToken,
-            Expression initializerExpression,
-            SyntaxToken semicolonToken) : base(syntaxTree)
-        {
-            this.DeclarationKeyword = declarationKeyword;
-            this.IdentifierToken = identifierToken;
-            this.AssignmentToken = assignmentToken;
-            this.InitializerExpression = initializerExpression;
-            this.SemicolonToken = semicolonToken;
-        }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return this.DeclarationKeyword;
-            yield return this.IdentifierToken;
-            yield return this.AssignmentToken;
-            yield return this.InitializerExpression;
-            yield return this.SemicolonToken;
-        }
+        public override TextSpan Text => TextSpan.FromTextSpans(DeclarationKeyword.Text, SemicolonToken.Text);
     }
 
     public sealed partial class Parser
@@ -48,13 +27,15 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var initializerExpression = this.ParseExpression();
             var semicolonToken = this.ExpectToken(SyntaxKind.SemicolonToken);
 
-            return new VariableDeclarationStatement(
-                syntaxTree: this.syntaxTree,
-                declarationKeyword: constOrLetKeyword,
-                identifierToken: identifierToken,
-                assignmentToken: equalsToken,
-                initializerExpression: initializerExpression,
-                semicolonToken: semicolonToken);
+            return new VariableDeclarationStatement()
+            {
+                SyntaxTree = syntaxTree,
+                DeclarationKeyword = constOrLetKeyword,
+                IdentifierToken = identifierToken,
+                AssignmentToken = equalsToken,
+                InitializerExpression = initializerExpression,
+                SemicolonToken = semicolonToken
+            };
         }
     }
 }
