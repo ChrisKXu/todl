@@ -8,11 +8,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public VariableDeclarationStatement VariableDeclarationStatement { get; init; }
 
         public override TextSpan Text => VariableDeclarationStatement.Text;
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return VariableDeclarationStatement;
-        }
     }
 
     public sealed partial class Parser

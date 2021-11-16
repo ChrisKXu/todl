@@ -9,12 +9,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken Identifier { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(ParameterType.Text, Identifier.Text);
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return ParameterType;
-            yield return Identifier;
-        }
     }
 
     public sealed class FunctionDeclarationMember : Member
@@ -25,14 +19,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public BlockStatement Body { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(ReturnType.Text, Body.Text);
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return ReturnType;
-            yield return Name;
-            yield return Parameters;
-            yield return Body;
-        }
     }
 
     public sealed partial class Parser

@@ -15,15 +15,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken SemicolonToken { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(DeclarationKeyword.Text, SemicolonToken.Text);
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return DeclarationKeyword;
-            yield return IdentifierToken;
-            yield return AssignmentToken;
-            yield return InitializerExpression;
-            yield return SemicolonToken;
-        }
     }
 
     public sealed partial class Parser

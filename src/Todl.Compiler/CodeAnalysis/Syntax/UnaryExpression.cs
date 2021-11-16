@@ -21,20 +21,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 return TextSpan.FromTextSpans(Operator.Text, Operand.Text);
             }
         }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            if (this.Trailing)
-            {
-                yield return Operand;
-                yield return Operator;
-            }
-            else
-            {
-                yield return Operator;
-                yield return Operand;
-            }
-        }
     }
 
     public sealed partial class Parser

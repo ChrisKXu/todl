@@ -15,8 +15,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public override TextSpan Text => QualifiedName;
 
         public bool IsSimpleName => SyntaxTokens.Count == 1;
-
-        public override IEnumerable<SyntaxNode> GetChildren() => SyntaxTokens;
     }
 
     public sealed partial class Parser

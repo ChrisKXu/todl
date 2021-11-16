@@ -11,13 +11,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public override TextSpan Text => TextSpan.FromTextSpans(Left.Text, Right.Text);
 
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return Left;
-            yield return AssignmentOperator;
-            yield return Right;
-        }
-
         public static readonly IReadOnlySet<SyntaxKind> AssignmentOperators = new HashSet<SyntaxKind>()
         {
             SyntaxKind.EqualsToken,

@@ -11,18 +11,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken CloseParenthesisToken { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(OpenParenthesisToken.Text, CloseParenthesisToken.Text);
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return OpenParenthesisToken;
-
-            foreach (var item in Items)
-            {
-                yield return item;
-            }
-
-            yield return CloseParenthesisToken;
-        }
     }
 
     public sealed partial class Parser

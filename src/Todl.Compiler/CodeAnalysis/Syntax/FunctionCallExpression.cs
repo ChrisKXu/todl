@@ -26,17 +26,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 return Expression.Text;
             }
         }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            if (IsNamedArgument)
-            {
-                yield return Identifier;
-                yield return ColonToken;
-            }
-
-            yield return Expression;
-        }
     }
 
     public sealed class FunctionCallExpression : Expression
@@ -57,17 +46,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
                 return TextSpan.FromTextSpans(NameToken.Text, Arguments.Text);
             }
-        }
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            if (BaseExpression != null && DotToken != null)
-            {
-                yield return BaseExpression;
-                yield return DotToken;
-            }
-            yield return NameToken;
-            yield return Arguments;
         }
     }
 

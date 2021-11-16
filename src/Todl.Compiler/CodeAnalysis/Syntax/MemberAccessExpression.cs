@@ -10,12 +10,5 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken MemberIdentifierToken { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(BaseExpression.Text, MemberIdentifierToken.Text);
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return BaseExpression;
-            yield return DotToken;
-            yield return MemberIdentifierToken;
-        }
     }
 }

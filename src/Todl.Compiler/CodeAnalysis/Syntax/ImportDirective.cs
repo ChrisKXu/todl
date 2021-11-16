@@ -36,13 +36,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         }
 
         public override TextSpan Text => TextSpan.FromTextSpans(ImportKeywordToken.Text, SemicolonToken.Text);
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return ImportKeywordToken;
-            yield return FromKeywordToken;
-            yield return SemicolonToken;
-        }
     }
 
     public sealed partial class Parser

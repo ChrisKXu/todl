@@ -10,13 +10,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken Operator { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(Left.Text, Right.Text);
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return Left;
-            yield return Operator;
-            yield return Right;
-        }
     }
 
     public sealed partial class Parser

@@ -11,16 +11,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public override TextSpan Text
             => TextSpan.FromTextSpans(OpenBraceToken.Text, CloseBraceToken.Text);
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return OpenBraceToken;
-            foreach (var statement in InnerStatements)
-            {
-                yield return statement;
-            }
-            yield return CloseBraceToken;
-        }
     }
 
     public sealed partial class Parser

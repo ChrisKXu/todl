@@ -12,13 +12,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public CommaSeparatedSyntaxList<Argument> Arguments { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(NewKeywordToken.Text, Arguments.Text);
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return NewKeywordToken;
-            yield return TypeNameExpression;
-            yield return Arguments;
-        }
     }
 
     public sealed partial class Parser

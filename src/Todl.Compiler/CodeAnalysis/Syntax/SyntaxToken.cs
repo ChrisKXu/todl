@@ -25,11 +25,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             this.TrailingTrivia = trailingTrivia;
         }
 
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield break;
-        }
-
         public TextLocation GetTextLocation() => new(SyntaxTree.SourceText, Text);
     }
 }

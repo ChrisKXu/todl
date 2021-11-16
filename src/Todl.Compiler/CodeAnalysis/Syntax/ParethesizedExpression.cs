@@ -10,13 +10,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken RightParenthesisToken { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(LeftParenthesisToken.Text, RightParenthesisToken.Text);
-
-        public override IEnumerable<SyntaxNode> GetChildren()
-        {
-            yield return this.LeftParenthesisToken;
-            yield return this.InnerExpression;
-            yield return this.RightParenthesisToken;
-        }
     }
 
     public sealed partial class Parser
