@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
@@ -9,6 +10,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken NewKeywordToken { get; internal init; }
         public NameExpression TypeNameExpression { get; internal init; }
         public CommaSeparatedSyntaxList<Argument> Arguments { get; internal init; }
+
+        public override TextSpan Text => TextSpan.FromTextSpans(NewKeywordToken.Text, Arguments.Text);
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {

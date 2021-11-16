@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -33,6 +34,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     .Select(token => token.Text.ToString());
             }
         }
+
+        public override TextSpan Text => TextSpan.FromTextSpans(ImportKeywordToken.Text, SemicolonToken.Text);
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {

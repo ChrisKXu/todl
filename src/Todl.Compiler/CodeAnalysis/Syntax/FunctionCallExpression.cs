@@ -14,6 +14,19 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public bool IsNamedArgument => Identifier != null;
 
+        public override TextSpan Text
+        {
+            get
+            {
+                if (IsNamedArgument)
+                {
+                    return TextSpan.FromTextSpans(Identifier.Text, Expression.Text);
+                }
+
+                return Expression.Text;
+            }
+        }
+
         public override IEnumerable<SyntaxNode> GetChildren()
         {
             if (IsNamedArgument)
@@ -32,6 +45,19 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken DotToken { get; internal init; }
         public SyntaxToken NameToken { get; internal init; }
         public CommaSeparatedSyntaxList<Argument> Arguments { get; internal init; }
+
+        public override TextSpan Text
+        {
+            get
+            {
+                if (BaseExpression != null)
+                {
+                    return TextSpan.FromTextSpans(BaseExpression.Text, Arguments.Text);
+                }
+
+                return TextSpan.FromTextSpans(NameToken.Text, Arguments.Text);
+            }
+        }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -6,6 +7,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         public Expression Expression { get; internal init; }
         public SyntaxToken SemicolonToken { get; internal init; }
+
+        public override TextSpan Text => TextSpan.FromTextSpans(Expression.Text, SemicolonToken.Text);
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {

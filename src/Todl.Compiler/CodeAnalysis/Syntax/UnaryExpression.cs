@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
 {
@@ -8,6 +8,19 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken Operator { get; internal init; }
         public Expression Operand { get; internal init; }
         public bool Trailing { get; internal init; }
+
+        public override TextSpan Text
+        {
+            get
+            {
+                if (Trailing)
+                {
+                    return TextSpan.FromTextSpans(Operand.Text, Operator.Text);
+                }
+
+                return TextSpan.FromTextSpans(Operator.Text, Operand.Text);
+            }
+        }
 
         public override IEnumerable<SyntaxNode> GetChildren()
         {

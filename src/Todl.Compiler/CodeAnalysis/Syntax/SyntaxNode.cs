@@ -11,14 +11,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public abstract IEnumerable<SyntaxNode> GetChildren();
 
-        public virtual TextSpan Text
-        {
-            get
-            {
-                var children = GetChildren();
-
-                return TextSpan.FromTextSpans(children.First().Text, children.Last().Text);
-            }
-        }
+        public abstract TextSpan Text { get; }
     }
 }

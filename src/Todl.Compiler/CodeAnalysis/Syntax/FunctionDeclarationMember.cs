@@ -8,6 +8,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public NameExpression ParameterType { get; internal init; }
         public SyntaxToken Identifier { get; internal init; }
 
+        public override TextSpan Text => TextSpan.FromTextSpans(ParameterType.Text, Identifier.Text);
+
         public override IEnumerable<SyntaxNode> GetChildren()
         {
             yield return ParameterType;
