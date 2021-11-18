@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -62,7 +62,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (assignmentExpression.Left is NameExpression nameExpression)
             {
-                var variableName = nameExpression.QualifiedName.ToString();
+                var variableName = nameExpression.Text.ToString();
                 var variable = scope.LookupVariable(variableName);
 
                 if (variable == null)

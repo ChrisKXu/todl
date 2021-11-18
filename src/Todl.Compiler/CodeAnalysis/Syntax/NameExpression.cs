@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Todl.Compiler.CodeAnalysis.Text;
 
@@ -9,10 +8,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         public IReadOnlyList<SyntaxToken> SyntaxTokens { get; internal init; }
 
-        public TextSpan QualifiedName
-            => TextSpan.FromTextSpans(SyntaxTokens[0].Text, SyntaxTokens[^1].Text);
-
-        public override TextSpan Text => QualifiedName;
+        public override TextSpan Text => TextSpan.FromTextSpans(SyntaxTokens[0].Text, SyntaxTokens[^1].Text);
 
         public bool IsSimpleName => SyntaxTokens.Count == 1;
     }

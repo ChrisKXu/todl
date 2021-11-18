@@ -18,7 +18,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         public bool ImportAll => StarToken != null;
 
-        public string Namespace => NamespaceExpression.QualifiedName.ToString();
+        public TextSpan Namespace => NamespaceExpression.Text;
 
         public IEnumerable<string> ImportedNames
         {

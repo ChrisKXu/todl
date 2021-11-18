@@ -42,7 +42,7 @@ namespace Todl.Compiler.CodeAnalysis
         }
 
         public Type ResolveType(NameExpression name)
-            => ResolveType(name.QualifiedName.ToString());
+            => ResolveType(name.Text.ToString());
 
         private IDictionary<string, Type> ImportTypeAliases(IEnumerable<ImportDirective> importDirectives)
         {
@@ -53,7 +53,7 @@ namespace Todl.Compiler.CodeAnalysis
 
             var importedTypes = importDirectives.SelectMany(importDirective =>
             {
-                var types = clrTypeCache.Types.Where(t => t.Namespace == importDirective.Namespace);
+                var types = clrTypeCache.Types.Where(t => importDirective.Namespace.Equals(t.Namespace));
                 if (!importDirective.ImportAll)
                 {
                     types = types.Where(t => importDirective.ImportedNames.Contains(t.Name));

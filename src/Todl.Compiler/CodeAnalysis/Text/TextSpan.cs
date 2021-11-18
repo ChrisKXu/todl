@@ -6,7 +6,7 @@ namespace Todl.Compiler.CodeAnalysis.Text
     /// <summary>
     /// TextSpan represents a portion of the source text
     /// </summary>
-    public struct TextSpan
+    public struct TextSpan : IEquatable<TextSpan>, IEquatable<string>
     {
         public SourceText SourceText { get; }
         public int Start { get; }
@@ -37,12 +37,17 @@ namespace Todl.Compiler.CodeAnalysis.Text
                 return this.ToString().Equals(other);
             }
 
+            if (obj is TextSpan textSpan)
+            {
+                return Equals(textSpan);
+            }
+
             return base.Equals(obj);
         }
 
         public ReadOnlySpan<char> ToReadOnlyTextSpan()
         {
-            return this.SourceText.Text.AsSpan(Start, Length);
+            return SourceText.Text.AsSpan(Start, Length);
         }
 
         public static TextSpan FromTextSpans(TextSpan start, TextSpan end)
@@ -50,6 +55,18 @@ namespace Todl.Compiler.CodeAnalysis.Text
             Debug.Assert(start.SourceText == end.SourceText);
 
             return start.SourceText.GetTextSpan(start.Start, end.End - start.Start);
+        }
+
+        public bool Equals(TextSpan other)
+        {
+            return SourceText == other.SourceText
+                && Start == other.Start
+                && Length == other.Length;
+        }
+
+        public bool Equals(string other)
+        {
+            return ToReadOnlyTextSpan() == other.AsSpan();
         }
     }
 }
