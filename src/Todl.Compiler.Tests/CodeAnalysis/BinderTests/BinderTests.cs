@@ -18,8 +18,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TBoundExpression : BoundExpression
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
+            syntaxTree.Lex();
             var parser = new Parser(syntaxTree);
-            parser.Lex();
 
             var expression = parser.ParseExpression();
             var binder = new Binder(binderFlags, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));
@@ -33,8 +33,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TBoundStatement : BoundStatement
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
+            syntaxTree.Lex();
             var parser = new Parser(syntaxTree);
-            parser.Lex();
 
             var statement = parser.ParseStatement();
             var binder = new Binder(binderFlags, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));
@@ -48,8 +48,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TBoundMember : BoundMember
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
+            syntaxTree.Lex();
             var parser = new Parser(syntaxTree);
-            parser.Lex();
 
             var member = parser.ParseMember();
             var binder = new Binder(binderFlags, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));

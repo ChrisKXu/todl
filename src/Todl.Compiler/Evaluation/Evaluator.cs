@@ -6,7 +6,6 @@ using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
-using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.Evaluation
 {
@@ -20,8 +19,8 @@ namespace Todl.Compiler.Evaluation
         public EvaluatorResult Evaluate(SourceText sourceText)
         {
             var syntaxTree = new SyntaxTree(sourceText);
+            syntaxTree.Lex();
             var parser = new Parser(syntaxTree);
-            parser.Lex();
             var expression = parser.ParseExpression();
 
             var diagnosticsOutput = parser.Diagnostics.Select(diagnostics => diagnostics.Message).ToList();

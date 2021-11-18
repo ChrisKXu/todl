@@ -107,8 +107,8 @@ public sealed class SyntaxNodeTests
     private static Parser GetParserForText(string sourceText)
     {
         var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
+        syntaxTree.Lex();
         var parser = new Parser(syntaxTree);
-        parser.Lex();
 
         return parser;
     }

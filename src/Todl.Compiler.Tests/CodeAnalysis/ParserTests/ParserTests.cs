@@ -14,8 +14,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TExpression : Expression
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
+            syntaxTree.Lex();
             var parser = new Parser(syntaxTree);
-            parser.Lex();
 
             return parser.ParseExpression().As<TExpression>();
         }
@@ -24,8 +24,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TStatement : Statement
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
+            syntaxTree.Lex();
             var parser = new Parser(syntaxTree);
-            parser.Lex();
 
             return parser.ParseStatement().As<TStatement>();
         }
@@ -34,8 +34,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TDirective : Directive
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
+            syntaxTree.Lex();
             var parser = new Parser(syntaxTree);
-            parser.Lex();
 
             return parser.ParseDirective().As<TDirective>();
         }
@@ -44,8 +44,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TMember : Member
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
+            syntaxTree.Lex();
             var parser = new Parser(syntaxTree);
-            parser.Lex();
 
             return parser.ParseMember().As<TMember>();
         }
@@ -179,8 +179,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         public void TestParserWithDiagnostics()
         {
             var syntaxTree = new SyntaxTree(SourceText.FromString("(1 + 2 * 3 - 4")); // missing a ")"
+            syntaxTree.Lex();
             var parser = new Parser(syntaxTree);
-            parser.Lex();
             parser.ParseExpression();
 
             parser.Diagnostics.Should().NotBeEmpty();

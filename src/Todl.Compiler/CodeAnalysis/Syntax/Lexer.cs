@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
@@ -11,21 +10,15 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     /// </summary>
     public sealed class Lexer
     {
-        private readonly SyntaxTree syntaxTree;
         private readonly List<SyntaxToken> syntaxTokens = new();
         private int position = 0;
 
-        private SourceText SourceText => this.syntaxTree.SourceText;
-        private char Current => this.Seek(0);
-        private char Peak => this.Seek(1);
+        public SourceText SourceText { get; internal set; }
+
+        private char Current => Seek(0);
+        private char Peak => Seek(1);
 
         public IReadOnlyList<SyntaxToken> SyntaxTokens => syntaxTokens;
-        public IReadOnlyList<Diagnostic> Diagnostics => SyntaxTokens.Where(t => t.Diagnostic != null).Select(t => t.Diagnostic).ToList();
-
-        public Lexer(SyntaxTree syntaxTree)
-        {
-            this.syntaxTree = syntaxTree;
-        }
 
         private char Seek(int offset)
         {
