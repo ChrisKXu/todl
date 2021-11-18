@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax
@@ -12,24 +11,24 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     public sealed partial class Parser
     {
         private readonly SyntaxTree syntaxTree;
-        private readonly Lexer lexer;
         private readonly List<Diagnostic> diagnostics = new();
         private readonly List<Directive> directives = new();
         private readonly List<Member> members = new();
         private int position = 0;
 
-        private IReadOnlyList<SyntaxToken> SyntaxTokens => this.lexer.SyntaxTokens;
+        private IReadOnlyList<SyntaxToken> SyntaxTokens => syntaxTree.SyntaxTokens;
 
-        private SyntaxToken Current => this.Seek(0);
-        private SyntaxToken Peak => this.Seek(1);
+        private SyntaxToken Current => Seek(0);
+        private SyntaxToken Peak => Seek(1);
 
         public IReadOnlyList<Diagnostic> Diagnostics
         {
             get
             {
-                if (this.lexer.Diagnostics.Any())
+                var lexerDiagnostics = SyntaxTokens.Where(t => t.Diagnostic != null).Select(t => t.Diagnostic);
+                if (lexerDiagnostics.Any())
                 {
-                    return this.lexer.Diagnostics;
+                    return lexerDiagnostics.ToList();
                 }
 
                 return this.diagnostics;
@@ -70,21 +69,10 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         internal Parser(SyntaxTree syntaxTree)
         {
             this.syntaxTree = syntaxTree;
-            this.lexer = new Lexer(syntaxTree);
         }
-
-        // Giving unit tests access to lexer.Lex()
-        internal void Lex() => this.lexer.Lex();
 
         public void Parse()
         {
-            this.Lex();
-
-            if (this.lexer.Diagnostics.Any())
-            {
-                return;
-            }
-
             while (Current.Kind == SyntaxKind.ImportKeywordToken)
             {
                 directives.Add(ParseDirective());

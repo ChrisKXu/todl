@@ -14,8 +14,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         public void TestLexerBasics()
         {
             var sourceText = SourceText.FromString("1+    2 +3");
-            var syntaxTree = new SyntaxTree(sourceText);
-            var lexer = new Lexer(syntaxTree);
+            var lexer = new Lexer() { SourceText = sourceText };
             lexer.Lex();
 
             var tokens = lexer.SyntaxTokens;
@@ -28,8 +27,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         public void TestSingleToken(SyntaxKind kind, string text)
         {
             var sourceText = SourceText.FromString(text);
-            var syntaxTree = new SyntaxTree(sourceText);
-            var lexer = new Lexer(syntaxTree);
+            var lexer = new Lexer() { SourceText = sourceText };
             lexer.Lex();
 
             lexer.SyntaxTokens.Count.Should().Be(2); // the expected token + EndOfFileToken
@@ -118,8 +116,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         public void TestStringToken(string text)
         {
             var sourceText = SourceText.FromString(text);
-            var syntaxTree = new SyntaxTree(sourceText);
-            var lexer = new Lexer(syntaxTree);
+            var lexer = new Lexer() { SourceText = sourceText };
             lexer.Lex();
 
             lexer.SyntaxTokens.Count.Should().Be(2); // the expected token + EndOfFileToken
@@ -134,8 +131,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         public void TestLexerWithDiagnostics()
         {
             var sourceText = SourceText.FromString("1+    2 ^+3");
-            var syntaxTree = new SyntaxTree(sourceText);
-            var lexer = new Lexer(syntaxTree);
+            var lexer = new Lexer() { SourceText = sourceText };
             lexer.Lex();
 
             var diagnostics = lexer.SyntaxTokens.Where(t => t.Diagnostic != null).Select(t => t.Diagnostic).ToList();
