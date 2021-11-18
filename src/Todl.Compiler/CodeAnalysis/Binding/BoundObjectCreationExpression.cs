@@ -24,7 +24,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 return ReportErrorExpression(new Diagnostic()
                 {
-                    Message = $"Type '{newExpression.TypeNameExpression.QualifiedName}' is invalid",
+                    Message = $"Type '{newExpression.TypeNameExpression.Text}' is invalid",
                     Level = DiagnosticLevel.Error,
                     ErrorCode = ErrorCode.TypeNotFound,
                     TextLocation = newExpression.NewKeywordToken.GetTextLocation()

@@ -139,7 +139,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 {
                     var letStatement = _1.As<VariableDeclarationStatement>();
                     letStatement.IdentifierToken.Text.Should().Be("b");
-                    letStatement.InitializerExpression.As<NameExpression>().QualifiedName.Should().Be("a");
+                    letStatement.InitializerExpression.As<NameExpression>().Text.Should().Be("a");
                 });
         }
 

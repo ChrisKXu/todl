@@ -149,7 +149,7 @@ public sealed partial class ParserTests
         {
             inner.Left.As<UnaryExpression>().Invoking(unaryExpression =>
             {
-                unaryExpression.Operand.As<NameExpression>().QualifiedName.Should().Be("a");
+                unaryExpression.Operand.As<NameExpression>().Text.Should().Be("a");
                 unaryExpression.Operator.Text.Should().Be("++");
                 unaryExpression.Operator.Kind.Should().Be(SyntaxKind.PlusPlusToken);
                 unaryExpression.Trailing.Should().Be(true);
