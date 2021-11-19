@@ -18,24 +18,21 @@ namespace Todl.Compiler.Evaluation
 
         public EvaluatorResult Evaluate(SourceText sourceText)
         {
-            var syntaxTree = new SyntaxTree(sourceText);
-            syntaxTree.Lex();
-            var parser = new Parser(syntaxTree);
-            var expression = parser.ParseExpression();
+            var expression = SyntaxTree.ParseExpression(sourceText);
 
-            var diagnosticsOutput = parser.Diagnostics.Select(diagnostics => diagnostics.Message).ToList();
+            //var diagnosticsOutput = parser.Diagnostics.Select(diagnostics => diagnostics.Message).ToList();
 
-            if (diagnosticsOutput.Any())
-            {
-                return new EvaluatorResult()
-                {
-                    DiagnosticsOutput = diagnosticsOutput,
-                    EvaluationOutput = null,
-                    ResultType = null
-                };
-            }
+            //if (diagnosticsOutput.Any())
+            //{
+            //    return new EvaluatorResult()
+            //    {
+            //        DiagnosticsOutput = diagnosticsOutput,
+            //        EvaluationOutput = null,
+            //        ResultType = null
+            //    };
+            //}
 
-            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));
+            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
             var boundExpression = binder.BindExpression(BoundScope.GlobalScope, expression);
 
             return new EvaluatorResult()

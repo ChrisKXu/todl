@@ -49,10 +49,10 @@ namespace Todl.Compiler.CodeAnalysis
             return new ClrTypeCache(assemblies);
         }
 
-        public ClrTypeCacheView CreateView(IEnumerable<ImportDirective> importDirectives) => new ClrTypeCacheView(this, importDirectives);
+        public ClrTypeCacheView CreateView(IEnumerable<ImportDirective> importDirectives) => new(this, importDirectives);
 
         public static ClrTypeCache FromAssemblies(IEnumerable<Assembly> assemblies)
-            => new ClrTypeCache(assemblies);
+            => new(assemblies);
 
         public static ClrTypeCache Default => ClrTypeCache.FromType(typeof(ClrTypeCache));
 

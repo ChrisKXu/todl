@@ -22,14 +22,14 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 functionScope.DeclareVariable(new VariableSymbol(
                     name: parameter.Identifier.Text.ToString(),
                     readOnly: true,
-                    type: ClrTypeSymbol.MapClrType(clrTypeCacheView.ResolveType(parameter.ParameterType))));
+                    type: ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(parameter.ParameterType))));
             }
 
             return new BoundFunctionMember()
             {
                 FunctionScope = functionScope,
                 Body = BindBlockStatement(functionScope, functionDeclarationMember.Body),
-                ReturnType = ClrTypeSymbol.MapClrType(clrTypeCacheView.ResolveType(functionDeclarationMember.ReturnType))
+                ReturnType = ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(functionDeclarationMember.ReturnType))
             };
         }
     }

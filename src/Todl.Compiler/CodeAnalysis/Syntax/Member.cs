@@ -4,7 +4,7 @@
 
     public sealed partial class Parser
     {
-        internal Member ParseMember()
+        private Member ParseMember()
         {
             if (Current.Kind == SyntaxKind.ConstKeywordToken || Current.Kind == SyntaxKind.LetKeywordToken)
             {

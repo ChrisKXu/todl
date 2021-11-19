@@ -4,7 +4,7 @@
 
     public sealed partial class Parser
     {
-        public Directive ParseDirective()
+        private Directive ParseDirective()
             => ParseImportDirective();
     }
 }

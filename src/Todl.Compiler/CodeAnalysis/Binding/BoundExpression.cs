@@ -3,7 +3,7 @@ using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
-    public abstract class BoundExpression
+    public abstract class BoundExpression : BoundNode
     {
         public virtual TypeSymbol ResultType { get; internal init; }
         public virtual bool LValue => false;

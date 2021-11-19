@@ -38,19 +38,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         };
 
         internal static BoundAssignmentOperator MatchAssignmentOperator(SyntaxKind syntaxKind)
-            => BoundAssignmentExpression.supportedAssignmentOperators.GetValueOrDefault(syntaxKind, null);
+            => supportedAssignmentOperators.GetValueOrDefault(syntaxKind, null);
 
-        public BoundExpression Left { get; }
-        public BoundAssignmentOperator Operator { get; }
-        public BoundExpression Right { get; }
+        public BoundExpression Left { get; internal init; }
+        public BoundAssignmentOperator Operator { get; internal init; }
+        public BoundExpression Right { get; internal init; }
         public override TypeSymbol ResultType => Right.ResultType;
-
-        public BoundAssignmentExpression(BoundExpression left, BoundAssignmentOperator boundAssignmentOperator, BoundExpression right)
-        {
-            this.Left = left;
-            this.Operator = boundAssignmentOperator;
-            this.Right = right;
-        }
     }
 
     public sealed partial class Binder
@@ -122,10 +115,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     });
             }
 
-            return new BoundAssignmentExpression(
-                left: left,
-                boundAssignmentOperator: boundAssignmentOperator,
-                right: right);
+            return new BoundAssignmentExpression()
+            {
+                Left = left,
+                Operator = boundAssignmentOperator,
+                Right = right,
+                SyntaxNode = assignmentExpression
+            };
         }
     }
 }
