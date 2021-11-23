@@ -48,7 +48,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             { "int", SyntaxKind.IntKeywordToken },
             { "long", SyntaxKind.LongKeywordToken },
             { "string", SyntaxKind.StringKeywordToken },
-            { "void", SyntaxKind.VoidKeywordToken }
+            { "void", SyntaxKind.VoidKeywordToken },
+
+            { "return", SyntaxKind.ReturnKeywordToken }
         };
 
         public static readonly IReadOnlySet<SyntaxKind> BuiltInTypes = new HashSet<SyntaxKind>()
