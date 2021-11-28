@@ -27,6 +27,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             return new BoundFunctionMember()
             {
+                SyntaxNode = functionDeclarationMember,
                 FunctionScope = functionScope,
                 Body = BindBlockStatement(functionScope, functionDeclarationMember.Body),
                 ReturnType = ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(functionDeclarationMember.ReturnType))

@@ -2,9 +2,7 @@
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
-    public abstract class BoundMember
-    {
-    }
+    public abstract class BoundMember : BoundNode { }
 
     public sealed partial class Binder
     {

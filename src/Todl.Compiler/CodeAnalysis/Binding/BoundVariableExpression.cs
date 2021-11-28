@@ -20,7 +20,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (type != null)
             {
-                return new BoundTypeExpression() { ResultType = ClrTypeSymbol.MapClrType(type) };
+                return new BoundTypeExpression()
+                {
+                    SyntaxNode = nameExpression,
+                    ResultType = ClrTypeSymbol.MapClrType(type)
+                };
             }
 
             var variable = scope.LookupVariable(name);
@@ -36,7 +40,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     });
             }
 
-            return new BoundVariableExpression() { Variable = variable };
+            return new BoundVariableExpression()
+            {
+                SyntaxNode = nameExpression,
+                Variable = variable
+            };
         }
     }
 }

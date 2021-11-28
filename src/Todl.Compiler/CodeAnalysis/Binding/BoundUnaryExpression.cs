@@ -61,24 +61,18 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         };
 
         internal static BoundUnaryOperator MatchUnaryOperator(TypeSymbol operandResultType, SyntaxKind syntaxKind, bool trailing)
-            => BoundUnaryExpression.supportedUnaryOperators.GetValueOrDefault(Tuple.Create(operandResultType, syntaxKind, trailing), null);
+            => supportedUnaryOperators.GetValueOrDefault(Tuple.Create(operandResultType, syntaxKind, trailing), null);
 
-        public BoundUnaryOperator Operator { get; }
-        public BoundExpression Operand { get; }
-        public override TypeSymbol ResultType => this.Operator.ResultType;
-
-        public BoundUnaryExpression(BoundUnaryOperator boundUnaryOperator, BoundExpression operand)
-        {
-            this.Operator = boundUnaryOperator;
-            this.Operand = operand;
-        }
+        public BoundUnaryOperator Operator { get; internal init; }
+        public BoundExpression Operand { get; internal init; }
+        public override TypeSymbol ResultType => Operator.ResultType;
     }
 
     public sealed partial class Binder
     {
         private BoundExpression BindUnaryExpression(BoundScope scope, UnaryExpression unaryExpression)
         {
-            var boundOperand = this.BindExpression(scope, unaryExpression.Operand);
+            var boundOperand = BindExpression(scope, unaryExpression.Operand);
             var boundUnaryOperator = BoundUnaryExpression.MatchUnaryOperator(
                 operandResultType: boundOperand.ResultType,
                 syntaxKind: unaryExpression.Operator.Kind,
@@ -86,7 +80,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (boundUnaryOperator == null)
             {
-                return this.ReportErrorExpression(
+                return ReportErrorExpression(
                     new Diagnostic()
                     {
                         Message = $"Operator {unaryExpression.Operator.Text} is not supported on type {boundOperand.ResultType.Name}",
@@ -96,7 +90,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     });
             }
 
-            return new BoundUnaryExpression(boundUnaryOperator, boundOperand);
+            return new BoundUnaryExpression()
+            {
+                SyntaxNode = unaryExpression,
+                Operand = boundOperand,
+                Operator = boundUnaryOperator
+            };
         }
     }
 }

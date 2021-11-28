@@ -7,7 +7,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding;
 
 public sealed class BoundModule
 {
-    private readonly Binder binder = new Binder(BinderFlags.None);
+    private readonly Binder binder = new(BinderFlags.None);
     private readonly BoundScope boundScope = BoundScope.GlobalScope.CreateChildScope(BoundScopeKind.Module);
     private readonly List<BoundMember> boundMembers = new();
 

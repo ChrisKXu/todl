@@ -13,8 +13,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     public sealed partial class Binder
     {
         private BoundBlockStatement BindBlockStatement(BoundScope scope, BlockStatement blockStatement)
-            => new BoundBlockStatement()
+            => new()
             {
+                SyntaxNode = blockStatement,
                 Scope = scope,
                 Statements = blockStatement.InnerStatements.Select(statement => BindStatement(scope, statement)).ToList()
             };

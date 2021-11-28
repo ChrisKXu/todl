@@ -37,24 +37,24 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 return BindNewExpressionWithPositionalArgumentsInternal(
                     scope: scope,
                     targetType: boundTypeExpression.ResultType,
-                    arguments: newExpression.Arguments);
+                    newExpression: newExpression);
             }
 
             return BindNewExpressionWithNamedArgumentsInternal(
                 scope: scope,
                 targetType: boundTypeExpression.ResultType,
-                arguments: newExpression.Arguments);
+                newExpression: newExpression);
         }
 
         private BoundExpression BindNewExpressionWithPositionalArgumentsInternal(
             BoundScope scope,
             TypeSymbol targetType,
-            CommaSeparatedSyntaxList<Argument> arguments)
+            NewExpression newExpression)
         {
             Debug.Assert(targetType.IsNative);
 
             var clrType = (targetType as ClrTypeSymbol).ClrType;
-            var boundArguments = arguments.Items.Select(a => BindExpression(scope, a.Expression));
+            var boundArguments = newExpression.Arguments.Items.Select(a => BindExpression(scope, a.Expression));
             var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
 
             var constructorInfo = clrType.GetConstructor(argumentTypes);
@@ -66,6 +66,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             return new BoundObjectCreationExpression()
             {
+                SyntaxNode = newExpression,
                 ConstructorInfo = constructorInfo,
                 ResultType = targetType,
                 BoundArguments = boundArguments.ToList()
@@ -75,11 +76,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private BoundExpression BindNewExpressionWithNamedArgumentsInternal(
             BoundScope scope,
             TypeSymbol targetType,
-            CommaSeparatedSyntaxList<Argument> arguments)
+            NewExpression newExpression)
         {
             Debug.Assert(targetType.IsNative);
 
             var clrType = (targetType as ClrTypeSymbol).ClrType;
+            var arguments = newExpression.Arguments;
             var candidates = clrType.GetConstructors()
                 .Where(c => c.IsPublic && c.GetParameters().Length == arguments.Items.Count);
             var argumentsDictionary = arguments.Items.ToDictionary(
@@ -102,6 +104,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             return new BoundObjectCreationExpression()
             {
+                SyntaxNode = newExpression,
                 ConstructorInfo = constructorInfo,
                 ResultType = targetType,
                 BoundArguments = boundArguments.ToList()
