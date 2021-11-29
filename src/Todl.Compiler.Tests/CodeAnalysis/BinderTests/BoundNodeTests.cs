@@ -57,7 +57,8 @@ public sealed class BoundNodeTests
     {
         "const a = 10;", // BoundVariableDeclarationStatement
         "a = 10;", // BoundExpressionStatement
-        "{ const a = 5; a.ToString(); }" // BoundBlockStatement
+        "{ const a = 5; a.ToString(); }", // BoundBlockStatement
+        "return 10;" // ReturnStatement
     };
 
     private static readonly string[] testMembers = new[]
