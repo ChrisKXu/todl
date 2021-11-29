@@ -17,12 +17,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             BoundScope scope)
             where TBoundExpression : BoundExpression
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
-            syntaxTree.Lex();
-            var parser = new Parser(syntaxTree);
-
-            var expression = parser.ParseExpression();
-            var binder = new Binder(binderFlags, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));
+            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText));
+            var binder = new Binder(binderFlags);
             return binder.BindExpression(scope, expression).As<TBoundExpression>();
         }
 
@@ -32,12 +28,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             BoundScope scope)
             where TBoundStatement : BoundStatement
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
-            syntaxTree.Lex();
-            var parser = new Parser(syntaxTree);
-
-            var statement = parser.ParseStatement();
-            var binder = new Binder(binderFlags, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));
+            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText));
+            var binder = new Binder(binderFlags);
             return binder.BindStatement(scope, statement) as TBoundStatement;
         }
 
@@ -47,13 +39,9 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             BoundScope scope)
             where TBoundMember : BoundMember
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString(inputText));
-            syntaxTree.Lex();
-            var parser = new Parser(syntaxTree);
-
-            var member = parser.ParseMember();
-            var binder = new Binder(binderFlags, syntaxTree.ClrTypeCache.CreateView(Array.Empty<ImportDirective>()));
-            return binder.BindMember(scope, member).As<TBoundMember>();
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+            var binder = new Binder(binderFlags);
+            return binder.BindMember(scope, syntaxTree.Members[0]).As<TBoundMember>();
         }
 
         [Fact]

@@ -13,41 +13,27 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         private static TExpression ParseExpression<TExpression>(string sourceText)
             where TExpression : Expression
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
-            syntaxTree.Lex();
-            var parser = new Parser(syntaxTree);
-
-            return parser.ParseExpression().As<TExpression>();
+            return SyntaxTree.ParseExpression(SourceText.FromString(sourceText)).As<TExpression>();
         }
 
         private static TStatement ParseStatement<TStatement>(string sourceText)
             where TStatement : Statement
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
-            syntaxTree.Lex();
-            var parser = new Parser(syntaxTree);
-
-            return parser.ParseStatement().As<TStatement>();
+            return SyntaxTree.ParseStatement(SourceText.FromString(sourceText)).As<TStatement>();
         }
 
         private static TDirective ParseDirective<TDirective>(string sourceText)
             where TDirective : Directive
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
-            syntaxTree.Lex();
-            var parser = new Parser(syntaxTree);
-
-            return parser.ParseDirective().As<TDirective>();
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(sourceText));
+            return syntaxTree.Directives[0].As<TDirective>();
         }
 
         private static TMember ParseMember<TMember>(string sourceText)
             where TMember : Member
         {
-            var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
-            syntaxTree.Lex();
-            var parser = new Parser(syntaxTree);
-
-            return parser.ParseMember().As<TMember>();
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(sourceText));
+            return syntaxTree.Members[0].As<TMember>();
         }
 
         [Theory]
@@ -173,19 +159,6 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
                 directive.ImportedNames.Should().BeEquivalentTo(importedNames);
             }
-        }
-
-        [Fact]
-        public void TestParserWithDiagnostics()
-        {
-            var syntaxTree = new SyntaxTree(SourceText.FromString("(1 + 2 * 3 - 4")); // missing a ")"
-            syntaxTree.Lex();
-            var parser = new Parser(syntaxTree);
-            parser.ParseExpression();
-
-            parser.Diagnostics.Should().NotBeEmpty();
-            parser.Diagnostics[0].TextLocation.TextSpan.Start.Should().Be(14);
-            parser.Diagnostics[0].TextLocation.TextSpan.Length.Should().Be(0);
         }
     }
 }

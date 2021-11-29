@@ -78,6 +78,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             return new BoundFunctionCallExpression()
             {
+                SyntaxNode = functionCallExpression,
                 BoundBaseExpression = boundBaseExpression,
                 MethodInfo = candidate,
                 BoundArguments = boundArguments
@@ -108,6 +109,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             return new BoundFunctionCallExpression()
             {
+                SyntaxNode = functionCallExpression,
                 BoundBaseExpression = boundBaseExpression,
                 MethodInfo = candidate,
                 BoundArguments = boundArguments.ToList()

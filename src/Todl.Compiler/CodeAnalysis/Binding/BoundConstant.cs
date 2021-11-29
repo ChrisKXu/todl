@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -11,15 +7,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 {
     public sealed class BoundConstant : BoundExpression
     {
-        public override TypeSymbol ResultType { get; internal init; }
-
-        public object Value { get; }
-
-        public BoundConstant(TypeSymbol resultType, object value)
-        {
-            this.ResultType = resultType;
-            this.Value = value;
-        }
+        public object Value { get; internal init; }
     }
 
     public sealed partial class Binder
@@ -28,34 +16,44 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             return literalExpression.LiteralToken.Kind switch
             {
-                SyntaxKind.NumberToken => this.BindNumericConstant(literalExpression.LiteralToken),
-                SyntaxKind.StringToken => this.BindStringConstant(literalExpression.LiteralToken),
+                SyntaxKind.NumberToken => BindNumericConstant(literalExpression),
+                SyntaxKind.StringToken => BindStringConstant(literalExpression),
                 SyntaxKind.TrueKeywordToken or SyntaxKind.FalseKeywordToken
-                    => new BoundConstant(TypeSymbol.ClrBoolean, bool.Parse(literalExpression.LiteralToken.Text.ToReadOnlyTextSpan())),
-                _ => ReportUnsupportedLiteral(literalExpression.LiteralToken)
+                    => BindBooleanConstant(literalExpression),
+                _ => ReportUnsupportedLiteral(literalExpression)
             };
         }
 
-        private BoundExpression BindNumericConstant(SyntaxToken syntaxToken)
+        private BoundExpression BindNumericConstant(LiteralExpression literalExpression)
         {
-            var text = syntaxToken.Text.ToReadOnlyTextSpan();
+            var text = literalExpression.LiteralToken.Text.ToReadOnlyTextSpan();
 
             if (int.TryParse(text, out var parsedInt))
             {
-                return new BoundConstant(TypeSymbol.ClrInt32, parsedInt);
+                return new BoundConstant
+                {
+                    ResultType = TypeSymbol.ClrInt32,
+                    Value = parsedInt,
+                    SyntaxNode = literalExpression
+                };
             }
 
             if (double.TryParse(text, out var parsedDouble))
             {
-                return new BoundConstant(TypeSymbol.ClrDouble, parsedDouble);
+                return new BoundConstant
+                {
+                    ResultType = TypeSymbol.ClrDouble,
+                    Value = parsedDouble,
+                    SyntaxNode = literalExpression
+                };
             }
 
-            return ReportUnsupportedLiteral(syntaxToken);
+            return ReportUnsupportedLiteral(literalExpression);
         }
 
-        private BoundExpression BindStringConstant(SyntaxToken syntaxToken)
+        private BoundExpression BindStringConstant(LiteralExpression literalExpression)
         {
-            var text = syntaxToken.Text.ToReadOnlyTextSpan();
+            var text = literalExpression.LiteralToken.Text.ToReadOnlyTextSpan();
             var escape = text[0] != '@';
             var builder = new StringBuilder();
 
@@ -82,7 +80,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                             builder.Append('"');
                             break;
                         default:
-                            return ReportUnsupportedLiteral(syntaxToken);
+                            return ReportUnsupportedLiteral(literalExpression);
                     }
                 }
                 else
@@ -91,16 +89,29 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
             }
 
-            return new BoundConstant(TypeSymbol.ClrString, builder.ToString());
+            return new BoundConstant
+            {
+                ResultType = TypeSymbol.ClrString,
+                Value = builder.ToString(),
+                SyntaxNode = literalExpression
+            };
         }
 
-        private BoundErrorExpression ReportUnsupportedLiteral(SyntaxToken syntaxToken)
+        private BoundConstant BindBooleanConstant(LiteralExpression literalExpression)
+            => new()
+            {
+                ResultType = TypeSymbol.ClrBoolean,
+                Value = literalExpression.LiteralToken.Kind == SyntaxKind.TrueKeywordToken,
+                SyntaxNode = literalExpression
+            };
+
+        private BoundErrorExpression ReportUnsupportedLiteral(LiteralExpression literalExpression)
             => ReportErrorExpression(
                 new Diagnostic()
                 {
-                    Message = $"Literal value {syntaxToken.Text} is not supported",
+                    Message = $"Literal value {literalExpression.Text} is not supported",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = syntaxToken.GetTextLocation(),
+                    TextLocation = literalExpression.LiteralToken.GetTextLocation(),
                     ErrorCode = ErrorCode.UnsupportedLiteral
                 });
     }

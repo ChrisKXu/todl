@@ -8,7 +8,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     /// <summary>
     /// This lexer converts source texts into syntax tokens, which allows parser to parse into syntax trees later
     /// </summary>
-    public sealed class Lexer
+    internal sealed class Lexer
     {
         private readonly List<SyntaxToken> syntaxTokens = new();
         private int position = 0;

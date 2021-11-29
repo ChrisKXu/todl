@@ -55,6 +55,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     public enum BoundScopeKind
     {
         Global,
+        Module,
         Function,
         BlockStatement
     }

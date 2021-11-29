@@ -54,6 +54,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 MemberTypes.Property => new BoundMemberAccessExpression()
                 {
+                    SyntaxNode = memberAccessExpression,
                     BoundBaseExpression = boundBaseExpression,
                     MemberName = memberAccessExpression.MemberIdentifierToken,
                     ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as PropertyInfo).PropertyType),
@@ -62,6 +63,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
                 MemberTypes.Field => new BoundMemberAccessExpression()
                 {
+                    SyntaxNode = memberAccessExpression,
                     BoundBaseExpression = boundBaseExpression,
                     MemberName = memberAccessExpression.MemberIdentifierToken,
                     ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as FieldInfo).FieldType),

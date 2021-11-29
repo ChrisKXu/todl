@@ -85,31 +85,24 @@ public sealed class SyntaxNodeTests
     {
         foreach (var inputText in testExpressions)
         {
-            yield return new object[] { inputText, GetParserForText(inputText).ParseExpression() };
+            yield return new object[] { inputText, SyntaxTree.ParseExpression(SourceText.FromString(inputText)) };
         }
 
         foreach (var inputText in testStatements)
         {
-            yield return new object[] { inputText, GetParserForText(inputText).ParseStatement() };
+            yield return new object[] { inputText, SyntaxTree.ParseStatement(SourceText.FromString(inputText)) };
         }
 
         foreach (var inputText in testDirectives)
         {
-            yield return new object[] { inputText, GetParserForText(inputText).ParseDirective() };
+            var tree = SyntaxTree.Parse(SourceText.FromString(inputText));
+            yield return new object[] { inputText, tree.Directives[0] };
         }
 
         foreach (var inputText in testMembers)
         {
-            yield return new object[] { inputText, GetParserForText(inputText).ParseMember() };
+            var tree = SyntaxTree.Parse(SourceText.FromString(inputText));
+            yield return new object[] { inputText, tree.Members[0] };
         }
-    }
-
-    private static Parser GetParserForText(string sourceText)
-    {
-        var syntaxTree = new SyntaxTree(SourceText.FromString(sourceText));
-        syntaxTree.Lex();
-        var parser = new Parser(syntaxTree);
-
-        return parser;
     }
 }

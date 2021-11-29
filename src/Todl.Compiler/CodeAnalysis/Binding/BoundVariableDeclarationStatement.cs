@@ -5,14 +5,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 {
     public sealed class BoundVariableDeclarationStatement : BoundStatement
     {
-        public VariableSymbol Variable { get; }
-        public BoundExpression InitializerExpression { get; }
-
-        public BoundVariableDeclarationStatement(VariableSymbol variable, BoundExpression initializerExpression)
-        {
-            this.Variable = variable;
-            this.InitializerExpression = initializerExpression;
-        }
+        public VariableSymbol Variable { get; internal init; }
+        public BoundExpression InitializerExpression { get; internal init; }
     }
 
     public sealed partial class Binder
@@ -21,7 +15,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             BoundScope scope,
             VariableDeclarationStatement variableDeclarationStatement)
         {
-            var initializerExpression = this.BindExpression(scope, variableDeclarationStatement.InitializerExpression);
+            var initializerExpression = BindExpression(scope, variableDeclarationStatement.InitializerExpression);
             var variable = new VariableSymbol(
                 name: variableDeclarationStatement.IdentifierToken.Text.ToString(),
                 readOnly: variableDeclarationStatement.AssignmentToken.Kind == SyntaxKind.ConstKeywordToken,
@@ -29,7 +23,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             scope.DeclareVariable(variable);
 
-            return new BoundVariableDeclarationStatement(variable, initializerExpression);
+            return new()
+            {
+                SyntaxNode = variableDeclarationStatement,
+                Variable = variable,
+                InitializerExpression = initializerExpression
+            };
         }
     }
 }
