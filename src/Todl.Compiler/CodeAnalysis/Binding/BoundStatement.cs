@@ -13,6 +13,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 ExpressionStatement expressionStatement => BindExpressionStatement(scope, expressionStatement),
                 BlockStatement blockStatement => BindBlockStatement(scope.CreateChildScope(BoundScopeKind.BlockStatement), blockStatement),
                 VariableDeclarationStatement variableDeclarationStatement => BindVariableDeclarationStatement(scope, variableDeclarationStatement),
+                ReturnStatement returnStatement => BindReturnStatement(scope, returnStatement),
                 _ => null
             };
         }

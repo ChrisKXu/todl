@@ -8,9 +8,10 @@
         {
             return Current.Kind switch
             {
-                SyntaxKind.OpenBraceToken => this.ParseBlockStatement(),
-                SyntaxKind.ConstKeywordToken or SyntaxKind.LetKeywordToken => this.ParseVariableDeclarationStatement(),
-                _ => this.ParseExpressionStatement()
+                SyntaxKind.OpenBraceToken => ParseBlockStatement(),
+                SyntaxKind.ConstKeywordToken or SyntaxKind.LetKeywordToken => ParseVariableDeclarationStatement(),
+                SyntaxKind.ReturnKeywordToken => ParseReturnStatement(),
+                _ => ParseExpressionStatement()
             };
         }
     }

@@ -61,5 +61,43 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             b.ParameterType.Text.Should().Be("System.Uri");
             b.Identifier.Text.Should().Be("b");
         }
+
+        [Fact]
+        public void ParseEmptyReturnStatement()
+        {
+            var emptyReturnStatement = ParseStatement<ReturnStatement>("return;");
+            emptyReturnStatement.Should().NotBeNull();
+            emptyReturnStatement.ReturnKeywordToken.Text.Should().Be("return");
+            emptyReturnStatement.ReturnKeywordToken.Kind.Should().Be(SyntaxKind.ReturnKeywordToken);
+            emptyReturnStatement.ReturnValueExpression.Should().BeNull();
+            emptyReturnStatement.SemicolonToken.Text.Should().Be(";");
+            emptyReturnStatement.SemicolonToken.Kind.Should().Be(SyntaxKind.SemicolonToken);
+        }
+
+        [Fact]
+        public void ParseReturnStatementWithExpression()
+        {
+            var returnStatement = ParseStatement<ReturnStatement>("return (1 + 2) * 4;");
+            returnStatement.Should().NotBeNull();
+            returnStatement.ReturnKeywordToken.Text.Should().Be("return");
+            returnStatement.ReturnKeywordToken.Kind.Should().Be(SyntaxKind.ReturnKeywordToken);
+            returnStatement.SemicolonToken.Text.Should().Be(";");
+            returnStatement.SemicolonToken.Kind.Should().Be(SyntaxKind.SemicolonToken);
+
+            returnStatement.ReturnValueExpression.As<BinaryExpression>().Invoking(binaryExpression =>
+            {
+                binaryExpression.Left.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>().Invoking(inner =>
+                {
+                    inner.Left.As<LiteralExpression>().Text.Should().Be("1");
+                    inner.Operator.Text.Should().Be("+");
+                    inner.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
+                    inner.Right.As<LiteralExpression>().Text.Should().Be("2");
+                });
+
+                binaryExpression.Operator.Text.Should().Be("*");
+                binaryExpression.Operator.Kind.Should().Be(SyntaxKind.StarToken);
+                binaryExpression.Right.As<LiteralExpression>().Text.Should().Be("4");
+            });
+        }
     }
 }

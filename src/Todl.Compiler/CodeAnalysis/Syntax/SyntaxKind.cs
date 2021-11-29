@@ -50,6 +50,7 @@
         LongKeywordToken,
         StringKeywordToken,
         VoidKeywordToken,
+        ReturnKeywordToken,
 
         // Trivia
         WhitespaceTrivia,

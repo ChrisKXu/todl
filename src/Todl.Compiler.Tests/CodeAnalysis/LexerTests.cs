@@ -101,7 +101,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             { SyntaxKind.IntKeywordToken, "int" },
             { SyntaxKind.LongKeywordToken, "long" },
             { SyntaxKind.StringKeywordToken, "string" },
-            { SyntaxKind.VoidKeywordToken, "void" }
+            { SyntaxKind.VoidKeywordToken, "void" },
+            { SyntaxKind.ReturnKeywordToken, "return" }
         };
 
         [Theory]
