@@ -25,7 +25,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         {
             get
             {
-                var lexerDiagnostics = SyntaxTokens.Where(t => t.Diagnostic != null).Select(t => t.Diagnostic);
+                var lexerDiagnostics = SyntaxTokens.SelectMany(t => t.GetDiagnostics());
                 if (lexerDiagnostics.Any())
                 {
                     return lexerDiagnostics.ToList();
@@ -162,8 +162,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 Text = syntaxTree.SourceText.GetTextSpan(Current.Text.Start, 0),
                 LeadingTrivia = Array.Empty<SyntaxTrivia>(),
                 TrailingTrivia = Array.Empty<SyntaxTrivia>(),
-                Missing = true,
-                Diagnostic = diagnostic
+                Missing = true
             };
         }
     }

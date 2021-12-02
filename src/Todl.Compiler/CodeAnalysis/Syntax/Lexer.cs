@@ -377,7 +377,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     Text = text,
                     LeadingTrivia = leadingTrivia,
                     TrailingTrivia = trailingTrivia,
-                    Diagnostic = GetDiagnosticFromErrorCode(errorCode, text)
+                    ErrorCode = errorCode
                 };
             }
 
@@ -387,26 +387,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 Text = text,
                 LeadingTrivia = leadingTrivia,
                 TrailingTrivia = trailingTrivia
-            };
-        }
-
-        private static Diagnostic GetDiagnosticFromErrorCode(
-            ErrorCode errorCode,
-            TextSpan text)
-        {
-            var message = errorCode switch
-            {
-                ErrorCode.UnrecognizedToken => $"Token '{text}' is not recognized",
-                ErrorCode.UnexpectedEndOfFile => "Unexpected EndOfFileToken",
-                _ => string.Empty
-            };
-
-            return new Diagnostic()
-            {
-                Message = message,
-                ErrorCode = errorCode,
-                TextLocation = new() { TextSpan = text },
-                Level = DiagnosticLevel.Error
             };
         }
 
