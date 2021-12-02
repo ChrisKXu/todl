@@ -30,6 +30,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             {
                 ErrorCode.UnrecognizedToken => $"Token '{Text}' is not recognized",
                 ErrorCode.UnexpectedEndOfFile => "Unexpected EndOfFileToken",
+                ErrorCode.UnexpectedToken => $"Unexpected token found: {Text}. Expecting {Kind}",
                 _ => string.Empty
             };
 

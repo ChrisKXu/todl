@@ -13,6 +13,8 @@ public sealed class DiagnosticBag : IEnumerable<Diagnostic>
         public readonly List<Diagnostic> Diagnostics = new();
 
         public DiagnosticBag Build() => new(Diagnostics);
+
+        public void Add(Diagnostic diagnostic) => Diagnostics.Add(diagnostic);
     }
 
     public static readonly DiagnosticBag Empty = new(Enumerable.Empty<Diagnostic>());

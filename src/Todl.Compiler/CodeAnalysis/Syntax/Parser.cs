@@ -11,7 +11,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     public sealed partial class Parser
     {
         private readonly SyntaxTree syntaxTree;
-        private readonly List<Diagnostic> diagnostics = new();
         private readonly List<Directive> directives = new();
         private readonly List<Member> members = new();
         private int position = 0;
@@ -20,20 +19,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         private SyntaxToken Current => Seek(0);
         private SyntaxToken Peak => Seek(1);
-
-        public IReadOnlyList<Diagnostic> Diagnostics
-        {
-            get
-            {
-                var lexerDiagnostics = SyntaxTokens.SelectMany(t => t.GetDiagnostics());
-                if (lexerDiagnostics.Any())
-                {
-                    return lexerDiagnostics.ToList();
-                }
-
-                return this.diagnostics;
-            }
-        }
 
         public IReadOnlyList<Directive> Directives => directives;
         public IReadOnlyList<Member> Members => members;
@@ -146,15 +131,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         private SyntaxToken ReportUnexpectedToken(SyntaxKind expectedSyntaxKind)
         {
-            var diagnostic = new Diagnostic()
-            {
-                Message = $"Unexpected token found: {Current.Text}. Expecting {expectedSyntaxKind}",
-                Level = DiagnosticLevel.Error,
-                TextLocation = Current.GetTextLocation(),
-                ErrorCode = ErrorCode.UnexpectedToken
-            };
-            diagnostics.Add(diagnostic);
-
             // return a fake syntax token of the expected kind, with a text span at the current location with 0 length 
             return new()
             {
@@ -162,7 +138,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 Text = syntaxTree.SourceText.GetTextSpan(Current.Text.Start, 0),
                 LeadingTrivia = Array.Empty<SyntaxTrivia>(),
                 TrailingTrivia = Array.Empty<SyntaxTrivia>(),
-                Missing = true
+                Missing = true,
+                ErrorCode = ErrorCode.UnexpectedToken
             };
         }
     }
