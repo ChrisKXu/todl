@@ -1,6 +1,6 @@
 namespace Todl.Compiler.Diagnostics
 {
-    public enum DiagnosticLevel
+    public enum DiagnosticLevel : short
     {
         Error,
         Warning,

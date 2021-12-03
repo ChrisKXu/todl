@@ -14,8 +14,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             public BoundAssignmentOperator(SyntaxKind syntaxKind, BoundAssignmentOperatorKind boundAssignmentOperatorKind)
             {
-                this.SyntaxKind = syntaxKind;
-                this.BoundAssignmentOperatorKind = boundAssignmentOperatorKind;
+                SyntaxKind = syntaxKind;
+                BoundAssignmentOperatorKind = boundAssignmentOperatorKind;
             }
         }
 
@@ -48,10 +48,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundExpression BindAssignmentExpression(BoundScope scope, AssignmentExpression assignmentExpression)
+        private BoundAssignmentExpression BindAssignmentExpression(BoundScope scope, AssignmentExpression assignmentExpression)
         {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
             var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
             var right = BindExpression(scope, assignmentExpression.Right);
+
+            diagnosticBuilder.Add(right);
 
             if (assignmentExpression.Left is NameExpression nameExpression)
             {
@@ -61,14 +64,14 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 if (variable == null)
                 {
                     if (boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment
-                        && this.binderFlags.Includes(BinderFlags.AllowVariableDeclarationInAssignment))
+                        && binderFlags.Includes(BinderFlags.AllowVariableDeclarationInAssignment))
                     {
                         variable = new VariableSymbol(variableName, false, right.ResultType);
                         scope.DeclareVariable(variable);
                     }
                     else
                     {
-                        return ReportErrorExpression(
+                        diagnosticBuilder.Add(
                             new Diagnostic()
                             {
                                 Message = $"Undeclared variable {variableName}",
@@ -80,7 +83,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
                 else if (variable.ReadOnly)
                 {
-                    return ReportErrorExpression(
+                    diagnosticBuilder.Add(
                         new Diagnostic()
                         {
                             Message = $"Variable {variableName} is read-only",
@@ -91,7 +94,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
                 else if (!variable.Type.Equals(right.ResultType))
                 {
-                    return ReportErrorExpression(
+                    diagnosticBuilder.Add(
                         new Diagnostic()
                         {
                             Message = $"Variable {variableName} cannot be assigned to type {right.ResultType}",
@@ -105,7 +108,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             var left = BindExpression(scope, assignmentExpression.Left);
             if (!left.LValue)
             {
-                return this.ReportErrorExpression(
+                diagnosticBuilder.Add(
                     new Diagnostic()
                     {
                         Message = $"The left-hand side of an assignment must be a variable, property or indexer",
@@ -115,12 +118,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     });
             }
 
-            return new BoundAssignmentExpression()
+            diagnosticBuilder.Add(left);
+
+            return new()
             {
                 Left = left,
                 Operator = boundAssignmentOperator,
                 Right = right,
-                SyntaxNode = assignmentExpression
+                SyntaxNode = assignmentExpression,
+                DiagnosticBuilder = diagnosticBuilder
             };
         }
     }

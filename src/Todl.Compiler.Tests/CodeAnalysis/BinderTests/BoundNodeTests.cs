@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
@@ -18,6 +19,14 @@ public sealed class BoundNodeTests
         boundNode.Should().NotBeOfType<BoundErrorExpression>();
         boundNode.SyntaxNode.Should().NotBeNull();
         boundNode.SyntaxNode.Should().Be(syntaxNode);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetAllSyntaxNodesForTest))]
+    [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
+    public void DiagnosticBagShouldNotBeNull(SyntaxNode unused, BoundNode boundNode)
+    {
+        boundNode.GetDiagnostics().Should().NotBeNull();
     }
 
     [Fact]

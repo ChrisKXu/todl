@@ -18,6 +18,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         private NewExpression ParseNewExpression()
         {
+            var diagnosticsBuilder = new DiagnosticBag.Builder();
             var newKeywordToken = ExpectToken(SyntaxKind.NewKeywordToken);
             var typeNameExpression = ParseNameExpression();
             var arguments = ParseCommaSeparatedSyntaxList(ParseArgument);
@@ -25,7 +26,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var namedArguments = arguments.Items.Where(p => p.IsNamedArgument);
             if (namedArguments.Any() && namedArguments.Count() != arguments.Items.Count)
             {
-                diagnostics.Add(
+                diagnosticsBuilder.Add(
                     new Diagnostic()
                     {
                         Message = "Either all or none of the arguments should be named arguments",
@@ -40,7 +41,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 SyntaxTree = syntaxTree,
                 NewKeywordToken = newKeywordToken,
                 TypeNameExpression = typeNameExpression,
-                Arguments = arguments
+                Arguments = arguments,
+                DiagnosticBuilder = diagnosticsBuilder
             };
         }
     }

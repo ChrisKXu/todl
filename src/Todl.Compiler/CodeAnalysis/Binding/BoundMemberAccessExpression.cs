@@ -24,11 +24,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundExpression BindMemberAccessExpression(
+        private BoundMemberAccessExpression BindMemberAccessExpression(
             BoundScope scope,
             MemberAccessExpression memberAccessExpression)
         {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
             var boundBaseExpression = BindExpression(scope, memberAccessExpression.BaseExpression);
+            diagnosticBuilder.Add(boundBaseExpression);
 
             Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
@@ -37,7 +39,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (!memberInfo.Any())
             {
-                return ReportErrorExpression(
+                diagnosticBuilder.Add(
                     new Diagnostic()
                     {
                         Message = $"Member {memberAccessExpression.MemberIdentifierToken.Text} does not exist in type {type.FullName}",
@@ -45,6 +47,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                         TextLocation = memberAccessExpression.MemberIdentifierToken.GetTextLocation(),
                         ErrorCode = ErrorCode.MemberNotFound
                     });
+
+                return new()
+                {
+                    SyntaxNode = memberAccessExpression,
+                    BoundBaseExpression = boundBaseExpression,
+                    DiagnosticBuilder = diagnosticBuilder
+                };
             }
 
             // if there are multiple members, make sure these are all overloads of the same method
@@ -52,25 +61,27 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             return memberInfo[0].MemberType switch
             {
-                MemberTypes.Property => new BoundMemberAccessExpression()
+                MemberTypes.Property => new()
                 {
                     SyntaxNode = memberAccessExpression,
                     BoundBaseExpression = boundBaseExpression,
                     MemberName = memberAccessExpression.MemberIdentifierToken,
                     ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as PropertyInfo).PropertyType),
-                    BoundMemberAccessKind = BoundMemberAccessKind.Property
+                    BoundMemberAccessKind = BoundMemberAccessKind.Property,
+                    DiagnosticBuilder = diagnosticBuilder
                 },
 
-                MemberTypes.Field => new BoundMemberAccessExpression()
+                MemberTypes.Field => new()
                 {
                     SyntaxNode = memberAccessExpression,
                     BoundBaseExpression = boundBaseExpression,
                     MemberName = memberAccessExpression.MemberIdentifierToken,
                     ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as FieldInfo).FieldType),
-                    BoundMemberAccessKind = BoundMemberAccessKind.Field
+                    BoundMemberAccessKind = BoundMemberAccessKind.Field,
+                    DiagnosticBuilder = diagnosticBuilder
                 },
 
-                _ => new BoundErrorExpression()
+                _ => null // should not happen
             };
         }
     }

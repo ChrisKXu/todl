@@ -19,7 +19,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
             var tokens = lexer.SyntaxTokens;
             tokens.Count.Should().Be(6); // '1', '+', '2', '+', '3' and EndOfFileToken
-            tokens.Where(t => t.Diagnostic != null).Select(t => t.Diagnostic).Should().BeEmpty();
+            tokens.SelectMany(t => t.GetDiagnostics()).Should().BeEmpty();
         }
 
         [Theory]
@@ -31,7 +31,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             lexer.Lex();
 
             lexer.SyntaxTokens.Count.Should().Be(2); // the expected token + EndOfFileToken
-            lexer.SyntaxTokens[0].Diagnostic.Should().BeNull();
+            lexer.SyntaxTokens[0].GetDiagnostics().Should().BeEmpty();
 
             var token = lexer.SyntaxTokens[0];
             token.Kind.Should().Be(kind);
@@ -121,7 +121,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             lexer.Lex();
 
             lexer.SyntaxTokens.Count.Should().Be(2); // the expected token + EndOfFileToken
-            lexer.SyntaxTokens[0].Diagnostic.Should().BeNull();
+            lexer.SyntaxTokens[0].GetDiagnostics().Should().BeEmpty();
 
             var token = lexer.SyntaxTokens[0];
             token.Kind.Should().Be(SyntaxKind.StringToken);
@@ -135,7 +135,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var lexer = new Lexer() { SourceText = sourceText };
             lexer.Lex();
 
-            var diagnostics = lexer.SyntaxTokens.Where(t => t.Diagnostic != null).Select(t => t.Diagnostic).ToList();
+            var diagnostics = lexer.SyntaxTokens.SelectMany(t => t.GetDiagnostics()).ToList();
 
             diagnostics.Should().NotBeEmpty();
             diagnostics.Count.Should().Be(1);

@@ -1,5 +1,6 @@
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -15,7 +16,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             BoundScope scope,
             VariableDeclarationStatement variableDeclarationStatement)
         {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
             var initializerExpression = BindExpression(scope, variableDeclarationStatement.InitializerExpression);
+            diagnosticBuilder.Add(initializerExpression);
+
             var variable = new VariableSymbol(
                 name: variableDeclarationStatement.IdentifierToken.Text.ToString(),
                 readOnly: variableDeclarationStatement.AssignmentToken.Kind == SyntaxKind.ConstKeywordToken,
@@ -27,7 +31,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 SyntaxNode = variableDeclarationStatement,
                 Variable = variable,
-                InitializerExpression = initializerExpression
+                InitializerExpression = initializerExpression,
+                DiagnosticBuilder = diagnosticBuilder
             };
         }
     }

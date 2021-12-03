@@ -73,12 +73,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         private FunctionCallExpression ParseFunctionCallExpression(Expression baseExpression)
         {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
             var arguments = ParseCommaSeparatedSyntaxList(ParseArgument);
 
             var namedArguments = arguments.Items.Where(p => p.IsNamedArgument);
             if (namedArguments.Any() && namedArguments.Count() != arguments.Items.Count)
             {
-                diagnostics.Add(
+                diagnosticBuilder.Add(
                     new Diagnostic()
                     {
                         Message = "Either all or none of the arguments should be named arguments",
@@ -96,7 +97,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     BaseExpression = memberAccessExpression.BaseExpression,
                     DotToken = memberAccessExpression.DotToken,
                     NameToken = memberAccessExpression.MemberIdentifierToken,
-                    Arguments = arguments
+                    Arguments = arguments,
+                    DiagnosticBuilder = diagnosticBuilder
                 };
             }
 
@@ -106,7 +108,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             {
                 SyntaxTree = syntaxTree,
                 NameToken = (baseExpression as NameExpression).SyntaxTokens[0],
-                Arguments = arguments
+                Arguments = arguments,
+                DiagnosticBuilder = diagnosticBuilder
             };
         }
     }
