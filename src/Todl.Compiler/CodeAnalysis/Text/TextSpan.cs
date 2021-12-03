@@ -68,5 +68,7 @@ namespace Todl.Compiler.CodeAnalysis.Text
         {
             return ToReadOnlyTextSpan() == other.AsSpan();
         }
+
+        public TextLocation GetTextLocation() => new() { TextSpan = this };
     }
 }

@@ -34,7 +34,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 _ => string.Empty
             };
 
-            return new Diagnostic()
+            return new()
             {
                 Message = message,
                 ErrorCode = ErrorCode,

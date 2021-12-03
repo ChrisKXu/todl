@@ -15,6 +15,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundExpression BindNameExpression(BoundScope scope, NameExpression nameExpression)
         {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
             var name = nameExpression.Text.ToString();
             var type = nameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(name);
 
@@ -23,14 +24,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 return new BoundTypeExpression()
                 {
                     SyntaxNode = nameExpression,
-                    ResultType = ClrTypeSymbol.MapClrType(type)
+                    ResultType = ClrTypeSymbol.MapClrType(type),
+                    DiagnosticBuilder = diagnosticBuilder
                 };
             }
 
             var variable = scope.LookupVariable(name);
             if (variable == null)
             {
-                return ReportErrorExpression(
+                diagnosticBuilder.Add(
                     new Diagnostic()
                     {
                         Message = $"Undeclared variable {nameExpression.Text}",
@@ -43,7 +45,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             return new BoundVariableExpression()
             {
                 SyntaxNode = nameExpression,
-                Variable = variable
+                Variable = variable,
+                DiagnosticBuilder = diagnosticBuilder
             };
         }
     }

@@ -14,7 +14,22 @@ public sealed class DiagnosticBag : IEnumerable<Diagnostic>
 
         public DiagnosticBag Build() => new(Diagnostics);
 
-        public void Add(Diagnostic diagnostic) => Diagnostics.Add(diagnostic);
+        public void Add(Diagnostic diagnostic)
+            => Diagnostics.Add(diagnostic);
+
+        public void Add(IDiagnosable diagnosable)
+            => Diagnostics.AddRange(diagnosable.GetDiagnostics());
+
+        public void AddRange(IEnumerable<Diagnostic> diagnostics)
+            => Diagnostics.AddRange(diagnostics);
+
+        public void AddRange(params Diagnostic[] diagnostics)
+            => AddRange(diagnostics.AsEnumerable());
+
+        public void AddRange(IEnumerable<IDiagnosable> diagnosables)
+            => AddRange(diagnosables.Where(d => d != null).SelectMany(d => d.GetDiagnostics()));
+        public void AddRange(params IDiagnosable[] diagnosables)
+            => AddRange(diagnosables.AsEnumerable());
     }
 
     public static readonly DiagnosticBag Empty = new(Enumerable.Empty<Diagnostic>());

@@ -72,15 +72,18 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundExpression BindUnaryExpression(BoundScope scope, UnaryExpression unaryExpression)
         {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
             var boundOperand = BindExpression(scope, unaryExpression.Operand);
             var boundUnaryOperator = BoundUnaryExpression.MatchUnaryOperator(
                 operandResultType: boundOperand.ResultType,
                 syntaxKind: unaryExpression.Operator.Kind,
                 trailing: unaryExpression.Trailing);
 
+            diagnosticBuilder.Add(boundOperand);
+
             if (boundUnaryOperator == null)
             {
-                return ReportErrorExpression(
+                diagnosticBuilder.Add(
                     new Diagnostic()
                     {
                         Message = $"Operator {unaryExpression.Operator.Text} is not supported on type {boundOperand.ResultType.Name}",
@@ -94,7 +97,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 SyntaxNode = unaryExpression,
                 Operand = boundOperand,
-                Operator = boundUnaryOperator
+                Operator = boundUnaryOperator,
+                DiagnosticBuilder = diagnosticBuilder
             };
         }
     }

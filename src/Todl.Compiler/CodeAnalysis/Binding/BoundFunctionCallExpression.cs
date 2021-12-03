@@ -40,12 +40,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 functionCallExpression: functionCallExpression);
         }
 
-        private BoundExpression BindFunctionCallWithNamedArgumentsInternal(
+        private BoundFunctionCallExpression BindFunctionCallWithNamedArgumentsInternal(
             BoundScope scope,
             BoundExpression boundBaseExpression,
             FunctionCallExpression functionCallExpression)
         {
             Debug.Assert(boundBaseExpression.ResultType.IsNative);
+
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            diagnosticBuilder.Add(boundBaseExpression);
 
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
             var isStatic = boundBaseExpression is BoundTypeExpression;
@@ -71,26 +74,38 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (candidate is null)
             {
-                return ReportNoMatchingCandidate();
+                ReportNoMatchingFunctionCandidate(diagnosticBuilder, functionCallExpression);
+
+                return new()
+                {
+                    SyntaxNode = functionCallExpression,
+                    BoundBaseExpression = boundBaseExpression,
+                    DiagnosticBuilder = diagnosticBuilder
+                };
             }
 
-            var boundArguments = candidate.GetParameters().OrderBy(p => p.Position).Select(p => arguments[p.Name]).ToList();
+            var boundArguments = candidate.GetParameters().OrderBy(p => p.Position).Select(p => arguments[p.Name]);
+            diagnosticBuilder.AddRange(boundArguments);
 
-            return new BoundFunctionCallExpression()
+            return new()
             {
                 SyntaxNode = functionCallExpression,
                 BoundBaseExpression = boundBaseExpression,
                 MethodInfo = candidate,
-                BoundArguments = boundArguments
+                BoundArguments = boundArguments.ToList(),
+                DiagnosticBuilder = diagnosticBuilder
             };
         }
 
-        private BoundExpression BindFunctionCallWithPositionalArgumentsInternal(
+        private BoundFunctionCallExpression BindFunctionCallWithPositionalArgumentsInternal(
             BoundScope scope,
             BoundExpression boundBaseExpression,
             FunctionCallExpression functionCallExpression)
         {
             Debug.Assert(boundBaseExpression.ResultType.IsNative);
+
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            diagnosticBuilder.Add(boundBaseExpression);
 
             var boundArguments = functionCallExpression.Arguments.Items.Select(a => BindExpression(scope, a.Expression));
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
@@ -104,10 +119,17 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (candidate is null)
             {
-                return ReportNoMatchingCandidate();
+                ReportNoMatchingFunctionCandidate(diagnosticBuilder, functionCallExpression);
+
+                return new()
+                {
+                    SyntaxNode = functionCallExpression,
+                    BoundBaseExpression = boundBaseExpression,
+                    DiagnosticBuilder = diagnosticBuilder
+                };
             }
 
-            return new BoundFunctionCallExpression()
+            return new()
             {
                 SyntaxNode = functionCallExpression,
                 BoundBaseExpression = boundBaseExpression,
@@ -116,14 +138,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             };
         }
 
-        private BoundErrorExpression ReportNoMatchingCandidate()
+        private void ReportNoMatchingFunctionCandidate(
+            DiagnosticBag.Builder diagnosticBuilder,
+            FunctionCallExpression functionCallExpression)
         {
-            return ReportErrorExpression(
+            diagnosticBuilder.Add(
                 new Diagnostic()
                 {
-                    Message = $"No matching function found.",
+                    Message = $"No matching function {functionCallExpression.BaseExpression.Text} found.",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = default,
+                    TextLocation = functionCallExpression.BaseExpression.Text.GetTextLocation(),
                     ErrorCode = ErrorCode.NoMatchingCandidate
                 });
         }

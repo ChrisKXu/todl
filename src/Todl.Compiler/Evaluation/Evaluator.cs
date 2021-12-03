@@ -23,7 +23,7 @@ namespace Todl.Compiler.Evaluation
 
             if (diagnostics.Any())
             {
-                return new EvaluatorResult()
+                return new()
                 {
                     DiagnosticsOutput = diagnostics.Select(d => d.Message).ToList(),
                     EvaluationOutput = null,
@@ -34,9 +34,9 @@ namespace Todl.Compiler.Evaluation
             var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
             var boundExpression = binder.BindExpression(BoundScope.GlobalScope, expression);
 
-            return new EvaluatorResult()
+            return new()
             {
-                DiagnosticsOutput = binder.Diagnostics.Select(diagnostics => diagnostics.Message).ToList(),
+                DiagnosticsOutput = boundExpression.GetDiagnostics().Select(d => d.Message).ToList(),
                 EvaluationOutput = EvaluateBoundExpression(boundExpression),
                 ResultType = boundExpression.ResultType
             };

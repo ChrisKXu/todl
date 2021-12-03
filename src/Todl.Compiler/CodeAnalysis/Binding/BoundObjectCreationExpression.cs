@@ -17,18 +17,27 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundExpression BindNewExpression(BoundScope scope, NewExpression newExpression)
+        private BoundObjectCreationExpression BindNewExpression(BoundScope scope, NewExpression newExpression)
         {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
             var boundTypeExpression = BindNameExpression(scope, newExpression.TypeNameExpression);
+            diagnosticBuilder.Add(boundTypeExpression);
+
             if (boundTypeExpression is not BoundTypeExpression)
             {
-                return ReportErrorExpression(new Diagnostic()
+                diagnosticBuilder.Add(new Diagnostic()
                 {
                     Message = $"Type '{newExpression.TypeNameExpression.Text}' is invalid",
                     Level = DiagnosticLevel.Error,
                     ErrorCode = ErrorCode.TypeNotFound,
-                    TextLocation = newExpression.NewKeywordToken.GetTextLocation()
+                    TextLocation = newExpression.TypeNameExpression.Text.GetTextLocation()
                 });
+
+                return new()
+                {
+                    SyntaxNode = newExpression,
+                    DiagnosticBuilder = diagnosticBuilder
+                };
             }
 
             // Treating no arguments as the same way of positional arguments
@@ -36,18 +45,21 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 return BindNewExpressionWithPositionalArgumentsInternal(
                     scope: scope,
+                    diagnosticBuilder: diagnosticBuilder,
                     targetType: boundTypeExpression.ResultType,
                     newExpression: newExpression);
             }
 
             return BindNewExpressionWithNamedArgumentsInternal(
                 scope: scope,
+                diagnosticBuilder: diagnosticBuilder,
                 targetType: boundTypeExpression.ResultType,
                 newExpression: newExpression);
         }
 
-        private BoundExpression BindNewExpressionWithPositionalArgumentsInternal(
+        private BoundObjectCreationExpression BindNewExpressionWithPositionalArgumentsInternal(
             BoundScope scope,
+            DiagnosticBag.Builder diagnosticBuilder,
             TypeSymbol targetType,
             NewExpression newExpression)
         {
@@ -61,20 +73,24 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (constructorInfo is null)
             {
-                return ReportNoMatchingCandidate();
+                ReportNoMatchingConstructorCandidate(diagnosticBuilder, newExpression);
             }
 
-            return new BoundObjectCreationExpression()
+            diagnosticBuilder.AddRange(boundArguments);
+
+            return new()
             {
                 SyntaxNode = newExpression,
                 ConstructorInfo = constructorInfo,
                 ResultType = targetType,
-                BoundArguments = boundArguments.ToList()
+                BoundArguments = boundArguments.ToList(),
+                DiagnosticBuilder = diagnosticBuilder
             };
         }
 
-        private BoundExpression BindNewExpressionWithNamedArgumentsInternal(
+        private BoundObjectCreationExpression BindNewExpressionWithNamedArgumentsInternal(
             BoundScope scope,
+            DiagnosticBag.Builder diagnosticBuilder,
             TypeSymbol targetType,
             NewExpression newExpression)
         {
@@ -97,18 +113,40 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (constructorInfo is null)
             {
-                return ReportNoMatchingCandidate();
+                ReportNoMatchingConstructorCandidate(diagnosticBuilder, newExpression);
+
+                return new()
+                {
+                    SyntaxNode = newExpression,
+                    DiagnosticBuilder = diagnosticBuilder
+                };
             }
 
             var boundArguments = constructorInfo.GetParameters().OrderBy(p => p.Position).Select(p => argumentsDictionary[p.Name]).ToList();
+            diagnosticBuilder.AddRange(boundArguments);
 
-            return new BoundObjectCreationExpression()
+            return new()
             {
                 SyntaxNode = newExpression,
                 ConstructorInfo = constructorInfo,
                 ResultType = targetType,
-                BoundArguments = boundArguments.ToList()
+                BoundArguments = boundArguments.ToList(),
+                DiagnosticBuilder = diagnosticBuilder
             };
+        }
+
+        private void ReportNoMatchingConstructorCandidate(
+            DiagnosticBag.Builder diagnosticBuilder,
+            NewExpression newExpression)
+        {
+            diagnosticBuilder.Add(
+                new Diagnostic()
+                {
+                    Message = $"No matching constructor {newExpression.TypeNameExpression.Text} found.",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = newExpression.TypeNameExpression.Text.GetTextLocation(),
+                    ErrorCode = ErrorCode.NoMatchingCandidate
+                });
         }
     }
 }

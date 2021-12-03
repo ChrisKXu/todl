@@ -18,9 +18,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             public BoundBinaryOperator(SyntaxKind syntaxKind, BoundBinaryOperatorKind boundBinaryOperatorKind, TypeSymbol resultType)
             {
-                this.SyntaxKind = syntaxKind;
-                this.BoundBinaryOperatorKind = boundBinaryOperatorKind;
-                this.ResultType = resultType;
+                SyntaxKind = syntaxKind;
+                BoundBinaryOperatorKind = boundBinaryOperatorKind;
+                ResultType = resultType;
             }
         }
 
@@ -54,7 +54,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         };
 
         internal static BoundBinaryOperator MatchBinaryOperator(TypeSymbol leftResultType, TypeSymbol rightResultType, SyntaxKind syntaxKind)
-            => BoundBinaryExpression.supportedBinaryOperators.GetValueOrDefault(Tuple.Create(leftResultType, rightResultType, syntaxKind), null);
+            => supportedBinaryOperators.GetValueOrDefault(Tuple.Create(leftResultType, rightResultType, syntaxKind), null);
 
         public BoundBinaryOperator Operator { get; internal init; }
         public BoundExpression Left { get; internal init; }
@@ -64,15 +64,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundExpression BindBinaryExpression(BoundScope scope, BinaryExpression binaryExpression)
+        private BoundBinaryExpression BindBinaryExpression(BoundScope scope, BinaryExpression binaryExpression)
         {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
             var boundLeft = BindExpression(scope, binaryExpression.Left);
             var boundRight = BindExpression(scope, binaryExpression.Right);
             var boundBinaryOperator = BoundBinaryExpression.MatchBinaryOperator(boundLeft.ResultType, boundRight.ResultType, binaryExpression.Operator.Kind);
 
             if (boundBinaryOperator == null)
             {
-                return ReportErrorExpression(
+                diagnosticBuilder.Add(
                     new Diagnostic()
                     {
                         Message = $"Operator {binaryExpression.Operator.Text} is not supported on types {boundLeft.ResultType.Name} and {boundRight.ResultType.Name}",
@@ -82,12 +83,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     });
             }
 
-            return new BoundBinaryExpression()
+            diagnosticBuilder.AddRange(boundLeft, boundRight);
+
+            return new()
             {
                 SyntaxNode = binaryExpression,
                 Left = boundLeft,
                 Right = boundRight,
-                Operator = boundBinaryOperator
+                Operator = boundBinaryOperator,
+                DiagnosticBuilder = diagnosticBuilder
             };
         }
     }

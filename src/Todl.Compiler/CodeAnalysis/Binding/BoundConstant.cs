@@ -24,13 +24,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             };
         }
 
-        private BoundExpression BindNumericConstant(LiteralExpression literalExpression)
+        private BoundConstant BindNumericConstant(LiteralExpression literalExpression)
         {
             var text = literalExpression.LiteralToken.Text.ToReadOnlyTextSpan();
 
             if (int.TryParse(text, out var parsedInt))
             {
-                return new BoundConstant
+                return new()
                 {
                     ResultType = TypeSymbol.ClrInt32,
                     Value = parsedInt,
@@ -40,7 +40,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (double.TryParse(text, out var parsedDouble))
             {
-                return new BoundConstant
+                return new()
                 {
                     ResultType = TypeSymbol.ClrDouble,
                     Value = parsedDouble,
@@ -51,7 +51,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             return ReportUnsupportedLiteral(literalExpression);
         }
 
-        private BoundExpression BindStringConstant(LiteralExpression literalExpression)
+        private BoundConstant BindStringConstant(LiteralExpression literalExpression)
         {
             var text = literalExpression.LiteralToken.Text.ToReadOnlyTextSpan();
             var escape = text[0] != '@';
@@ -89,7 +89,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
             }
 
-            return new BoundConstant
+            return new()
             {
                 ResultType = TypeSymbol.ClrString,
                 Value = builder.ToString(),
@@ -105,8 +105,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 SyntaxNode = literalExpression
             };
 
-        private BoundErrorExpression ReportUnsupportedLiteral(LiteralExpression literalExpression)
-            => ReportErrorExpression(
+        private BoundConstant ReportUnsupportedLiteral(LiteralExpression literalExpression)
+        {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            diagnosticBuilder.Add(
                 new Diagnostic()
                 {
                     Message = $"Literal value {literalExpression.Text} is not supported",
@@ -114,5 +116,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     TextLocation = literalExpression.LiteralToken.GetTextLocation(),
                     ErrorCode = ErrorCode.UnsupportedLiteral
                 });
+
+            return new()
+            {
+                SyntaxNode = literalExpression,
+                DiagnosticBuilder = diagnosticBuilder
+            };
+        }
     }
 }
