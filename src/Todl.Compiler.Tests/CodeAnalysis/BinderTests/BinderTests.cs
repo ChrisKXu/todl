@@ -35,7 +35,14 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
             var binder = Binder.CreateModuleBinder();
-            return binder.BindMember(syntaxTree.Members[0]).As<TBoundMember>();
+            var member = syntaxTree.Members[0];
+
+            if (member is FunctionDeclarationMember functionDeclarationMember)
+            {
+                binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember));
+            }
+
+            return binder.BindMember(member).As<TBoundMember>();
         }
 
         [Fact]

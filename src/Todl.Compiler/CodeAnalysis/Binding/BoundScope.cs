@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -18,23 +19,36 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         }
 
         public VariableSymbol LookupVariable(string name)
-            => this.LookupSymbol<VariableSymbol>(name);
+            => LookupSymbol<VariableSymbol>(name);
 
         private VariableSymbol LookupLocalVariable(string name)
-            => this.LookupLocalSymbol<VariableSymbol>(name);
+            => LookupLocalSymbol<VariableSymbol>(name);
 
         public VariableSymbol DeclareVariable(VariableSymbol variable)
         {
-            var existingVariable = this.LookupLocalVariable(variable.Name);
+            var existingVariable = LookupLocalVariable(variable.Name);
             if (existingVariable != null)
             {
                 return existingVariable;
             }
 
-            this.symbols.Add(variable);
+            symbols.Add(variable);
 
             return variable;
         }
+
+        public FunctionSymbol DeclareFunction(FunctionSymbol function)
+        {
+            if (!symbols.Contains(function))
+            {
+                symbols.Add(function);
+            }
+
+            return function;
+        }
+
+        public FunctionSymbol LookupFunctionSymbol(FunctionDeclarationMember functionDeclarationMember)
+            => symbols.OfType<FunctionSymbol>().FirstOrDefault(f => f.FunctionDeclarationMember.Equals(functionDeclarationMember));
 
         public TSymbol LookupSymbol<TSymbol>(string name) where TSymbol : Symbol
         {
@@ -44,7 +58,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         private TSymbol LookupLocalSymbol<TSymbol>(string name) where TSymbol : Symbol
         {
-            return this.symbols.Where(s => s.Name == name).OfType<TSymbol>().FirstOrDefault();
+            return symbols.Where(s => s.Name == name).OfType<TSymbol>().FirstOrDefault();
         }
 
         public BoundScope CreateChildScope(BoundScopeKind boundScopeKind) => new(this, boundScopeKind);

@@ -1,4 +1,5 @@
-﻿using Todl.Compiler.CodeAnalysis.Symbols;
+﻿using System.Linq;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
@@ -7,7 +8,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         public BoundScope FunctionScope { get; internal init; }
         public BoundBlockStatement Body { get; internal init; }
-        public TypeSymbol ReturnType { get; internal init; }
+        public FunctionSymbol FunctionSymbol { get; internal init; }
+
+        public TypeSymbol ReturnType => FunctionSymbol.ReturnType;
     }
 
     public partial class Binder
@@ -15,14 +18,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private BoundFunctionMember BindFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
         {
             var functionBinder = CreateFunctionBinder();
+            var functionSymbol = Scope.LookupFunctionSymbol(functionDeclarationMember);
 
-            foreach (var parameter in functionDeclarationMember.Parameters.Items)
+            foreach (var parameter in functionSymbol.Parameters)
             {
-                // declaring parameters as readonly variables in function
-                functionBinder.Scope.DeclareVariable(new VariableSymbol(
-                    name: parameter.Identifier.Text.ToString(),
-                    readOnly: true,
-                    type: ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(parameter.ParameterType))));
+                functionBinder.Scope.DeclareVariable(parameter);
             }
 
             return new()
@@ -30,7 +30,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 SyntaxNode = functionDeclarationMember,
                 FunctionScope = functionBinder.Scope,
                 Body = functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body),
-                ReturnType = ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(functionDeclarationMember.ReturnType))
+                FunctionSymbol = functionSymbol
             };
         }
     }
