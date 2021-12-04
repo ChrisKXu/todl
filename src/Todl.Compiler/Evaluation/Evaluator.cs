@@ -12,7 +12,7 @@ namespace Todl.Compiler.Evaluation
     /// <summary>
     /// An evaluator evaluates expressions and statements and give out results as output
     /// </summary>
-    public class Evaluator
+    public sealed class Evaluator
     {
         private readonly Dictionary<VariableSymbol, object> variables = new();
 
@@ -31,7 +31,7 @@ namespace Todl.Compiler.Evaluation
                 };
             }
 
-            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment, BoundScope.GlobalScope);
+            var binder = Binder.CreateScriptBinder();
             var boundExpression = binder.BindExpression(expression);
 
             return new()

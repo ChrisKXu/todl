@@ -10,7 +10,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public virtual bool LValue => false;
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         internal BoundExpression BindExpression(Expression expression)
             => expression switch

@@ -8,7 +8,7 @@ public sealed class BoundReturnStatement : BoundStatement
     public BoundExpression BoundReturnValueExpression { get; internal init; }
 }
 
-public sealed partial class Binder
+public partial class Binder
 {
     private BoundReturnStatement BindReturnStatement(ReturnStatement returnStatement)
     {

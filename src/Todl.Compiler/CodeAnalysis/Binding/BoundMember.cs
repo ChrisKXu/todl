@@ -5,7 +5,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 {
     public abstract class BoundMember : BoundNode { }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         public BoundMember BindMember(Member member)
             => member switch

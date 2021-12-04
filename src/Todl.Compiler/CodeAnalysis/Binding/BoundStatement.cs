@@ -5,7 +5,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 {
     public abstract class BoundStatement : BoundNode { }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         public BoundStatement BindStatement(Statement statement)
             => statement switch

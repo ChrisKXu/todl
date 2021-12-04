@@ -10,17 +10,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public TypeSymbol ReturnType { get; internal init; }
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         private BoundFunctionMember BindFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
         {
-            var functionScope = scope.CreateChildScope(BoundScopeKind.Function);
-            var functionBinder = new Binder(binderFlags, scope);
+            var functionBinder = CreateFunctionBinder();
 
             foreach (var parameter in functionDeclarationMember.Parameters.Items)
             {
                 // declaring parameters as readonly variables in function
-                functionScope.DeclareVariable(new VariableSymbol(
+                functionBinder.Scope.DeclareVariable(new VariableSymbol(
                     name: parameter.Identifier.Text.ToString(),
                     readOnly: true,
                     type: ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(parameter.ParameterType))));
@@ -29,7 +28,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             return new()
             {
                 SyntaxNode = functionDeclarationMember,
-                FunctionScope = functionScope,
+                FunctionScope = functionBinder.Scope,
                 Body = functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body),
                 ReturnType = ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(functionDeclarationMember.ReturnType))
             };

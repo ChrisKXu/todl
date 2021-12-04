@@ -22,7 +22,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         Field
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         private BoundMemberAccessExpression BindMemberAccessExpression(
             MemberAccessExpression memberAccessExpression)

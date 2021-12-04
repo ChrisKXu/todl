@@ -46,7 +46,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public override TypeSymbol ResultType => Right.ResultType;
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         private BoundAssignmentExpression BindAssignmentExpression(AssignmentExpression assignmentExpression)
         {
@@ -59,15 +59,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             if (assignmentExpression.Left is NameExpression nameExpression)
             {
                 var variableName = nameExpression.Text.ToString();
-                var variable = scope.LookupVariable(variableName);
+                var variable = Scope.LookupVariable(variableName);
 
                 if (variable == null)
                 {
                     if (boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment
-                        && binderFlags.Includes(BinderFlags.AllowVariableDeclarationInAssignment))
+                        && AllowVariableDeclarationInAssignment)
                     {
                         variable = new VariableSymbol(variableName, false, right.ResultType);
-                        scope.DeclareVariable(variable);
+                        Scope.DeclareVariable(variable);
                     }
                     else
                     {

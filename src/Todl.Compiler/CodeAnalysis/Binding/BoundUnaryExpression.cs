@@ -68,7 +68,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public override TypeSymbol ResultType => Operator.ResultType;
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         private BoundExpression BindUnaryExpression(UnaryExpression unaryExpression)
         {

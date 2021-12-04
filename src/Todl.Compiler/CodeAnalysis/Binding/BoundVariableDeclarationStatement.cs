@@ -10,7 +10,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public BoundExpression InitializerExpression { get; internal init; }
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         private BoundVariableDeclarationStatement BindVariableDeclarationStatement(
             VariableDeclarationStatement variableDeclarationStatement)
@@ -24,7 +24,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 readOnly: variableDeclarationStatement.AssignmentToken.Kind == SyntaxKind.ConstKeywordToken,
                 type: initializerExpression.ResultType);
 
-            scope.DeclareVariable(variable);
+            Scope.DeclareVariable(variable);
 
             return new()
             {

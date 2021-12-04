@@ -10,21 +10,17 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public IReadOnlyList<BoundStatement> Statements { get; internal init; }
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         private BoundBlockStatement BindBlockStatementInScope(BlockStatement blockStatement)
             => new()
             {
                 SyntaxNode = blockStatement,
-                Scope = scope,
+                Scope = Scope,
                 Statements = blockStatement.InnerStatements.Select(statement => BindStatement(statement)).ToList()
             };
 
         private BoundBlockStatement BindBlockStatement(BlockStatement blockStatement)
-        {
-            var childScope = scope.CreateChildScope(BoundScopeKind.BlockStatement);
-            var childBinder = new Binder(binderFlags, childScope);
-            return childBinder.BindBlockStatementInScope(blockStatement);
-        }
+            => CreateBlockStatementBinder().BindBlockStatementInScope(blockStatement);
     }
 }

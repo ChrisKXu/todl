@@ -16,7 +16,6 @@ public sealed class BoundNodeTests
     [MemberData(nameof(GetAllSyntaxNodesForTest))]
     public void BoundNodeShouldHaveCorrectSyntaxNode(SyntaxNode syntaxNode, BoundNode boundNode)
     {
-        boundNode.Should().NotBeOfType<BoundErrorExpression>();
         boundNode.SyntaxNode.Should().NotBeNull();
         boundNode.SyntaxNode.Should().Be(syntaxNode);
     }
@@ -33,17 +32,12 @@ public sealed class BoundNodeTests
     public void AllBoundNodeVariantsAreCovered()
     {
         var types = GetAllSyntaxNodesForTest().Select(pair => pair[1].GetType());
-        var exemptions = (new Type[]
-        {
-            typeof(BoundErrorExpression)
-        }).ToHashSet();
 
         var allBoundNodeTypes = typeof(BoundNode)
             .Assembly
             .GetTypes()
             .Where(t => t.IsSubclassOf(typeof(BoundNode))
-                && !t.IsAbstract
-                && !exemptions.Contains(t))
+                && !t.IsAbstract)
             .ToHashSet();
         var uncoveredTypes = allBoundNodeTypes.Where(t => !types.Contains(t));
 
@@ -80,7 +74,7 @@ public sealed class BoundNodeTests
         foreach (var inputText in testExpressions)
         {
             var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText));
-            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment, BoundScope.GlobalScope);
+            var binder = Binder.CreateScriptBinder();
             yield return new object[] { expression, binder.BindExpression(expression) };
         }
 
@@ -88,7 +82,7 @@ public sealed class BoundNodeTests
         {
             var sourceText = SourceText.FromString("{ const a = 5; a; }");
             var blockStatement = SyntaxTree.ParseStatement(sourceText);
-            var binder = new Binder(BinderFlags.None, BoundScope.GlobalScope);
+            var binder = Binder.CreateModuleBinder();
             var boundBlockStatement =
                 binder.BindStatement(blockStatement).As<BoundBlockStatement>();
 
@@ -100,7 +94,7 @@ public sealed class BoundNodeTests
         foreach (var inputText in testStatements)
         {
             var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText));
-            var binder = new Binder(BinderFlags.None, BoundScope.GlobalScope);
+            var binder = Binder.CreateModuleBinder();
             yield return new object[] { statement, binder.BindStatement(statement) };
         }
 
@@ -108,7 +102,7 @@ public sealed class BoundNodeTests
         {
             var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
             var member = syntaxTree.Members[0];
-            var binder = new Binder(BinderFlags.None, BoundScope.GlobalScope);
+            var binder = Binder.CreateModuleBinder();
             yield return new object[] { member, binder.BindMember(member) };
         }
     }

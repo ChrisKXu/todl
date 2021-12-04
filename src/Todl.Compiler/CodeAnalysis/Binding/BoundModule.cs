@@ -8,7 +8,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding;
 public sealed class BoundModule
 {
     private readonly Binder binder;
-    private readonly BoundScope boundScope;
     private readonly List<BoundMember> boundMembers = new();
 
     public IReadOnlyList<SyntaxTree> SyntaxTrees { get; private init; }
@@ -17,8 +16,7 @@ public sealed class BoundModule
     // make ctor private
     private BoundModule()
     {
-        boundScope = BoundScope.GlobalScope.CreateChildScope(BoundScopeKind.Module);
-        binder = new(BinderFlags.None, boundScope);
+        binder = Binder.CreateModuleBinder();
     }
 
     private void BindSyntaxTrees()

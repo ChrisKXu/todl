@@ -18,7 +18,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public bool IsStatic => MethodInfo.IsStatic;
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         private BoundExpression BindFunctionCallExpression(FunctionCallExpression functionCallExpression)
         {

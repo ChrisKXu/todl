@@ -15,7 +15,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public IReadOnlyList<BoundExpression> BoundArguments { get; internal init; }
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         private BoundObjectCreationExpression BindNewExpression(NewExpression newExpression)
         {

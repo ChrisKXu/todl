@@ -10,7 +10,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public object Value { get; internal init; }
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         private BoundExpression BindLiteralExpression(LiteralExpression literalExpression)
         {

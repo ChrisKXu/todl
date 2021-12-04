@@ -14,10 +14,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("void Function() {}", typeof(void))]
         public void TestBindFunctionDeclarationMemberWithoutParametersOrBody(string inputText, Type expectedReturnType)
         {
-            var function = BindMember<BoundFunctionMember>(
-                inputText: inputText,
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var function = BindMember<BoundFunctionMember>(inputText);
 
             function.Body.Statements.Should().BeEmpty();
             function.ReturnType.As<ClrTypeSymbol>().ClrType.Should().Be(expectedReturnType);
@@ -28,9 +25,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         public void TestBindFunctionDeclarationMemberWithBody()
         {
             var function = BindMember<BoundFunctionMember>(
-                inputText: "void Main() { const a = 30; System.Threading.Thread.Sleep(a); }",
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+                inputText: "void Main() { const a = 30; System.Threading.Thread.Sleep(a); }");
 
             function.Body.Statements.Count.Should().Be(2);
 
@@ -48,9 +43,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         public void TestBindFunctionDeclarationMemberWithParameters()
         {
             var function = BindMember<BoundFunctionMember>(
-                inputText: "void Sleep(int a) { System.Threading.Thread.Sleep(a); }",
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+                inputText: "void Sleep(int a) { System.Threading.Thread.Sleep(a); }");
 
             var a = function.FunctionScope.LookupVariable("a");
             a.Should().NotBeNull();

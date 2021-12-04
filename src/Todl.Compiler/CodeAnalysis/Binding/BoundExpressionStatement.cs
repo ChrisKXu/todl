@@ -12,7 +12,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             => Expression.GetDiagnostics();
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
         private BoundExpressionStatement BindExpressionStatement(ExpressionStatement expressionStatement)
             => new()
