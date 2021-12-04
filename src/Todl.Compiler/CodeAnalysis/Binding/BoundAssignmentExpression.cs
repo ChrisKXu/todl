@@ -48,11 +48,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundAssignmentExpression BindAssignmentExpression(BoundScope scope, AssignmentExpression assignmentExpression)
+        private BoundAssignmentExpression BindAssignmentExpression(AssignmentExpression assignmentExpression)
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
             var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
-            var right = BindExpression(scope, assignmentExpression.Right);
+            var right = BindExpression(assignmentExpression.Right);
 
             diagnosticBuilder.Add(right);
 
@@ -105,7 +105,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
             }
 
-            var left = BindExpression(scope, assignmentExpression.Left);
+            var left = BindExpression(assignmentExpression.Left);
             if (!left.LValue)
             {
                 diagnosticBuilder.Add(

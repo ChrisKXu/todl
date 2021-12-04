@@ -18,8 +18,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TBoundExpression : BoundExpression
         {
             var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText));
-            var binder = new Binder(binderFlags);
-            return binder.BindExpression(scope, expression).As<TBoundExpression>();
+            var binder = new Binder(binderFlags, scope);
+            return binder.BindExpression(expression).As<TBoundExpression>();
         }
 
         private static TBoundStatement BindStatement<TBoundStatement>(
@@ -29,8 +29,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TBoundStatement : BoundStatement
         {
             var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText));
-            var binder = new Binder(binderFlags);
-            return binder.BindStatement(scope, statement) as TBoundStatement;
+            var binder = new Binder(binderFlags, scope);
+            return binder.BindStatement(statement) as TBoundStatement;
         }
 
         private static TBoundMember BindMember<TBoundMember>(
@@ -40,8 +40,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TBoundMember : BoundMember
         {
             var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
-            var binder = new Binder(binderFlags);
-            return binder.BindMember(scope, syntaxTree.Members[0]).As<TBoundMember>();
+            var binder = new Binder(binderFlags, scope);
+            return binder.BindMember(syntaxTree.Members[0]).As<TBoundMember>();
         }
 
         [Fact]

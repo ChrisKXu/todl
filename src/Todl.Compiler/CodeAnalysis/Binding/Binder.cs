@@ -10,11 +10,14 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     public sealed partial class Binder
     {
         private readonly BinderFlags binderFlags;
+        private readonly BoundScope scope;
 
         internal Binder(
-            BinderFlags binderFlags)
+            BinderFlags binderFlags,
+            BoundScope scope)
         {
             this.binderFlags = binderFlags;
+            this.scope = scope;
         }
     }
 }

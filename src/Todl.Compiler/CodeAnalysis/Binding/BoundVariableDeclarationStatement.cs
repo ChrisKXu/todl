@@ -13,11 +13,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     public sealed partial class Binder
     {
         private BoundVariableDeclarationStatement BindVariableDeclarationStatement(
-            BoundScope scope,
             VariableDeclarationStatement variableDeclarationStatement)
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
-            var initializerExpression = BindExpression(scope, variableDeclarationStatement.InitializerExpression);
+            var initializerExpression = BindExpression(variableDeclarationStatement.InitializerExpression);
             diagnosticBuilder.Add(initializerExpression);
 
             var variable = new VariableSymbol(

@@ -17,10 +17,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundObjectCreationExpression BindNewExpression(BoundScope scope, NewExpression newExpression)
+        private BoundObjectCreationExpression BindNewExpression(NewExpression newExpression)
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
-            var boundTypeExpression = BindNameExpression(scope, newExpression.TypeNameExpression);
+            var boundTypeExpression = BindNameExpression(newExpression.TypeNameExpression);
             diagnosticBuilder.Add(boundTypeExpression);
 
             if (boundTypeExpression is not BoundTypeExpression)
@@ -44,21 +44,18 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             if (!newExpression.Arguments.Items.Any() || !newExpression.Arguments.Items[0].IsNamedArgument)
             {
                 return BindNewExpressionWithPositionalArgumentsInternal(
-                    scope: scope,
                     diagnosticBuilder: diagnosticBuilder,
                     targetType: boundTypeExpression.ResultType,
                     newExpression: newExpression);
             }
 
             return BindNewExpressionWithNamedArgumentsInternal(
-                scope: scope,
                 diagnosticBuilder: diagnosticBuilder,
                 targetType: boundTypeExpression.ResultType,
                 newExpression: newExpression);
         }
 
         private BoundObjectCreationExpression BindNewExpressionWithPositionalArgumentsInternal(
-            BoundScope scope,
             DiagnosticBag.Builder diagnosticBuilder,
             TypeSymbol targetType,
             NewExpression newExpression)
@@ -66,7 +63,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             Debug.Assert(targetType.IsNative);
 
             var clrType = (targetType as ClrTypeSymbol).ClrType;
-            var boundArguments = newExpression.Arguments.Items.Select(a => BindExpression(scope, a.Expression));
+            var boundArguments = newExpression.Arguments.Items.Select(a => BindExpression(a.Expression));
             var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
 
             var constructorInfo = clrType.GetConstructor(argumentTypes);
@@ -89,7 +86,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         }
 
         private BoundObjectCreationExpression BindNewExpressionWithNamedArgumentsInternal(
-            BoundScope scope,
             DiagnosticBag.Builder diagnosticBuilder,
             TypeSymbol targetType,
             NewExpression newExpression)
@@ -102,7 +98,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 .Where(c => c.IsPublic && c.GetParameters().Length == arguments.Items.Count);
             var argumentsDictionary = arguments.Items.ToDictionary(
                 keySelector: a => a.Identifier.Value.Text.ToString(),
-                elementSelector: a => BindExpression(scope, a.Expression));
+                elementSelector: a => BindExpression(a.Expression));
             var nameAndTypes = argumentsDictionary.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
 
             var constructorInfo = candidates.FirstOrDefault(c =>

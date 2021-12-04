@@ -31,8 +31,8 @@ namespace Todl.Compiler.Evaluation
                 };
             }
 
-            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
-            var boundExpression = binder.BindExpression(BoundScope.GlobalScope, expression);
+            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment, BoundScope.GlobalScope);
+            var boundExpression = binder.BindExpression(expression);
 
             return new()
             {
@@ -55,7 +55,6 @@ namespace Todl.Compiler.Evaluation
                 BoundTypeExpression boundTypeExpression => boundTypeExpression.ResultType.Name,
                 BoundFunctionCallExpression boundFunctionCallExpression => EvaluateBoundFunctionCallExpression(boundFunctionCallExpression),
                 BoundObjectCreationExpression boundObjectCreationExpression => EvaluateBoundObjectCreationExpression(boundObjectCreationExpression),
-                BoundErrorExpression => null,
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };
         }

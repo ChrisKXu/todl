@@ -14,11 +14,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundExpressionStatement BindExpressionStatement(BoundScope scope, ExpressionStatement expressionStatement)
+        private BoundExpressionStatement BindExpressionStatement(ExpressionStatement expressionStatement)
             => new()
             {
                 SyntaxNode = expressionStatement,
-                Expression = BindExpression(scope, expressionStatement.Expression)
+                Expression = BindExpression(expressionStatement.Expression)
             };
     }
 }

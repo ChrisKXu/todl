@@ -80,17 +80,17 @@ public sealed class BoundNodeTests
         foreach (var inputText in testExpressions)
         {
             var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText));
-            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
-            yield return new object[] { expression, binder.BindExpression(BoundScope.GlobalScope, expression) };
+            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment, BoundScope.GlobalScope);
+            yield return new object[] { expression, binder.BindExpression(expression) };
         }
 
         // BoundVariableExpression requires special logic to work
         {
             var sourceText = SourceText.FromString("{ const a = 5; a; }");
             var blockStatement = SyntaxTree.ParseStatement(sourceText);
-            var binder = new Binder(BinderFlags.None);
+            var binder = new Binder(BinderFlags.None, BoundScope.GlobalScope);
             var boundBlockStatement =
-                binder.BindStatement(BoundScope.GlobalScope, blockStatement).As<BoundBlockStatement>();
+                binder.BindStatement(blockStatement).As<BoundBlockStatement>();
 
             var boundVariableExpression =
                 boundBlockStatement.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundVariableExpression>();
@@ -100,16 +100,16 @@ public sealed class BoundNodeTests
         foreach (var inputText in testStatements)
         {
             var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText));
-            var binder = new Binder(BinderFlags.None);
-            yield return new object[] { statement, binder.BindStatement(BoundScope.GlobalScope, statement) };
+            var binder = new Binder(BinderFlags.None, BoundScope.GlobalScope);
+            yield return new object[] { statement, binder.BindStatement(statement) };
         }
 
         foreach (var inputText in testMembers)
         {
             var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
             var member = syntaxTree.Members[0];
-            var binder = new Binder(BinderFlags.None);
-            yield return new object[] { member, binder.BindMember(BoundScope.GlobalScope, member) };
+            var binder = new Binder(BinderFlags.None, BoundScope.GlobalScope);
+            yield return new object[] { member, binder.BindMember(member) };
         }
     }
 }

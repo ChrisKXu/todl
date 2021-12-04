@@ -12,9 +12,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundFunctionMember BindFunctionDeclarationMember(BoundScope parentScope, FunctionDeclarationMember functionDeclarationMember)
+        private BoundFunctionMember BindFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
         {
-            var functionScope = parentScope.CreateChildScope(BoundScopeKind.Function);
+            var functionScope = scope.CreateChildScope(BoundScopeKind.Function);
+            var functionBinder = new Binder(binderFlags, scope);
 
             foreach (var parameter in functionDeclarationMember.Parameters.Items)
             {
@@ -25,11 +26,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     type: ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(parameter.ParameterType))));
             }
 
-            return new BoundFunctionMember()
+            return new()
             {
                 SyntaxNode = functionDeclarationMember,
                 FunctionScope = functionScope,
-                Body = BindBlockStatement(functionScope, functionDeclarationMember.Body),
+                Body = functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body),
                 ReturnType = ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(functionDeclarationMember.ReturnType))
             };
         }

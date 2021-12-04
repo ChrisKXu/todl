@@ -64,11 +64,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundBinaryExpression BindBinaryExpression(BoundScope scope, BinaryExpression binaryExpression)
+        private BoundBinaryExpression BindBinaryExpression(BinaryExpression binaryExpression)
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
-            var boundLeft = BindExpression(scope, binaryExpression.Left);
-            var boundRight = BindExpression(scope, binaryExpression.Right);
+            var boundLeft = BindExpression(binaryExpression.Left);
+            var boundRight = BindExpression(binaryExpression.Right);
             var boundBinaryOperator = BoundBinaryExpression.MatchBinaryOperator(boundLeft.ResultType, boundRight.ResultType, binaryExpression.Operator.Kind);
 
             if (boundBinaryOperator == null)

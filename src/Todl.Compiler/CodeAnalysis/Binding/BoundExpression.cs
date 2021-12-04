@@ -1,4 +1,5 @@
-﻿using Todl.Compiler.CodeAnalysis.Symbols;
+﻿using System;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
@@ -11,21 +12,19 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        internal BoundExpression BindExpression(BoundScope scope, Expression expression)
-        {
-            return expression switch
+        internal BoundExpression BindExpression(Expression expression)
+            => expression switch
             {
                 LiteralExpression literalExpression => BindLiteralExpression(literalExpression),
-                BinaryExpression binaryExpression => BindBinaryExpression(scope, binaryExpression),
-                UnaryExpression unaryExpression => BindUnaryExpression(scope, unaryExpression),
-                ParethesizedExpression parethesizedExpression => BindExpression(scope, parethesizedExpression.InnerExpression),
-                AssignmentExpression assignmentExpression => BindAssignmentExpression(scope, assignmentExpression),
-                NameExpression nameExpression => BindNameExpression(scope, nameExpression),
-                MemberAccessExpression memberAccessExpression => BindMemberAccessExpression(scope, memberAccessExpression),
-                FunctionCallExpression functionCallExpression => BindFunctionCallExpression(scope, functionCallExpression),
-                NewExpression newExpression => BindNewExpression(scope, newExpression),
-                _ => new BoundErrorExpression()
+                BinaryExpression binaryExpression => BindBinaryExpression(binaryExpression),
+                UnaryExpression unaryExpression => BindUnaryExpression(unaryExpression),
+                ParethesizedExpression parethesizedExpression => BindExpression(parethesizedExpression.InnerExpression),
+                AssignmentExpression assignmentExpression => BindAssignmentExpression(assignmentExpression),
+                NameExpression nameExpression => BindNameExpression(nameExpression),
+                MemberAccessExpression memberAccessExpression => BindMemberAccessExpression(memberAccessExpression),
+                FunctionCallExpression functionCallExpression => BindFunctionCallExpression(functionCallExpression),
+                NewExpression newExpression => BindNewExpression(newExpression),
+                _ => throw new NotSupportedException() // keep compiler happy, this shouldn't happen as guarded by test cases
             };
-        }
     }
 }

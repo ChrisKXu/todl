@@ -25,11 +25,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     public sealed partial class Binder
     {
         private BoundMemberAccessExpression BindMemberAccessExpression(
-            BoundScope scope,
             MemberAccessExpression memberAccessExpression)
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
-            var boundBaseExpression = BindExpression(scope, memberAccessExpression.BaseExpression);
+            var boundBaseExpression = BindExpression(memberAccessExpression.BaseExpression);
             diagnosticBuilder.Add(boundBaseExpression);
 
             Debug.Assert(boundBaseExpression.ResultType.IsNative);

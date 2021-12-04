@@ -1,4 +1,5 @@
-﻿using Todl.Compiler.CodeAnalysis.Syntax;
+﻿using System;
+using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -6,16 +7,14 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        public BoundStatement BindStatement(BoundScope scope, Statement statement)
-        {
-            return statement switch
+        public BoundStatement BindStatement(Statement statement)
+            => statement switch
             {
-                ExpressionStatement expressionStatement => BindExpressionStatement(scope, expressionStatement),
-                BlockStatement blockStatement => BindBlockStatement(scope.CreateChildScope(BoundScopeKind.BlockStatement), blockStatement),
-                VariableDeclarationStatement variableDeclarationStatement => BindVariableDeclarationStatement(scope, variableDeclarationStatement),
-                ReturnStatement returnStatement => BindReturnStatement(scope, returnStatement),
-                _ => null
+                ExpressionStatement expressionStatement => BindExpressionStatement(expressionStatement),
+                BlockStatement blockStatement => BindBlockStatement(blockStatement),
+                VariableDeclarationStatement variableDeclarationStatement => BindVariableDeclarationStatement(variableDeclarationStatement),
+                ReturnStatement returnStatement => BindReturnStatement(returnStatement),
+                _ => throw new NotSupportedException() // keep compiler happy, this shouldn't happen as guarded by test cases
             };
-        }
     }
 }

@@ -13,7 +13,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
     public sealed partial class Binder
     {
-        private BoundExpression BindNameExpression(BoundScope scope, NameExpression nameExpression)
+        private BoundExpression BindNameExpression(NameExpression nameExpression)
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
             var name = nameExpression.Text.ToString();

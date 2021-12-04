@@ -7,20 +7,24 @@ namespace Todl.Compiler.CodeAnalysis.Binding;
 
 public sealed class BoundModule
 {
-    private readonly Binder binder = new(BinderFlags.None);
-    private readonly BoundScope boundScope = BoundScope.GlobalScope.CreateChildScope(BoundScopeKind.Module);
+    private readonly Binder binder;
+    private readonly BoundScope boundScope;
     private readonly List<BoundMember> boundMembers = new();
 
     public IReadOnlyList<SyntaxTree> SyntaxTrees { get; private init; }
     public IReadOnlyList<BoundMember> BoundMembers => boundMembers;
 
     // make ctor private
-    private BoundModule() { }
+    private BoundModule()
+    {
+        boundScope = BoundScope.GlobalScope.CreateChildScope(BoundScopeKind.Module);
+        binder = new(BinderFlags.None, boundScope);
+    }
 
     private void BindSyntaxTrees()
     {
         var members = SyntaxTrees.SelectMany(tree => tree.Members);
-        boundMembers.AddRange(members.Select(m => binder.BindMember(boundScope, m)));
+        boundMembers.AddRange(members.Select(m => binder.BindMember(m)));
     }
 
     public static BoundModule Create(
