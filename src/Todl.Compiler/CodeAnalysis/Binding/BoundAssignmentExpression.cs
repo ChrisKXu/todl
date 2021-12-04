@@ -46,28 +46,28 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public override TypeSymbol ResultType => Right.ResultType;
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
-        private BoundAssignmentExpression BindAssignmentExpression(BoundScope scope, AssignmentExpression assignmentExpression)
+        private BoundAssignmentExpression BindAssignmentExpression(AssignmentExpression assignmentExpression)
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
             var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
-            var right = BindExpression(scope, assignmentExpression.Right);
+            var right = BindExpression(assignmentExpression.Right);
 
             diagnosticBuilder.Add(right);
 
             if (assignmentExpression.Left is NameExpression nameExpression)
             {
                 var variableName = nameExpression.Text.ToString();
-                var variable = scope.LookupVariable(variableName);
+                var variable = Scope.LookupVariable(variableName);
 
                 if (variable == null)
                 {
                     if (boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment
-                        && binderFlags.Includes(BinderFlags.AllowVariableDeclarationInAssignment))
+                        && AllowVariableDeclarationInAssignment)
                     {
                         variable = new VariableSymbol(variableName, false, right.ResultType);
-                        scope.DeclareVariable(variable);
+                        Scope.DeclareVariable(variable);
                     }
                     else
                     {
@@ -105,7 +105,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
             }
 
-            var left = BindExpression(scope, assignmentExpression.Left);
+            var left = BindExpression(assignmentExpression.Left);
             if (!left.LValue)
             {
                 diagnosticBuilder.Add(

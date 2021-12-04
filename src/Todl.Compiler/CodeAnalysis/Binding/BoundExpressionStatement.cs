@@ -12,13 +12,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             => Expression.GetDiagnostics();
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
-        private BoundExpressionStatement BindExpressionStatement(BoundScope scope, ExpressionStatement expressionStatement)
+        private BoundExpressionStatement BindExpressionStatement(ExpressionStatement expressionStatement)
             => new()
             {
                 SyntaxNode = expressionStatement,
-                Expression = BindExpression(scope, expressionStatement.Expression)
+                Expression = BindExpression(expressionStatement.Expression)
             };
     }
 }

@@ -12,7 +12,7 @@ namespace Todl.Compiler.Evaluation
     /// <summary>
     /// An evaluator evaluates expressions and statements and give out results as output
     /// </summary>
-    public class Evaluator
+    public sealed class Evaluator
     {
         private readonly Dictionary<VariableSymbol, object> variables = new();
 
@@ -31,8 +31,8 @@ namespace Todl.Compiler.Evaluation
                 };
             }
 
-            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
-            var boundExpression = binder.BindExpression(BoundScope.GlobalScope, expression);
+            var binder = Binder.CreateScriptBinder();
+            var boundExpression = binder.BindExpression(expression);
 
             return new()
             {
@@ -55,7 +55,6 @@ namespace Todl.Compiler.Evaluation
                 BoundTypeExpression boundTypeExpression => boundTypeExpression.ResultType.Name,
                 BoundFunctionCallExpression boundFunctionCallExpression => EvaluateBoundFunctionCallExpression(boundFunctionCallExpression),
                 BoundObjectCreationExpression boundObjectCreationExpression => EvaluateBoundObjectCreationExpression(boundObjectCreationExpression),
-                BoundErrorExpression => null,
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };
         }

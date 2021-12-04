@@ -16,7 +16,6 @@ public sealed class BoundNodeTests
     [MemberData(nameof(GetAllSyntaxNodesForTest))]
     public void BoundNodeShouldHaveCorrectSyntaxNode(SyntaxNode syntaxNode, BoundNode boundNode)
     {
-        boundNode.Should().NotBeOfType<BoundErrorExpression>();
         boundNode.SyntaxNode.Should().NotBeNull();
         boundNode.SyntaxNode.Should().Be(syntaxNode);
     }
@@ -33,17 +32,12 @@ public sealed class BoundNodeTests
     public void AllBoundNodeVariantsAreCovered()
     {
         var types = GetAllSyntaxNodesForTest().Select(pair => pair[1].GetType());
-        var exemptions = (new Type[]
-        {
-            typeof(BoundErrorExpression)
-        }).ToHashSet();
 
         var allBoundNodeTypes = typeof(BoundNode)
             .Assembly
             .GetTypes()
             .Where(t => t.IsSubclassOf(typeof(BoundNode))
-                && !t.IsAbstract
-                && !exemptions.Contains(t))
+                && !t.IsAbstract)
             .ToHashSet();
         var uncoveredTypes = allBoundNodeTypes.Where(t => !types.Contains(t));
 
@@ -80,17 +74,17 @@ public sealed class BoundNodeTests
         foreach (var inputText in testExpressions)
         {
             var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText));
-            var binder = new Binder(BinderFlags.AllowVariableDeclarationInAssignment);
-            yield return new object[] { expression, binder.BindExpression(BoundScope.GlobalScope, expression) };
+            var binder = Binder.CreateScriptBinder();
+            yield return new object[] { expression, binder.BindExpression(expression) };
         }
 
         // BoundVariableExpression requires special logic to work
         {
             var sourceText = SourceText.FromString("{ const a = 5; a; }");
             var blockStatement = SyntaxTree.ParseStatement(sourceText);
-            var binder = new Binder(BinderFlags.None);
+            var binder = Binder.CreateModuleBinder();
             var boundBlockStatement =
-                binder.BindStatement(BoundScope.GlobalScope, blockStatement).As<BoundBlockStatement>();
+                binder.BindStatement(blockStatement).As<BoundBlockStatement>();
 
             var boundVariableExpression =
                 boundBlockStatement.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundVariableExpression>();
@@ -100,16 +94,16 @@ public sealed class BoundNodeTests
         foreach (var inputText in testStatements)
         {
             var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText));
-            var binder = new Binder(BinderFlags.None);
-            yield return new object[] { statement, binder.BindStatement(BoundScope.GlobalScope, statement) };
+            var binder = Binder.CreateModuleBinder();
+            yield return new object[] { statement, binder.BindStatement(statement) };
         }
 
         foreach (var inputText in testMembers)
         {
             var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
             var member = syntaxTree.Members[0];
-            var binder = new Binder(BinderFlags.None);
-            yield return new object[] { member, binder.BindMember(BoundScope.GlobalScope, member) };
+            var binder = Binder.CreateModuleBinder();
+            yield return new object[] { member, binder.BindMember(member) };
         }
     }
 }

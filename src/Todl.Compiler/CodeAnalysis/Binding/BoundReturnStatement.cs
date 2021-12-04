@@ -8,16 +8,16 @@ public sealed class BoundReturnStatement : BoundStatement
     public BoundExpression BoundReturnValueExpression { get; internal init; }
 }
 
-public sealed partial class Binder
+public partial class Binder
 {
-    private BoundReturnStatement BindReturnStatement(BoundScope scope, ReturnStatement returnStatement)
+    private BoundReturnStatement BindReturnStatement(ReturnStatement returnStatement)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
 
         BoundExpression boundReturnValueExpression = null;
         if (returnStatement.ReturnValueExpression != null)
         {
-            boundReturnValueExpression = BindExpression(scope, returnStatement.ReturnValueExpression);
+            boundReturnValueExpression = BindExpression(returnStatement.ReturnValueExpression);
             diagnosticBuilder.Add(boundReturnValueExpression);
         }
 

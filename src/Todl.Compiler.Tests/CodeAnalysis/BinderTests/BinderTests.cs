@@ -12,45 +12,36 @@ namespace Todl.Compiler.Tests.CodeAnalysis
     public sealed partial class BinderTests
     {
         private static TBoundExpression BindExpression<TBoundExpression>(
-            string inputText,
-            BinderFlags binderFlags,
-            BoundScope scope)
+            string inputText)
             where TBoundExpression : BoundExpression
         {
             var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText));
-            var binder = new Binder(binderFlags);
-            return binder.BindExpression(scope, expression).As<TBoundExpression>();
+            var binder = Binder.CreateModuleBinder();
+            return binder.BindExpression(expression).As<TBoundExpression>();
         }
 
         private static TBoundStatement BindStatement<TBoundStatement>(
-            string inputText,
-            BinderFlags binderFlags,
-            BoundScope scope)
+            string inputText)
             where TBoundStatement : BoundStatement
         {
             var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText));
-            var binder = new Binder(binderFlags);
-            return binder.BindStatement(scope, statement) as TBoundStatement;
+            var binder = Binder.CreateModuleBinder();
+            return binder.BindStatement(statement) as TBoundStatement;
         }
 
         private static TBoundMember BindMember<TBoundMember>(
-            string inputText,
-            BinderFlags binderFlags,
-            BoundScope scope)
+            string inputText)
             where TBoundMember : BoundMember
         {
             var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
-            var binder = new Binder(binderFlags);
-            return binder.BindMember(scope, syntaxTree.Members[0]).As<TBoundMember>();
+            var binder = Binder.CreateModuleBinder();
+            return binder.BindMember(syntaxTree.Members[0]).As<TBoundMember>();
         }
 
         [Fact]
         public void TestBindBinaryExpression()
         {
-            var boundBinaryExpression = BindExpression<BoundBinaryExpression>(
-                inputText: "1 + 2 + 3",
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundBinaryExpression = BindExpression<BoundBinaryExpression>("1 + 2 + 3");
 
             boundBinaryExpression.Should().NotBeNull();
             boundBinaryExpression.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition);
@@ -71,10 +62,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("@\"ab\\\"cd\"", "ab\\\"cd")]
         public void TestBindStringConstant(string input, string expectedOutput)
         {
-            var boundConstant = BindExpression<BoundConstant>(
-                inputText: input,
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundConstant = BindExpression<BoundConstant>(input);
 
             boundConstant.Should().NotBeNull();
             boundConstant.ResultType.Should().Be(TypeSymbol.ClrString);
@@ -85,14 +73,14 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [MemberData(nameof(GetTestBindAssignmentExpressionDataWithEqualsToken))]
         public void TestBindAssignmentExpressionEqualsToken(string input, string variableName, TypeSymbol expectedResultType)
         {
-            var boundAssignmentExpression = BindExpression<BoundAssignmentExpression>(
-                inputText: input,
-                binderFlags: BinderFlags.AllowVariableDeclarationInAssignment,
-                scope: BoundScope.GlobalScope);
+            var expression = SyntaxTree.ParseExpression(SourceText.FromString(input));
+            var boundAssignmentExpression =
+                Binder.CreateScriptBinder().BindExpression(expression)
+                .As<BoundAssignmentExpression>();
 
             boundAssignmentExpression.Should().NotBeNull();
 
-            var variable = (boundAssignmentExpression.Left as BoundVariableExpression).Variable;
+            var variable = boundAssignmentExpression.Left.As<BoundVariableExpression>().Variable;
 
             variable.Name.Should().Be(variableName);
             variable.ReadOnly.Should().BeFalse();
@@ -112,27 +100,24 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var input = @"
             {
-                a = 0;
-                b = a + 10;
+                const a = 0;
+                const b = a + 10;
             }
             ";
 
-            var boundBlockStatement = BindStatement<BoundBlockStatement>(
-                inputText: input,
-                binderFlags: BinderFlags.AllowVariableDeclarationInAssignment,
-                scope: BoundScope.GlobalScope);
+            var boundBlockStatement = BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
             boundBlockStatement.Statements.Count.Should().Be(2);
             boundBlockStatement.Scope.LookupVariable("a").Type.Should().Be(TypeSymbol.ClrInt32);
             boundBlockStatement.Scope.LookupVariable("b").Type.Should().Be(TypeSymbol.ClrInt32);
 
-            var firstExpression = boundBlockStatement.Statements[0] as BoundExpressionStatement;
-            (firstExpression.Expression as BoundAssignmentExpression).Should().NotBeNull();
+            boundBlockStatement.Statements[0].Should().BeOfType<BoundVariableDeclarationStatement>();
+            boundBlockStatement.Statements[1].Should().BeOfType<BoundVariableDeclarationStatement>();
 
-            var secondExpression = boundBlockStatement.Statements[1] as BoundExpressionStatement;
-            var binaryExpression = (secondExpression.Expression as BoundAssignmentExpression).Right as BoundBinaryExpression;
-            binaryExpression.Should().NotBeNull();
+            boundBlockStatement.Statements[1]
+                .As<BoundVariableDeclarationStatement>()
+                .InitializerExpression.Should().BeOfType<BoundBinaryExpression>();
         }
 
         [Fact]
@@ -144,10 +129,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 let b = a + 4;
             }
             ";
-            var boundBlockStatement = BindStatement<BoundBlockStatement>(
-                inputText: input,
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundBlockStatement = BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
             boundBlockStatement.Statements.Count.Should().Be(2);
@@ -170,10 +152,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             }
             ";
 
-            var boundBlockStatement = BindStatement<BoundBlockStatement>(
-                inputText: input,
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundBlockStatement = BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
             boundBlockStatement.Statements.Count.Should().Be(4);
@@ -192,10 +171,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestBindMemberAccessExpressionInstanceProperty()
         {
-            var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>(
-                inputText: "\"abc\".Length",
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>("\"abc\".Length");
 
             boundMemberAccessExpression.BoundMemberAccessKind.Should().Be(BoundMemberAccessKind.Property);
             boundMemberAccessExpression.MemberName.Text.Should().Be("Length");
@@ -206,10 +182,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestBindMemberAccessExpressionStaticField()
         {
-            var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>(
-                inputText: "System.Int32.MaxValue",
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>("System.Int32.MaxValue");
 
             boundMemberAccessExpression.BoundMemberAccessKind.Should().Be(BoundMemberAccessKind.Field);
             boundMemberAccessExpression.MemberName.Text.Should().Be("MaxValue");
@@ -220,10 +193,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestBindFunctionCallExpressionWithNoArguments()
         {
-            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
-                inputText: "100.ToString()",
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>("100.ToString()");
 
             boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
             boundFunctionCallExpression.MethodInfo.Name.Should().Be("ToString");
@@ -233,10 +203,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestBindFunctionCallExpressionWithOnePositionalArgument()
         {
-            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
-                inputText: "System.Math.Abs(-10)",
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>("System.Math.Abs(-10)");
 
             boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
             boundFunctionCallExpression.MethodInfo.Name.Should().Be("Abs");
@@ -251,10 +218,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestBindFunctionCallExpressionWithOneNamedArgument()
         {
-            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
-                inputText: "100.ToString(format: \"G\")",
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>("100.ToString(format: \"G\")");
 
             boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
             boundFunctionCallExpression.MethodInfo.Name.Should().Be("ToString");
@@ -268,10 +232,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestBindFunctionCallExpressionWithMultiplePositionalArguments()
         {
-            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
-                inputText: "\"abcde\".IndexOf(\"ab\", 1, 2)",
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>("\"abcde\".IndexOf(\"ab\", 1, 2)");
 
             boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
             boundFunctionCallExpression.MethodInfo.Name.Should().Be("IndexOf");
@@ -289,10 +250,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("\"abcde\".Substring(length: 2, startIndex: 1)")]
         public void TestBindFunctionCallExpressionWithMultipleNamedArguments(string inputText)
         {
-            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(
-                inputText: inputText,
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundFunctionCallExpression = BindExpression<BoundFunctionCallExpression>(inputText);
 
             boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
             boundFunctionCallExpression.MethodInfo.Name.Should().Be("Substring");
@@ -307,10 +265,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestBoundObjectCreationExpressionWithNoArguments()
         {
-            var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>(
-                inputText: "new System.Exception()",
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>("new System.Exception()");
 
             boundObjectCreationExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(System.Exception));
             boundObjectCreationExpression.ConstructorInfo.Should().NotBeNull();
@@ -322,10 +277,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("new System.Exception(message: \"exception message\")")]
         public void TestBoundObjectCreationExpressionWithOneArgument(string inputText)
         {
-            var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>(
-                inputText: inputText,
-                binderFlags: BinderFlags.None,
-                scope: BoundScope.GlobalScope);
+            var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>(inputText);
 
             boundObjectCreationExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(System.Exception));
             boundObjectCreationExpression.ConstructorInfo.Should().NotBeNull();

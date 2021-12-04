@@ -13,8 +13,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         private BoundScope(BoundScope parent, BoundScopeKind boundScopeKind)
         {
-            this.Parent = parent;
-            this.BoundScopeKind = boundScopeKind;
+            Parent = parent;
+            BoundScopeKind = boundScopeKind;
         }
 
         public VariableSymbol LookupVariable(string name)

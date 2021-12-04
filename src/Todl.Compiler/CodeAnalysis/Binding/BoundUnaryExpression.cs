@@ -68,12 +68,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public override TypeSymbol ResultType => Operator.ResultType;
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
-        private BoundExpression BindUnaryExpression(BoundScope scope, UnaryExpression unaryExpression)
+        private BoundExpression BindUnaryExpression(UnaryExpression unaryExpression)
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
-            var boundOperand = BindExpression(scope, unaryExpression.Operand);
+            var boundOperand = BindExpression(unaryExpression.Operand);
             var boundUnaryOperator = BoundUnaryExpression.MatchUnaryOperator(
                 operandResultType: boundOperand.ResultType,
                 syntaxKind: unaryExpression.Operator.Kind,

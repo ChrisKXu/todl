@@ -1,18 +1,17 @@
-﻿using Todl.Compiler.CodeAnalysis.Syntax;
+﻿using System;
+using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
     public abstract class BoundMember : BoundNode { }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
-        public BoundMember BindMember(BoundScope scope, Member member)
-        {
-            return member switch
+        public BoundMember BindMember(Member member)
+            => member switch
             {
-                FunctionDeclarationMember functionDeclarationMember => BindFunctionDeclarationMember(scope, functionDeclarationMember),
-                _ => null
+                FunctionDeclarationMember functionDeclarationMember => BindFunctionDeclarationMember(functionDeclarationMember),
+                _ => throw new NotSupportedException()
             };
-        }
     }
 }

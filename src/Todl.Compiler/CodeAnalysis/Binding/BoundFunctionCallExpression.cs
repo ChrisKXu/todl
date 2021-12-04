@@ -18,30 +18,27 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public bool IsStatic => MethodInfo.IsStatic;
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
-        private BoundExpression BindFunctionCallExpression(BoundScope scope, FunctionCallExpression functionCallExpression)
+        private BoundExpression BindFunctionCallExpression(FunctionCallExpression functionCallExpression)
         {
-            var boundBaseExpression = BindExpression(scope, functionCallExpression.BaseExpression);
+            var boundBaseExpression = BindExpression(functionCallExpression.BaseExpression);
 
             // Since all or none of the arguments of a FunctionCallExpression needs to be named,
             // we only need to check the first argument to see if it's a named argument to determine the others
             if (functionCallExpression.Arguments.Items.Any() && functionCallExpression.Arguments.Items[0].IsNamedArgument)
             {
                 return BindFunctionCallWithNamedArgumentsInternal(
-                    scope: scope,
                     boundBaseExpression: boundBaseExpression,
                     functionCallExpression: functionCallExpression);
             }
 
             return BindFunctionCallWithPositionalArgumentsInternal(
-                scope: scope,
                 boundBaseExpression: boundBaseExpression,
                 functionCallExpression: functionCallExpression);
         }
 
         private BoundFunctionCallExpression BindFunctionCallWithNamedArgumentsInternal(
-            BoundScope scope,
             BoundExpression boundBaseExpression,
             FunctionCallExpression functionCallExpression)
         {
@@ -62,7 +59,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             var arguments = functionCallExpression.Arguments.Items.ToDictionary(
                 keySelector: a => a.Identifier.Value.Text.ToString(),
-                elementSelector: a => BindExpression(scope, a.Expression));
+                elementSelector: a => BindExpression(a.Expression));
 
             var nameAndTypes = arguments.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
 
@@ -98,7 +95,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         }
 
         private BoundFunctionCallExpression BindFunctionCallWithPositionalArgumentsInternal(
-            BoundScope scope,
             BoundExpression boundBaseExpression,
             FunctionCallExpression functionCallExpression)
         {
@@ -107,7 +103,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             var diagnosticBuilder = new DiagnosticBag.Builder();
             diagnosticBuilder.Add(boundBaseExpression);
 
-            var boundArguments = functionCallExpression.Arguments.Items.Select(a => BindExpression(scope, a.Expression));
+            var boundArguments = functionCallExpression.Arguments.Items.Select(a => BindExpression(a.Expression));
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
 
             var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();

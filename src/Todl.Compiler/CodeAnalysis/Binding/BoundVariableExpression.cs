@@ -11,9 +11,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public override bool LValue => true;
     }
 
-    public sealed partial class Binder
+    public partial class Binder
     {
-        private BoundExpression BindNameExpression(BoundScope scope, NameExpression nameExpression)
+        private BoundExpression BindNameExpression(NameExpression nameExpression)
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
             var name = nameExpression.Text.ToString();
@@ -29,7 +29,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 };
             }
 
-            var variable = scope.LookupVariable(name);
+            var variable = Scope.LookupVariable(name);
             if (variable == null)
             {
                 diagnosticBuilder.Add(
