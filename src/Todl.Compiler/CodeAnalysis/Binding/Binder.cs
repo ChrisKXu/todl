@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
@@ -13,6 +14,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public Binder Parent { get; private init; }
         public virtual bool AllowVariableDeclarationInAssignment
             => Parent.AllowVariableDeclarationInAssignment;
+        public virtual FunctionSymbol FunctionSymbol
+            => Parent?.FunctionSymbol;
+        public bool IsInFunction => FunctionSymbol is not null;
 
         public Binder CreateBlockStatementBinder()
             => new()
@@ -21,8 +25,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
             };
 
-        public Binder CreateFunctionBinder()
-            => new()
+        public Binder CreateFunctionBinder(FunctionSymbol functionSymbol)
+            => new FunctionBinder(functionSymbol)
             {
                 Parent = this,
                 Scope = Scope.CreateChildScope(BoundScopeKind.Function)
@@ -48,6 +52,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         internal sealed class ModuleBinder : Binder
         {
             public override bool AllowVariableDeclarationInAssignment => false;
+        }
+
+        internal sealed class FunctionBinder : Binder
+        {
+            public FunctionBinder(FunctionSymbol functionSymbol)
+            {
+                FunctionSymbol = functionSymbol;
+            }
+
+            public override FunctionSymbol FunctionSymbol { get; }
         }
     }
 }

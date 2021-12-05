@@ -26,5 +26,7 @@ namespace Todl.Compiler.CodeAnalysis.Symbols
 
         public override int GetHashCode()
             => ClrType.GetHashCode();
+
+        public override string ToString() => Name;
     }
 }

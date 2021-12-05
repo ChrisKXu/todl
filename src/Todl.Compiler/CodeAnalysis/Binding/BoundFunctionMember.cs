@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using Todl.Compiler.CodeAnalysis.Symbols;
+﻿using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
@@ -17,8 +16,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundFunctionMember BindFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
         {
-            var functionBinder = CreateFunctionBinder();
             var functionSymbol = Scope.LookupFunctionSymbol(functionDeclarationMember);
+            var functionBinder = CreateFunctionBinder(functionSymbol);
 
             foreach (var parameter in functionSymbol.Parameters)
             {
