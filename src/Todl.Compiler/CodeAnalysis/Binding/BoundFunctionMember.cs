@@ -1,5 +1,6 @@
 ﻿using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -16,6 +17,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundFunctionMember BindFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
         {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
             var functionSymbol = Scope.LookupFunctionSymbol(functionDeclarationMember);
             var functionBinder = CreateFunctionBinder(functionSymbol);
 
@@ -24,12 +26,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 functionBinder.Scope.DeclareVariable(parameter);
             }
 
+            var body = functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body);
+            diagnosticBuilder.Add(body);
+
             return new()
             {
                 SyntaxNode = functionDeclarationMember,
                 FunctionScope = functionBinder.Scope,
-                Body = functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body),
-                FunctionSymbol = functionSymbol
+                Body = body,
+                FunctionSymbol = functionSymbol,
+                DiagnosticBuilder = diagnosticBuilder
             };
         }
     }

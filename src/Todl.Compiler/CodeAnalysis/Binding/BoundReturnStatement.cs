@@ -42,7 +42,7 @@ public partial class Binder
                 Level = DiagnosticLevel.Error
             });
         }
-        else if (boundReturnStatement.ReturnType != FunctionSymbol.ReturnType)
+        else if (!boundReturnStatement.ReturnType.Equals(FunctionSymbol.ReturnType))
         {
             diagnosticBuilder.Add(new Diagnostic()
             {
