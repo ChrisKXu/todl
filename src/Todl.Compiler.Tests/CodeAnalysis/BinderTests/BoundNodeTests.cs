@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
@@ -103,6 +104,11 @@ public sealed class BoundNodeTests
             var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
             var member = syntaxTree.Members[0];
             var binder = Binder.CreateModuleBinder();
+            if (member is FunctionDeclarationMember functionDeclarationMember)
+            {
+                binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember));
+            }
+
             yield return new object[] { member, binder.BindMember(member) };
         }
     }

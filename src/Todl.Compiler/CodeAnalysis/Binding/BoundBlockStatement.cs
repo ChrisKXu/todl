@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -8,6 +9,14 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         public BoundScope Scope { get; internal init; }
         public IReadOnlyList<BoundStatement> Statements { get; internal init; }
+
+        public override IEnumerable<Diagnostic> GetDiagnostics()
+        {
+            var builder = new DiagnosticBag.Builder();
+            builder.AddRange(Statements);
+
+            return builder.Build();
+        }
     }
 
     public partial class Binder

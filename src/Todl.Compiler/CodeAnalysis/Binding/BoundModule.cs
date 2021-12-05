@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
@@ -22,6 +23,11 @@ public sealed class BoundModule
     private void BindSyntaxTrees()
     {
         var members = SyntaxTrees.SelectMany(tree => tree.Members);
+        foreach (var functionDeclarationMember in boundMembers.OfType<FunctionDeclarationMember>())
+        {
+            binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember));
+        }
+
         boundMembers.AddRange(members.Select(m => binder.BindMember(m)));
     }
 

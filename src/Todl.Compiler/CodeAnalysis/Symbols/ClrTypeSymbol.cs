@@ -12,7 +12,7 @@ namespace Todl.Compiler.CodeAnalysis.Symbols
         {
             if (other is ClrTypeSymbol clrTypeSymbol)
             {
-                return this.ClrType.Equals(clrTypeSymbol.ClrType);
+                return ClrType.Equals(clrTypeSymbol.ClrType);
             }
 
             return false;
@@ -26,5 +26,7 @@ namespace Todl.Compiler.CodeAnalysis.Symbols
 
         public override int GetHashCode()
             => ClrType.GetHashCode();
+
+        public override string ToString() => Name;
     }
 }

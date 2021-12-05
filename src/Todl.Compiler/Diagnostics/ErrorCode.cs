@@ -21,6 +21,7 @@ namespace Todl.Compiler.Diagnostics
         UnsupportedLiteral,
         NoMatchingCandidate,
         MemberNotFound,
-        TypeNotFound
+        TypeNotFound,
+        UnexpectedStatement
     }
 }
