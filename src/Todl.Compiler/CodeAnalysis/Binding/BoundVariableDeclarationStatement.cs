@@ -26,13 +26,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             Scope.DeclareVariable(variable);
 
-            return new()
-            {
-                SyntaxNode = variableDeclarationStatement,
-                Variable = variable,
-                InitializerExpression = initializerExpression,
-                DiagnosticBuilder = diagnosticBuilder
-            };
+            return BoundNodeFactory.CreateBoundVariableDeclarationStatement(
+                syntaxNode: variableDeclarationStatement,
+                variable: variable,
+                initializerExpression: initializerExpression,
+                diagnosticBuilder: diagnosticBuilder);
         }
     }
 }
