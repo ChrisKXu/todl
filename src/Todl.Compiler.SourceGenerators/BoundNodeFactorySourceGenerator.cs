@@ -1,6 +1,5 @@
 using System;
 using System.CodeDom.Compiler;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -75,15 +74,16 @@ public sealed class BoundNodeFactorySourceGenerator : ISourceGenerator
         var boundNodeNamespace = boundNodeType.ContainingNamespace;
         var allBoundNodeTypes = boundNodeNamespace
             .GetTypeMembers()
-            .Where(t => !t.IsAbstract && t.IsDerivedFrom(boundNodeType));
+            .Where(t => !t.IsAbstract && t.IsDerivedFrom(boundNodeType))
+            .ToList();
 
         foreach (var typeSymbol in allBoundNodeTypes)
         {
-            WriteCreateMethod(typeSymbol, writer);
+            WriteCreateMethod(typeSymbol, boundNodeType, writer);
         }
     }
 
-    private void WriteCreateMethod(INamedTypeSymbol typeSymbol, IndentedTextWriter writer)
+    private void WriteCreateMethod(INamedTypeSymbol typeSymbol, INamedTypeSymbol boundNodeType, IndentedTextWriter writer)
     {
         var properties = typeSymbol
             .GetMembers()
@@ -103,6 +103,21 @@ public sealed class BoundNodeFactorySourceGenerator : ISourceGenerator
         --writer.Indent;
         writer.BeginCurlyBrace();
         writer.WriteLine("diagnosticBuilder ??= new();");
+
+        foreach (var p in properties)
+        {
+            if (p.Type.IsDerivedFrom(boundNodeType))
+            {
+                writer.WriteLine($"diagnosticBuilder.Add({p.CamelCasedName()});");
+            }
+            else if (p.Type is INamedTypeSymbol t
+                && t.IsGenericType
+                && t.TypeArguments[0].IsDerivedFrom(boundNodeType))
+            {
+                writer.WriteLine($"diagnosticBuilder.AddRange({p.CamelCasedName()});");
+            }
+        }
+
         writer.WriteLine();
         writer.WriteLine("return new()");
         writer.BeginCurlyBrace();

@@ -9,25 +9,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         public BoundScope Scope { get; internal init; }
         public IReadOnlyList<BoundStatement> Statements { get; internal init; }
-
-        public override IEnumerable<Diagnostic> GetDiagnostics()
-        {
-            var builder = new DiagnosticBag.Builder();
-            builder.AddRange(Statements);
-
-            return builder.Build();
-        }
     }
 
     public partial class Binder
     {
         private BoundBlockStatement BindBlockStatementInScope(BlockStatement blockStatement)
-            => new()
-            {
-                SyntaxNode = blockStatement,
-                Scope = Scope,
-                Statements = blockStatement.InnerStatements.Select(statement => BindStatement(statement)).ToList()
-            };
+            => BoundNodeFactory.CreateBoundBlockStatement(
+                syntaxNode: blockStatement,
+                scope: Scope,
+                statements: blockStatement.InnerStatements.Select(statement => BindStatement(statement)).ToList());
 
         private BoundBlockStatement BindBlockStatement(BlockStatement blockStatement)
             => CreateBlockStatementBinder().BindBlockStatementInScope(blockStatement);
