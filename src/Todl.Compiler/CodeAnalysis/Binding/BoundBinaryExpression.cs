@@ -87,7 +87,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 syntaxNode: binaryExpression,
                 left: boundLeft,
                 right: boundRight,
-                operatorToken: boundBinaryOperator,
+                @operator: boundBinaryOperator,
                 diagnosticBuilder: diagnosticBuilder);
         }
     }

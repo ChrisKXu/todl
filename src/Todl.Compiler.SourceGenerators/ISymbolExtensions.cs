@@ -33,7 +33,7 @@ public static class ISymbolExtensions
         // "operator" is a c# keyword so we need to special handle it
         if (name.Equals("Operator"))
         {
-            return "operatorToken";
+            return "@operator";
         }
 
         var charArray = name.ToCharArray();

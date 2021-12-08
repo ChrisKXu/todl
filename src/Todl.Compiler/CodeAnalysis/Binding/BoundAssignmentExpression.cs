@@ -120,7 +120,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 syntaxNode: assignmentExpression,
                 left: left,
                 right: right,
-                operatorToken: boundAssignmentOperator,
+                @operator: boundAssignmentOperator,
                 diagnosticBuilder: diagnosticBuilder);
         }
     }

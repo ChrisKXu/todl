@@ -94,7 +94,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             return BoundNodeFactory.CreateBoundUnaryExpression(
                 syntaxNode: unaryExpression,
                 operand: boundOperand,
-                operatorToken: boundUnaryOperator,
+                @operator: boundUnaryOperator,
                 diagnosticBuilder: diagnosticBuilder);
         }
     }
