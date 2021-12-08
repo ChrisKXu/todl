@@ -15,10 +15,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private BoundVariableDeclarationStatement BindVariableDeclarationStatement(
             VariableDeclarationStatement variableDeclarationStatement)
         {
-            var diagnosticBuilder = new DiagnosticBag.Builder();
             var initializerExpression = BindExpression(variableDeclarationStatement.InitializerExpression);
-            diagnosticBuilder.Add(initializerExpression);
-
             var variable = new VariableSymbol(
                 name: variableDeclarationStatement.IdentifierToken.Text.ToString(),
                 readOnly: variableDeclarationStatement.AssignmentToken.Kind == SyntaxKind.ConstKeywordToken,
@@ -26,13 +23,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             Scope.DeclareVariable(variable);
 
-            return new()
-            {
-                SyntaxNode = variableDeclarationStatement,
-                Variable = variable,
-                InitializerExpression = initializerExpression,
-                DiagnosticBuilder = diagnosticBuilder
-            };
+            return BoundNodeFactory.CreateBoundVariableDeclarationStatement(
+                syntaxNode: variableDeclarationStatement,
+                variable: variable,
+                initializerExpression: initializerExpression);
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public BoundExpression BoundBaseExpression { get; internal init; }
         public MethodInfo MethodInfo { get; internal init; }
         public IReadOnlyList<BoundExpression> BoundArguments { get; internal init; }
-        public override TypeSymbol ResultType { get => ClrTypeSymbol.MapClrType(MethodInfo.ReturnType); }
+        public override TypeSymbol ResultType => ClrTypeSymbol.MapClrType(MethodInfo.ReturnType);
         public bool IsStatic => MethodInfo.IsStatic;
     }
 
@@ -45,7 +45,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
             var diagnosticBuilder = new DiagnosticBag.Builder();
-            diagnosticBuilder.Add(boundBaseExpression);
 
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
             var isStatic = boundBaseExpression is BoundTypeExpression;
@@ -72,26 +71,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             if (candidate is null)
             {
                 ReportNoMatchingFunctionCandidate(diagnosticBuilder, functionCallExpression);
-
-                return new()
-                {
-                    SyntaxNode = functionCallExpression,
-                    BoundBaseExpression = boundBaseExpression,
-                    DiagnosticBuilder = diagnosticBuilder
-                };
             }
 
-            var boundArguments = candidate.GetParameters().OrderBy(p => p.Position).Select(p => arguments[p.Name]);
-            diagnosticBuilder.AddRange(boundArguments);
+            var boundArguments = candidate?.GetParameters().OrderBy(p => p.Position).Select(p => arguments[p.Name]);
 
-            return new()
-            {
-                SyntaxNode = functionCallExpression,
-                BoundBaseExpression = boundBaseExpression,
-                MethodInfo = candidate,
-                BoundArguments = boundArguments.ToList(),
-                DiagnosticBuilder = diagnosticBuilder
-            };
+            return BoundNodeFactory.CreateBoundFunctionCallExpression(
+                syntaxNode: functionCallExpression,
+                boundBaseExpression: boundBaseExpression,
+                methodInfo: candidate,
+                boundArguments: boundArguments.ToList(),
+                diagnosticBuilder: diagnosticBuilder);
         }
 
         private BoundFunctionCallExpression BindFunctionCallWithPositionalArgumentsInternal(
@@ -101,7 +90,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
             var diagnosticBuilder = new DiagnosticBag.Builder();
-            diagnosticBuilder.Add(boundBaseExpression);
 
             var boundArguments = functionCallExpression.Arguments.Items.Select(a => BindExpression(a.Expression));
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
@@ -116,22 +104,14 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             if (candidate is null)
             {
                 ReportNoMatchingFunctionCandidate(diagnosticBuilder, functionCallExpression);
-
-                return new()
-                {
-                    SyntaxNode = functionCallExpression,
-                    BoundBaseExpression = boundBaseExpression,
-                    DiagnosticBuilder = diagnosticBuilder
-                };
             }
 
-            return new()
-            {
-                SyntaxNode = functionCallExpression,
-                BoundBaseExpression = boundBaseExpression,
-                MethodInfo = candidate,
-                BoundArguments = boundArguments.ToList()
-            };
+            return BoundNodeFactory.CreateBoundFunctionCallExpression(
+                syntaxNode: functionCallExpression,
+                boundBaseExpression: boundBaseExpression,
+                methodInfo: candidate,
+                boundArguments: boundArguments.ToList(),
+                diagnosticBuilder: diagnosticBuilder);
         }
 
         private void ReportNoMatchingFunctionCandidate(

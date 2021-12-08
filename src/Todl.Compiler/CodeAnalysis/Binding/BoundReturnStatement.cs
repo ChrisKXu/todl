@@ -16,25 +16,19 @@ public partial class Binder
 {
     private BoundReturnStatement BindReturnStatement(ReturnStatement returnStatement)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
-
         BoundExpression boundReturnValueExpression = null;
         if (returnStatement.ReturnValueExpression != null)
         {
             boundReturnValueExpression = BindExpression(returnStatement.ReturnValueExpression);
-            diagnosticBuilder.Add(boundReturnValueExpression);
         }
 
-        var boundReturnStatement = new BoundReturnStatement()
-        {
-            SyntaxNode = returnStatement,
-            BoundReturnValueExpression = boundReturnValueExpression,
-            DiagnosticBuilder = diagnosticBuilder
-        };
+        var boundReturnStatement = BoundNodeFactory.CreateBoundReturnStatement(
+            syntaxNode: returnStatement,
+            boundReturnValueExpression: boundReturnValueExpression);
 
         if (FunctionSymbol is null)
         {
-            diagnosticBuilder.Add(new Diagnostic()
+            boundReturnStatement.DiagnosticBuilder.Add(new Diagnostic()
             {
                 Message = "Return statements are only valid within a function declaration.",
                 ErrorCode = ErrorCode.UnexpectedStatement,
@@ -44,7 +38,7 @@ public partial class Binder
         }
         else if (!boundReturnStatement.ReturnType.Equals(FunctionSymbol.ReturnType))
         {
-            diagnosticBuilder.Add(new Diagnostic()
+            boundReturnStatement.DiagnosticBuilder.Add(new Diagnostic()
             {
                 Message = $"The function expects a return type of {FunctionSymbol.ReturnType} but {boundReturnStatement.ReturnType} is returned.",
                 ErrorCode = ErrorCode.TypeMismatch,

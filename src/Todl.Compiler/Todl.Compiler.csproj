@@ -4,6 +4,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Todl.Compiler.SourceGenerators\Todl.Compiler.SourceGenerators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="Todl.Compiler.Tests" />
   </ItemGroup>
 </Project>

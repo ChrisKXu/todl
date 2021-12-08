@@ -26,6 +26,7 @@ public sealed class BoundNodeTests
     [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
     public void DiagnosticBagShouldNotBeNull(SyntaxNode unused, BoundNode boundNode)
     {
+        boundNode.DiagnosticBuilder.Should().NotBeNull();
         boundNode.GetDiagnostics().Should().NotBeNull();
     }
 

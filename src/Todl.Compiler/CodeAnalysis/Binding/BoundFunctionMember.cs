@@ -17,7 +17,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundFunctionMember BindFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
         {
-            var diagnosticBuilder = new DiagnosticBag.Builder();
             var functionSymbol = Scope.LookupFunctionSymbol(functionDeclarationMember);
             var functionBinder = CreateFunctionBinder(functionSymbol);
 
@@ -26,17 +25,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 functionBinder.Scope.DeclareVariable(parameter);
             }
 
-            var body = functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body);
-            diagnosticBuilder.Add(body);
-
-            return new()
-            {
-                SyntaxNode = functionDeclarationMember,
-                FunctionScope = functionBinder.Scope,
-                Body = body,
-                FunctionSymbol = functionSymbol,
-                DiagnosticBuilder = diagnosticBuilder
-            };
+            return BoundNodeFactory.CreateBoundFunctionMember(
+                syntaxNode: functionDeclarationMember,
+                functionScope: functionBinder.Scope,
+                body: functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body),
+                functionSymbol: functionSymbol);
         }
     }
 }
