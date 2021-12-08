@@ -83,16 +83,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     });
             }
 
-            diagnosticBuilder.AddRange(boundLeft, boundRight);
-
-            return new()
-            {
-                SyntaxNode = binaryExpression,
-                Left = boundLeft,
-                Right = boundRight,
-                Operator = boundBinaryOperator,
-                DiagnosticBuilder = diagnosticBuilder
-            };
+            return BoundNodeFactory.CreateBoundBinaryExpression(
+                syntaxNode: binaryExpression,
+                left: boundLeft,
+                right: boundRight,
+                operatorToken: boundBinaryOperator,
+                diagnosticBuilder: diagnosticBuilder);
         }
     }
 }

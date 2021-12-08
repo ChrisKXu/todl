@@ -15,20 +15,17 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundExpression BindNameExpression(NameExpression nameExpression)
         {
-            var diagnosticBuilder = new DiagnosticBag.Builder();
             var name = nameExpression.Text.ToString();
             var type = nameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(name);
 
             if (type != null)
             {
-                return new BoundTypeExpression()
-                {
-                    SyntaxNode = nameExpression,
-                    ResultType = ClrTypeSymbol.MapClrType(type),
-                    DiagnosticBuilder = diagnosticBuilder
-                };
+                return BoundNodeFactory.CreateBoundTypeExpression(
+                    syntaxNode: nameExpression,
+                    targetType: ClrTypeSymbol.MapClrType(type));
             }
 
+            var diagnosticBuilder = new DiagnosticBag.Builder();
             var variable = Scope.LookupVariable(name);
             if (variable == null)
             {
@@ -42,12 +39,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     });
             }
 
-            return new BoundVariableExpression()
-            {
-                SyntaxNode = nameExpression,
-                Variable = variable,
-                DiagnosticBuilder = diagnosticBuilder
-            };
+            return BoundNodeFactory.CreateBoundVariableExpression(
+                syntaxNode: nameExpression,
+                variable: variable,
+                diagnosticBuilder: diagnosticBuilder);
         }
     }
 }

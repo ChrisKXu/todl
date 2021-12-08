@@ -18,7 +18,12 @@ public sealed class DiagnosticBag : IEnumerable<Diagnostic>
             => Diagnostics.Add(diagnostic);
 
         public void Add(IDiagnosable diagnosable)
-            => Diagnostics.AddRange(diagnosable.GetDiagnostics());
+        {
+            if (diagnosable is not null)
+            {
+                Diagnostics.AddRange(diagnosable.GetDiagnostics());
+            }
+        }
 
         public void AddRange(IEnumerable<Diagnostic> diagnostics)
             => Diagnostics.AddRange(diagnostics);
@@ -27,7 +32,13 @@ public sealed class DiagnosticBag : IEnumerable<Diagnostic>
             => AddRange(diagnostics.AsEnumerable());
 
         public void AddRange(IEnumerable<IDiagnosable> diagnosables)
-            => AddRange(diagnosables.Where(d => d != null).SelectMany(d => d.GetDiagnostics()));
+        {
+            if (diagnosables is not null)
+            {
+                AddRange(diagnosables.Where(d => d != null).SelectMany(d => d.GetDiagnostics()));
+            }
+        }
+
         public void AddRange(params IDiagnosable[] diagnosables)
             => AddRange(diagnosables.AsEnumerable());
     }

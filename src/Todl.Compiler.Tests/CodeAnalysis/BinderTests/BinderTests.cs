@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -9,6 +10,8 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
+    using Binder = Todl.Compiler.CodeAnalysis.Binding.Binder;
+
     public sealed partial class BinderTests
     {
         private static TBoundExpression BindExpression<TBoundExpression>(
@@ -180,8 +183,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>("\"abc\".Length");
 
-            boundMemberAccessExpression.BoundMemberAccessKind.Should().Be(BoundMemberAccessKind.Property);
-            boundMemberAccessExpression.MemberName.Text.Should().Be("Length");
+            boundMemberAccessExpression.MemberInfo.MemberType.Should().Be(MemberTypes.Property);
+            boundMemberAccessExpression.MemberName.Should().Be("Length");
             boundMemberAccessExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
             boundMemberAccessExpression.IsStatic.Should().Be(false);
         }
@@ -191,8 +194,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>("System.Int32.MaxValue");
 
-            boundMemberAccessExpression.BoundMemberAccessKind.Should().Be(BoundMemberAccessKind.Field);
-            boundMemberAccessExpression.MemberName.Text.Should().Be("MaxValue");
+            boundMemberAccessExpression.MemberInfo.MemberType.Should().Be(MemberTypes.Field);
+            boundMemberAccessExpression.MemberName.Should().Be("MaxValue");
             boundMemberAccessExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
             boundMemberAccessExpression.IsStatic.Should().Be(true);
         }

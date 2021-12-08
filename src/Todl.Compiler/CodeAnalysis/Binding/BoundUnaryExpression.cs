@@ -79,8 +79,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 syntaxKind: unaryExpression.Operator.Kind,
                 trailing: unaryExpression.Trailing);
 
-            diagnosticBuilder.Add(boundOperand);
-
             if (boundUnaryOperator == null)
             {
                 diagnosticBuilder.Add(
@@ -93,13 +91,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     });
             }
 
-            return new BoundUnaryExpression()
-            {
-                SyntaxNode = unaryExpression,
-                Operand = boundOperand,
-                Operator = boundUnaryOperator,
-                DiagnosticBuilder = diagnosticBuilder
-            };
+            return BoundNodeFactory.CreateBoundUnaryExpression(
+                syntaxNode: unaryExpression,
+                operand: boundOperand,
+                operatorToken: boundUnaryOperator,
+                diagnosticBuilder: diagnosticBuilder);
         }
     }
 }

@@ -54,8 +54,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
             var right = BindExpression(assignmentExpression.Right);
 
-            diagnosticBuilder.Add(right);
-
             if (assignmentExpression.Left is NameExpression nameExpression)
             {
                 var variableName = nameExpression.Text.ToString();
@@ -118,16 +116,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     });
             }
 
-            diagnosticBuilder.Add(left);
-
-            return new()
-            {
-                Left = left,
-                Operator = boundAssignmentOperator,
-                Right = right,
-                SyntaxNode = assignmentExpression,
-                DiagnosticBuilder = diagnosticBuilder
-            };
+            return BoundNodeFactory.CreateBoundAssignmentExpression(
+                syntaxNode: assignmentExpression,
+                left: left,
+                right: right,
+                operatorToken: boundAssignmentOperator,
+                diagnosticBuilder: diagnosticBuilder);
         }
     }
 }

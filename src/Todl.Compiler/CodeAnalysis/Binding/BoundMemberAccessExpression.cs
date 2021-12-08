@@ -10,16 +10,21 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     public sealed class BoundMemberAccessExpression : BoundExpression
     {
         public BoundExpression BoundBaseExpression { get; internal init; }
-        public BoundMemberAccessKind BoundMemberAccessKind { get; internal init; }
-        public SyntaxToken MemberName { get; internal init; }
-        public override TypeSymbol ResultType { get; internal init; }
+        public MemberInfo MemberInfo { get; internal init; }
+        public string MemberName => MemberInfo.Name;
         public bool IsStatic => BoundBaseExpression is BoundTypeExpression;
-    }
 
-    public enum BoundMemberAccessKind
-    {
-        Property,
-        Field
+        public override TypeSymbol ResultType
+        {
+            get
+            {
+                var clrType = (MemberInfo.MemberType == MemberTypes.Property)
+                    ? (MemberInfo as PropertyInfo).PropertyType
+                    : (MemberInfo as FieldInfo).FieldType;
+
+                return ClrTypeSymbol.MapClrType(clrType);
+            }
+        }
     }
 
     public partial class Binder
@@ -29,14 +34,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
             var boundBaseExpression = BindExpression(memberAccessExpression.BaseExpression);
-            diagnosticBuilder.Add(boundBaseExpression);
 
             Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
             var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
-            var memberInfo = type.GetMember(memberAccessExpression.MemberIdentifierToken.Text.ToString());
+            var memberInfo = type
+                .GetMember(memberAccessExpression.MemberIdentifierToken.Text.ToString())
+                .FirstOrDefault();
 
-            if (!memberInfo.Any())
+            if (memberInfo is null)
             {
                 diagnosticBuilder.Add(
                     new Diagnostic()
@@ -46,42 +52,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                         TextLocation = memberAccessExpression.MemberIdentifierToken.GetTextLocation(),
                         ErrorCode = ErrorCode.MemberNotFound
                     });
-
-                return new()
-                {
-                    SyntaxNode = memberAccessExpression,
-                    BoundBaseExpression = boundBaseExpression,
-                    DiagnosticBuilder = diagnosticBuilder
-                };
             }
 
-            // if there are multiple members, make sure these are all overloads of the same method
-            Debug.Assert(memberInfo.Length == 1 || memberInfo.All(m => m.MemberType == MemberTypes.Method));
-
-            return memberInfo[0].MemberType switch
-            {
-                MemberTypes.Property => new()
-                {
-                    SyntaxNode = memberAccessExpression,
-                    BoundBaseExpression = boundBaseExpression,
-                    MemberName = memberAccessExpression.MemberIdentifierToken,
-                    ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as PropertyInfo).PropertyType),
-                    BoundMemberAccessKind = BoundMemberAccessKind.Property,
-                    DiagnosticBuilder = diagnosticBuilder
-                },
-
-                MemberTypes.Field => new()
-                {
-                    SyntaxNode = memberAccessExpression,
-                    BoundBaseExpression = boundBaseExpression,
-                    MemberName = memberAccessExpression.MemberIdentifierToken,
-                    ResultType = ClrTypeSymbol.MapClrType((memberInfo[0] as FieldInfo).FieldType),
-                    BoundMemberAccessKind = BoundMemberAccessKind.Field,
-                    DiagnosticBuilder = diagnosticBuilder
-                },
-
-                _ => null // should not happen
-            };
+            return BoundNodeFactory.CreateBoundMemberAccessExpression(
+                syntaxNode: memberAccessExpression,
+                boundBaseExpression: boundBaseExpression,
+                memberInfo: memberInfo,
+                diagnosticBuilder: diagnosticBuilder);
         }
     }
 }

@@ -8,6 +8,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     public sealed class BoundConstant : BoundExpression
     {
         public object Value { get; internal init; }
+
+        public override TypeSymbol ResultType
+            => ClrTypeSymbol.MapClrType(Value.GetType());
     }
 
     public partial class Binder
@@ -30,22 +33,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             if (int.TryParse(text, out var parsedInt))
             {
-                return new()
-                {
-                    ResultType = TypeSymbol.ClrInt32,
-                    Value = parsedInt,
-                    SyntaxNode = literalExpression
-                };
+                return BoundNodeFactory.CreateBoundConstant(
+                    syntaxNode: literalExpression,
+                    value: parsedInt);
             }
 
             if (double.TryParse(text, out var parsedDouble))
             {
-                return new()
-                {
-                    ResultType = TypeSymbol.ClrDouble,
-                    Value = parsedDouble,
-                    SyntaxNode = literalExpression
-                };
+                return BoundNodeFactory.CreateBoundConstant(
+                    syntaxNode: literalExpression,
+                    value: parsedDouble);
             }
 
             return ReportUnsupportedLiteral(literalExpression);
@@ -89,21 +86,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
             }
 
-            return new()
-            {
-                ResultType = TypeSymbol.ClrString,
-                Value = builder.ToString(),
-                SyntaxNode = literalExpression
-            };
+            return BoundNodeFactory.CreateBoundConstant(
+                syntaxNode: literalExpression,
+                value: builder.ToString());
         }
 
         private BoundConstant BindBooleanConstant(LiteralExpression literalExpression)
-            => new()
-            {
-                ResultType = TypeSymbol.ClrBoolean,
-                Value = literalExpression.LiteralToken.Kind == SyntaxKind.TrueKeywordToken,
-                SyntaxNode = literalExpression
-            };
+            => BoundNodeFactory.CreateBoundConstant(
+                syntaxNode: literalExpression,
+                value: literalExpression.LiteralToken.Kind == SyntaxKind.TrueKeywordToken);
 
         private BoundConstant ReportUnsupportedLiteral(LiteralExpression literalExpression)
         {
@@ -117,11 +108,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     ErrorCode = ErrorCode.UnsupportedLiteral
                 });
 
-            return new()
-            {
-                SyntaxNode = literalExpression,
-                DiagnosticBuilder = diagnosticBuilder
-            };
+            return BoundNodeFactory.CreateBoundConstant(
+                syntaxNode: literalExpression,
+                value: null,
+                diagnosticBuilder: diagnosticBuilder);
         }
     }
 }

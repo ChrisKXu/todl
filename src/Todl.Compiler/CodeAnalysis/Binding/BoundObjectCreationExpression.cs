@@ -13,6 +13,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         public ConstructorInfo ConstructorInfo { get; internal init; }
         public IReadOnlyList<BoundExpression> BoundArguments { get; internal init; }
+        public override TypeSymbol ResultType
+            => ClrTypeSymbol.MapClrType(ConstructorInfo.DeclaringType);
     }
 
     public partial class Binder
@@ -79,7 +81,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 SyntaxNode = newExpression,
                 ConstructorInfo = constructorInfo,
-                ResultType = targetType,
                 BoundArguments = boundArguments.ToList(),
                 DiagnosticBuilder = diagnosticBuilder
             };
@@ -125,7 +126,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 SyntaxNode = newExpression,
                 ConstructorInfo = constructorInfo,
-                ResultType = targetType,
                 BoundArguments = boundArguments.ToList(),
                 DiagnosticBuilder = diagnosticBuilder
             };

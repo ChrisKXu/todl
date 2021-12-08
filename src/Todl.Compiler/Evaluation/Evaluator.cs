@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -9,6 +10,8 @@ using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.Evaluation
 {
+    using Binder = Todl.Compiler.CodeAnalysis.Binding.Binder;
+
     /// <summary>
     /// An evaluator evaluates expressions and statements and give out results as output
     /// </summary>
@@ -149,17 +152,11 @@ namespace Todl.Compiler.Evaluation
         {
             var baseObject = EvaluateBoundExpression(boundMemberAccessExpression.BoundBaseExpression);
             var invokingObject = boundMemberAccessExpression.IsStatic ? null : baseObject;
-            var memberName = boundMemberAccessExpression.MemberName.Text.ToString();
-            var type = (boundMemberAccessExpression.BoundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
 
-            return boundMemberAccessExpression.BoundMemberAccessKind switch
+            return boundMemberAccessExpression.MemberInfo switch
             {
-                BoundMemberAccessKind.Property =>
-                    type.GetProperty(memberName).GetValue(invokingObject),
-
-                BoundMemberAccessKind.Field =>
-                    type.GetField(memberName).GetValue(invokingObject),
-
+                PropertyInfo property => property.GetValue(invokingObject),
+                FieldInfo field => field.GetValue(invokingObject),
                 _ => baseObject
             };
         }
