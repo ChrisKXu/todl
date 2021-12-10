@@ -112,7 +112,7 @@ public sealed class BoundNodeFactorySourceGenerator : ISourceGenerator
             }
             else if (p.Type is INamedTypeSymbol t
                 && t.IsGenericType
-                && t.TypeArguments[0].IsDerivedFrom(boundNodeType))
+                && t.TypeArguments.Any(t => t.IsDerivedFrom(boundNodeType)))
             {
                 writer.WriteLine($"diagnosticBuilder.AddRange({p.CamelCasedName()});");
             }

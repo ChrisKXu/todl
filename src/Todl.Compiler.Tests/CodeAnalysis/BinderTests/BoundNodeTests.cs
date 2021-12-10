@@ -52,7 +52,8 @@ public sealed class BoundNodeTests
         "a = 5", // BoundAssignmentExpression
         "-10", // BoundUnaryExpression
         "System.Int32.MinValue + 10", // BoundBinaryExpression
-        "100.ToString()", // BoundFunctionCallExpression
+        "100.ToString()", // BoundClrFunctionCallExpression
+        "func()", // BoundTodlFunctionCallExpression
         "\"Hello World!\"", // BoundConstant
         "\"abc\".Length", // BoundMemberAccessExpression
         "new System.Exception()" // BoundNewExpression

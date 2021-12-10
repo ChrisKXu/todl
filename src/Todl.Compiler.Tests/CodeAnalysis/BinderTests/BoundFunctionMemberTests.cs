@@ -35,7 +35,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             a.Name.Should().Be("a");
             function.FunctionScope.LookupVariable("a").Should().Be(a);
 
-            function.Body.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundFunctionCallExpression>().Should().NotBeNull();
+            function.Body.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundClrFunctionCallExpression>().Should().NotBeNull();
 
             function.ReturnType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(void));
             function.FunctionScope.BoundScopeKind.Should().Be(BoundScopeKind.Function);
@@ -53,7 +53,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             a.Type.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
 
             function.Body.Statements.Count.Should().Be(1);
-            function.Body.Statements[0].As<BoundExpressionStatement>().Expression.As<BoundFunctionCallExpression>().Should().NotBeNull();
+            function.Body.Statements[0].As<BoundExpressionStatement>().Expression.As<BoundClrFunctionCallExpression>().Should().NotBeNull();
 
             function.ReturnType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(void));
             function.FunctionScope.BoundScopeKind.Should().Be(BoundScopeKind.Function);

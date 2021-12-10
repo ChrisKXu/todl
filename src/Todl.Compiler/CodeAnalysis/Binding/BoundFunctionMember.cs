@@ -20,7 +20,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             var functionSymbol = Scope.LookupFunctionSymbol(functionDeclarationMember);
             var functionBinder = CreateFunctionBinder(functionSymbol);
 
-            foreach (var parameter in functionSymbol.Parameters)
+            foreach (var parameter in functionSymbol.Parameters.Values)
             {
                 functionBinder.Scope.DeclareVariable(parameter);
             }

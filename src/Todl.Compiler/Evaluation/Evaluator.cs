@@ -56,7 +56,7 @@ namespace Todl.Compiler.Evaluation
                 BoundVariableExpression boundVariableExpression => EvaluateBoundVariableExpression(boundVariableExpression),
                 BoundMemberAccessExpression boundMemberAccessExpression => EvaluateBoundMemberAccessExpression(boundMemberAccessExpression),
                 BoundTypeExpression boundTypeExpression => boundTypeExpression.ResultType.Name,
-                BoundFunctionCallExpression boundFunctionCallExpression => EvaluateBoundFunctionCallExpression(boundFunctionCallExpression),
+                BoundClrFunctionCallExpression boundFunctionCallExpression => EvaluateBoundFunctionCallExpression(boundFunctionCallExpression),
                 BoundObjectCreationExpression boundObjectCreationExpression => EvaluateBoundObjectCreationExpression(boundObjectCreationExpression),
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };
@@ -161,7 +161,7 @@ namespace Todl.Compiler.Evaluation
             };
         }
 
-        private object EvaluateBoundFunctionCallExpression(BoundFunctionCallExpression boundFunctionCallExpression)
+        private object EvaluateBoundFunctionCallExpression(BoundClrFunctionCallExpression boundFunctionCallExpression)
         {
             var isStatic = boundFunctionCallExpression.MethodInfo.IsStatic;
             var invokingObject = isStatic ? null : EvaluateBoundExpression(boundFunctionCallExpression.BoundBaseExpression);
