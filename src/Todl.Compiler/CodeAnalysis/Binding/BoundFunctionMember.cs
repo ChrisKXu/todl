@@ -1,4 +1,5 @@
-﻿using Todl.Compiler.CodeAnalysis.Symbols;
+﻿using System.Linq;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
@@ -17,10 +18,34 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundFunctionMember BindFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
         {
-            var functionSymbol = Scope.LookupFunctionSymbol(functionDeclarationMember);
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+
+            var clrTypeCacheView = functionDeclarationMember.SyntaxTree.ClrTypeCacheView;
+            var namedArguments = functionDeclarationMember
+                .Parameters
+                .Items
+                .ToDictionary(
+                    p => p.Identifier.Text.ToString(),
+                    p => ClrTypeSymbol.MapClrType(clrTypeCacheView.ResolveType(p.ParameterType)));
+
+            var functionSymbol = Scope.LookupFunctionSymbol(
+                name: functionDeclarationMember.Name.Text.ToString(),
+                namedArguments: namedArguments);
+
+            if (functionSymbol.FunctionDeclarationMember != functionDeclarationMember)
+            {
+                diagnosticBuilder.Add(new Diagnostic()
+                {
+                    Message = "Ambiguous function declaration. Multiple functions with the same name and parameters set are declared within the same scope.",
+                    ErrorCode = ErrorCode.AmbiguousFunctionDeclaration,
+                    TextLocation = functionDeclarationMember.Name.Text.GetTextLocation(),
+                    Level = DiagnosticLevel.Error
+                });
+            }
+
             var functionBinder = CreateFunctionBinder(functionSymbol);
 
-            foreach (var parameter in functionSymbol.Parameters.Values)
+            foreach (var parameter in functionSymbol.Parameters)
             {
                 functionBinder.Scope.DeclareVariable(parameter);
             }
@@ -29,7 +54,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 syntaxNode: functionDeclarationMember,
                 functionScope: functionBinder.Scope,
                 body: functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body),
-                functionSymbol: functionSymbol);
+                functionSymbol: functionSymbol,
+                diagnosticBuilder: diagnosticBuilder);
         }
     }
 }

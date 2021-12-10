@@ -8,7 +8,7 @@ namespace Todl.Compiler.CodeAnalysis.Symbols;
 public sealed class FunctionSymbol : Symbol
 {
     public FunctionDeclarationMember FunctionDeclarationMember { get; internal init; }
-    public IReadOnlyDictionary<string, VariableSymbol> Parameters { get; internal init; }
+    public IReadOnlySet<VariableSymbol> Parameters { get; internal init; }
 
     public IEnumerable<string> OrderedParameterNames
         => FunctionDeclarationMember.Parameters.Items.Select(p => p.Identifier.Text.ToString());
@@ -25,7 +25,7 @@ public sealed class FunctionSymbol : Symbol
                 name: p.Identifier.Text.ToString(),
                 readOnly: true,
                 type: ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(p.ParameterType))))
-            .ToDictionary(v => v.Name, v => v);
+            .ToHashSet();
 
         return new()
         {
@@ -36,7 +36,7 @@ public sealed class FunctionSymbol : Symbol
 
     public override bool Equals(Symbol other)
         => other is FunctionSymbol functionSymbol
-        && FunctionDeclarationMember.Equals(functionSymbol.FunctionDeclarationMember);
+        && FunctionDeclarationMember == functionSymbol.FunctionDeclarationMember;
 
     public override int GetHashCode()
         => HashCode.Combine(FunctionDeclarationMember);
@@ -48,9 +48,10 @@ public sealed class FunctionSymbol : Symbol
             return false;
         }
 
-        return Parameters
-            .ToDictionary(p => p.Key, p => p.Value.Type)
-            .SequenceEqual(namedArguments);
+        return namedArguments
+            .Select(a => new VariableSymbol(a.Key, true, a.Value))
+            .ToHashSet()
+            .SetEquals(Parameters);
     }
 
     public bool Match(string name, IEnumerable<TypeSymbol> positionalArguments)

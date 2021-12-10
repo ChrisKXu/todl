@@ -22,6 +22,7 @@ namespace Todl.Compiler.Diagnostics
         NoMatchingCandidate,
         MemberNotFound,
         TypeNotFound,
-        UnexpectedStatement
+        UnexpectedStatement,
+        AmbiguousFunctionDeclaration
     }
 }

@@ -47,14 +47,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             return function;
         }
 
-        public FunctionSymbol LookupFunctionSymbol(FunctionDeclarationMember functionDeclarationMember)
-        {
-            var symbol = symbols
-                .OfType<FunctionSymbol>()
-                .FirstOrDefault(f => f.FunctionDeclarationMember.Equals(functionDeclarationMember));
-            return symbol ?? Parent?.LookupFunctionSymbol(functionDeclarationMember);
-        }
-
         public FunctionSymbol LookupFunctionSymbol(string name, IReadOnlyDictionary<string, TypeSymbol> namedArguments)
         {
             var symbol = symbols

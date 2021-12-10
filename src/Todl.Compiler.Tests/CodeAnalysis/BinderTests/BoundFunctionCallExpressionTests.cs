@@ -100,4 +100,46 @@ public sealed partial class BinderTests
 
         boundModule.GetDiagnostics().Should().BeEmpty();
     }
+
+    [Fact]
+    public void TestBindTodlFunctionCallExpressionWithOneNamedArguments()
+    {
+        var inputText = @"
+            int func(int input) {
+                return input;
+            }
+
+            int Main() {
+                const a = func(input: 20);
+                a.ToString();
+                return 0;
+            }
+        ";
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+        var boundModule = BoundModule.Create(new[] { syntaxTree });
+
+        boundModule.GetDiagnostics().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void TestBindTodlFunctionCallExpressionWithMultipleNamedArguments()
+    {
+        var inputText = @"
+            int func(int a, string b) {
+                return a + b.Length;
+            }
+
+            int Main() {
+                const a = func(a: 20, b: string.Empty);
+                const b = func(b: string.Empty, a: 20);
+                a.ToString();
+                b.ToString();
+                return 0;
+            }
+        ";
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+        var boundModule = BoundModule.Create(new[] { syntaxTree });
+
+        boundModule.GetDiagnostics().Should().BeEmpty();
+    }
 }
