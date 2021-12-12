@@ -11,6 +11,7 @@ public sealed class BoundModule : IDiagnosable
 {
     private readonly Binder binder;
     private readonly List<BoundMember> boundMembers = new();
+    private readonly DiagnosticBag.Builder diagnosticBuilder = new();
 
     public IReadOnlyList<SyntaxTree> SyntaxTrees { get; private init; }
     public IReadOnlyList<BoundMember> BoundMembers => boundMembers;
@@ -26,7 +27,17 @@ public sealed class BoundModule : IDiagnosable
         var members = SyntaxTrees.SelectMany(tree => tree.Members);
         foreach (var functionDeclarationMember in members.OfType<FunctionDeclarationMember>())
         {
-            binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember));
+            var function = FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember);
+            if (binder.Scope.DeclareFunction(function) != function)
+            {
+                diagnosticBuilder.Add(new Diagnostic()
+                {
+                    Message = "Ambiguous function declaration. Multiple functions with the same name and parameters set are declared within the same scope.",
+                    ErrorCode = ErrorCode.AmbiguousFunctionDeclaration,
+                    TextLocation = functionDeclarationMember.Name.Text.GetTextLocation(),
+                    Level = DiagnosticLevel.Error
+                });
+            }
         }
 
         boundMembers.AddRange(members.Select(m => binder.BindMember(m)));
@@ -49,7 +60,6 @@ public sealed class BoundModule : IDiagnosable
 
     public IEnumerable<Diagnostic> GetDiagnostics()
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         diagnosticBuilder.AddRange(BoundMembers);
         return diagnosticBuilder.Build();
     }

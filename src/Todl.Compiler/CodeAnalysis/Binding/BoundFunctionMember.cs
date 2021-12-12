@@ -18,31 +18,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundFunctionMember BindFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
         {
-            var diagnosticBuilder = new DiagnosticBag.Builder();
-
-            var clrTypeCacheView = functionDeclarationMember.SyntaxTree.ClrTypeCacheView;
-            var namedArguments = functionDeclarationMember
-                .Parameters
-                .Items
-                .ToDictionary(
-                    p => p.Identifier.Text.ToString(),
-                    p => ClrTypeSymbol.MapClrType(clrTypeCacheView.ResolveType(p.ParameterType)));
-
-            var functionSymbol = Scope.LookupFunctionSymbol(
-                name: functionDeclarationMember.Name.Text.ToString(),
-                namedArguments: namedArguments);
-
-            if (functionSymbol.FunctionDeclarationMember != functionDeclarationMember)
-            {
-                diagnosticBuilder.Add(new Diagnostic()
-                {
-                    Message = "Ambiguous function declaration. Multiple functions with the same name and parameters set are declared within the same scope.",
-                    ErrorCode = ErrorCode.AmbiguousFunctionDeclaration,
-                    TextLocation = functionDeclarationMember.Name.Text.GetTextLocation(),
-                    Level = DiagnosticLevel.Error
-                });
-            }
-
+            var functionSymbol = Scope.LookupFunctionSymbol(functionDeclarationMember);
             var functionBinder = CreateFunctionBinder(functionSymbol);
 
             foreach (var parameter in functionSymbol.Parameters)
@@ -54,8 +30,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 syntaxNode: functionDeclarationMember,
                 functionScope: functionBinder.Scope,
                 body: functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body),
-                functionSymbol: functionSymbol,
-                diagnosticBuilder: diagnosticBuilder);
+                functionSymbol: functionSymbol);
         }
     }
 }

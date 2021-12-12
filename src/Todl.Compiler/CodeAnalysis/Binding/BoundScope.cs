@@ -39,12 +39,27 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         public FunctionSymbol DeclareFunction(FunctionSymbol function)
         {
-            if (!symbols.Contains(function))
+            symbols.Add(function);
+
+            var existingFunction = symbols
+                .OfType<FunctionSymbol>()
+                .FirstOrDefault(f => f.IsAmbigousWith(function));
+
+            if (existingFunction is not null)
             {
-                symbols.Add(function);
+                return existingFunction;
             }
 
             return function;
+        }
+
+        public FunctionSymbol LookupFunctionSymbol(FunctionDeclarationMember functionDeclarationMember)
+        {
+            var symbol = symbols
+                .OfType<FunctionSymbol>()
+                .FirstOrDefault(f => f.FunctionDeclarationMember == functionDeclarationMember);
+
+            return symbol ?? Parent?.LookupFunctionSymbol(functionDeclarationMember);
         }
 
         public FunctionSymbol LookupFunctionSymbol(string name, IReadOnlyDictionary<string, TypeSymbol> namedArguments)

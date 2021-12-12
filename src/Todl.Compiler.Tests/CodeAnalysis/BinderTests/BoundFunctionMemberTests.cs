@@ -116,7 +116,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
-        public void TestAmbiguousOverloadedFunctionDeclarationMember()
+        public void FunctionsWithSameArgumentsInDifferentOrderShouldBeAmbiguous()
         {
             // the following function declarations are ambiguous
             // considering a function call expression like this: func(a: 10, b: "abc")
@@ -125,6 +125,21 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var inputText = @"
                 int func(int a, string b) { return b.Length + a; }
                 int func(string b, int a) { return b.Length + a + 1; }
+            ";
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+            var boundModule = BoundModule.Create(new[] { syntaxTree });
+
+            var diagnostics = boundModule.GetDiagnostics().ToList();
+            diagnostics.Count.Should().Be(1);
+            diagnostics[0].ErrorCode.Should().Be(ErrorCode.AmbiguousFunctionDeclaration);
+        }
+
+        [Fact]
+        public void FunctionsWithSameArgumentsButDifferentNamesShouldBeAmbiguous()
+        {
+            var inputText = @"
+                int func(int a, string b) { return b.Length + a; }
+                int func(int b, string a) { return a.Length + b + 1; }
             ";
             var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
             var boundModule = BoundModule.Create(new[] { syntaxTree });

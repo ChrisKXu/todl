@@ -8,7 +8,7 @@ namespace Todl.Compiler.CodeAnalysis.Symbols;
 public sealed class FunctionSymbol : Symbol
 {
     public FunctionDeclarationMember FunctionDeclarationMember { get; internal init; }
-    public IReadOnlySet<VariableSymbol> Parameters { get; internal init; }
+    public IEnumerable<VariableSymbol> Parameters { get; internal init; }
 
     public IEnumerable<string> OrderedParameterNames
         => FunctionDeclarationMember.Parameters.Items.Select(p => p.Identifier.Text.ToString());
@@ -24,8 +24,7 @@ public sealed class FunctionSymbol : Symbol
             .Select(p => new VariableSymbol(
                 name: p.Identifier.Text.ToString(),
                 readOnly: true,
-                type: ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(p.ParameterType))))
-            .ToHashSet();
+                type: ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(p.ParameterType))));
 
         return new()
         {
@@ -56,15 +55,39 @@ public sealed class FunctionSymbol : Symbol
 
     public bool Match(string name, IEnumerable<TypeSymbol> positionalArguments)
     {
-        if (OrderedParameterNames.Count() != positionalArguments.Count())
+        if (!Name.Equals(name))
         {
             return false;
         }
 
-        var namedArguments = OrderedParameterNames
-            .Zip(positionalArguments)
-            .ToDictionary(p => p.First, p => p.Second);
+        return Parameters.Select(p => p.Type).SequenceEqual(positionalArguments);
+    }
 
-        return Match(name, namedArguments);
+    public bool IsAmbigousWith(FunctionSymbol other)
+    {
+        // one can't be ambiguous with itself
+        if (Equals(other))
+        {
+            return false;
+        }
+
+        if (Name != other.Name)
+        {
+            return false;
+        }
+
+        // func(int a, string b) is ambigous with func(string b, int a)
+        if (Parameters.ToHashSet().SetEquals(other.Parameters))
+        {
+            return true;
+        }
+
+        // func(int a, string b) is ambiguous with func(int b, string a)
+        if (Parameters.Select(p => p.Type).SequenceEqual(other.Parameters.Select(p => p.Type)))
+        {
+            return true;
+        }
+
+        return false;
     }
 }
