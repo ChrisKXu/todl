@@ -26,7 +26,7 @@ public partial class Binder
             syntaxNode: returnStatement,
             boundReturnValueExpression: boundReturnValueExpression);
 
-        if (FunctionSymbol is null)
+        if (!IsInFunction)
         {
             boundReturnStatement.DiagnosticBuilder.Add(new Diagnostic()
             {

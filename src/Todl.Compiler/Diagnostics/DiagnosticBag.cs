@@ -41,6 +41,10 @@ public sealed class DiagnosticBag : IEnumerable<Diagnostic>
 
         public void AddRange(params IDiagnosable[] diagnosables)
             => AddRange(diagnosables.AsEnumerable());
+
+        public void AddRange<TKey, TValue>(IReadOnlyDictionary<TKey, TValue> diagnosables)
+            where TValue : IDiagnosable
+            => AddRange(diagnosables?.Values.OfType<IDiagnosable>());
     }
 
     public static readonly DiagnosticBag Empty = new(Enumerable.Empty<Diagnostic>());

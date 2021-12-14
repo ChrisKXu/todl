@@ -9,7 +9,7 @@ using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
-    public sealed class BoundFunctionCallExpression : BoundExpression
+    public sealed class BoundClrFunctionCallExpression : BoundExpression
     {
         public BoundExpression BoundBaseExpression { get; internal init; }
         public MethodInfo MethodInfo { get; internal init; }
@@ -22,11 +22,21 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundExpression BindFunctionCallExpression(FunctionCallExpression functionCallExpression)
         {
+            if (functionCallExpression.BaseExpression is not null)
+            {
+                return BindClrFunctionCallExpression(functionCallExpression);
+            }
+
+            return BindTodlFunctionCallExpression(functionCallExpression);
+        }
+
+        private BoundClrFunctionCallExpression BindClrFunctionCallExpression(FunctionCallExpression functionCallExpression)
+        {
             var boundBaseExpression = BindExpression(functionCallExpression.BaseExpression);
 
             // Since all or none of the arguments of a FunctionCallExpression needs to be named,
             // we only need to check the first argument to see if it's a named argument to determine the others
-            if (functionCallExpression.Arguments.Items.Any() && functionCallExpression.Arguments.Items[0].IsNamedArgument)
+            if (functionCallExpression.Arguments.Items.Any(a => a.IsNamedArgument))
             {
                 return BindFunctionCallWithNamedArgumentsInternal(
                     boundBaseExpression: boundBaseExpression,
@@ -38,7 +48,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 functionCallExpression: functionCallExpression);
         }
 
-        private BoundFunctionCallExpression BindFunctionCallWithNamedArgumentsInternal(
+        private BoundClrFunctionCallExpression BindFunctionCallWithNamedArgumentsInternal(
             BoundExpression boundBaseExpression,
             FunctionCallExpression functionCallExpression)
         {
@@ -75,7 +85,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             var boundArguments = candidate?.GetParameters().OrderBy(p => p.Position).Select(p => arguments[p.Name]);
 
-            return BoundNodeFactory.CreateBoundFunctionCallExpression(
+            return BoundNodeFactory.CreateBoundClrFunctionCallExpression(
                 syntaxNode: functionCallExpression,
                 boundBaseExpression: boundBaseExpression,
                 methodInfo: candidate,
@@ -83,7 +93,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 diagnosticBuilder: diagnosticBuilder);
         }
 
-        private BoundFunctionCallExpression BindFunctionCallWithPositionalArgumentsInternal(
+        private BoundClrFunctionCallExpression BindFunctionCallWithPositionalArgumentsInternal(
             BoundExpression boundBaseExpression,
             FunctionCallExpression functionCallExpression)
         {
@@ -106,7 +116,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 ReportNoMatchingFunctionCandidate(diagnosticBuilder, functionCallExpression);
             }
 
-            return BoundNodeFactory.CreateBoundFunctionCallExpression(
+            return BoundNodeFactory.CreateBoundClrFunctionCallExpression(
                 syntaxNode: functionCallExpression,
                 boundBaseExpression: boundBaseExpression,
                 methodInfo: candidate,
@@ -121,9 +131,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             diagnosticBuilder.Add(
                 new Diagnostic()
                 {
-                    Message = $"No matching function {functionCallExpression.BaseExpression.Text} found.",
+                    Message = $"No matching function '{functionCallExpression.NameToken.Text}' found.",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = functionCallExpression.BaseExpression.Text.GetTextLocation(),
+                    TextLocation = functionCallExpression.NameToken.Text.GetTextLocation(),
                     ErrorCode = ErrorCode.NoMatchingCandidate
                 });
         }

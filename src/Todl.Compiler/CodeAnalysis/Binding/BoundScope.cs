@@ -39,16 +39,46 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         public FunctionSymbol DeclareFunction(FunctionSymbol function)
         {
-            if (!symbols.Contains(function))
+            symbols.Add(function);
+
+            var existingFunction = symbols
+                .OfType<FunctionSymbol>()
+                .FirstOrDefault(f => f.IsAmbigousWith(function));
+
+            if (existingFunction is not null)
             {
-                symbols.Add(function);
+                return existingFunction;
             }
 
             return function;
         }
 
         public FunctionSymbol LookupFunctionSymbol(FunctionDeclarationMember functionDeclarationMember)
-            => symbols.OfType<FunctionSymbol>().FirstOrDefault(f => f.FunctionDeclarationMember.Equals(functionDeclarationMember));
+        {
+            var symbol = symbols
+                .OfType<FunctionSymbol>()
+                .FirstOrDefault(f => f.FunctionDeclarationMember == functionDeclarationMember);
+
+            return symbol ?? Parent?.LookupFunctionSymbol(functionDeclarationMember);
+        }
+
+        public FunctionSymbol LookupFunctionSymbol(string name, IReadOnlyDictionary<string, TypeSymbol> namedArguments)
+        {
+            var symbol = symbols
+                .OfType<FunctionSymbol>()
+                .FirstOrDefault(f => f.Match(name, namedArguments));
+
+            return symbol ?? Parent?.LookupFunctionSymbol(name, namedArguments);
+        }
+
+        public FunctionSymbol LookupFunctionSymbol(string name, IEnumerable<TypeSymbol> positionalArguments)
+        {
+            var symbol = symbols
+                .OfType<FunctionSymbol>()
+                .FirstOrDefault(f => f.Match(name, positionalArguments));
+
+            return symbol ?? Parent?.LookupFunctionSymbol(name, positionalArguments);
+        }
 
         public TSymbol LookupSymbol<TSymbol>(string name) where TSymbol : Symbol
         {
