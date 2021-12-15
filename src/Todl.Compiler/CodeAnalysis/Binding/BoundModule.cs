@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -12,6 +13,7 @@ public sealed class BoundModule : IDiagnosable
     private readonly Binder binder;
     private readonly List<BoundMember> boundMembers = new();
     private readonly DiagnosticBag.Builder diagnosticBuilder = new();
+    private readonly List<BoundNodeVisitor> boundNodeVisitors = new();
 
     public IReadOnlyList<SyntaxTree> SyntaxTrees { get; private init; }
     public IReadOnlyList<BoundMember> BoundMembers => boundMembers;
@@ -20,6 +22,7 @@ public sealed class BoundModule : IDiagnosable
     private BoundModule()
     {
         binder = Binder.CreateModuleBinder();
+        boundNodeVisitors.Add(new ControlFlowAnalyzer(diagnosticBuilder));
     }
 
     private void BindSyntaxTrees()
@@ -41,6 +44,11 @@ public sealed class BoundModule : IDiagnosable
         }
 
         boundMembers.AddRange(members.Select(m => binder.BindMember(m)));
+
+        foreach (var visitor in boundNodeVisitors)
+        {
+            boundMembers.ForEach(m => visitor.VisitMember(m));
+        }
     }
 
     public static BoundModule Create(
