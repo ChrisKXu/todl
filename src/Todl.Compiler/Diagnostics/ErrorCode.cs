@@ -23,6 +23,8 @@ namespace Todl.Compiler.Diagnostics
         MemberNotFound,
         TypeNotFound,
         UnexpectedStatement,
-        AmbiguousFunctionDeclaration
+        AmbiguousFunctionDeclaration,
+        NotAllPathsReturn,
+        UnreachableCode
     }
 }
