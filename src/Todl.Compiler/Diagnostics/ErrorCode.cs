@@ -24,6 +24,7 @@ namespace Todl.Compiler.Diagnostics
         TypeNotFound,
         UnexpectedStatement,
         AmbiguousFunctionDeclaration,
-        NotAllPathsReturn
+        NotAllPathsReturn,
+        UnreachableCode
     }
 }

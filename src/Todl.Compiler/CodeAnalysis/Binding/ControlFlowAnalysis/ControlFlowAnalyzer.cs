@@ -22,6 +22,8 @@ internal class ControlFlowAnalyzer : BoundNodeVisitor
             AllPathShouldReturn(controlFlowGraph, boundFunctionMember);
         }
 
+        AllBlocksShouldBeReachable(controlFlowGraph);
+
         return boundFunctionMember;
     }
 
@@ -31,7 +33,7 @@ internal class ControlFlowAnalyzer : BoundNodeVisitor
     {
         var end = controlFlowGraph.EndBlock;
 
-        if (end.Incoming.Any(i => !i.From.IsTeminal))
+        if (!end.Reachable || end.Incoming.Any(i => !i.From.IsTeminal))
         {
             diagnosticBuilder.Add(new Diagnostic()
             {
@@ -39,6 +41,28 @@ internal class ControlFlowAnalyzer : BoundNodeVisitor
                 ErrorCode = ErrorCode.NotAllPathsReturn,
                 Level = DiagnosticLevel.Error,
                 TextLocation = boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.Name.GetTextLocation()
+            });
+        }
+    }
+
+    private void AllBlocksShouldBeReachable(
+        ControlFlowGraph controlFlowGraph)
+    {
+        var unreachableBlock = controlFlowGraph
+            .Blocks
+            .FirstOrDefault(block =>
+                !block.Equals(controlFlowGraph.StartBlock)
+                && !block.Equals(controlFlowGraph.EndBlock)
+                && !block.Reachable);
+
+        if (unreachableBlock is not null)
+        {
+            diagnosticBuilder.Add(new Diagnostic()
+            {
+                Message = "Unreachable code",
+                ErrorCode = ErrorCode.UnreachableCode,
+                Level = DiagnosticLevel.Warning,
+                TextLocation = unreachableBlock.Statements[0].SyntaxNode.Text.GetTextLocation()
             });
         }
     }

@@ -36,4 +36,18 @@ public sealed class ControlFlowAnalysisTests
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.NotAllPathsReturn);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Error);
     }
+
+    [Theory]
+    [InlineData("void func() { return; 10.ToString(); }")]
+    [InlineData("int func() { return 10; 10.ToString(); }")]
+    [InlineData("System.Uri func(string a) { const r = new System.Uri(a); return r; r.ToString(); }")]
+    public void TestControlFlowAnalysisWithUnreachableCode(string inputText)
+    {
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+        var module = BoundModule.Create(new[] { syntaxTree });
+        var diagnostics = module.GetDiagnostics().ToList();
+
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
+    }
 }

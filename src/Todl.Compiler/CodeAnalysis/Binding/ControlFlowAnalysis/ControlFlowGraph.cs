@@ -72,10 +72,9 @@ internal sealed class ControlFlowGraph
 
         public ControlFlowGraph Build()
         {
-            if (blocks.LastOrDefault() != current && current.Statements.Any())
+            if (blocks.LastOrDefault() != current)
             {
-                blocks.Add(current);
-                Connect(current, end);
+                StartNewBlock();
             }
 
             blocks.Insert(0, start);
@@ -107,6 +106,8 @@ internal sealed class ControlFlowGraph
                 return Statements[^1] is BoundReturnStatement;
             }
         }
+
+        public bool Reachable => Incoming.Any();
     }
 
     internal sealed class BasicBlockBranch
