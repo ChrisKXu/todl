@@ -65,7 +65,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         public BoundUnaryOperator Operator { get; internal init; }
         public BoundExpression Operand { get; internal init; }
+
         public override TypeSymbol ResultType => Operator.ResultType;
+        public override bool Constant => Operand.Constant;
     }
 
     public partial class Binder
