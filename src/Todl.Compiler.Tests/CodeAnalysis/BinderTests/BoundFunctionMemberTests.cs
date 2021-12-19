@@ -115,6 +115,19 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             boundModule.GetDiagnostics().Should().BeEmpty();
         }
 
+        [Theory]
+        [InlineData("void func(int a, int a) { }")]
+        [InlineData("void func(int a, string a) { }")]
+        public void FunctionParametersShouldHaveDistinctNames(string inputText)
+        {
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+            var boundModule = BoundModule.Create(new[] { syntaxTree });
+
+            var diagnostics = boundModule.GetDiagnostics().ToList();
+            diagnostics.Count.Should().Be(1);
+            diagnostics[0].ErrorCode.Should().Be(ErrorCode.DuplicateParameterName);
+        }
+
         [Fact]
         public void FunctionsWithSameArgumentsShouldBeAmbiguous()
         {
