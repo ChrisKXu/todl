@@ -18,8 +18,25 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         private BoundFunctionMember BindFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
         {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
             var functionSymbol = Scope.LookupFunctionSymbol(functionDeclarationMember);
             var functionBinder = CreateFunctionBinder(functionSymbol);
+
+            var duplicate = functionSymbol
+                .Parameters
+                .GroupBy(p => p.Name)
+                .FirstOrDefault(g => g.Count() > 1);
+
+            if (duplicate is not null)
+            {
+                diagnosticBuilder.Add(new Diagnostic()
+                {
+                    Message = $"Parameter '{duplicate.First().Name}' is a duplicate",
+                    ErrorCode = ErrorCode.DuplicateParameterName,
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = functionDeclarationMember.Name.GetTextLocation()
+                });
+            }
 
             foreach (var parameter in functionSymbol.Parameters)
             {
@@ -30,7 +47,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 syntaxNode: functionDeclarationMember,
                 functionScope: functionBinder.Scope,
                 body: functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body),
-                functionSymbol: functionSymbol);
+                functionSymbol: functionSymbol,
+                diagnosticBuilder: diagnosticBuilder);
         }
     }
 }

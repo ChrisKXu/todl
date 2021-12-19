@@ -8,7 +8,7 @@ namespace Todl.Compiler.CodeAnalysis.Symbols;
 public sealed class FunctionSymbol : Symbol
 {
     public FunctionDeclarationMember FunctionDeclarationMember { get; internal init; }
-    public IEnumerable<VariableSymbol> Parameters { get; internal init; }
+    public IEnumerable<ParameterSymbol> Parameters { get; internal init; }
 
     public IEnumerable<string> OrderedParameterNames
         => FunctionDeclarationMember.Parameters.Items.Select(p => p.Identifier.Text.ToString());
@@ -21,10 +21,7 @@ public sealed class FunctionSymbol : Symbol
         var parameters = functionDeclarationMember
             .Parameters
             .Items
-            .Select(p => new VariableSymbol(
-                name: p.Identifier.Text.ToString(),
-                readOnly: true,
-                type: ClrTypeSymbol.MapClrType(functionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(p.ParameterType))));
+            .Select(p => new ParameterSymbol() { Parameter = p });
 
         return new()
         {
@@ -47,10 +44,10 @@ public sealed class FunctionSymbol : Symbol
             return false;
         }
 
-        return namedArguments
-            .Select(a => new VariableSymbol(a.Key, true, a.Value))
+        return Parameters
+            .Select(p => KeyValuePair.Create(p.Name, p.Type))
             .ToHashSet()
-            .SetEquals(Parameters);
+            .SetEquals(namedArguments.ToHashSet());
     }
 
     public bool Match(string name, IEnumerable<TypeSymbol> positionalArguments)

@@ -64,7 +64,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     if (boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment
                         && AllowVariableDeclarationInAssignment)
                     {
-                        variable = new VariableSymbol(variableName, false, right.ResultType);
+                        variable = new ReplVariableSymbol()
+                        {
+                            AssignmentExpression = assignmentExpression,
+                            BoundInitializer = right
+                        };
                         Scope.DeclareVariable(variable);
                     }
                     else

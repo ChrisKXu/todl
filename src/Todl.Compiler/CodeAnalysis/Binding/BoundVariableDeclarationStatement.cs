@@ -1,12 +1,11 @@
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
-using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
     public sealed class BoundVariableDeclarationStatement : BoundStatement
     {
-        public VariableSymbol Variable { get; internal init; }
+        public LocalVariableSymbol Variable { get; internal init; }
         public BoundExpression InitializerExpression { get; internal init; }
     }
 
@@ -16,10 +15,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             VariableDeclarationStatement variableDeclarationStatement)
         {
             var initializerExpression = BindExpression(variableDeclarationStatement.InitializerExpression);
-            var variable = new VariableSymbol(
-                name: variableDeclarationStatement.IdentifierToken.Text.ToString(),
-                readOnly: variableDeclarationStatement.AssignmentToken.Kind == SyntaxKind.ConstKeywordToken,
-                type: initializerExpression.ResultType);
+            var variable = new LocalVariableSymbol()
+            {
+                VariableDeclarationStatement = variableDeclarationStatement,
+                BoundInitializer = initializerExpression
+            };
 
             Scope.DeclareVariable(variable);
 

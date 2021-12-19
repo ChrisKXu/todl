@@ -11,6 +11,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             => member switch
             {
                 FunctionDeclarationMember functionDeclarationMember => BindFunctionDeclarationMember(functionDeclarationMember),
+                VariableDeclarationMember variableDeclarationMember => BindVariableDeclarationMember(variableDeclarationMember),
                 _ => throw new NotSupportedException()
             };
     }

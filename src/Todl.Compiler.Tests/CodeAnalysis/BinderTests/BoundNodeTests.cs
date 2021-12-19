@@ -69,7 +69,8 @@ public sealed class BoundNodeTests
 
     private static readonly string[] testMembers = new[]
     {
-        "void Main() { }" // BoundFunctionMember
+        "void Main() { }", // BoundFunctionMember
+        "const globalVariable = 10.5;" // BoundVariableMember
     };
 
     public static IEnumerable<object[]> GetAllSyntaxNodesForTest()

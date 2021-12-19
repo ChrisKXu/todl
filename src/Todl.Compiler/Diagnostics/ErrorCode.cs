@@ -25,6 +25,7 @@ namespace Todl.Compiler.Diagnostics
         UnexpectedStatement,
         AmbiguousFunctionDeclaration,
         NotAllPathsReturn,
-        UnreachableCode
+        UnreachableCode,
+        DuplicateParameterName
     }
 }
