@@ -13,7 +13,7 @@ internal class ControlFlowAnalyzer : BoundNodeVisitor
         this.diagnosticBuilder = diagnosticBuilder;
     }
 
-    protected override BoundMember VisitFunctionMember(BoundFunctionMember boundFunctionMember)
+    protected override BoundMember VisitBoundFunctionMember(BoundFunctionMember boundFunctionMember)
     {
         var controlFlowGraph = ControlFlowGraph.Create(boundFunctionMember);
 
