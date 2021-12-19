@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
@@ -39,11 +41,43 @@ internal abstract partial class BoundNodeVisitor
             _ => throw new NotSupportedException()
         };
 
+    public virtual IEnumerable<BoundMember> VisitBoundMembers(IEnumerable<BoundMember> boundMembers)
+        => boundMembers.Select(m => VisitBoundMember(m));
+
     protected virtual BoundExpression VisitBoundAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
-        => boundAssignmentExpression;
+    {
+        var newLeft = VisitBoundExpression(boundAssignmentExpression.Left);
+        var newRight = VisitBoundExpression(boundAssignmentExpression.Right);
+        if (newLeft == boundAssignmentExpression.Left && newRight == boundAssignmentExpression.Right)
+        {
+            return boundAssignmentExpression;
+        }
+
+        return BoundNodeFactory.CreateBoundAssignmentExpression(
+            syntaxNode: boundAssignmentExpression.SyntaxNode,
+            left: newLeft,
+            @operator: boundAssignmentExpression.Operator,
+            right: newRight,
+            diagnosticBuilder: boundAssignmentExpression.DiagnosticBuilder);
+    }
 
     protected virtual BoundExpression VisitBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
-        => boundBinaryExpression;
+    {
+        var newLeft = VisitBoundExpression(boundBinaryExpression.Left);
+        var newRight = VisitBoundExpression(boundBinaryExpression.Right);
+
+        if (newLeft == boundBinaryExpression.Left && newRight == boundBinaryExpression.Right)
+        {
+            return boundBinaryExpression;
+        }
+
+        return BoundNodeFactory.CreateBoundBinaryExpression(
+            syntaxNode: boundBinaryExpression.SyntaxNode,
+            @operator: boundBinaryExpression.Operator,
+            left: newLeft,
+            right: newRight,
+            diagnosticBuilder: boundBinaryExpression.DiagnosticBuilder);
+    }
 
     protected virtual BoundExpression VisitBoundConstant(BoundConstant boundConstant)
         => boundConstant;
@@ -64,7 +98,19 @@ internal abstract partial class BoundNodeVisitor
         => boundTypeExpression;
 
     protected virtual BoundExpression VisitBoundUnaryExpression(BoundUnaryExpression boundUnaryExpression)
-        => boundUnaryExpression;
+    {
+        var newOperand = VisitBoundExpression(boundUnaryExpression.Operand);
+        if (newOperand == boundUnaryExpression.Operand)
+        {
+            return boundUnaryExpression;
+        }
+
+        return BoundNodeFactory.CreateBoundUnaryExpression(
+            syntaxNode: boundUnaryExpression.SyntaxNode,
+            @operator: boundUnaryExpression.Operator,
+            operand: newOperand,
+            diagnosticBuilder: boundUnaryExpression.DiagnosticBuilder);
+    }
 
     protected virtual BoundExpression VisitBoundVariableExpression(BoundVariableExpression boundVariableExpression)
         => boundVariableExpression;

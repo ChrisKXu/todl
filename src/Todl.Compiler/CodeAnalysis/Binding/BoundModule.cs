@@ -48,12 +48,14 @@ public sealed class BoundModule : IDiagnosable
             }
         }
 
-        boundMembers.AddRange(members.Select(m => binder.BindMember(m)));
+        var m = members.Select(m => binder.BindMember(m));
 
         foreach (var visitor in boundNodeVisitors)
         {
-            boundMembers.ForEach(m => visitor.VisitBoundMember(m));
+            m = visitor.VisitBoundMembers(m);
         }
+
+        boundMembers.AddRange(m);
     }
 
     public static BoundModule Create(

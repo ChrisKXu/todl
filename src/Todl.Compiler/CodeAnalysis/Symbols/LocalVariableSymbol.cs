@@ -16,7 +16,7 @@ public sealed class LocalVariableSymbol : VariableSymbol
         => VariableDeclarationStatement.DeclarationKeyword.Kind == SyntaxKind.ConstKeywordToken;
 
     public override TypeSymbol Type => BoundInitializer.ResultType;
-    public override bool Constant => BoundInitializer.Constant;
+    public override bool Constant => ReadOnly && BoundInitializer.Constant;
 
     public override bool Equals(Symbol other)
         => other is LocalVariableSymbol localVariableSymbol
