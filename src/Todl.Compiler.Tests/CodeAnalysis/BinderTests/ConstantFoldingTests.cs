@@ -8,10 +8,14 @@ namespace Todl.Compiler.Tests.CodeAnalysis;
 
 public sealed class ConstantFoldingTests
 {
-    [Fact]
-    public void BasicConstantFoldingTests()
+    [Theory]
+    [InlineData("const a = 10 + 10", 20)]
+    [InlineData("const a = 10; const b = a + 10;", 20)]
+    [InlineData("const a = 10; const b = a * 2;", 20)]
+    [InlineData("const a = true;", true)]
+    [InlineData("const a = true; const b = a && false", false)]
+    public void BasicConstantFoldingTests(string inputText, object expectedValue)
     {
-        var inputText = "const a = 10 + 10";
         var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
         var module = BoundModule.Create(new[] { syntaxTree });
         module.GetDiagnostics().Should().BeEmpty();
@@ -24,6 +28,22 @@ public sealed class ConstantFoldingTests
             .As<BoundConstant>()
             .Value;
 
-        value.Should().Be(20);
+        value.Should().Be(expectedValue);
+    }
+
+    [Theory]
+    [InlineData("let a = 10 + 10;")]
+    [InlineData("const a = 10; let b = a + 10;")]
+    [InlineData("const a = 10; let b = a * 2;")]
+    [InlineData("const a = 10; let b = a + 10; const c = a + b;")]
+    public void BasicConstantFoldingNegativeTests(string inputText)
+    {
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+        var module = BoundModule.Create(new[] { syntaxTree });
+        module.GetDiagnostics().Should().BeEmpty();
+
+        var variableMember = module.BoundMembers[^1].As<BoundVariableMember>();
+        var boundVariableDeclarationStatement = variableMember.BoundVariableDeclarationStatement;
+        boundVariableDeclarationStatement.Variable.Constant.Should().Be(false);
     }
 }
