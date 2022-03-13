@@ -9,7 +9,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis;
 public sealed class ConstantFoldingTests
 {
     [Theory]
-    [InlineData("const a = 10 + 10", 20)]
+    [InlineData("const a = 10 + 10;", 20)]
     [InlineData("const a = 10; const b = a + 10;", 20)]
     [InlineData("const a = 10; const b = a * 2;", 20)]
     [InlineData("const a = true;", true)]
@@ -45,5 +45,18 @@ public sealed class ConstantFoldingTests
         var variableMember = module.BoundMembers[^1].As<BoundVariableMember>();
         var boundVariableDeclarationStatement = variableMember.BoundVariableDeclarationStatement;
         boundVariableDeclarationStatement.Variable.Constant.Should().Be(false);
+    }
+
+    [Fact]
+    public void PartiallyFoldedConstantTests()
+    {
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString("let a = 10 + 10;"));
+        var module = BoundModule.Create(new[] { syntaxTree });
+        module.GetDiagnostics().Should().BeEmpty();
+
+        var statement = module.BoundMembers[^1].As<BoundVariableMember>().BoundVariableDeclarationStatement;
+        statement.Variable.Constant.Should().Be(false);
+        statement.InitializerExpression.Constant.Should().Be(true);
+        statement.InitializerExpression.As<BoundConstant>().Value.Should().Be(20);
     }
 }

@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
@@ -9,25 +7,41 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
 {
     private readonly Dictionary<VariableSymbol, BoundConstant> constantMap = new();
 
-    public override BoundExpression VisitBoundExpression(BoundExpression boundExpression)
-    {
-        if (!boundExpression.Constant)
-        {
-            return boundExpression;
-        }
-
-        return base.VisitBoundExpression(boundExpression);
-    }
-
     protected override BoundExpression VisitBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
     {
-        var left = ((BoundConstant)VisitBoundExpression(boundBinaryExpression.Left)).Value;
-        var right = ((BoundConstant)VisitBoundExpression(boundBinaryExpression.Right)).Value;
+        var left = VisitBoundExpression(boundBinaryExpression.Left);
+        var right = VisitBoundExpression(boundBinaryExpression.Right);
+
+        // if both of left and right are now constant, fold the binary expression into constant as well
+        if (left is BoundConstant constantLeft
+            && right is BoundConstant constantRight)
+        {
+            return FoldBinaryConstant(constantLeft, constantRight, boundBinaryExpression);
+        }
+
+        // if there are no changes to both left and right, return the original binary expression
+        if (left == boundBinaryExpression.Left && right == boundBinaryExpression.Right)
+        {
+            return boundBinaryExpression;
+        }
+
+        return BoundNodeFactory.CreateBoundBinaryExpression(
+            syntaxNode: boundBinaryExpression.SyntaxNode,
+            @operator: boundBinaryExpression.Operator,
+            left: left,
+            right: right,
+            diagnosticBuilder: boundBinaryExpression.DiagnosticBuilder);
+    }
+
+    private static BoundConstant FoldBinaryConstant(BoundConstant left, BoundConstant right, BoundBinaryExpression boundBinaryExpression)
+    {
+        var l = left.Value;
+        var r = right.Value;
 
         object value = boundBinaryExpression.Operator.BoundBinaryOperatorKind switch
         {
             BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition
-                => (left, right) switch
+                => (l, r) switch
                 {
                     (int a, int b) => a + b,
                     (long a, long b) => a + b,
@@ -35,7 +49,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
                     _ => null
                 },
             BoundBinaryExpression.BoundBinaryOperatorKind.NumericSubstraction
-                => (left, right) switch
+                => (l, r) switch
                 {
                     (int a, int b) => a - b,
                     (long a, long b) => a - b,
@@ -43,7 +57,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
                     _ => null
                 },
             BoundBinaryExpression.BoundBinaryOperatorKind.NumericMultiplication
-                => (left, right) switch
+                => (l, r) switch
                 {
                     (int a, int b) => a * b,
                     (long a, long b) => a * b,
@@ -51,7 +65,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
                     _ => null
                 },
             BoundBinaryExpression.BoundBinaryOperatorKind.NumericDivision
-                => (left, right) switch
+                => (l, r) switch
                 {
                     (int a, int b) => a / b,
                     (long a, long b) => a / b,
@@ -59,30 +73,25 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
                     _ => null
                 },
             BoundBinaryExpression.BoundBinaryOperatorKind.LogicalAnd
-                => (left, right) switch
+                => (l, r) switch
                 {
                     (bool a, bool b) => a && b,
                     _ => null
                 },
             BoundBinaryExpression.BoundBinaryOperatorKind.LogicalOr
-                => (left, right) switch
+                => (l, r) switch
                 {
                     (bool a, bool b) => a || b,
                     _ => null
                 },
             BoundBinaryExpression.BoundBinaryOperatorKind.StringConcatenation
-                => (left, right) switch
+                => (l, r) switch
                 {
                     (string a, string b) => a + b,
                     _ => null
                 },
             _ => null
         };
-
-        if (value is null)
-        {
-            return boundBinaryExpression;
-        }
 
         return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: boundBinaryExpression.SyntaxNode,
@@ -92,47 +101,72 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
 
     protected override BoundExpression VisitBoundUnaryExpression(BoundUnaryExpression boundUnaryExpression)
     {
-        var constant = (BoundConstant)VisitBoundExpression(boundUnaryExpression.Operand);
-        var value = boundUnaryExpression.Operator.BoundUnaryOperatorKind switch
+        var visitedOperand = VisitBoundExpression(boundUnaryExpression.Operand);
+
+        if (visitedOperand is BoundConstant constant)
         {
-            BoundUnaryExpression.BoundUnaryOperatorKind.Identity => constant.Value,
-            BoundUnaryExpression.BoundUnaryOperatorKind.Negation
-                => constant.Value switch
-                {
-                    int intValue => -intValue,
-                    long longValue => -longValue,
-                    double doubleValue => -doubleValue,
-                    _ => null
-                },
-            BoundUnaryExpression.BoundUnaryOperatorKind.LogicalNegation => !(bool)constant.Value,
-            _ => null
+            var value = boundUnaryExpression.Operator.BoundUnaryOperatorKind switch
+            {
+                BoundUnaryExpression.BoundUnaryOperatorKind.Identity => constant.Value,
+                BoundUnaryExpression.BoundUnaryOperatorKind.Negation
+                    => constant.Value switch
+                    {
+                        int intValue => -intValue,
+                        long longValue => -longValue,
+                        double doubleValue => -doubleValue,
+                        _ => null
+                    },
+                BoundUnaryExpression.BoundUnaryOperatorKind.LogicalNegation => !(bool)constant.Value,
+                _ => null
+            };
+
+            return BoundNodeFactory.CreateBoundConstant(
+                syntaxNode: boundUnaryExpression.SyntaxNode,
+                value: value,
+                diagnosticBuilder: boundUnaryExpression.DiagnosticBuilder);
         };
 
-        if (value is null)
+        if (visitedOperand == boundUnaryExpression.Operand)
         {
             return boundUnaryExpression;
         }
 
-        return BoundNodeFactory.CreateBoundConstant(
+        return BoundNodeFactory.CreateBoundUnaryExpression(
             syntaxNode: boundUnaryExpression.SyntaxNode,
-            value: value,
+            @operator: boundUnaryExpression.Operator,
+            operand: visitedOperand,
             diagnosticBuilder: boundUnaryExpression.DiagnosticBuilder);
     }
 
     protected override BoundStatement VisitBoundVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)
     {
-        if (!boundVariableDeclarationStatement.Variable.Constant)
+        var visitedExpression = VisitBoundExpression(boundVariableDeclarationStatement.InitializerExpression);
+
+        if (visitedExpression is BoundConstant constant)
+        {
+            constantMap.Add(boundVariableDeclarationStatement.Variable, constant);
+
+            if (visitedExpression == boundVariableDeclarationStatement.InitializerExpression)
+            {
+                return boundVariableDeclarationStatement;
+            }
+
+            return BoundNodeFactory.CreateBoundVariableDeclarationStatement(
+                syntaxNode: boundVariableDeclarationStatement.SyntaxNode,
+                variable: boundVariableDeclarationStatement.Variable,
+                initializerExpression: constant,
+                diagnosticBuilder: boundVariableDeclarationStatement.DiagnosticBuilder);
+        }
+
+        if (visitedExpression == boundVariableDeclarationStatement.InitializerExpression)
         {
             return boundVariableDeclarationStatement;
         }
 
-        var constant = (BoundConstant)VisitBoundExpression(boundVariableDeclarationStatement.InitializerExpression);
-        constantMap.Add(boundVariableDeclarationStatement.Variable, constant);
-
         return BoundNodeFactory.CreateBoundVariableDeclarationStatement(
             syntaxNode: boundVariableDeclarationStatement.SyntaxNode,
             variable: boundVariableDeclarationStatement.Variable,
-            initializerExpression: constant,
+            initializerExpression: visitedExpression,
             diagnosticBuilder: boundVariableDeclarationStatement.DiagnosticBuilder);
     }
 
