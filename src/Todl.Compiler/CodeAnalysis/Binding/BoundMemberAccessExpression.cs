@@ -25,6 +25,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 return ClrTypeSymbol.MapClrType(clrType);
             }
         }
+
+        public override bool Constant
+            => MemberInfo is FieldInfo fieldInfo && fieldInfo.IsLiteral;
     }
 
     public partial class Binder

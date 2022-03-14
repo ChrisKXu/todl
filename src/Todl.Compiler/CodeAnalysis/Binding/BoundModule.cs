@@ -22,7 +22,12 @@ public sealed class BoundModule : IDiagnosable
     private BoundModule()
     {
         binder = Binder.CreateModuleBinder();
-        boundNodeVisitors.Add(new ControlFlowAnalyzer(diagnosticBuilder));
+        boundNodeVisitors.AddRange(
+            new BoundNodeVisitor[]
+            {
+                new ConstantFoldingBoundNodeVisitor(),
+                new ControlFlowAnalyzer(diagnosticBuilder),
+            });
     }
 
     private void BindSyntaxTrees()
@@ -43,12 +48,14 @@ public sealed class BoundModule : IDiagnosable
             }
         }
 
-        boundMembers.AddRange(members.Select(m => binder.BindMember(m)));
+        var m = members.Select(m => binder.BindMember(m));
 
         foreach (var visitor in boundNodeVisitors)
         {
-            boundMembers.ForEach(m => visitor.VisitMember(m));
+            m = visitor.VisitBoundMembers(m);
         }
+
+        boundMembers.AddRange(m);
     }
 
     public static BoundModule Create(

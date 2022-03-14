@@ -59,7 +59,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public BoundBinaryOperator Operator { get; internal init; }
         public BoundExpression Left { get; internal init; }
         public BoundExpression Right { get; internal init; }
+
         public override TypeSymbol ResultType => Operator.ResultType;
+        public override bool Constant => Left.Constant && Right.Constant;
     }
 
     public partial class Binder

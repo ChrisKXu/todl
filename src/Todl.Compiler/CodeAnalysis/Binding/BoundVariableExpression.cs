@@ -9,6 +9,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public VariableSymbol Variable { get; internal init; }
         public override TypeSymbol ResultType => Variable.Type;
         public override bool LValue => true;
+        public override bool Constant => Variable.Constant;
     }
 
     public partial class Binder

@@ -11,6 +11,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         public override TypeSymbol ResultType
             => ClrTypeSymbol.MapClrType(Value.GetType());
+
+        public override bool Constant => true;
     }
 
     public partial class Binder

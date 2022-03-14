@@ -21,9 +21,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             public BoundUnaryOperator(SyntaxKind syntaxKind, BoundUnaryOperatorKind boundUnaryOperatorKind, TypeSymbol resultType)
             {
-                this.SyntaxKind = syntaxKind;
-                this.BoundUnaryOperatorKind = boundUnaryOperatorKind;
-                this.ResultType = resultType;
+                SyntaxKind = syntaxKind;
+                BoundUnaryOperatorKind = boundUnaryOperatorKind;
+                ResultType = resultType;
             }
         }
 
@@ -65,7 +65,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         public BoundUnaryOperator Operator { get; internal init; }
         public BoundExpression Operand { get; internal init; }
+
         public override TypeSymbol ResultType => Operator.ResultType;
+        public override bool Constant => Operand.Constant;
     }
 
     public partial class Binder
