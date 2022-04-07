@@ -3,5 +3,8 @@
   "omnisharp.enableEditorConfigSupport": true,
   "omnisharp.useGlobalMono": "never",
   "omnisharp.defaultLaunchSolution": "src/Todl.sln",
-  "dotnet-test-explorer.testProjectPath": "**/*Tests.@(csproj)"
+  "dotnet-test-explorer.testProjectPath": "**/*Tests.@(csproj)",
+  "files.associations": {
+    "*.tdlproj": "xml"
+  }
 }
