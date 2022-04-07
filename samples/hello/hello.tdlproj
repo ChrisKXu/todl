@@ -1,6 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
+    <DefaultLanguageSourceExtension>.ms</DefaultLanguageSourceExtension>
   </PropertyGroup>
+
+  <UsingTask TaskName="Todl.Sdk.CoreTodlCompileTask"
+             AssemblyFile="$(OutputRoot)/src/Todl.Sdk/Todl.Sdk.dll"/>
+
+  <Target Name="CreateManifestResourceNames" />
+
+  <Target Name="CoreCompile" DependsOnTargets="$(CoreCompileDependsOn)">
+    <CoreTodlCompileTask IntermediateAssembly="@(IntermediateAssembly)"
+                         SourceFiles="@(Compile)"
+                         References="@(ReferencePath)" />
+  </Target>
 </Project>

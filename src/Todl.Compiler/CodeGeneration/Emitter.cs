@@ -15,6 +15,6 @@ internal class Emitter
 
     public void Emit()
     {
-        
+
     }
 }

@@ -1,15 +1,16 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection.Metadata;
+using System.Reflection;
 using Todl.Compiler.CodeAnalysis.Binding;
 
 namespace Todl.Compiler.CodeGeneration;
 
 public sealed class Compilation
 {
-    public string AssemblyName { get; private init; }
+    public string TargetAssembly { get; private init; }
     public BoundModule MainModule { get; private init; }
-    public IReadOnlyList<AssemblyReference> AssemblyReferences { get; private init; }
+    public IReadOnlyList<AssemblyName> ReferencedAssemblies { get; private init; }
 
     public void Emit(Stream stream)
     {
@@ -18,15 +19,20 @@ public sealed class Compilation
     }
 
     public static Compilation Create(
-        string assemblyName,
+        string targetAssembly,
         BoundModule mainModule,
-        IReadOnlyList<AssemblyReference> assemblyReferences)
+        IReadOnlyList<AssemblyName> referencedAssemblies)
     {
+        if (string.IsNullOrEmpty(targetAssembly))
+        {
+            throw new ArgumentNullException(nameof(targetAssembly));
+        }
+
         return new()
         {
-            AssemblyName = assemblyName,
+            TargetAssembly = targetAssembly,
             MainModule = mainModule,
-            AssemblyReferences = assemblyReferences
+            ReferencedAssemblies = referencedAssemblies ?? throw new ArgumentNullException(nameof(referencedAssemblies))
         };
     }
 }
