@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Build.Framework;
@@ -28,21 +29,13 @@ public sealed class CoreTodlCompileTask : Task
         {
             Log.LogMessage("Compiling Todl assembly {0}", IntermediateAssembly);
 
-            var referencedAssemblies = new List<AssemblyName>();
-            foreach (var reference in References)
-            {
-                Log.LogMessage("Loading assembly reference {0}", reference);
-                referencedAssemblies.Add(AssemblyName.GetAssemblyName(reference));
-            }
-
-            var syntaxTrees = SourceFiles.Select(s => SyntaxTree.Parse(SourceText.FromFile(s)));
-
-            var compilation = Compilation.Create(
+            using var compilation = new Compilation(
                 targetAssembly: IntermediateAssembly,
-                mainModule: BoundModule.Create(syntaxTrees.ToList()),
-                referencedAssemblies: referencedAssemblies);
+                sourceTexts: SourceFiles.Select(SourceText.FromFile),
+                assemblyPaths: References);
 
-            compilation.Emit(null);
+            using var stream = File.OpenWrite(IntermediateAssembly);
+            compilation.Emit(stream);
 
             Log.LogMessage("Done compiling Todl assembly {0}", IntermediateAssembly);
 

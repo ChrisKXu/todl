@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <UsingTask TaskName="Todl.Sdk.CoreTodlCompileTask"
-             AssemblyFile="$(OutputRoot)/src/Todl.Sdk/Todl.Sdk.dll"/>
+             AssemblyFile="$(OutputRoot)/src/Todl.Sdk/Published/Todl.Sdk.dll"/>
 
   <Target Name="CreateManifestResourceNames" />
 
