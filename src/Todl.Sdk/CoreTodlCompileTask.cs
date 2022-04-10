@@ -1,14 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
-using Todl.Compiler.CodeAnalysis.Binding;
-using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.CodeGeneration;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Sdk;
 
@@ -30,12 +27,37 @@ public sealed class CoreTodlCompileTask : Task
             Log.LogMessage("Compiling Todl assembly {0}", IntermediateAssembly);
 
             using var compilation = new Compilation(
-                targetAssembly: IntermediateAssembly,
+                assemblyName: Path.GetFileNameWithoutExtension(IntermediateAssembly),
+                version: new Version(1, 0),
                 sourceTexts: SourceFiles.Select(SourceText.FromFile),
                 assemblyPaths: References);
 
+            var diagnostics = compilation.MainModule.GetDiagnostics();
+
+            foreach (var d in diagnostics)
+            {
+                switch (d.Level)
+                {
+                    case DiagnosticLevel.Error:
+                        Log.LogError(d.Message);
+                        break;
+                    case DiagnosticLevel.Warning:
+                        Log.LogWarning(d.Message);
+                        break;
+                    default:
+                        Log.LogMessage(d.Message);
+                        break;
+                }
+            }
+
+            if (diagnostics.Any(d => d.Level == DiagnosticLevel.Error))
+            {
+                return false;
+            }
+
             using var stream = File.OpenWrite(IntermediateAssembly);
-            compilation.Emit(stream);
+            var assemblyDefinition = compilation.Emit();
+            assemblyDefinition.Write(stream);
 
             Log.LogMessage("Done compiling Todl assembly {0}", IntermediateAssembly);
 
@@ -43,7 +65,7 @@ public sealed class CoreTodlCompileTask : Task
         }
         catch (Exception ex)
         {
-            Log.LogErrorFromException(ex);
+            Log.LogErrorFromException(ex, true);
             return false;
         }
     }

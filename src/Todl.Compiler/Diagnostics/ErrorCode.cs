@@ -26,6 +26,7 @@ namespace Todl.Compiler.Diagnostics
         AmbiguousFunctionDeclaration,
         NotAllPathsReturn,
         UnreachableCode,
-        DuplicateParameterName
+        DuplicateParameterName,
+        MissingEntryPoint
     }
 }

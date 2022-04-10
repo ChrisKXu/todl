@@ -18,6 +18,18 @@ public sealed class BoundModule : IDiagnosable
     public IReadOnlyList<SyntaxTree> SyntaxTrees { get; private init; }
     public IReadOnlyList<BoundMember> BoundMembers => boundMembers;
 
+    public BoundFunctionMember EntryPoint
+    {
+        get
+        {
+            var functionMembers = boundMembers.OfType<BoundFunctionMember>();
+            return functionMembers.FirstOrDefault(f =>
+                f.FunctionSymbol.Name == "Main" &&
+                f.FunctionSymbol.ReturnType.Equals(TypeSymbol.ClrVoid) &&
+                !f.FunctionSymbol.Parameters.Any());
+        }
+    }
+
     // make ctor private
     private BoundModule()
     {
