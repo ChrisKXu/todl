@@ -20,7 +20,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("System.Uri func(string a) { return new System.Uri(a); }")]
     public void TestControlFlowAnalysisBasic(string inputText)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
         BoundModule.Create(new[] { syntaxTree }).GetDiagnostics().Should().BeEmpty();
     }
 
@@ -29,7 +29,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { int.MaxValue.ToString(); }")]
     public void TestControlFlowAnalysisWithNoReturnStatement(string inputText)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
         var module = BoundModule.Create(new[] { syntaxTree });
         var diagnostics = module.GetDiagnostics().ToList();
 
@@ -43,7 +43,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("System.Uri func(string a) { const r = new System.Uri(a); return r; r.ToString(); }")]
     public void TestControlFlowAnalysisWithUnreachableCode(string inputText)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
         var module = BoundModule.Create(new[] { syntaxTree });
         var diagnostics = module.GetDiagnostics().ToList();
 

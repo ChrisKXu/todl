@@ -49,9 +49,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             ClrTypeCacheView = ClrTypeCache.CreateView(Directives.OfType<ImportDirective>());
         }
 
-        public static SyntaxTree Parse(SourceText sourceText)
-            => Parse(sourceText, ClrTypeCache.Default);
-
         public static SyntaxTree Parse(SourceText sourceText, ClrTypeCache clrTypeCache)
         {
             var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
@@ -60,15 +57,15 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         }
 
         // temporarily make available for tests and evaluator
-        internal static Expression ParseExpression(SourceText sourceText)
+        internal static Expression ParseExpression(SourceText sourceText, ClrTypeCache clrTypeCache)
         {
-            var syntaxTree = new SyntaxTree(sourceText, ClrTypeCache.Default);
+            var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
             return syntaxTree.ParseExpression();
         }
 
-        internal static Statement ParseStatement(SourceText sourceText)
+        internal static Statement ParseStatement(SourceText sourceText, ClrTypeCache clrTypeCache)
         {
-            var syntaxTree = new SyntaxTree(sourceText, ClrTypeCache.Default);
+            var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
             return syntaxTree.ParseStatement();
         }
     }

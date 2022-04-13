@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis
@@ -11,50 +12,31 @@ namespace Todl.Compiler.CodeAnalysis
         private readonly HashSet<string> loadedNamespaces = new();
 
         public IReadOnlySet<Assembly> Assemblies { get; private init; }
-        public IReadOnlySet<Type> Types { get; private init; }
+        public IReadOnlySet<ClrTypeSymbol> Types { get; private init; }
         public IReadOnlySet<string> Namespaces => loadedNamespaces;
+
+        public readonly BuiltInTypes BuiltInTypes;
 
         private ClrTypeCache(IEnumerable<Assembly> assemblies)
         {
             Assemblies = assemblies.ToHashSet();
             Types = assemblies
                 .SelectMany(a => a.GetTypes())
-                .Where(a => a.IsPublic)
+                .Where(t => t.IsPublic)
+                .Select(t => new ClrTypeSymbol() { ClrType = t })
                 .ToHashSet();
+
+            BuiltInTypes = new BuiltInTypes(this);
 
             PopulateNamespaces();
         }
 
-        public static ClrTypeCache FromType(Type type)
-        {
-            var assemblies = new HashSet<Assembly>();
-
-            var stack = new Stack<Assembly>();
-            stack.Push(type.Assembly);
-
-            while (stack.Any())
-            {
-                var current = stack.Pop();
-                if (!assemblies.Contains(current))
-                {
-                    assemblies.Add(current);
-
-                    foreach (var reference in current.GetReferencedAssemblies())
-                    {
-                        stack.Push(Assembly.Load(reference));
-                    }
-                }
-            }
-
-            return new ClrTypeCache(assemblies);
-        }
+        public ClrTypeSymbol Resolve(string name) => Types.FirstOrDefault(t => t.Name == name);
 
         public ClrTypeCacheView CreateView(IEnumerable<ImportDirective> importDirectives) => new(this, importDirectives);
 
         public static ClrTypeCache FromAssemblies(IEnumerable<Assembly> assemblies)
             => new(assemblies);
-
-        public static ClrTypeCache Default => ClrTypeCache.FromType(typeof(ClrTypeCache));
 
         /// <summary>
         /// Populating loadedNamespaces with a full list of namespaces
@@ -78,7 +60,7 @@ namespace Todl.Compiler.CodeAnalysis
                 var position = -1;
                 while ((position = n.IndexOf('.', position + 1)) != -1)
                 {
-                    loadedNamespaces.Add(n.Substring(0, position));
+                    loadedNamespaces.Add(n[..position]);
                 }
                 loadedNamespaces.Add(n);
             }

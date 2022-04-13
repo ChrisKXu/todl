@@ -10,7 +10,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public object Value { get; internal init; }
 
         public override TypeSymbol ResultType
-            => ClrTypeSymbol.MapClrType(Value.GetType());
+            => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(Value.GetType().FullName);
 
         public override bool Constant => true;
     }

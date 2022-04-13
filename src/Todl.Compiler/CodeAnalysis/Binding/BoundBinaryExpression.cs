@@ -42,15 +42,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         private static readonly IReadOnlyDictionary<BinaryOperatorIndex, BoundBinaryOperator> supportedBinaryOperators = new Dictionary<BinaryOperatorIndex, BoundBinaryOperator>
         {
-            { Tuple.Create(TypeSymbol.ClrInt32, TypeSymbol.ClrInt32, SyntaxKind.PlusToken), new BoundBinaryOperator(SyntaxKind.PlusToken, BoundBinaryOperatorKind.NumericAddition, TypeSymbol.ClrInt32) },
-            { Tuple.Create(TypeSymbol.ClrInt32, TypeSymbol.ClrInt32, SyntaxKind.MinusToken), new BoundBinaryOperator(SyntaxKind.MinusToken, BoundBinaryOperatorKind.NumericSubstraction, TypeSymbol.ClrInt32) },
-            { Tuple.Create(TypeSymbol.ClrInt32, TypeSymbol.ClrInt32, SyntaxKind.StarToken), new BoundBinaryOperator(SyntaxKind.StarToken, BoundBinaryOperatorKind.NumericMultiplication, TypeSymbol.ClrInt32) },
-            { Tuple.Create(TypeSymbol.ClrInt32, TypeSymbol.ClrInt32, SyntaxKind.SlashToken), new BoundBinaryOperator(SyntaxKind.SlashToken, BoundBinaryOperatorKind.NumericDivision, TypeSymbol.ClrInt32) },
+            //{ Tuple.Create(TypeSymbol.ClrInt32, TypeSymbol.ClrInt32, SyntaxKind.PlusToken), new BoundBinaryOperator(SyntaxKind.PlusToken, BoundBinaryOperatorKind.NumericAddition, TypeSymbol.ClrInt32) },
+            //{ Tuple.Create(TypeSymbol.ClrInt32, TypeSymbol.ClrInt32, SyntaxKind.MinusToken), new BoundBinaryOperator(SyntaxKind.MinusToken, BoundBinaryOperatorKind.NumericSubstraction, TypeSymbol.ClrInt32) },
+            //{ Tuple.Create(TypeSymbol.ClrInt32, TypeSymbol.ClrInt32, SyntaxKind.StarToken), new BoundBinaryOperator(SyntaxKind.StarToken, BoundBinaryOperatorKind.NumericMultiplication, TypeSymbol.ClrInt32) },
+            //{ Tuple.Create(TypeSymbol.ClrInt32, TypeSymbol.ClrInt32, SyntaxKind.SlashToken), new BoundBinaryOperator(SyntaxKind.SlashToken, BoundBinaryOperatorKind.NumericDivision, TypeSymbol.ClrInt32) },
 
-            { Tuple.Create(TypeSymbol.ClrBoolean, TypeSymbol.ClrBoolean, SyntaxKind.AmpersandAmpersandToken), new BoundBinaryOperator(SyntaxKind.AmpersandAmpersandToken, BoundBinaryOperatorKind.LogicalAnd, TypeSymbol.ClrBoolean) },
-            { Tuple.Create(TypeSymbol.ClrBoolean, TypeSymbol.ClrBoolean, SyntaxKind.PipePipeToken), new BoundBinaryOperator(SyntaxKind.PipePipeToken, BoundBinaryOperatorKind.LogicalOr, TypeSymbol.ClrBoolean) },
+            //{ Tuple.Create(TypeSymbol.ClrBoolean, TypeSymbol.ClrBoolean, SyntaxKind.AmpersandAmpersandToken), new BoundBinaryOperator(SyntaxKind.AmpersandAmpersandToken, BoundBinaryOperatorKind.LogicalAnd, TypeSymbol.ClrBoolean) },
+            //{ Tuple.Create(TypeSymbol.ClrBoolean, TypeSymbol.ClrBoolean, SyntaxKind.PipePipeToken), new BoundBinaryOperator(SyntaxKind.PipePipeToken, BoundBinaryOperatorKind.LogicalOr, TypeSymbol.ClrBoolean) },
 
-            { Tuple.Create(TypeSymbol.ClrString, TypeSymbol.ClrString, SyntaxKind.PlusToken), new BoundBinaryOperator(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, TypeSymbol.ClrString) }
+            //{ Tuple.Create(TypeSymbol.ClrString, TypeSymbol.ClrString, SyntaxKind.PlusToken), new BoundBinaryOperator(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, TypeSymbol.ClrString) }
         };
 
         internal static BoundBinaryOperator MatchBinaryOperator(TypeSymbol leftResultType, TypeSymbol rightResultType, SyntaxKind syntaxKind)

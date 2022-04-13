@@ -23,7 +23,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 return BoundNodeFactory.CreateBoundTypeExpression(
                     syntaxNode: nameExpression,
-                    targetType: ClrTypeSymbol.MapClrType(type));
+                    targetType: type);
             }
 
             var diagnosticBuilder = new DiagnosticBag.Builder();

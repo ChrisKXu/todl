@@ -13,26 +13,26 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         private static TExpression ParseExpression<TExpression>(string sourceText)
             where TExpression : Expression
         {
-            return SyntaxTree.ParseExpression(SourceText.FromString(sourceText)).As<TExpression>();
+            return SyntaxTree.ParseExpression(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache).As<TExpression>();
         }
 
         private static TStatement ParseStatement<TStatement>(string sourceText)
             where TStatement : Statement
         {
-            return SyntaxTree.ParseStatement(SourceText.FromString(sourceText)).As<TStatement>();
+            return SyntaxTree.ParseStatement(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache).As<TStatement>();
         }
 
         private static TDirective ParseDirective<TDirective>(string sourceText)
             where TDirective : Directive
         {
-            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(sourceText));
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache);
             return syntaxTree.Directives[0].As<TDirective>();
         }
 
         private static TMember ParseMember<TMember>(string sourceText)
             where TMember : Member
         {
-            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(sourceText));
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache);
             return syntaxTree.Members[0].As<TMember>();
         }
 

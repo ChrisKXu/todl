@@ -25,7 +25,7 @@ public sealed class BoundModule : IDiagnosable
             var functionMembers = boundMembers.OfType<BoundFunctionMember>();
             return functionMembers.FirstOrDefault(f =>
                 f.FunctionSymbol.Name == "Main" &&
-                f.FunctionSymbol.ReturnType.Equals(TypeSymbol.ClrVoid) &&
+                f.FunctionSymbol.ReturnType.Equals(f.SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Void) &&
                 !f.FunctionSymbol.Parameters.Any());
         }
     }

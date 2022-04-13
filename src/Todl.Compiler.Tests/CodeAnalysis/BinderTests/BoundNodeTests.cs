@@ -77,7 +77,7 @@ public sealed class BoundNodeTests
     {
         foreach (var inputText in testExpressions)
         {
-            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText));
+            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
             var binder = Binder.CreateScriptBinder();
             yield return new object[] { expression, binder.BindExpression(expression) };
         }
@@ -85,7 +85,7 @@ public sealed class BoundNodeTests
         // BoundVariableExpression requires special logic to work
         {
             var sourceText = SourceText.FromString("{ const a = 5; a; }");
-            var blockStatement = SyntaxTree.ParseStatement(sourceText);
+            var blockStatement = SyntaxTree.ParseStatement(sourceText, TestDefaults.DefaultClrTypeCache);
             var binder = Binder.CreateModuleBinder();
             var boundBlockStatement =
                 binder.BindStatement(blockStatement).As<BoundBlockStatement>();
@@ -97,14 +97,14 @@ public sealed class BoundNodeTests
 
         foreach (var inputText in testStatements)
         {
-            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText));
+            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
             var binder = Binder.CreateModuleBinder();
             yield return new object[] { statement, binder.BindStatement(statement) };
         }
 
         foreach (var inputText in testMembers)
         {
-            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
             var member = syntaxTree.Members[0];
             var binder = Binder.CreateModuleBinder();
             if (member is FunctionDeclarationMember functionDeclarationMember)

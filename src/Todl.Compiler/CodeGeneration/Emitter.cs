@@ -23,7 +23,7 @@ internal class Emitter
             @namespace: compilation.AssemblyName,
             name: "_Todl_Generated_EntryPoint",
             attributes: TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract,
-            baseType: ResolveClrType(TypeSymbol.ClrObject as ClrTypeSymbol));
+            baseType: ResolveClrType(compilation.ClrTypeCache.BuiltInTypes.Object));
 
         assemblyDefinition.MainModule.Types.Add(entryPointType);
     }

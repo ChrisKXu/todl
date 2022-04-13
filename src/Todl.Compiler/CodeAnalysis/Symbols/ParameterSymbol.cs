@@ -11,7 +11,7 @@ public sealed class ParameterSymbol : VariableSymbol
     public override bool ReadOnly => false;
 
     public override TypeSymbol Type
-        => ClrTypeSymbol.MapClrType(Parameter.SyntaxTree.ClrTypeCacheView.ResolveType(Parameter.ParameterType.Text.ToString()));
+        => Parameter.SyntaxTree.ClrTypeCacheView.ResolveType(Parameter.ParameterType.Text.ToString());
 
     public override bool Equals(Symbol other)
         => other is ParameterSymbol parameterSymbol

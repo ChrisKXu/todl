@@ -5,8 +5,9 @@ namespace Todl.Compiler.CodeAnalysis.Symbols
     public sealed class ClrTypeSymbol : TypeSymbol
     {
         public override bool IsNative => true;
-        public Type ClrType { get; private init; }
+        public Type ClrType { get; internal init; }
         public override string Name => ClrType.FullName;
+        public string Namespace => ClrType.Namespace;
 
         public override bool Equals(Symbol other)
         {
@@ -17,12 +18,6 @@ namespace Todl.Compiler.CodeAnalysis.Symbols
 
             return false;
         }
-
-        public static TypeSymbol MapClrType<T>()
-            => MapClrType(typeof(T));
-
-        public static TypeSymbol MapClrType(Type type)
-            => new ClrTypeSymbol() { ClrType = type };
 
         public override int GetHashCode()
             => ClrType.GetHashCode();

@@ -17,7 +17,7 @@ internal class ControlFlowAnalyzer : BoundNodeVisitor
     {
         var controlFlowGraph = ControlFlowGraph.Create(boundFunctionMember);
 
-        if (!boundFunctionMember.ReturnType.Equals(TypeSymbol.ClrVoid))
+        if (!boundFunctionMember.ReturnType.Equals(boundFunctionMember.SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Void))
         {
             AllPathShouldReturn(controlFlowGraph, boundFunctionMember);
         }

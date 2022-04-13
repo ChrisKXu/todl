@@ -17,9 +17,9 @@ public sealed class Compilation : IDisposable, IDiagnosable
     public string AssemblyName { get; }
     public Version Version { get; }
     public BoundModule MainModule { get; }
+    public ClrTypeCache ClrTypeCache { get; }
 
     private readonly MetadataLoadContext metadataLoadContext;
-    private readonly ClrTypeCache clrTypeCache;
     private readonly DiagnosticBag.Builder diagnosticBuilder = new();
 
     public Compilation(
@@ -50,9 +50,9 @@ public sealed class Compilation : IDisposable, IDiagnosable
         Version = version;
 
         var assemblies = assemblyPaths.Select(metadataLoadContext.LoadFromAssemblyPath);
-        clrTypeCache = ClrTypeCache.FromAssemblies(assemblies);
+        ClrTypeCache = ClrTypeCache.FromAssemblies(assemblies);
 
-        var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, clrTypeCache));
+        var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, ClrTypeCache));
         MainModule = BoundModule.Create(syntaxTrees.ToImmutableList());
 
         if (MainModule.EntryPoint is null)

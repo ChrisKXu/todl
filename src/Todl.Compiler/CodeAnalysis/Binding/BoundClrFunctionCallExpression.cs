@@ -14,7 +14,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public BoundExpression BoundBaseExpression { get; internal init; }
         public MethodInfo MethodInfo { get; internal init; }
         public IReadOnlyList<BoundExpression> BoundArguments { get; internal init; }
-        public override TypeSymbol ResultType => ClrTypeSymbol.MapClrType(MethodInfo.ReturnType);
+        public override TypeSymbol ResultType => BoundBaseExpression.SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(MethodInfo.ReturnType.FullName);
         public bool IsStatic => MethodInfo.IsStatic;
     }
 

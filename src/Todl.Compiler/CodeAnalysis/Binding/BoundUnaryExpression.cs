@@ -43,21 +43,21 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         private static readonly IReadOnlyDictionary<UnaryOperatorIndex, BoundUnaryOperator> supportedUnaryOperators = new Dictionary<UnaryOperatorIndex, BoundUnaryOperator>
         {
-            { Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.PlusToken, false), new BoundUnaryOperator(SyntaxKind.PlusToken, BoundUnaryOperatorKind.Identity, TypeSymbol.ClrInt32) },
-            { Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.PlusToken, false), new BoundUnaryOperator(SyntaxKind.PlusToken, BoundUnaryOperatorKind.Identity, TypeSymbol.ClrInt64) },
-            { Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.MinusToken, false), new BoundUnaryOperator(SyntaxKind.MinusToken, BoundUnaryOperatorKind.Negation, TypeSymbol.ClrInt32) },
-            { Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.MinusToken, false), new BoundUnaryOperator(SyntaxKind.MinusToken, BoundUnaryOperatorKind.Negation, TypeSymbol.ClrInt64) },
+            //{ Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.PlusToken, false), new BoundUnaryOperator(SyntaxKind.PlusToken, BoundUnaryOperatorKind.Identity, TypeSymbol.ClrInt32) },
+            //{ Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.PlusToken, false), new BoundUnaryOperator(SyntaxKind.PlusToken, BoundUnaryOperatorKind.Identity, TypeSymbol.ClrInt64) },
+            //{ Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.MinusToken, false), new BoundUnaryOperator(SyntaxKind.MinusToken, BoundUnaryOperatorKind.Negation, TypeSymbol.ClrInt32) },
+            //{ Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.MinusToken, false), new BoundUnaryOperator(SyntaxKind.MinusToken, BoundUnaryOperatorKind.Negation, TypeSymbol.ClrInt64) },
 
-            { Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.PlusPlusToken, false), new BoundUnaryOperator(SyntaxKind.PlusPlusToken, BoundUnaryOperatorKind.PreIncrement, TypeSymbol.ClrInt32) },
-            { Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.PlusPlusToken, false), new BoundUnaryOperator(SyntaxKind.PlusPlusToken, BoundUnaryOperatorKind.PreIncrement, TypeSymbol.ClrInt64) },
-            { Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.PlusPlusToken, true), new BoundUnaryOperator(SyntaxKind.PlusPlusToken, BoundUnaryOperatorKind.PostIncrement, TypeSymbol.ClrInt32) },
-            { Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.PlusPlusToken, true), new BoundUnaryOperator(SyntaxKind.PlusPlusToken, BoundUnaryOperatorKind.PostIncrement, TypeSymbol.ClrInt64) },
-            { Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.MinusMinusToken, false), new BoundUnaryOperator(SyntaxKind.MinusMinusToken, BoundUnaryOperatorKind.PreDecrement, TypeSymbol.ClrInt32) },
-            { Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.MinusMinusToken, false), new BoundUnaryOperator(SyntaxKind.MinusMinusToken, BoundUnaryOperatorKind.PreDecrement, TypeSymbol.ClrInt64) },
-            { Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.MinusMinusToken, true), new BoundUnaryOperator(SyntaxKind.MinusMinusToken, BoundUnaryOperatorKind.PostDecrement, TypeSymbol.ClrInt32) },
-            { Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.MinusMinusToken, true), new BoundUnaryOperator(SyntaxKind.MinusMinusToken, BoundUnaryOperatorKind.PostDecrement, TypeSymbol.ClrInt64) },
+            //{ Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.PlusPlusToken, false), new BoundUnaryOperator(SyntaxKind.PlusPlusToken, BoundUnaryOperatorKind.PreIncrement, TypeSymbol.ClrInt32) },
+            //{ Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.PlusPlusToken, false), new BoundUnaryOperator(SyntaxKind.PlusPlusToken, BoundUnaryOperatorKind.PreIncrement, TypeSymbol.ClrInt64) },
+            //{ Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.PlusPlusToken, true), new BoundUnaryOperator(SyntaxKind.PlusPlusToken, BoundUnaryOperatorKind.PostIncrement, TypeSymbol.ClrInt32) },
+            //{ Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.PlusPlusToken, true), new BoundUnaryOperator(SyntaxKind.PlusPlusToken, BoundUnaryOperatorKind.PostIncrement, TypeSymbol.ClrInt64) },
+            //{ Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.MinusMinusToken, false), new BoundUnaryOperator(SyntaxKind.MinusMinusToken, BoundUnaryOperatorKind.PreDecrement, TypeSymbol.ClrInt32) },
+            //{ Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.MinusMinusToken, false), new BoundUnaryOperator(SyntaxKind.MinusMinusToken, BoundUnaryOperatorKind.PreDecrement, TypeSymbol.ClrInt64) },
+            //{ Tuple.Create(TypeSymbol.ClrInt32, SyntaxKind.MinusMinusToken, true), new BoundUnaryOperator(SyntaxKind.MinusMinusToken, BoundUnaryOperatorKind.PostDecrement, TypeSymbol.ClrInt32) },
+            //{ Tuple.Create(TypeSymbol.ClrInt64, SyntaxKind.MinusMinusToken, true), new BoundUnaryOperator(SyntaxKind.MinusMinusToken, BoundUnaryOperatorKind.PostDecrement, TypeSymbol.ClrInt64) },
 
-            { Tuple.Create(TypeSymbol.ClrBoolean, SyntaxKind.BangToken, false), new BoundUnaryOperator(SyntaxKind.BangToken, BoundUnaryOperatorKind.LogicalNegation, TypeSymbol.ClrBoolean) }
+            //{ Tuple.Create(TypeSymbol.ClrBoolean, SyntaxKind.BangToken, false), new BoundUnaryOperator(SyntaxKind.BangToken, BoundUnaryOperatorKind.LogicalNegation, TypeSymbol.ClrBoolean) }
         };
 
         internal static BoundUnaryOperator MatchUnaryOperator(TypeSymbol operandResultType, SyntaxKind syntaxKind, bool trailing)
@@ -68,6 +68,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         public override TypeSymbol ResultType => Operator.ResultType;
         public override bool Constant => Operand.Constant;
+
+        private BuiltInTypes BuiltInTypes => SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes;
     }
 
     public partial class Binder

@@ -14,7 +14,7 @@ public sealed class FunctionSymbol : Symbol
         => FunctionDeclarationMember.Parameters.Items.Select(p => p.Identifier.Text.ToString());
     public override string Name => FunctionDeclarationMember.Name.Text.ToString();
     public TypeSymbol ReturnType
-        => ClrTypeSymbol.MapClrType(FunctionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(FunctionDeclarationMember.ReturnType));
+        => FunctionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(FunctionDeclarationMember.ReturnType);
 
     public static FunctionSymbol FromFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
     {

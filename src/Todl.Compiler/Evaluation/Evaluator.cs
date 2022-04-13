@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -21,7 +22,8 @@ namespace Todl.Compiler.Evaluation
 
         public EvaluatorResult Evaluate(SourceText sourceText)
         {
-            var expression = SyntaxTree.ParseExpression(sourceText);
+            var clrTypeCache = ClrTypeCache.FromAssemblies(new[] { Assembly.GetExecutingAssembly() });
+            var expression = SyntaxTree.ParseExpression(sourceText, clrTypeCache);
             var diagnostics = expression.GetDiagnostics();
 
             if (diagnostics.Any())

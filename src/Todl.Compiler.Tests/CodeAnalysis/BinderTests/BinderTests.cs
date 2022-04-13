@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using FluentAssertions;
+using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -14,11 +15,13 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
     public sealed partial class BinderTests
     {
+        private static readonly BuiltInTypes builtInTypes = TestDefaults.DefaultClrTypeCache.BuiltInTypes;
+
         private static TBoundExpression BindExpression<TBoundExpression>(
             string inputText)
             where TBoundExpression : BoundExpression
         {
-            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText));
+            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
             var binder = Binder.CreateModuleBinder();
             return binder.BindExpression(expression).As<TBoundExpression>();
         }
@@ -27,7 +30,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             string inputText)
             where TBoundStatement : BoundStatement
         {
-            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText));
+            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
             var binder = Binder.CreateModuleBinder();
             return binder.BindStatement(statement) as TBoundStatement;
         }
@@ -36,7 +39,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             string inputText)
             where TBoundMember : BoundMember
         {
-            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
+            var syntaxTree = ParseSyntaxTree(inputText);
             var binder = Binder.CreateModuleBinder();
             var member = syntaxTree.Members[0];
 
@@ -47,6 +50,9 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
             return binder.BindMember(member).As<TBoundMember>();
         }
+
+        public static SyntaxTree ParseSyntaxTree(string inputText)
+            => SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
 
         [Fact]
         public void TestBindBinaryExpression()
@@ -75,7 +81,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var boundConstant = BindExpression<BoundConstant>(input);
 
             boundConstant.Should().NotBeNull();
-            boundConstant.ResultType.Should().Be(TypeSymbol.ClrString);
+            boundConstant.ResultType.Should().Be(builtInTypes.String);
             boundConstant.Value.Should().Be(expectedOutput);
         }
 
@@ -83,7 +89,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [MemberData(nameof(GetTestBindAssignmentExpressionDataWithEqualsToken))]
         public void TestBindAssignmentExpressionEqualsToken(string input, string variableName, TypeSymbol expectedResultType)
         {
-            var expression = SyntaxTree.ParseExpression(SourceText.FromString(input));
+            var expression = SyntaxTree.ParseExpression(SourceText.FromString(input), TestDefaults.DefaultClrTypeCache);
             var boundAssignmentExpression =
                 Binder.CreateScriptBinder().BindExpression(expression)
                 .As<BoundAssignmentExpression>();
@@ -101,8 +107,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
         public static IEnumerable<object[]> GetTestBindAssignmentExpressionDataWithEqualsToken()
         {
-            yield return new object[] { "n = 0", "n", TypeSymbol.ClrInt32 };
-            yield return new object[] { "abcd = \"abcde\"", "abcd", TypeSymbol.ClrString };
+            yield return new object[] { "n = 0", "n", builtInTypes.Int32 };
+            yield return new object[] { "abcd = \"abcde\"", "abcd", builtInTypes.String };
         }
 
         [Fact]
@@ -119,8 +125,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
             boundBlockStatement.Should().NotBeNull();
             boundBlockStatement.Statements.Count.Should().Be(2);
-            boundBlockStatement.Scope.LookupVariable("a").Type.Should().Be(TypeSymbol.ClrInt32);
-            boundBlockStatement.Scope.LookupVariable("b").Type.Should().Be(TypeSymbol.ClrInt32);
+            boundBlockStatement.Scope.LookupVariable("a").Type.Should().Be(builtInTypes.Int32);
+            boundBlockStatement.Scope.LookupVariable("b").Type.Should().Be(builtInTypes.Int32);
 
             boundBlockStatement.Statements[0].Should().BeOfType<BoundVariableDeclarationStatement>();
             boundBlockStatement.Statements[1].Should().BeOfType<BoundVariableDeclarationStatement>();
@@ -143,8 +149,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
             boundBlockStatement.Should().NotBeNull();
             boundBlockStatement.Statements.Count.Should().Be(2);
-            boundBlockStatement.Scope.LookupVariable("a").Type.Should().Be(TypeSymbol.ClrInt32);
-            boundBlockStatement.Scope.LookupVariable("b").Type.Should().Be(TypeSymbol.ClrInt32);
+            boundBlockStatement.Scope.LookupVariable("a").Type.Should().Be(builtInTypes.Int32);
+            boundBlockStatement.Scope.LookupVariable("b").Type.Should().Be(builtInTypes.Int32);
         }
 
         [Fact]
@@ -171,11 +177,11 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var childScope = (boundBlockStatement.Statements[2] as BoundBlockStatement).Scope;
             childScope.Parent.Should().Be(scope);
 
-            scope.LookupVariable("a").Type.Should().Be(TypeSymbol.ClrInt32);
-            scope.LookupVariable("b").Type.Should().Be(TypeSymbol.ClrInt32);
+            scope.LookupVariable("a").Type.Should().Be(builtInTypes.Int32);
+            scope.LookupVariable("b").Type.Should().Be(builtInTypes.Int32);
 
-            childScope.LookupVariable("a").Type.Should().Be(TypeSymbol.ClrBoolean);
-            childScope.LookupVariable("b").Type.Should().Be(TypeSymbol.ClrInt32);
+            childScope.LookupVariable("a").Type.Should().Be(builtInTypes.Boolean);
+            childScope.LookupVariable("b").Type.Should().Be(builtInTypes.Int32);
         }
 
         [Fact]
@@ -185,7 +191,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
             boundMemberAccessExpression.MemberInfo.MemberType.Should().Be(MemberTypes.Property);
             boundMemberAccessExpression.MemberName.Should().Be("Length");
-            boundMemberAccessExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
+            boundMemberAccessExpression.ResultType.Should().Be(builtInTypes.Int32);
             boundMemberAccessExpression.IsStatic.Should().Be(false);
         }
 
@@ -196,7 +202,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
             boundMemberAccessExpression.MemberInfo.MemberType.Should().Be(MemberTypes.Field);
             boundMemberAccessExpression.MemberName.Should().Be("MaxValue");
-            boundMemberAccessExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
+            boundMemberAccessExpression.ResultType.Should().Be(builtInTypes.Int32);
             boundMemberAccessExpression.IsStatic.Should().Be(true);
         }
 
@@ -205,7 +211,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>("new System.Exception()");
 
-            boundObjectCreationExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(System.Exception));
+            var exceptionType = TestDefaults.DefaultClrTypeCache.Resolve(typeof(Exception).FullName);
+            boundObjectCreationExpression.ResultType.Should().Be(exceptionType);
             boundObjectCreationExpression.ConstructorInfo.Should().NotBeNull();
             boundObjectCreationExpression.BoundArguments.Should().BeEmpty();
         }
@@ -217,7 +224,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>(inputText);
 
-            boundObjectCreationExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(System.Exception));
+            var exceptionType = TestDefaults.DefaultClrTypeCache.Resolve(typeof(Exception).FullName);
+            boundObjectCreationExpression.ResultType.Should().Be(exceptionType);
             boundObjectCreationExpression.ConstructorInfo.Should().NotBeNull();
             boundObjectCreationExpression.BoundArguments.Count.Should().Be(1);
 
