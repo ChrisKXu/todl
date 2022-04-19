@@ -22,7 +22,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TBoundExpression : BoundExpression
         {
             var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-            var binder = Binder.CreateModuleBinder();
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
             return binder.BindExpression(expression).As<TBoundExpression>();
         }
 
@@ -31,7 +31,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TBoundStatement : BoundStatement
         {
             var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-            var binder = Binder.CreateModuleBinder();
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
             return binder.BindStatement(statement) as TBoundStatement;
         }
 
@@ -40,7 +40,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             where TBoundMember : BoundMember
         {
             var syntaxTree = ParseSyntaxTree(inputText);
-            var binder = Binder.CreateModuleBinder();
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
             var member = syntaxTree.Members[0];
 
             if (member is FunctionDeclarationMember functionDeclarationMember)

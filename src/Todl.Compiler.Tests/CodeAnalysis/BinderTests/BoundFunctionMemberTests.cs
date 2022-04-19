@@ -56,7 +56,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             function.Body.Statements.Count.Should().Be(1);
             function.Body.Statements[0].As<BoundExpressionStatement>().Expression.As<BoundClrFunctionCallExpression>().Should().NotBeNull();
 
-            function.ReturnType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(void));
+            function.ReturnType.Should().Be(builtInTypes.Void);
             function.FunctionScope.BoundScopeKind.Should().Be(BoundScopeKind.Function);
         }
 
@@ -68,14 +68,15 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var function = BindMember<BoundFunctionMember>(inputText);
 
+            var targetType = TestDefaults.DefaultClrTypeCache.Resolve(expectedReturnType.FullName);
             function.Body.Statements.Count.Should().Be(1);
-            function.ReturnType.As<ClrTypeSymbol>().ClrType.Should().Be(expectedReturnType);
+            function.ReturnType.Should().Be(targetType);
             function.GetDiagnostics().Should().BeEmpty();
 
             var returnStatement = function.Body.Statements[0].As<BoundReturnStatement>();
             returnStatement.Should().NotBeNull();
             returnStatement.GetDiagnostics().Should().BeEmpty();
-            returnStatement.ReturnType.As<ClrTypeSymbol>().ClrType.Should().Be(expectedReturnType);
+            returnStatement.ReturnType.Should().Be(targetType);
         }
 
         [Theory]
@@ -112,7 +113,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 int func(int a) { return a; }
             ";
             var syntaxTree = ParseSyntaxTree(inputText);
-            var boundModule = BoundModule.Create(new[] { syntaxTree });
+            var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
             boundModule.GetDiagnostics().Should().BeEmpty();
         }
@@ -123,7 +124,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         public void FunctionParametersShouldHaveDistinctNames(string inputText)
         {
             var syntaxTree = ParseSyntaxTree(inputText);
-            var boundModule = BoundModule.Create(new[] { syntaxTree });
+            var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
             var diagnostics = boundModule.GetDiagnostics().ToList();
             diagnostics.Count.Should().Be(1);
@@ -138,7 +139,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 int func(int a, string b) { return b.Length + a + 1; }
             ";
             var syntaxTree = ParseSyntaxTree(inputText);
-            var boundModule = BoundModule.Create(new[] { syntaxTree });
+            var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
             var diagnostics = boundModule.GetDiagnostics().ToList();
             diagnostics.Count.Should().Be(1);
@@ -157,7 +158,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 int func(string b, int a) { return b.Length + a + 1; }
             ";
             var syntaxTree = ParseSyntaxTree(inputText);
-            var boundModule = BoundModule.Create(new[] { syntaxTree });
+            var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
             var diagnostics = boundModule.GetDiagnostics().ToList();
             diagnostics.Count.Should().Be(1);
@@ -172,7 +173,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 int func(int b, string a) { return a.Length + b + 1; }
             ";
             var syntaxTree = ParseSyntaxTree(inputText);
-            var boundModule = BoundModule.Create(new[] { syntaxTree });
+            var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
             var diagnostics = boundModule.GetDiagnostics().ToList();
             diagnostics.Count.Should().Be(1);

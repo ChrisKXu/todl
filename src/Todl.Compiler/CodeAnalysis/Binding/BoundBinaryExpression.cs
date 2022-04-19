@@ -73,7 +73,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             var boundRight = BindExpression(binaryExpression.Right);
             var boundBinaryOperator = BoundBinaryExpression.MatchBinaryOperator(boundLeft.ResultType, boundRight.ResultType, binaryExpression.Operator.Kind);
 
-            if (boundBinaryOperator == null)
+            if (boundBinaryOperator is null)
             {
                 diagnosticBuilder.Add(
                     new Diagnostic()

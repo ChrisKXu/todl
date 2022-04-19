@@ -86,7 +86,7 @@ public sealed class BoundNodeTests
         {
             var sourceText = SourceText.FromString("{ const a = 5; a; }");
             var blockStatement = SyntaxTree.ParseStatement(sourceText, TestDefaults.DefaultClrTypeCache);
-            var binder = Binder.CreateModuleBinder();
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
             var boundBlockStatement =
                 binder.BindStatement(blockStatement).As<BoundBlockStatement>();
 
@@ -98,7 +98,7 @@ public sealed class BoundNodeTests
         foreach (var inputText in testStatements)
         {
             var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-            var binder = Binder.CreateModuleBinder();
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
             yield return new object[] { statement, binder.BindStatement(statement) };
         }
 
@@ -106,7 +106,7 @@ public sealed class BoundNodeTests
         {
             var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
             var member = syntaxTree.Members[0];
-            var binder = Binder.CreateModuleBinder();
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
             if (member is FunctionDeclarationMember functionDeclarationMember)
             {
                 binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember));

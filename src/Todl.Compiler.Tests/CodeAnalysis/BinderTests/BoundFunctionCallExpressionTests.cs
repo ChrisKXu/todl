@@ -28,7 +28,7 @@ public sealed partial class BinderTests
         boundFunctionCallExpression.BoundArguments.Count.Should().Be(1);
 
         var argument = boundFunctionCallExpression.BoundArguments[0].As<BoundUnaryExpression>();
-        argument.Operator.BoundUnaryOperatorKind.Should().Be(BoundUnaryExpression.BoundUnaryOperatorKind.Negation);
+        argument.Operator.BoundUnaryOperatorKind.Should().Be(BoundUnaryOperatorKind.Negation);
         argument.Operand.As<BoundConstant>().Value.Should().Be(10);
     }
 
@@ -51,7 +51,7 @@ public sealed partial class BinderTests
     {
         var boundFunctionCallExpression = BindExpression<BoundClrFunctionCallExpression>("\"abcde\".IndexOf(\"ab\", 1, 2)");
 
-        boundFunctionCallExpression.ResultType.Should().Be(builtInTypes.String);
+        boundFunctionCallExpression.ResultType.Should().Be(builtInTypes.Int32);
         boundFunctionCallExpression.MethodInfo.Name.Should().Be("IndexOf");
         boundFunctionCallExpression.IsStatic.Should().Be(false);
 
@@ -94,7 +94,7 @@ public sealed partial class BinderTests
             }
         ";
         var syntaxTree = ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(new[] { syntaxTree });
+        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
         boundModule.GetDiagnostics().Should().BeEmpty();
     }
@@ -114,7 +114,7 @@ public sealed partial class BinderTests
             }
         ";
         var syntaxTree = ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(new[] { syntaxTree });
+        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
         boundModule.GetDiagnostics().Should().BeEmpty();
     }
@@ -136,7 +136,7 @@ public sealed partial class BinderTests
             }
         ";
         var syntaxTree = ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(new[] { syntaxTree });
+        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
         boundModule.GetDiagnostics().Should().BeEmpty();
     }

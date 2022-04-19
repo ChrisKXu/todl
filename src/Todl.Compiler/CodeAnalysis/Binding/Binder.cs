@@ -12,10 +12,19 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         public BoundScope Scope { get; private init; }
         public Binder Parent { get; private init; }
+
+        public virtual BoundUnaryOperatorFactory BoundUnaryOperatorFactory
+            => Parent?.BoundUnaryOperatorFactory;
+
+        public virtual ClrTypeCache ClrTypeCache
+            => Parent?.ClrTypeCache;
+
         public virtual bool AllowVariableDeclarationInAssignment
             => Parent.AllowVariableDeclarationInAssignment;
+
         public virtual FunctionSymbol FunctionSymbol
             => Parent?.FunctionSymbol;
+
         public bool IsInFunction => FunctionSymbol is not null;
 
         public Binder CreateBlockStatementBinder()
@@ -38,8 +47,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 Scope = BoundScope.GlobalScope
             };
 
-        public static Binder CreateModuleBinder()
-            => new ModuleBinder()
+        public static Binder CreateModuleBinder(ClrTypeCache clrTypeCache)
+            => new ModuleBinder(clrTypeCache)
             {
                 Scope = BoundScope.GlobalScope.CreateChildScope(BoundScopeKind.Module)
             };
@@ -51,7 +60,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         internal sealed class ModuleBinder : Binder
         {
+            public ModuleBinder(ClrTypeCache clrTypeCache)
+            {
+                ClrTypeCache = clrTypeCache;
+                BoundUnaryOperatorFactory = new(clrTypeCache);
+            }
+
             public override bool AllowVariableDeclarationInAssignment => false;
+            public override ClrTypeCache ClrTypeCache { get; }
+            public override BoundUnaryOperatorFactory BoundUnaryOperatorFactory { get; }
         }
 
         internal sealed class FunctionBinder : Binder

@@ -21,7 +21,7 @@ public sealed class ControlFlowAnalysisTests
     public void TestControlFlowAnalysisBasic(string inputText)
     {
         var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-        BoundModule.Create(new[] { syntaxTree }).GetDiagnostics().Should().BeEmpty();
+        BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree }).GetDiagnostics().Should().BeEmpty();
     }
 
     [Theory]
@@ -30,7 +30,7 @@ public sealed class ControlFlowAnalysisTests
     public void TestControlFlowAnalysisWithNoReturnStatement(string inputText)
     {
         var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-        var module = BoundModule.Create(new[] { syntaxTree });
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         var diagnostics = module.GetDiagnostics().ToList();
 
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.NotAllPathsReturn);
@@ -44,7 +44,7 @@ public sealed class ControlFlowAnalysisTests
     public void TestControlFlowAnalysisWithUnreachableCode(string inputText)
     {
         var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-        var module = BoundModule.Create(new[] { syntaxTree });
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         var diagnostics = module.GetDiagnostics().ToList();
 
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
