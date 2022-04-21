@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis
@@ -8,29 +9,24 @@ namespace Todl.Compiler.CodeAnalysis
     public sealed class ClrTypeCacheView
     {
         private readonly ClrTypeCache clrTypeCache;
-        private readonly IDictionary<string, Type> typeAliases;
+        private readonly IDictionary<string, ClrTypeSymbol> typeAliases;
 
-        private static readonly IDictionary<string, Type> builtInTypes = new Dictionary<string, Type>()
+        private static readonly Dictionary<string, string> builtInTypes = new()
         {
-            { "bool", typeof(bool) },
-            { "byte", typeof(byte) },
-            { "char", typeof(char) },
-            { "int", typeof(int) },
-            { "long", typeof(long) },
-            { "string", typeof(string) },
-            { "void", typeof(void) }
+            { "bool", typeof(bool).FullName },
+            { "byte", typeof(byte).FullName },
+            { "char", typeof(char).FullName },
+            { "int", typeof(int).FullName },
+            { "long", typeof(long).FullName },
+            { "string", typeof(string).FullName },
+            { "void", typeof(void).FullName }
         };
 
-        public Type ResolveType(string name)
+        public ClrTypeSymbol ResolveType(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
                 throw new ArgumentNullException(nameof(name));
-            }
-
-            if (builtInTypes.ContainsKey(name))
-            {
-                return builtInTypes[name];
             }
 
             if (typeAliases.ContainsKey(name))
@@ -38,13 +34,18 @@ namespace Todl.Compiler.CodeAnalysis
                 return typeAliases[name];
             }
 
-            return clrTypeCache.Types.FirstOrDefault(t => t.FullName == name);
+            if (builtInTypes.ContainsKey(name))
+            {
+                name = builtInTypes[name];
+            }
+
+            return clrTypeCache.Resolve(name);
         }
 
-        public Type ResolveType(NameExpression name)
+        public ClrTypeSymbol ResolveType(NameExpression name)
             => ResolveType(name.Text.ToString());
 
-        private IDictionary<string, Type> ImportTypeAliases(IEnumerable<ImportDirective> importDirectives)
+        private IDictionary<string, ClrTypeSymbol> ImportTypeAliases(IEnumerable<ImportDirective> importDirectives)
         {
             if (importDirectives == null)
             {
@@ -53,7 +54,9 @@ namespace Todl.Compiler.CodeAnalysis
 
             var importedTypes = importDirectives.SelectMany(importDirective =>
             {
-                var types = clrTypeCache.Types.Where(t => importDirective.Namespace.Equals(t.Namespace));
+                var types = clrTypeCache
+                    .Types
+                    .Where(t => importDirective.Namespace.Equals(t.Namespace));
                 if (!importDirective.ImportAll)
                 {
                     types = types.Where(t => importDirective.ImportedNames.Contains(t.Name));
@@ -67,7 +70,7 @@ namespace Todl.Compiler.CodeAnalysis
 
         internal ClrTypeCacheView(ClrTypeCache cache, IEnumerable<ImportDirective> importDirectives)
         {
-            this.clrTypeCache = cache;
+            clrTypeCache = cache;
             typeAliases = ImportTypeAliases(importDirectives);
         }
     }

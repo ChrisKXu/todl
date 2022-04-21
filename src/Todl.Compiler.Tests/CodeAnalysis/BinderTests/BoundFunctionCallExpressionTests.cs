@@ -1,8 +1,6 @@
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
-using Todl.Compiler.CodeAnalysis.Syntax;
-using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -14,7 +12,7 @@ public sealed partial class BinderTests
     {
         var boundFunctionCallExpression = BindExpression<BoundClrFunctionCallExpression>("100.ToString()");
 
-        boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
+        boundFunctionCallExpression.ResultType.Should().Be(builtInTypes.String);
         boundFunctionCallExpression.MethodInfo.Name.Should().Be("ToString");
         boundFunctionCallExpression.IsStatic.Should().Be(false);
     }
@@ -24,13 +22,13 @@ public sealed partial class BinderTests
     {
         var boundFunctionCallExpression = BindExpression<BoundClrFunctionCallExpression>("System.Math.Abs(-10)");
 
-        boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
+        boundFunctionCallExpression.ResultType.Should().Be(builtInTypes.Int32);
         boundFunctionCallExpression.MethodInfo.Name.Should().Be("Abs");
         boundFunctionCallExpression.IsStatic.Should().Be(true);
         boundFunctionCallExpression.BoundArguments.Count.Should().Be(1);
 
         var argument = boundFunctionCallExpression.BoundArguments[0].As<BoundUnaryExpression>();
-        argument.Operator.BoundUnaryOperatorKind.Should().Be(BoundUnaryExpression.BoundUnaryOperatorKind.Negation);
+        argument.Operator.BoundUnaryOperatorKind.Should().Be(BoundUnaryOperatorKind.Negation);
         argument.Operand.As<BoundConstant>().Value.Should().Be(10);
     }
 
@@ -39,7 +37,7 @@ public sealed partial class BinderTests
     {
         var boundFunctionCallExpression = BindExpression<BoundClrFunctionCallExpression>("100.ToString(format: \"G\")");
 
-        boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
+        boundFunctionCallExpression.ResultType.Should().Be(builtInTypes.String);
         boundFunctionCallExpression.MethodInfo.Name.Should().Be("ToString");
         boundFunctionCallExpression.IsStatic.Should().Be(false);
         boundFunctionCallExpression.BoundArguments.Count.Should().Be(1);
@@ -53,7 +51,7 @@ public sealed partial class BinderTests
     {
         var boundFunctionCallExpression = BindExpression<BoundClrFunctionCallExpression>("\"abcde\".IndexOf(\"ab\", 1, 2)");
 
-        boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(int));
+        boundFunctionCallExpression.ResultType.Should().Be(builtInTypes.Int32);
         boundFunctionCallExpression.MethodInfo.Name.Should().Be("IndexOf");
         boundFunctionCallExpression.IsStatic.Should().Be(false);
 
@@ -71,7 +69,7 @@ public sealed partial class BinderTests
     {
         var boundFunctionCallExpression = BindExpression<BoundClrFunctionCallExpression>(inputText);
 
-        boundFunctionCallExpression.ResultType.As<ClrTypeSymbol>().ClrType.Should().Be(typeof(string));
+        boundFunctionCallExpression.ResultType.Should().Be(builtInTypes.String);
         boundFunctionCallExpression.MethodInfo.Name.Should().Be("Substring");
         boundFunctionCallExpression.IsStatic.Should().Be(false);
 
@@ -95,8 +93,8 @@ public sealed partial class BinderTests
                 return 0;
             }
         ";
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
-        var boundModule = BoundModule.Create(new[] { syntaxTree });
+        var syntaxTree = ParseSyntaxTree(inputText);
+        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
         boundModule.GetDiagnostics().Should().BeEmpty();
     }
@@ -115,8 +113,8 @@ public sealed partial class BinderTests
                 return 0;
             }
         ";
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
-        var boundModule = BoundModule.Create(new[] { syntaxTree });
+        var syntaxTree = ParseSyntaxTree(inputText);
+        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
         boundModule.GetDiagnostics().Should().BeEmpty();
     }
@@ -137,8 +135,8 @@ public sealed partial class BinderTests
                 return 0;
             }
         ";
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
-        var boundModule = BoundModule.Create(new[] { syntaxTree });
+        var syntaxTree = ParseSyntaxTree(inputText);
+        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
         boundModule.GetDiagnostics().Should().BeEmpty();
     }

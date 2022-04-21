@@ -16,12 +16,26 @@ public sealed class BoundModule : IDiagnosable
     private readonly List<BoundNodeVisitor> boundNodeVisitors = new();
 
     public IReadOnlyList<SyntaxTree> SyntaxTrees { get; private init; }
+    public ClrTypeCache ClrTypeCache { get; private init; }
     public IReadOnlyList<BoundMember> BoundMembers => boundMembers;
 
-    // make ctor private
-    private BoundModule()
+    public BoundFunctionMember EntryPoint
     {
-        binder = Binder.CreateModuleBinder();
+        get
+        {
+            var functionMembers = boundMembers.OfType<BoundFunctionMember>();
+            return functionMembers.FirstOrDefault(f =>
+                f.FunctionSymbol.Name == "Main" &&
+                f.FunctionSymbol.ReturnType.Equals(f.SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Void) &&
+                !f.FunctionSymbol.Parameters.Any());
+        }
+    }
+
+    // make ctor private
+    private BoundModule(ClrTypeCache clrTypeCache)
+    {
+        ClrTypeCache = clrTypeCache;
+        binder = Binder.CreateModuleBinder(clrTypeCache);
         boundNodeVisitors.AddRange(
             new BoundNodeVisitor[]
             {
@@ -59,11 +73,12 @@ public sealed class BoundModule : IDiagnosable
     }
 
     public static BoundModule Create(
+        ClrTypeCache clrTypeCache,
         IReadOnlyList<SyntaxTree> syntaxTrees)
     {
         syntaxTrees ??= Array.Empty<SyntaxTree>();
 
-        var boundModule = new BoundModule()
+        var boundModule = new BoundModule(clrTypeCache)
         {
             SyntaxTrees = syntaxTrees
         };

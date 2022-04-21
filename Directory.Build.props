@@ -10,7 +10,7 @@
   <PropertyGroup>
     <OutputRoot>$(RepoRoot)\out\$(Configuration)</OutputRoot>
     <ObjRoot>$(RepoRoot)\obj\$(Configuration)</ObjRoot>
-    <RelativeProjectDirectory>$([MSBuild]::MakeRelative($(SrcRoot), $(MSBuildProjectDirectory)))</RelativeProjectDirectory>
+    <RelativeProjectDirectory>$([MSBuild]::MakeRelative($(RepoRoot), $(MSBuildProjectDirectory)))</RelativeProjectDirectory>
     <OutDir>$(OutputRoot)\$(RelativeProjectDirectory)</OutDir>
     <IntermediateRelativeProjectDirectory>$([MSBuild]::MakeRelative($(RepoRoot), $(MSBuildProjectDirectory)))</IntermediateRelativeProjectDirectory>
     <BaseIntermediateOutputPath>$(ObjRoot)\$(IntermediateRelativeProjectDirectory)</BaseIntermediateOutputPath>

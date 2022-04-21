@@ -22,7 +22,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     ? (MemberInfo as PropertyInfo).PropertyType
                     : (MemberInfo as FieldInfo).FieldType;
 
-                return ClrTypeSymbol.MapClrType(clrType);
+                return SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(clrType.FullName);
             }
         }
 

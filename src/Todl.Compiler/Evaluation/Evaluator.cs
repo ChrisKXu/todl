@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -18,10 +19,21 @@ namespace Todl.Compiler.Evaluation
     public sealed class Evaluator
     {
         private readonly Dictionary<VariableSymbol, object> variables = new();
+        private readonly ClrTypeCache clrTypeCache;
+
+        public Evaluator(ClrTypeCache clrTypeCache)
+        {
+            this.clrTypeCache = clrTypeCache;
+        }
+
+        public Evaluator()
+        {
+
+        }
 
         public EvaluatorResult Evaluate(SourceText sourceText)
         {
-            var expression = SyntaxTree.ParseExpression(sourceText);
+            var expression = SyntaxTree.ParseExpression(sourceText, clrTypeCache);
             var diagnostics = expression.GetDiagnostics();
 
             if (diagnostics.Any())
@@ -34,7 +46,7 @@ namespace Todl.Compiler.Evaluation
                 };
             }
 
-            var binder = Binder.CreateScriptBinder();
+            var binder = Binder.CreateScriptBinder(clrTypeCache);
             var boundExpression = binder.BindExpression(expression);
 
             return new()
@@ -70,9 +82,9 @@ namespace Todl.Compiler.Evaluation
 
             return boundUnaryExpression.Operator.BoundUnaryOperatorKind switch
             {
-                BoundUnaryExpression.BoundUnaryOperatorKind.Identity => operandValue,
-                BoundUnaryExpression.BoundUnaryOperatorKind.Negation => -(int)operandValue,
-                BoundUnaryExpression.BoundUnaryOperatorKind.LogicalNegation => !(bool)operandValue,
+                BoundUnaryOperatorKind.Identity => operandValue,
+                BoundUnaryOperatorKind.Negation => -(int)operandValue,
+                BoundUnaryOperatorKind.LogicalNegation => !(bool)operandValue,
                 _ => this.EvaluateBoundUnaryExpressionWithSideEffects(boundUnaryExpression)
             };
         }
@@ -86,14 +98,14 @@ namespace Todl.Compiler.Evaluation
 
                 switch (boundUnaryExpression.Operator.BoundUnaryOperatorKind)
                 {
-                    case BoundUnaryExpression.BoundUnaryOperatorKind.PreIncrement:
+                    case BoundUnaryOperatorKind.PreIncrement:
                         return SetVariableValue(variable, (int)oldValue + 1);
-                    case BoundUnaryExpression.BoundUnaryOperatorKind.PostIncrement:
+                    case BoundUnaryOperatorKind.PostIncrement:
                         SetVariableValue(variable, (int)oldValue + 1);
                         return oldValue;
-                    case BoundUnaryExpression.BoundUnaryOperatorKind.PreDecrement:
+                    case BoundUnaryOperatorKind.PreDecrement:
                         return SetVariableValue(variable, (int)oldValue - 1);
-                    case BoundUnaryExpression.BoundUnaryOperatorKind.PostDecrement:
+                    case BoundUnaryOperatorKind.PostDecrement:
                         SetVariableValue(variable, (int)oldValue - 1);
                         return oldValue;
                 }
@@ -111,13 +123,13 @@ namespace Todl.Compiler.Evaluation
 
             return boundBinaryExpression.Operator.BoundBinaryOperatorKind switch
             {
-                BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition => (int)leftValue + (int)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.NumericSubstraction => (int)leftValue - (int)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.NumericMultiplication => (int)leftValue * (int)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.NumericDivision => (int)leftValue / (int)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.LogicalAnd => (bool)leftValue && (bool)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.LogicalOr => (bool)leftValue || (bool)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.StringConcatenation => (string)leftValue + (string)rightValue,
+                BoundBinaryOperatorKind.NumericAddition => (int)leftValue + (int)rightValue,
+                BoundBinaryOperatorKind.NumericSubstraction => (int)leftValue - (int)rightValue,
+                BoundBinaryOperatorKind.NumericMultiplication => (int)leftValue * (int)rightValue,
+                BoundBinaryOperatorKind.NumericDivision => (int)leftValue / (int)rightValue,
+                BoundBinaryOperatorKind.LogicalAnd => (bool)leftValue && (bool)rightValue,
+                BoundBinaryOperatorKind.LogicalOr => (bool)leftValue || (bool)rightValue,
+                BoundBinaryOperatorKind.StringConcatenation => (string)leftValue + (string)rightValue,
                 _ => null
             };
         }

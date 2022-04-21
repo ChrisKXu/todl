@@ -5,24 +5,20 @@ namespace Todl.Compiler.CodeAnalysis.Text
 {
     public sealed class SourceText
     {
-        public string Text { get; }
+        public string FilePath { get; private init; }
+        public string Text { get; private init; }
 
         public int Length => this.Text.Length;
 
-        private SourceText(string text)
-        {
-            this.Text = text;
-        }
-
         public static SourceText FromString(string text)
-        {
-            return new SourceText(text);
-        }
+            => new() { Text = text };
 
-        public static async Task<SourceText> FromFileAsync(string fileName)
-        {
-            return FromString(await File.ReadAllTextAsync(fileName));
-        }
+        public static SourceText FromFile(string filePath)
+            => new()
+            {
+                FilePath = filePath,
+                Text = File.ReadAllText(filePath)
+            };
 
         public TextSpan GetTextSpan(int start, int length) => new(this, start, length);
     }

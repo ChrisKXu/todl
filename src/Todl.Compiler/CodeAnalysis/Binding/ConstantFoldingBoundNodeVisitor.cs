@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
@@ -40,7 +40,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
 
         object value = boundBinaryExpression.Operator.BoundBinaryOperatorKind switch
         {
-            BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition
+            BoundBinaryOperatorKind.NumericAddition
                 => (l, r) switch
                 {
                     (int a, int b) => a + b,
@@ -48,7 +48,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
                     (double a, double b) => a + b,
                     _ => null
                 },
-            BoundBinaryExpression.BoundBinaryOperatorKind.NumericSubstraction
+            BoundBinaryOperatorKind.NumericSubstraction
                 => (l, r) switch
                 {
                     (int a, int b) => a - b,
@@ -56,7 +56,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
                     (double a, double b) => a - b,
                     _ => null
                 },
-            BoundBinaryExpression.BoundBinaryOperatorKind.NumericMultiplication
+            BoundBinaryOperatorKind.NumericMultiplication
                 => (l, r) switch
                 {
                     (int a, int b) => a * b,
@@ -64,7 +64,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
                     (double a, double b) => a * b,
                     _ => null
                 },
-            BoundBinaryExpression.BoundBinaryOperatorKind.NumericDivision
+            BoundBinaryOperatorKind.NumericDivision
                 => (l, r) switch
                 {
                     (int a, int b) => a / b,
@@ -72,19 +72,19 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
                     (double a, double b) => a / b,
                     _ => null
                 },
-            BoundBinaryExpression.BoundBinaryOperatorKind.LogicalAnd
+            BoundBinaryOperatorKind.LogicalAnd
                 => (l, r) switch
                 {
                     (bool a, bool b) => a && b,
                     _ => null
                 },
-            BoundBinaryExpression.BoundBinaryOperatorKind.LogicalOr
+            BoundBinaryOperatorKind.LogicalOr
                 => (l, r) switch
                 {
                     (bool a, bool b) => a || b,
                     _ => null
                 },
-            BoundBinaryExpression.BoundBinaryOperatorKind.StringConcatenation
+            BoundBinaryOperatorKind.StringConcatenation
                 => (l, r) switch
                 {
                     (string a, string b) => a + b,
@@ -107,8 +107,8 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
         {
             var value = boundUnaryExpression.Operator.BoundUnaryOperatorKind switch
             {
-                BoundUnaryExpression.BoundUnaryOperatorKind.Identity => constant.Value,
-                BoundUnaryExpression.BoundUnaryOperatorKind.Negation
+                BoundUnaryOperatorKind.Identity => constant.Value,
+                BoundUnaryOperatorKind.Negation
                     => constant.Value switch
                     {
                         int intValue => -intValue,
@@ -116,7 +116,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
                         double doubleValue => -doubleValue,
                         _ => null
                     },
-                BoundUnaryExpression.BoundUnaryOperatorKind.LogicalNegation => !(bool)constant.Value,
+                BoundUnaryOperatorKind.LogicalNegation => !(bool)constant.Value,
                 _ => null
             };
 

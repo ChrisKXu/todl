@@ -16,8 +16,8 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = true; const b = a && false", false)]
     public void BasicConstantFoldingTests(string inputText, object expectedValue)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
-        var module = BoundModule.Create(new[] { syntaxTree });
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         module.GetDiagnostics().Should().BeEmpty();
 
         var variableMember = module.BoundMembers[^1].As<BoundVariableMember>();
@@ -38,8 +38,8 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = 10; let b = a + 10; const c = a + b;")]
     public void BasicConstantFoldingNegativeTests(string inputText)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
-        var module = BoundModule.Create(new[] { syntaxTree });
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         module.GetDiagnostics().Should().BeEmpty();
 
         var variableMember = module.BoundMembers[^1].As<BoundVariableMember>();
@@ -50,8 +50,8 @@ public sealed class ConstantFoldingTests
     [Fact]
     public void PartiallyFoldedConstantTests()
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString("let a = 10 + 10;"));
-        var module = BoundModule.Create(new[] { syntaxTree });
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString("let a = 10 + 10;"), TestDefaults.DefaultClrTypeCache);
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         module.GetDiagnostics().Should().BeEmpty();
 
         var statement = module.BoundMembers[^1].As<BoundVariableMember>().BoundVariableDeclarationStatement;

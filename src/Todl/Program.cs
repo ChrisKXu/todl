@@ -1,20 +1,11 @@
 ﻿using System;
-using System.CommandLine;
-using System.Threading.Tasks;
-using Todl.Repl;
 
-namespace Todl
+namespace Todl;
+
+static class Program
 {
-    class Program
+    static void Main()
     {
-        static Task<int> Main(string[] args) => ParseCommandLineOptions().InvokeAsync(args);
-
-        static RootCommand ParseCommandLineOptions()
-        {
-            return new RootCommand("todl compiler")
-            {
-                new ReplCommand()
-            };
-        }
+        Console.WriteLine("Hello Todl!");
     }
 }

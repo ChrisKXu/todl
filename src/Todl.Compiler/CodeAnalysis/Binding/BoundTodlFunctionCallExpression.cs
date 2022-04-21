@@ -12,7 +12,7 @@ public sealed class BoundTodlFunctionCallExpression : BoundExpression
     public IReadOnlyDictionary<string, BoundExpression> BoundArguments { get; internal init; }
 
     public override TypeSymbol ResultType
-        => FunctionSymbol?.ReturnType ?? ClrTypeSymbol.ClrObject; // TODO: we may need something like TypeSymbol.InvalidType for this
+        => FunctionSymbol?.ReturnType ?? default; // TODO: we may need something like TypeSymbol.InvalidType for this
 }
 
 public partial class Binder

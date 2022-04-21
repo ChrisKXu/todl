@@ -9,7 +9,9 @@ public sealed class BoundReturnStatement : BoundStatement
 {
     public BoundExpression BoundReturnValueExpression { get; internal init; }
 
-    public TypeSymbol ReturnType => BoundReturnValueExpression?.ResultType ?? TypeSymbol.ClrVoid;
+    public TypeSymbol ReturnType
+        => BoundReturnValueExpression?.ResultType
+        ?? SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Void;
 }
 
 public partial class Binder

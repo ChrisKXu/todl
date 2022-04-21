@@ -27,12 +27,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             ClrTypeCache = clrTypeCache;
         }
 
-        internal SyntaxTree(SourceText sourceText)
-            : this(sourceText, ClrTypeCache.Default)
-        {
-            // do nothing
-        }
-
         private Expression ParseExpression()
         {
             lexer.Lex();
@@ -55,23 +49,23 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             ClrTypeCacheView = ClrTypeCache.CreateView(Directives.OfType<ImportDirective>());
         }
 
-        public static SyntaxTree Parse(SourceText sourceText)
+        public static SyntaxTree Parse(SourceText sourceText, ClrTypeCache clrTypeCache)
         {
-            var syntaxTree = new SyntaxTree(sourceText);
+            var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
             syntaxTree.Parse();
             return syntaxTree;
         }
 
         // temporarily make available for tests and evaluator
-        internal static Expression ParseExpression(SourceText sourceText)
+        internal static Expression ParseExpression(SourceText sourceText, ClrTypeCache clrTypeCache)
         {
-            var syntaxTree = new SyntaxTree(sourceText);
+            var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
             return syntaxTree.ParseExpression();
         }
 
-        internal static Statement ParseStatement(SourceText sourceText)
+        internal static Statement ParseStatement(SourceText sourceText, ClrTypeCache clrTypeCache)
         {
-            var syntaxTree = new SyntaxTree(sourceText);
+            var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
             return syntaxTree.ParseStatement();
         }
     }

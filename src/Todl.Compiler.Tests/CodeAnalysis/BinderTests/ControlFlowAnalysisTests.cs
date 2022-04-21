@@ -20,8 +20,8 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("System.Uri func(string a) { return new System.Uri(a); }")]
     public void TestControlFlowAnalysisBasic(string inputText)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
-        BoundModule.Create(new[] { syntaxTree }).GetDiagnostics().Should().BeEmpty();
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree }).GetDiagnostics().Should().BeEmpty();
     }
 
     [Theory]
@@ -29,8 +29,8 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { int.MaxValue.ToString(); }")]
     public void TestControlFlowAnalysisWithNoReturnStatement(string inputText)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
-        var module = BoundModule.Create(new[] { syntaxTree });
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         var diagnostics = module.GetDiagnostics().ToList();
 
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.NotAllPathsReturn);
@@ -43,8 +43,8 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("System.Uri func(string a) { const r = new System.Uri(a); return r; r.ToString(); }")]
     public void TestControlFlowAnalysisWithUnreachableCode(string inputText)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText));
-        var module = BoundModule.Create(new[] { syntaxTree });
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         var diagnostics = module.GetDiagnostics().ToList();
 
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
