@@ -60,14 +60,14 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var boundBinaryExpression = BindExpression<BoundBinaryExpression>("1 + 2 + 3");
 
             boundBinaryExpression.Should().NotBeNull();
-            boundBinaryExpression.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition);
+            boundBinaryExpression.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryOperatorKind.NumericAddition);
             (boundBinaryExpression.Right as BoundConstant).Value.Should().Be(3);
 
             var left = boundBinaryExpression.Left as BoundBinaryExpression;
             left.Should().NotBeNull();
             (left.Left as BoundConstant).Value.Should().Be(1);
             (left.Right as BoundConstant).Value.Should().Be(2);
-            left.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition);
+            left.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryOperatorKind.NumericAddition);
         }
 
         [Theory]
@@ -91,7 +91,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var expression = SyntaxTree.ParseExpression(SourceText.FromString(input), TestDefaults.DefaultClrTypeCache);
             var boundAssignmentExpression =
-                Binder.CreateScriptBinder().BindExpression(expression)
+                Binder.CreateScriptBinder(TestDefaults.DefaultClrTypeCache).BindExpression(expression)
                 .As<BoundAssignmentExpression>();
 
             boundAssignmentExpression.Should().NotBeNull();

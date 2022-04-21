@@ -19,10 +19,20 @@ namespace Todl.Compiler.Evaluation
     public sealed class Evaluator
     {
         private readonly Dictionary<VariableSymbol, object> variables = new();
+        private readonly ClrTypeCache clrTypeCache;
+
+        public Evaluator(ClrTypeCache clrTypeCache)
+        {
+            this.clrTypeCache = clrTypeCache;
+        }
+
+        public Evaluator()
+        {
+
+        }
 
         public EvaluatorResult Evaluate(SourceText sourceText)
         {
-            var clrTypeCache = ClrTypeCache.FromAssemblies(new[] { Assembly.GetExecutingAssembly() });
             var expression = SyntaxTree.ParseExpression(sourceText, clrTypeCache);
             var diagnostics = expression.GetDiagnostics();
 
@@ -36,7 +46,7 @@ namespace Todl.Compiler.Evaluation
                 };
             }
 
-            var binder = Binder.CreateScriptBinder();
+            var binder = Binder.CreateScriptBinder(clrTypeCache);
             var boundExpression = binder.BindExpression(expression);
 
             return new()
@@ -113,13 +123,13 @@ namespace Todl.Compiler.Evaluation
 
             return boundBinaryExpression.Operator.BoundBinaryOperatorKind switch
             {
-                BoundBinaryExpression.BoundBinaryOperatorKind.NumericAddition => (int)leftValue + (int)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.NumericSubstraction => (int)leftValue - (int)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.NumericMultiplication => (int)leftValue * (int)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.NumericDivision => (int)leftValue / (int)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.LogicalAnd => (bool)leftValue && (bool)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.LogicalOr => (bool)leftValue || (bool)rightValue,
-                BoundBinaryExpression.BoundBinaryOperatorKind.StringConcatenation => (string)leftValue + (string)rightValue,
+                BoundBinaryOperatorKind.NumericAddition => (int)leftValue + (int)rightValue,
+                BoundBinaryOperatorKind.NumericSubstraction => (int)leftValue - (int)rightValue,
+                BoundBinaryOperatorKind.NumericMultiplication => (int)leftValue * (int)rightValue,
+                BoundBinaryOperatorKind.NumericDivision => (int)leftValue / (int)rightValue,
+                BoundBinaryOperatorKind.LogicalAnd => (bool)leftValue && (bool)rightValue,
+                BoundBinaryOperatorKind.LogicalOr => (bool)leftValue || (bool)rightValue,
+                BoundBinaryOperatorKind.StringConcatenation => (string)leftValue + (string)rightValue,
                 _ => null
             };
         }

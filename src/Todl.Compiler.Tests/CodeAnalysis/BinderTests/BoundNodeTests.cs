@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -78,7 +78,7 @@ public sealed class BoundNodeTests
         foreach (var inputText in testExpressions)
         {
             var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-            var binder = Binder.CreateScriptBinder();
+            var binder = Binder.CreateScriptBinder(TestDefaults.DefaultClrTypeCache);
             yield return new object[] { expression, binder.BindExpression(expression) };
         }
 

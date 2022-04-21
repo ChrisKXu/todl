@@ -16,6 +16,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public virtual BoundUnaryOperatorFactory BoundUnaryOperatorFactory
             => Parent?.BoundUnaryOperatorFactory;
 
+        public virtual BoundBinaryOperatorFactory BoundBinaryOperatorFactory
+            => Parent?.BoundBinaryOperatorFactory;
+
         public virtual ClrTypeCache ClrTypeCache
             => Parent?.ClrTypeCache;
 
@@ -41,8 +44,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 Scope = Scope.CreateChildScope(BoundScopeKind.Function)
             };
 
-        public static Binder CreateScriptBinder()
-            => new ScriptBinder()
+        public static Binder CreateScriptBinder(ClrTypeCache clrTypeCache)
+            => new ScriptBinder(clrTypeCache)
             {
                 Scope = BoundScope.GlobalScope
             };
@@ -55,7 +58,17 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         internal sealed class ScriptBinder : Binder
         {
+            public ScriptBinder(ClrTypeCache clrTypeCache)
+            {
+                ClrTypeCache = clrTypeCache;
+                BoundUnaryOperatorFactory = new(clrTypeCache);
+                BoundBinaryOperatorFactory = new(clrTypeCache);
+            }
+
             public override bool AllowVariableDeclarationInAssignment => true;
+            public override ClrTypeCache ClrTypeCache { get; }
+            public override BoundUnaryOperatorFactory BoundUnaryOperatorFactory { get; }
+            public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
         }
 
         internal sealed class ModuleBinder : Binder
@@ -64,11 +77,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 ClrTypeCache = clrTypeCache;
                 BoundUnaryOperatorFactory = new(clrTypeCache);
+                BoundBinaryOperatorFactory = new(clrTypeCache);
             }
 
             public override bool AllowVariableDeclarationInAssignment => false;
             public override ClrTypeCache ClrTypeCache { get; }
             public override BoundUnaryOperatorFactory BoundUnaryOperatorFactory { get; }
+            public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
         }
 
         internal sealed class FunctionBinder : Binder
