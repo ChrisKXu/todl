@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
@@ -51,8 +51,8 @@ internal class Emitter
     {
         var methodDefinition = new MethodDefinition(
             name: functionMember.FunctionSymbol.Name,
-            attributes: MethodAttributes.Static | MethodAttributes.Public,
-            returnType: ResolveClrType(functionMember.ReturnType as ClrTypeSymbol));
+            attributes: MethodAttributes.Static | MethodAttributes.Private,
+            returnType: assemblyDefinition.MainModule.TypeSystem.Void);
 
         methodDefinition.Body.GetILProcessor().Emit(OpCodes.Nop);
         methodDefinition.Body.GetILProcessor().Emit(OpCodes.Ret);
