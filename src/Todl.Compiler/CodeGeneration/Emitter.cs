@@ -37,7 +37,7 @@ internal class Emitter
 
     public void EmitModule(BoundModule module)
     {
-        foreach (var functionMember in module.BoundMembers.OfType<BoundFunctionMember>())
+        foreach (var functionMember in module.EntryPointType.BoundMembers.OfType<BoundFunctionMember>())
         {
             var methodDefinition = EmitFunctionMember(functionMember);
             if (functionMember == module.EntryPoint)

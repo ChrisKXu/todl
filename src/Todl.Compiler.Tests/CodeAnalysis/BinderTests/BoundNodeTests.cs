@@ -34,6 +34,7 @@ public sealed class BoundNodeTests
     public void AllBoundNodeVariantsAreCovered()
     {
         var types = GetAllSyntaxNodesForTest().Select(pair => pair[1].GetType());
+        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition) };
 
         var allBoundNodeTypes = typeof(BoundNode)
             .Assembly
@@ -41,7 +42,7 @@ public sealed class BoundNodeTests
             .Where(t => t.IsSubclassOf(typeof(BoundNode))
                 && !t.IsAbstract)
             .ToHashSet();
-        var uncoveredTypes = allBoundNodeTypes.Where(t => !types.Contains(t));
+        var uncoveredTypes = allBoundNodeTypes.Where(t => !types.Contains(t) && !exceptions.Contains(t));
 
         uncoveredTypes.Should().BeEmpty();
     }

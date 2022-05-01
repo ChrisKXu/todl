@@ -127,7 +127,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
             var diagnostics = boundModule.GetDiagnostics().ToList();
-            diagnostics.Count.Should().Be(1);
+            diagnostics.Should().NotBeEmpty();
             diagnostics[0].ErrorCode.Should().Be(ErrorCode.DuplicateParameterName);
         }
 

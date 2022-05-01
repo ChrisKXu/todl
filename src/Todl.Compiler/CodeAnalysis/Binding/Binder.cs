@@ -56,6 +56,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 Scope = BoundScope.GlobalScope.CreateChildScope(BoundScopeKind.Module)
             };
 
+        public Binder CreateTypeBinder()
+            => new TypeBinder()
+            {
+                Parent = this,
+                Scope = Scope.CreateChildScope(BoundScopeKind.Type)
+            };
+
         internal sealed class ScriptBinder : Binder
         {
             public ScriptBinder(ClrTypeCache clrTypeCache)
@@ -84,6 +91,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             public override ClrTypeCache ClrTypeCache { get; }
             public override BoundUnaryOperatorFactory BoundUnaryOperatorFactory { get; }
             public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
+        }
+
+        internal sealed class TypeBinder : Binder
+        {
         }
 
         internal sealed class FunctionBinder : Binder
