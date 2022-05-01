@@ -10,7 +10,6 @@ internal class Emitter
 {
     private readonly Compilation compilation;
     private readonly AssemblyDefinition assemblyDefinition;
-    private readonly TypeDefinition entryPointType;
 
     internal Emitter(Compilation compilation)
     {
@@ -18,29 +17,31 @@ internal class Emitter
 
         var assemblyName = new AssemblyNameDefinition(compilation.AssemblyName, compilation.Version);
         assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, compilation.AssemblyName, ModuleKind.Console);
-
-        entryPointType = new TypeDefinition(
-            @namespace: compilation.AssemblyName,
-            name: "_Todl_Generated_EntryPoint",
-            attributes: TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract,
-            baseType: ResolveClrType(compilation.ClrTypeCache.BuiltInTypes.Object));
-
-        assemblyDefinition.MainModule.Types.Add(entryPointType);
     }
 
     public AssemblyDefinition Emit()
     {
-        EmitModule(compilation.MainModule);
+        EmitEntryPointType(compilation.MainModule.EntryPointType);
 
         return assemblyDefinition;
     }
 
-    public void EmitModule(BoundModule module)
+    public void EmitEntryPointType(BoundEntryPointTypeDefinition boundEntryPointTypeDefinition)
     {
-        foreach (var functionMember in module.EntryPointType.BoundMembers.OfType<BoundFunctionMember>())
+        var entryPointType = new TypeDefinition(
+            @namespace: compilation.AssemblyName,
+            name: boundEntryPointTypeDefinition.Name,
+            attributes: TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract,
+            baseType: ResolveClrType(compilation.ClrTypeCache.BuiltInTypes.Object));
+
+        assemblyDefinition.MainModule.Types.Add(entryPointType);
+
+        foreach (var functionMember in boundEntryPointTypeDefinition.BoundMembers.OfType<BoundFunctionMember>())
         {
             var methodDefinition = EmitFunctionMember(functionMember);
-            if (functionMember == module.EntryPoint)
+            entryPointType.Methods.Add(methodDefinition);
+
+            if (functionMember == boundEntryPointTypeDefinition.EntryPointFunctionMember)
             {
                 assemblyDefinition.EntryPoint = methodDefinition;
             }
@@ -56,7 +57,6 @@ internal class Emitter
 
         methodDefinition.Body.GetILProcessor().Emit(OpCodes.Nop);
         methodDefinition.Body.GetILProcessor().Emit(OpCodes.Ret);
-        entryPointType.Methods.Add(methodDefinition);
 
         return methodDefinition;
     }
