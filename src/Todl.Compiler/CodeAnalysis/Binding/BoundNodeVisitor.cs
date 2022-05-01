@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,6 +6,25 @@ namespace Todl.Compiler.CodeAnalysis.Binding;
 
 internal abstract partial class BoundNodeVisitor
 {
+    public virtual BoundTodlTypeDefinition VisitBoundTypeDefinition(BoundTodlTypeDefinition boundTodlTypeDefinition)
+    {
+        if (boundTodlTypeDefinition is BoundEntryPointTypeDefinition)
+        {
+            var boundMembers = VisitBoundMembers(boundTodlTypeDefinition.BoundMembers).ToList();
+            boundTodlTypeDefinition.DiagnosticBuilder.AddRange(boundMembers);
+
+            // TODO: Use BoundNodeFactory to initialize BoundEntryPointTypeDefinition
+            return new BoundEntryPointTypeDefinition()
+            {
+                SyntaxNode = boundTodlTypeDefinition.SyntaxNode,
+                BoundMembers = boundMembers,
+                DiagnosticBuilder = boundTodlTypeDefinition.DiagnosticBuilder
+            };
+        }
+
+        throw new NotSupportedException();
+    }
+
     public virtual BoundExpression VisitBoundExpression(BoundExpression boundExpression)
         => boundExpression switch
         {

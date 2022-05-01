@@ -1,3 +1,4 @@
+using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -20,7 +21,7 @@ public sealed class ConstantFoldingTests
         var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         module.GetDiagnostics().Should().BeEmpty();
 
-        var variableMember = module.BoundMembers[^1].As<BoundVariableMember>();
+        var variableMember = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>();
         variableMember.BoundVariableDeclarationStatement.Variable.Constant.Should().Be(true);
         var value = variableMember
             .BoundVariableDeclarationStatement
@@ -42,7 +43,7 @@ public sealed class ConstantFoldingTests
         var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         module.GetDiagnostics().Should().BeEmpty();
 
-        var variableMember = module.BoundMembers[^1].As<BoundVariableMember>();
+        var variableMember = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>();
         var boundVariableDeclarationStatement = variableMember.BoundVariableDeclarationStatement;
         boundVariableDeclarationStatement.Variable.Constant.Should().Be(false);
     }
@@ -54,7 +55,7 @@ public sealed class ConstantFoldingTests
         var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         module.GetDiagnostics().Should().BeEmpty();
 
-        var statement = module.BoundMembers[^1].As<BoundVariableMember>().BoundVariableDeclarationStatement;
+        var statement = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>().BoundVariableDeclarationStatement;
         statement.Variable.Constant.Should().Be(false);
         statement.InitializerExpression.Constant.Should().Be(true);
         statement.InitializerExpression.As<BoundConstant>().Value.Should().Be(20);

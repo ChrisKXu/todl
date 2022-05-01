@@ -100,6 +100,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     {
         Global,
         Module,
+        Type,
         Function,
         BlockStatement
     }
