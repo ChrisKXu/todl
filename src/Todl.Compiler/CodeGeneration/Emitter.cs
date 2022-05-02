@@ -53,7 +53,7 @@ internal class Emitter
         var methodDefinition = new MethodDefinition(
             name: functionMember.FunctionSymbol.Name,
             attributes: MethodAttributes.Static | MethodAttributes.Private,
-            returnType: assemblyDefinition.MainModule.TypeSystem.Void);
+            returnType: ResolveClrType(functionMember.ReturnType as ClrTypeSymbol));
 
         methodDefinition.Body.GetILProcessor().Emit(OpCodes.Nop);
         methodDefinition.Body.GetILProcessor().Emit(OpCodes.Ret);
@@ -63,6 +63,15 @@ internal class Emitter
 
     private TypeReference ResolveClrType(ClrTypeSymbol clrTypeSymbol)
     {
+        if (clrTypeSymbol.Equals(compilation.ClrTypeCache.BuiltInTypes.Void))
+        {
+            return assemblyDefinition.MainModule.TypeSystem.Void;
+        }
+        else if (clrTypeSymbol.Equals(compilation.ClrTypeCache.BuiltInTypes.Int32))
+        {
+            return assemblyDefinition.MainModule.TypeSystem.Int32;
+        }
+
         return assemblyDefinition.MainModule.ImportReference(clrTypeSymbol.ClrType);
     }
 }
