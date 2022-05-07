@@ -1,5 +1,4 @@
 using System.Linq;
-using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
@@ -10,17 +9,13 @@ internal class ControlFlowAnalyzer : BoundNodeVisitor
     {
         var controlFlowGraph = ControlFlowGraph.Create(boundFunctionMember);
 
-        if (!boundFunctionMember.ReturnType.Equals(boundFunctionMember.SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Void))
-        {
-            AllPathShouldReturn(controlFlowGraph, boundFunctionMember);
-        }
-
+        AllPathsShouldReturn(controlFlowGraph, boundFunctionMember);
         AllBlocksShouldBeReachable(controlFlowGraph, boundFunctionMember.DiagnosticBuilder);
 
         return boundFunctionMember;
     }
 
-    private void AllPathShouldReturn(
+    private void AllPathsShouldReturn(
         ControlFlowGraph controlFlowGraph,
         BoundFunctionMember boundFunctionMember)
     {
