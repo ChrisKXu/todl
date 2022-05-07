@@ -43,10 +43,27 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 functionBinder.Scope.DeclareVariable(parameter);
             }
 
+            var body = functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body);
+            if (functionSymbol.ReturnType.Equals(ClrTypeCache.BuiltInTypes.Void))
+            {
+                if (!body.Statements.Any() || body.Statements[^1] is not BoundReturnStatement)
+                {
+                    var returnStatement = BoundNodeFactory.CreateBoundReturnStatement(
+                        syntaxNode: null,
+                        boundReturnValueExpression: null,
+                        diagnosticBuilder: diagnosticBuilder);
+
+                    body = BoundNodeFactory.CreateBoundBlockStatement(
+                        syntaxNode: body.SyntaxNode,
+                        scope: body.Scope,
+                        statements: body.Statements.Append(returnStatement).ToList());
+                }
+            }
+
             return BoundNodeFactory.CreateBoundFunctionMember(
                 syntaxNode: functionDeclarationMember,
                 functionScope: functionBinder.Scope,
-                body: functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body),
+                body: body,
                 functionSymbol: functionSymbol,
                 diagnosticBuilder: diagnosticBuilder);
         }
