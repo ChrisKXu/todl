@@ -53,9 +53,12 @@ internal sealed class Emitter
 
     public MethodDefinition EmitFunctionMember(BoundFunctionMember functionMember)
     {
+        var attributes = MethodAttributes.Static;
+        attributes |= functionMember.IsPublic ? MethodAttributes.Public : MethodAttributes.Private;
+
         var methodDefinition = new MethodDefinition(
             name: functionMember.FunctionSymbol.Name,
-            attributes: MethodAttributes.Static | MethodAttributes.Private,
+            attributes: attributes,
             returnType: ResolveClrType(functionMember.ReturnType as ClrTypeSymbol));
 
         foreach (var statement in functionMember.Body.Statements)

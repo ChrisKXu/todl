@@ -12,6 +12,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public FunctionSymbol FunctionSymbol { get; internal init; }
 
         public TypeSymbol ReturnType => FunctionSymbol.ReturnType;
+        public bool IsPublic => FunctionSymbol.IsPublic;
     }
 
     public partial class Binder

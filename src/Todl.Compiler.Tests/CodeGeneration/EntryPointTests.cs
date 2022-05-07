@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using FluentAssertions;
 using Mono.Cecil;
 using Todl.Compiler.CodeAnalysis.Text;
@@ -23,6 +25,15 @@ public sealed class EntryPointTests
         return (compilation.Emit(), compilation.GetDiagnostics());
     }
 
+    private static void RunAssembly(AssemblyDefinition assemblyDefinition, Action<Assembly> action)
+    {
+        using var memoryStream = new MemoryStream();
+        assemblyDefinition.Write(memoryStream);
+        var assembly = Assembly.Load(memoryStream.GetBuffer());
+
+        action(assembly);
+    }
+
     [Fact]
     public void TestVoidMainWithEmptyArgs()
     {
@@ -35,6 +46,12 @@ public sealed class EntryPointTests
         entryPoint.Should().NotBeNull();
         entryPoint.ReturnType.Should().Be(assemblyDefinition.MainModule.TypeSystem.Void);
         entryPoint.HasBody.Should().BeTrue();
+
+        RunAssembly(assemblyDefinition, assembly =>
+        {
+            var result = assembly.EntryPoint.Invoke(null, null);
+            result.Should().BeNull();
+        });
     }
 
     [Fact]
@@ -49,5 +66,11 @@ public sealed class EntryPointTests
         entryPoint.Should().NotBeNull();
         entryPoint.ReturnType.Should().Be(assemblyDefinition.MainModule.TypeSystem.Int32);
         entryPoint.HasBody.Should().BeTrue();
+
+        RunAssembly(assemblyDefinition, assembly =>
+        {
+            var result = assembly.EntryPoint.Invoke(null, null);
+            result.Should().Be(0);
+        });
     }
 }
