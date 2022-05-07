@@ -11,15 +11,15 @@ namespace Todl.Compiler.Tests.CodeAnalysis
     public sealed partial class BinderTests
     {
         [Theory]
-        [InlineData("int Function() {}", typeof(int))]
-        [InlineData("System.Uri Function() {}", typeof(Uri))]
-        [InlineData("void Function() {}", typeof(void))]
-        public void TestBindFunctionDeclarationMemberWithoutParametersOrBody(string inputText, Type expectedReturnType)
+        [InlineData("int Function() {}", typeof(int), 0)]
+        [InlineData("System.Uri Function() {}", typeof(Uri), 0)]
+        [InlineData("void Function() {}", typeof(void), 1)]
+        public void TestBindFunctionDeclarationMemberWithoutParametersOrBody(string inputText, Type expectedReturnType, int expectedStatementsCount)
         {
             var function = BindMember<BoundFunctionMember>(inputText);
 
             var targetType = TestDefaults.DefaultClrTypeCache.Resolve(expectedReturnType.FullName);
-            function.Body.Statements.Should().BeEmpty();
+            function.Body.Statements.Count.Should().Be(expectedStatementsCount);
             function.ReturnType.Should().Be(targetType);
             function.FunctionScope.BoundScopeKind.Should().Be(BoundScopeKind.Function);
         }
@@ -30,7 +30,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var function = BindMember<BoundFunctionMember>(
                 inputText: "void Main() { const a = 30; System.Threading.Thread.Sleep(a); }");
 
-            function.Body.Statements.Count.Should().Be(2);
+            function.Body.Statements.Count.Should().Be(3);
 
             var a = function.Body.Statements[0].As<BoundVariableDeclarationStatement>().Variable;
             a.Name.Should().Be("a");
@@ -53,7 +53,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             a.Name.Should().Be("a");
             a.Type.Should().Be(builtInTypes.Int32);
 
-            function.Body.Statements.Count.Should().Be(1);
+            function.Body.Statements.Count.Should().Be(2);
             function.Body.Statements[0].As<BoundExpressionStatement>().Expression.As<BoundClrFunctionCallExpression>().Should().NotBeNull();
 
             function.ReturnType.Should().Be(builtInTypes.Void);
@@ -178,6 +178,22 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var diagnostics = boundModule.GetDiagnostics().ToList();
             diagnostics.Count.Should().Be(1);
             diagnostics[0].ErrorCode.Should().Be(ErrorCode.AmbiguousFunctionDeclaration);
+        }
+
+        [Theory]
+        [InlineData("void func() {}")]
+        [InlineData("void func() { return; }")]
+        [InlineData("void func() { System.Threading.Thread.Sleep(a); }")]
+        [InlineData("void func() { System.Threading.Thread.Sleep(a); return; }")]
+        public void FunctionsThatReturnsVoidShouldNotHaveDuplicateReturnStatements(string inputText)
+        {
+            var function = BindMember<BoundFunctionMember>(inputText);
+            function.Body.Statements.Should().NotBeEmpty();
+
+            function.Body.Statements.OfType<BoundReturnStatement>().Should().HaveCount(1);
+
+            var lastStatement = function.Body.Statements[^1];
+            lastStatement.Should().BeOfType<BoundReturnStatement>();
         }
     }
 }
