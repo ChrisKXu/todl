@@ -88,6 +88,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             { SyntaxKind.FalseKeywordToken, "false" },
             { SyntaxKind.OpenBraceToken, "{" },
             { SyntaxKind.CloseBraceToken, "}" },
+            { SyntaxKind.OpenBracketToken, "[" },
+            { SyntaxKind.CloseBracketToken, "]" },
             { SyntaxKind.SemicolonToken, ";" },
             { SyntaxKind.ColonToken, ":" },
             { SyntaxKind.LetKeywordToken, "let" },
