@@ -6,9 +6,12 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     public sealed class Parameter : SyntaxNode
     {
         public NameExpression ParameterType { get; internal init; }
+        public SyntaxToken? OpenBracketToken { get; internal init; }
+        public SyntaxToken? CloseBracketToken { get; internal init; }
         public SyntaxToken Identifier { get; internal init; }
 
         public override TextSpan Text => TextSpan.FromTextSpans(ParameterType.Text, Identifier.Text);
+        public bool IsArrayType => OpenBracketToken is not null && CloseBracketToken is not null;
     }
 
     public sealed class FunctionDeclarationMember : Member
@@ -25,11 +28,26 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         private Parameter ParseParemeter()
         {
-            return new Parameter
+            SyntaxToken? openBracketToken = null;
+            SyntaxToken? closeBracketToken = null;
+
+            var parameterType = ParseNameExpression();
+
+            if (Current.Kind == SyntaxKind.OpenBracketToken)
+            {
+                openBracketToken = ExpectToken(SyntaxKind.OpenBracketToken);
+                closeBracketToken = ExpectToken(SyntaxKind.CloseBracketToken);
+            }
+
+            var identifier = ExpectToken(SyntaxKind.IdentifierToken);
+
+            return new()
             {
                 SyntaxTree = syntaxTree,
-                ParameterType = ParseNameExpression(),
-                Identifier = ExpectToken(SyntaxKind.IdentifierToken)
+                ParameterType = parameterType,
+                OpenBracketToken = openBracketToken,
+                CloseBracketToken = closeBracketToken,
+                Identifier = identifier
             };
         }
 

@@ -63,6 +63,27 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
+        public void ParseFunctionDeclarationMemberWithArrayParameters()
+        {
+            var function = ParseMember<FunctionDeclarationMember>("void Function(string[] a, System.Uri[] b) {}");
+            function.Should().NotBeNull();
+            function.Name.Text.Should().Be("Function");
+            function.ReturnType.Text.Should().Be("void");
+            function.Parameters.Items.Count.Should().Be(2);
+            function.Body.InnerStatements.Should().BeEmpty();
+
+            var a = function.Parameters.Items[0];
+            a.ParameterType.Text.Should().Be("string");
+            a.Identifier.Text.Should().Be("a");
+            a.IsArrayType.Should().BeTrue();
+
+            var b = function.Parameters.Items[1];
+            b.ParameterType.Text.Should().Be("System.Uri");
+            b.Identifier.Text.Should().Be("b");
+            b.IsArrayType.Should().BeTrue();
+        }
+
+        [Fact]
         public void ParseEmptyReturnStatement()
         {
             var emptyReturnStatement = ParseStatement<ReturnStatement>("return;");
