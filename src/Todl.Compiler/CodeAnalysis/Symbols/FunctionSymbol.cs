@@ -16,6 +16,8 @@ public sealed class FunctionSymbol : Symbol
     public TypeSymbol ReturnType
         => FunctionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(FunctionDeclarationMember.ReturnType);
 
+    public bool IsPublic => char.IsUpper(Name[0]);
+
     public static FunctionSymbol FromFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
     {
         var parameters = functionDeclarationMember

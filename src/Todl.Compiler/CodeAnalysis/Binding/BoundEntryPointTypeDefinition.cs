@@ -26,15 +26,29 @@ public sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
         }
 
         // entry point function should either return "void" or "int"
-        if (!f.ReturnType.Equals(f.SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Void)
-            && !f.ReturnType.Equals(f.SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Int32))
+        var builtInTypes = f.SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes;
+        if (!f.ReturnType.Equals(builtInTypes.Void)
+            && !f.ReturnType.Equals(builtInTypes.Int32))
         {
             return false;
         }
 
-        if (f.FunctionSymbol.Parameters.Any())
+        // entry point function should either have no parameters or exactly one parameter of type string[]
+        var parameters = f.FunctionSymbol.Parameters.ToList();
+        if (parameters.Count > 2)
         {
             return false;
+        }
+
+        if (parameters.Count == 1)
+        {
+            var p = parameters[0];
+            if (p.Type is not ClrTypeSymbol clrTypeSymbol)
+            {
+                return false;
+            }
+
+            return clrTypeSymbol.ClrType.IsArray && clrTypeSymbol.ClrType.GetElementType().Equals(builtInTypes.String.ClrType);
         }
 
         return true;

@@ -1,15 +1,18 @@
 ﻿using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeGeneration;
 
-internal class Emitter
+internal sealed class Emitter
 {
     private readonly Compilation compilation;
     private readonly AssemblyDefinition assemblyDefinition;
+
+    private BuiltInTypes BuiltInTypes => compilation.ClrTypeCache.BuiltInTypes;
 
     internal Emitter(Compilation compilation)
     {
@@ -32,7 +35,7 @@ internal class Emitter
             @namespace: compilation.AssemblyName,
             name: boundEntryPointTypeDefinition.Name,
             attributes: TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract,
-            baseType: ResolveClrType(compilation.ClrTypeCache.BuiltInTypes.Object));
+            baseType: ResolveTypeReference(BuiltInTypes.Object));
 
         assemblyDefinition.MainModule.Types.Add(entryPointType);
 
@@ -50,19 +53,87 @@ internal class Emitter
 
     public MethodDefinition EmitFunctionMember(BoundFunctionMember functionMember)
     {
+        var attributes = MethodAttributes.Static;
+        attributes |= functionMember.IsPublic ? MethodAttributes.Public : MethodAttributes.Private;
+
         var methodDefinition = new MethodDefinition(
             name: functionMember.FunctionSymbol.Name,
-            attributes: MethodAttributes.Static | MethodAttributes.Private,
-            returnType: assemblyDefinition.MainModule.TypeSystem.Void);
+            attributes: attributes,
+            returnType: ResolveTypeReference(functionMember.ReturnType as ClrTypeSymbol));
 
-        methodDefinition.Body.GetILProcessor().Emit(OpCodes.Nop);
-        methodDefinition.Body.GetILProcessor().Emit(OpCodes.Ret);
+        foreach (var parameter in functionMember.FunctionSymbol.Parameters)
+        {
+            methodDefinition.Parameters.Add(new ParameterDefinition(
+                name: parameter.Name,
+                attributes: ParameterAttributes.None,
+                parameterType: ResolveTypeReference(parameter.Type as ClrTypeSymbol)));
+        }
+
+        foreach (var statement in functionMember.Body.Statements)
+        {
+            EmitStatement(methodDefinition.Body, statement);
+        }
 
         return methodDefinition;
     }
 
-    private TypeReference ResolveClrType(ClrTypeSymbol clrTypeSymbol)
+    private void EmitStatement(MethodBody methodBody, BoundStatement boundStatement)
     {
+        switch (boundStatement)
+        {
+            case BoundReturnStatement boundReturnStatement:
+                EmitReturnStatement(methodBody, boundReturnStatement);
+                return;
+            default:
+                return;
+        }
+    }
+
+    private void EmitReturnStatement(MethodBody methodBody, BoundReturnStatement boundReturnStatement)
+    {
+        if (boundReturnStatement.BoundReturnValueExpression is not null)
+        {
+            EmitExpression(methodBody, boundReturnStatement.BoundReturnValueExpression);
+        }
+
+        methodBody.GetILProcessor().Emit(OpCodes.Ret);
+    }
+
+    private void EmitExpression(MethodBody methodBody, BoundExpression boundExpression)
+    {
+        switch (boundExpression)
+        {
+            case BoundConstant boundConstant:
+                EmitConstant(methodBody, boundConstant);
+                return;
+            default:
+                return;
+        }
+    }
+
+    private void EmitConstant(MethodBody methodBody, BoundConstant boundConstant)
+    {
+        if (boundConstant.ResultType.Equals(BuiltInTypes.Int32))
+        {
+            methodBody.GetILProcessor().Emit(OpCodes.Ldc_I4, (int)boundConstant.Value);
+        }
+        else if (boundConstant.ResultType.Equals(BuiltInTypes.String))
+        {
+            methodBody.GetILProcessor().Emit(OpCodes.Ldstr, (string)boundConstant.Value);
+        }
+    }
+
+    private TypeReference ResolveTypeReference(ClrTypeSymbol clrTypeSymbol)
+    {
+        if (clrTypeSymbol.Equals(BuiltInTypes.Void))
+        {
+            return assemblyDefinition.MainModule.TypeSystem.Void;
+        }
+        else if (clrTypeSymbol.Equals(BuiltInTypes.Int32))
+        {
+            return assemblyDefinition.MainModule.TypeSystem.Int32;
+        }
+
         return assemblyDefinition.MainModule.ImportReference(clrTypeSymbol.ClrType);
     }
 }
