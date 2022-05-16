@@ -35,7 +35,7 @@ internal sealed class Emitter
             @namespace: compilation.AssemblyName,
             name: boundEntryPointTypeDefinition.Name,
             attributes: TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract,
-            baseType: ResolveClrType(BuiltInTypes.Object));
+            baseType: ResolveTypeReference(BuiltInTypes.Object));
 
         assemblyDefinition.MainModule.Types.Add(entryPointType);
 
@@ -59,7 +59,15 @@ internal sealed class Emitter
         var methodDefinition = new MethodDefinition(
             name: functionMember.FunctionSymbol.Name,
             attributes: attributes,
-            returnType: ResolveClrType(functionMember.ReturnType as ClrTypeSymbol));
+            returnType: ResolveTypeReference(functionMember.ReturnType as ClrTypeSymbol));
+
+        foreach (var parameter in functionMember.FunctionSymbol.Parameters)
+        {
+            methodDefinition.Parameters.Add(new ParameterDefinition(
+                name: parameter.Name,
+                attributes: ParameterAttributes.None,
+                parameterType: ResolveTypeReference(parameter.Type as ClrTypeSymbol)));
+        }
 
         foreach (var statement in functionMember.Body.Statements)
         {
@@ -115,7 +123,7 @@ internal sealed class Emitter
         }
     }
 
-    private TypeReference ResolveClrType(ClrTypeSymbol clrTypeSymbol)
+    private TypeReference ResolveTypeReference(ClrTypeSymbol clrTypeSymbol)
     {
         if (clrTypeSymbol.Equals(BuiltInTypes.Void))
         {

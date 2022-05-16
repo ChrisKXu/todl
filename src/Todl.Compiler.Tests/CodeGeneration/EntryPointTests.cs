@@ -44,6 +44,7 @@ public sealed class EntryPointTests
 
         var entryPoint = assemblyDefinition.MainModule.EntryPoint;
         entryPoint.Should().NotBeNull();
+        entryPoint.Parameters.Count.Should().Be(0);
         entryPoint.ReturnType.Should().Be(assemblyDefinition.MainModule.TypeSystem.Void);
         entryPoint.HasBody.Should().BeTrue();
 
@@ -64,12 +65,55 @@ public sealed class EntryPointTests
 
         var entryPoint = assemblyDefinition.MainModule.EntryPoint;
         entryPoint.Should().NotBeNull();
+        entryPoint.Parameters.Count.Should().Be(0);
         entryPoint.ReturnType.Should().Be(assemblyDefinition.MainModule.TypeSystem.Int32);
         entryPoint.HasBody.Should().BeTrue();
 
         RunAssembly(assemblyDefinition, assembly =>
         {
             var result = assembly.EntryPoint.Invoke(null, null);
+            result.Should().Be(0);
+        });
+    }
+
+    [Fact]
+    public void TestVoidMainWithStringArrayArgs()
+    {
+        var (assemblyDefinition, diagnostics) = Compile(SourceText.FromString("void Main(string[] args) {}"));
+
+        assemblyDefinition.Should().NotBeNull();
+        diagnostics.Should().BeEmpty();
+
+        var entryPoint = assemblyDefinition.MainModule.EntryPoint;
+        entryPoint.Should().NotBeNull();
+        entryPoint.Parameters.Count.Should().Be(1);
+        entryPoint.ReturnType.Should().Be(assemblyDefinition.MainModule.TypeSystem.Void);
+        entryPoint.HasBody.Should().BeTrue();
+
+        RunAssembly(assemblyDefinition, assembly =>
+        {
+            var result = assembly.EntryPoint.Invoke(null, new object[] { new[] { "hello", "world" } });
+            result.Should().BeNull();
+        });
+    }
+
+    [Fact]
+    public void TestIntMainWithStringArrayArgs()
+    {
+        var (assemblyDefinition, diagnostics) = Compile(SourceText.FromString("int Main(string[] args) { return 0; }"));
+
+        assemblyDefinition.Should().NotBeNull();
+        diagnostics.Should().BeEmpty();
+
+        var entryPoint = assemblyDefinition.MainModule.EntryPoint;
+        entryPoint.Should().NotBeNull();
+        entryPoint.Parameters.Count.Should().Be(1);
+        entryPoint.ReturnType.Should().Be(assemblyDefinition.MainModule.TypeSystem.Int32);
+        entryPoint.HasBody.Should().BeTrue();
+
+        RunAssembly(assemblyDefinition, assembly =>
+        {
+            var result = assembly.EntryPoint.Invoke(null, new object[] { new[] { "hello", "world" } });
             result.Should().Be(0);
         });
     }
