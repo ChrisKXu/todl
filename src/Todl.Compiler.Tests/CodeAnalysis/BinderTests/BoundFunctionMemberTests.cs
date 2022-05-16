@@ -14,13 +14,15 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("int Function() {}", typeof(int), 0)]
         [InlineData("System.Uri Function() {}", typeof(Uri), 0)]
         [InlineData("void Function() {}", typeof(void), 1)]
+        [InlineData("int[] Function() {}", typeof(int[]), 0)]
+        [InlineData("System.Uri[][] Function() {}", typeof(Uri[][]), 0)]
         public void TestBindFunctionDeclarationMemberWithoutParametersOrBody(string inputText, Type expectedReturnType, int expectedStatementsCount)
         {
             var function = BindMember<BoundFunctionMember>(inputText);
 
-            var targetType = TestDefaults.DefaultClrTypeCache.Resolve(expectedReturnType.FullName);
             function.Body.Statements.Count.Should().Be(expectedStatementsCount);
-            function.ReturnType.Should().Be(targetType);
+            function.ReturnType.Name.Should().Be(expectedReturnType.FullName);
+            function.ReturnType.IsArray.Should().Be(expectedReturnType.IsArray);
             function.FunctionScope.BoundScopeKind.Should().Be(BoundScopeKind.Function);
         }
 
@@ -55,6 +57,34 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
             function.Body.Statements.Count.Should().Be(2);
             function.Body.Statements[0].As<BoundExpressionStatement>().Expression.As<BoundClrFunctionCallExpression>().Should().NotBeNull();
+
+            function.ReturnType.Should().Be(builtInTypes.Void);
+            function.FunctionScope.BoundScopeKind.Should().Be(BoundScopeKind.Function);
+        }
+
+        [Fact]
+        public void TestBindFunctionDeclarationMemberWithArrayParameters()
+        {
+            var function = BindMember<BoundFunctionMember>(
+                inputText: "void Function(int a, int[] b, string[][] c) { }");
+
+            var a = function.FunctionScope.LookupVariable("a");
+            a.Should().NotBeNull();
+            a.Name.Should().Be("a");
+            a.Type.Should().Be(builtInTypes.Int32);
+            a.Type.IsArray.Should().BeFalse();
+
+            var b = function.FunctionScope.LookupVariable("b");
+            b.Should().NotBeNull();
+            b.Name.Should().Be("b");
+            b.Type.As<ClrTypeSymbol>().ClrType.GetElementType().Should().Be(builtInTypes.Int32.ClrType);
+            b.Type.IsArray.Should().BeTrue();
+
+            var c = function.FunctionScope.LookupVariable("c");
+            c.Should().NotBeNull();
+            c.Name.Should().Be("c");
+            c.Type.As<ClrTypeSymbol>().ClrType.GetElementType().GetElementType().Should().Be(builtInTypes.String.ClrType);
+            c.Type.IsArray.Should().BeTrue();
 
             function.ReturnType.Should().Be(builtInTypes.Void);
             function.FunctionScope.BoundScopeKind.Should().Be(BoundScopeKind.Function);

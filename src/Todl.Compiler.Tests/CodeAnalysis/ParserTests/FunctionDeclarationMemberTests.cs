@@ -29,6 +29,18 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
+        public void ParseFunctionDeclarationMemberWithArrayReturnType()
+        {
+            var function = ParseMember<FunctionDeclarationMember>("int[] Function() {}");
+            function.Should().NotBeNull();
+            function.Name.Text.Should().Be("Function");
+            function.ReturnType.Text.Should().Be("int[]");
+            function.ReturnType.IsArrayType.Should().BeTrue();
+            function.Parameters.Items.Should().BeEmpty();
+            function.Body.InnerStatements.Should().BeEmpty();
+        }
+
+        [Fact]
         public void ParseFunctionDeclarationMemberWithSingleParameter()
         {
             var function = ParseMember<FunctionDeclarationMember>("void Function(int a) {}");
@@ -60,6 +72,53 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var b = function.Parameters.Items[1];
             b.ParameterType.Text.Should().Be("System.Uri");
             b.Identifier.Text.Should().Be("b");
+        }
+
+        [Fact]
+        public void ParseFunctionDeclarationMemberWithArrayParameters()
+        {
+            var function = ParseMember<FunctionDeclarationMember>("void Function(string[] a, System.Uri[] b) {}");
+            function.Should().NotBeNull();
+            function.Name.Text.Should().Be("Function");
+            function.ReturnType.Text.Should().Be("void");
+            function.Parameters.Items.Count.Should().Be(2);
+            function.Body.InnerStatements.Should().BeEmpty();
+
+            var a = function.Parameters.Items[0];
+            a.ParameterType.Text.Should().Be("string[]");
+            a.Identifier.Text.Should().Be("a");
+            a.ParameterType.IsArrayType.Should().BeTrue();
+
+            var b = function.Parameters.Items[1];
+            b.ParameterType.Text.Should().Be("System.Uri[]");
+            b.Identifier.Text.Should().Be("b");
+            b.ParameterType.IsArrayType.Should().BeTrue();
+        }
+
+        [Fact]
+        public void ParseFunctionDeclarationMemberWithMultiDimensionalArrayParameters()
+        {
+            var function = ParseMember<FunctionDeclarationMember>("void Function(int intParameter, string[] stringArrayParameter, System.Uri[][] twoDimensionalArraysParameter) {}");
+            function.Should().NotBeNull();
+            function.Name.Text.Should().Be("Function");
+            function.ReturnType.Text.Should().Be("void");
+            function.Parameters.Items.Count.Should().Be(3);
+            function.Body.InnerStatements.Should().BeEmpty();
+
+            var intParameter = function.Parameters.Items[0];
+            intParameter.ParameterType.Text.Should().Be("int");
+            intParameter.Identifier.Text.Should().Be(nameof(intParameter));
+            intParameter.ParameterType.IsArrayType.Should().BeFalse();
+
+            var stringArrayParameter = function.Parameters.Items[1];
+            stringArrayParameter.ParameterType.Text.Should().Be("string[]");
+            stringArrayParameter.Identifier.Text.Should().Be(nameof(stringArrayParameter));
+            stringArrayParameter.ParameterType.IsArrayType.Should().BeTrue();
+
+            var twoDimensionalArraysParameter = function.Parameters.Items[2];
+            twoDimensionalArraysParameter.ParameterType.Text.Should().Be("System.Uri[][]");
+            twoDimensionalArraysParameter.Identifier.Text.Should().Be(nameof(twoDimensionalArraysParameter));
+            twoDimensionalArraysParameter.ParameterType.IsArrayType.Should().BeTrue();
         }
 
         [Fact]

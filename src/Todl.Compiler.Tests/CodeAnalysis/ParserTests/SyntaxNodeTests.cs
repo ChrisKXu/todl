@@ -42,7 +42,9 @@ public sealed class SyntaxNodeTests
         {
             typeof(Argument),
             typeof(Parameter),
-            typeof(SyntaxToken)
+            typeof(SyntaxToken),
+            typeof(TypeExpression),
+            typeof(ArrayRankSpecifier)
         }).ToHashSet();
 
         var allSyntaxNodeTypes = typeof(Expression)

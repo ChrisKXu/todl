@@ -21,6 +21,8 @@
         CloseParenthesisToken,
         OpenBraceToken,
         CloseBraceToken,
+        OpenBracketToken,
+        CloseBracketToken,
         SemicolonToken,
         ColonToken,
         EqualsToken,
@@ -54,6 +56,6 @@
 
         // Trivia
         WhitespaceTrivia,
-        LineBreakTrivia,
+        LineBreakTrivia
     }
 }

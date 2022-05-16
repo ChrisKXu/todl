@@ -290,6 +290,14 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     kind = SyntaxKind.CloseBraceToken;
                     ++this.position;
                     break;
+                case '[':
+                    kind = SyntaxKind.OpenBracketToken;
+                    ++position;
+                    break;
+                case ']':
+                    kind = SyntaxKind.CloseBracketToken;
+                    ++position;
+                    break;
                 case ';':
                     kind = SyntaxKind.SemicolonToken;
                     ++this.position;
