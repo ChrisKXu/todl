@@ -21,8 +21,7 @@ namespace Todl.Compiler.CodeAnalysis
         {
             Assemblies = assemblies.ToHashSet();
             Types = assemblies
-                .SelectMany(a => a.GetTypes())
-                .Where(t => t.IsPublic)
+                .SelectMany(a => a.GetExportedTypes())
                 .Select(t => new ClrTypeSymbol() { ClrType = t })
                 .ToHashSet();
 

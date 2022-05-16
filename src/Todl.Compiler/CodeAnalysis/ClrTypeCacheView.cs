@@ -22,7 +22,7 @@ namespace Todl.Compiler.CodeAnalysis
             { "void", typeof(void).FullName }
         };
 
-        public ClrTypeSymbol ResolveType(string name)
+        private ClrTypeSymbol ResolveBaseType(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -42,8 +42,18 @@ namespace Todl.Compiler.CodeAnalysis
             return clrTypeCache.Resolve(name);
         }
 
-        public ClrTypeSymbol ResolveType(NameExpression name)
-            => ResolveType(name.Text.ToString());
+        public ClrTypeSymbol ResolveType(NameExpression nameExpression)
+            => ResolveBaseType(nameExpression.Text.ToString());
+
+        public ClrTypeSymbol ResolveType(TypeExpression typeExpression)
+        {
+            if (!typeExpression.IsArrayType)
+            {
+                return ResolveBaseType(typeExpression.Text.ToString());
+            }
+
+            throw new NotImplementedException();
+        }
 
         private IDictionary<string, ClrTypeSymbol> ImportTypeAliases(IEnumerable<ImportDirective> importDirectives)
         {

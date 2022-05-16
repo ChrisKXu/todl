@@ -14,7 +14,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
     public sealed class FunctionDeclarationMember : Member
     {
-        public NameExpression ReturnType { get; internal init; }
+        public TypeExpression ReturnType { get; internal init; }
         public SyntaxToken Name { get; internal init; }
         public CommaSeparatedSyntaxList<Parameter> Parameters { get; internal init; }
         public BlockStatement Body { get; internal init; }
@@ -36,7 +36,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         private FunctionDeclarationMember ParseFunctionDeclarationMember()
         {
-            var returnType = ParseNameExpression();
+            var returnType = ParseTypeExpression();
             var name = ExpectToken(SyntaxKind.IdentifierToken);
             var parameters = ParseCommaSeparatedSyntaxList(ParseParemeter);
             var body = ParseBlockStatement();

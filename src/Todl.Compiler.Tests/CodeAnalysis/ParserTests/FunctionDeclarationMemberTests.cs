@@ -29,6 +29,18 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
+        public void ParseFunctionDeclarationMemberWithArrayReturnType()
+        {
+            var function = ParseMember<FunctionDeclarationMember>("int[] Function() {}");
+            function.Should().NotBeNull();
+            function.Name.Text.Should().Be("Function");
+            function.ReturnType.Text.Should().Be("int[]");
+            function.ReturnType.IsArrayType.Should().BeTrue();
+            function.Parameters.Items.Should().BeEmpty();
+            function.Body.InnerStatements.Should().BeEmpty();
+        }
+
+        [Fact]
         public void ParseFunctionDeclarationMemberWithSingleParameter()
         {
             var function = ParseMember<FunctionDeclarationMember>("void Function(int a) {}");

@@ -17,7 +17,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private BoundExpression BindNameExpression(NameExpression nameExpression)
         {
             var name = nameExpression.Text.ToString();
-            var type = nameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(name);
+            var type = nameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(nameExpression);
 
             if (type != null)
             {
