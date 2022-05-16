@@ -15,5 +15,7 @@ namespace Todl.Compiler.CodeAnalysis.Symbols
         /// Gets if a type is a native CLR type
         /// </summary>
         public virtual bool IsNative => false;
+
+        public virtual bool IsArray => false;
     }
 }

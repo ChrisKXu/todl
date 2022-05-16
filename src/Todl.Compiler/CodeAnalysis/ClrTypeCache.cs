@@ -17,6 +17,19 @@ namespace Todl.Compiler.CodeAnalysis
 
         public readonly BuiltInTypes BuiltInTypes;
 
+        public static readonly IReadOnlyDictionary<string, string> BuiltInTypeNames
+            = new Dictionary<string, string>()
+            {
+                { "bool", typeof(bool).FullName },
+                { "byte", typeof(byte).FullName },
+                { "char", typeof(char).FullName },
+                { "int", typeof(int).FullName },
+                { "long", typeof(long).FullName },
+                { "string", typeof(string).FullName },
+                { "void", typeof(void).FullName },
+                { "object", typeof(object).FullName }
+            };
+
         private ClrTypeCache(IEnumerable<Assembly> assemblies)
         {
             Assemblies = assemblies.ToHashSet();
@@ -30,7 +43,15 @@ namespace Todl.Compiler.CodeAnalysis
             PopulateNamespaces();
         }
 
-        public ClrTypeSymbol Resolve(string name) => Types.FirstOrDefault(t => t.Name == name);
+        public ClrTypeSymbol Resolve(string name)
+        {
+            if (BuiltInTypeNames.ContainsKey(name))
+            {
+                name = BuiltInTypeNames[name];
+            }
+
+            return Types.FirstOrDefault(t => t.Name == name);
+        }
 
         public ClrTypeCacheView CreateView(IEnumerable<ImportDirective> importDirectives) => new(this, importDirectives);
 

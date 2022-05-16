@@ -11,17 +11,6 @@ namespace Todl.Compiler.CodeAnalysis
         private readonly ClrTypeCache clrTypeCache;
         private readonly IDictionary<string, ClrTypeSymbol> typeAliases;
 
-        private static readonly Dictionary<string, string> builtInTypes = new()
-        {
-            { "bool", typeof(bool).FullName },
-            { "byte", typeof(byte).FullName },
-            { "char", typeof(char).FullName },
-            { "int", typeof(int).FullName },
-            { "long", typeof(long).FullName },
-            { "string", typeof(string).FullName },
-            { "void", typeof(void).FullName }
-        };
-
         private ClrTypeSymbol ResolveBaseType(string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -34,11 +23,6 @@ namespace Todl.Compiler.CodeAnalysis
                 return typeAliases[name];
             }
 
-            if (builtInTypes.ContainsKey(name))
-            {
-                name = builtInTypes[name];
-            }
-
             return clrTypeCache.Resolve(name);
         }
 
@@ -47,12 +31,23 @@ namespace Todl.Compiler.CodeAnalysis
 
         public ClrTypeSymbol ResolveType(TypeExpression typeExpression)
         {
+            var baseType = ResolveType(typeExpression.BaseTypeExpression);
             if (!typeExpression.IsArrayType)
             {
-                return ResolveBaseType(typeExpression.Text.ToString());
+                return baseType;
             }
 
-            throw new NotImplementedException();
+            if (baseType is null)
+            {
+                return null;
+            }
+
+            var resolvedTypeString = typeExpression.Text.ToString().Replace(typeExpression.BaseTypeExpression.Text.ToString(), baseType.Name);
+
+            return new()
+            {
+                ClrType = baseType.ClrType.Assembly.GetType(resolvedTypeString)
+            };
         }
 
         private IDictionary<string, ClrTypeSymbol> ImportTypeAliases(IEnumerable<ImportDirective> importDirectives)

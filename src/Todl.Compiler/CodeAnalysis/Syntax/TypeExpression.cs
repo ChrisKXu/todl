@@ -1,19 +1,28 @@
+using System.Collections.Generic;
+using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
 
 public sealed class TypeExpression : Expression
 {
-    public Expression BaseTypeExpression { get; internal init; }
-    public SyntaxToken? OpenBracketToken { get; internal set; }
-    public SyntaxToken? CloseBracketToken { get; internal set; }
+    public NameExpression BaseTypeExpression { get; internal init; }
+    public IReadOnlyList<ArrayRankSpecifier> ArrayRankSpecifiers { get; internal init; }
 
-    public bool IsArrayType => OpenBracketToken is not null;
+    public bool IsArrayType => ArrayRankSpecifiers.Any();
 
     public override TextSpan Text
-        => CloseBracketToken is not null
-            ? TextSpan.FromTextSpans(BaseTypeExpression.Text, CloseBracketToken.Value.Text)
-            : BaseTypeExpression.Text;
+        => !IsArrayType
+            ? BaseTypeExpression.Text
+            : TextSpan.FromTextSpans(BaseTypeExpression.Text, ArrayRankSpecifiers[^1].CloseBracketToken.Text);
+}
+
+public sealed class ArrayRankSpecifier : SyntaxNode
+{
+    public SyntaxToken OpenBracketToken { get; internal set; }
+    public SyntaxToken CloseBracketToken { get; internal set; }
+
+    public override TextSpan Text => TextSpan.FromTextSpans(OpenBracketToken.Text, CloseBracketToken.Text);
 }
 
 public sealed partial class Parser
@@ -21,35 +30,24 @@ public sealed partial class Parser
     private TypeExpression ParseTypeExpression()
     {
         var nameExpression = ParseNameExpression();
-
-        if (Current.Kind != SyntaxKind.OpenBracketToken)
-        {
-            return new()
-            {
-                SyntaxTree = syntaxTree,
-                BaseTypeExpression = nameExpression
-            };
-        }
-
-        var typeExpression = new TypeExpression()
-        {
-            SyntaxTree = syntaxTree,
-            BaseTypeExpression = nameExpression,
-            OpenBracketToken = ExpectToken(SyntaxKind.OpenBracketToken),
-            CloseBracketToken = ExpectToken(SyntaxKind.CloseBracketToken)
-        };
+        var arrayRankSpecifiers = new List<ArrayRankSpecifier>();
 
         while (Current.Kind == SyntaxKind.OpenBracketToken)
         {
-            typeExpression = new()
-            {
-                SyntaxTree = syntaxTree,
-                BaseTypeExpression = typeExpression,
-                OpenBracketToken = ExpectToken(SyntaxKind.OpenBracketToken),
-                CloseBracketToken = ExpectToken(SyntaxKind.CloseBracketToken)
-            };
+            arrayRankSpecifiers.Add(ParseArrayRankSpecifier());
         }
 
-        return typeExpression;
+        return new()
+        {
+            BaseTypeExpression = nameExpression,
+            ArrayRankSpecifiers = arrayRankSpecifiers
+        };
     }
+
+    private ArrayRankSpecifier ParseArrayRankSpecifier()
+        => new()
+        {
+            OpenBracketToken = ExpectToken(SyntaxKind.OpenBracketToken),
+            CloseBracketToken = ExpectToken(SyntaxKind.CloseBracketToken)
+        };
 }
