@@ -59,18 +59,25 @@ namespace Todl.Compiler.CodeAnalysis
 
             var importedTypes = importDirectives.SelectMany(importDirective =>
             {
+                var importedNamespace = importDirective.Namespace.ToString();
                 var types = clrTypeCache
                     .Types
-                    .Where(t => importDirective.Namespace.Equals(t.Namespace));
+                    .Where(t => importedNamespace.Equals(t.Namespace));
+
                 if (!importDirective.ImportAll)
                 {
-                    types = types.Where(t => importDirective.ImportedNames.Contains(t.Name));
+                    var importedNames = importDirective
+                        .ImportedNames
+                        .Select(n => $"{importedNamespace}.{n}")
+                        .ToHashSet();
+
+                    types = types.Where(t => importedNames.Contains(t.Name));
                 }
 
                 return types;
             }).Distinct();
 
-            return importedTypes.ToDictionary(t => t.Name);
+            return importedTypes.ToDictionary(t => t.ClrType.Name);
         }
 
         internal ClrTypeCacheView(ClrTypeCache cache, IEnumerable<ImportDirective> importDirectives)

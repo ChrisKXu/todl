@@ -35,6 +35,7 @@ namespace Todl.Compiler.CodeAnalysis
             Assemblies = assemblies.ToHashSet();
             Types = assemblies
                 .SelectMany(a => a.GetExportedTypes())
+                .Where(t => !t.IsGenericType) // TODO: support generic type
                 .Select(t => new ClrTypeSymbol() { ClrType = t })
                 .ToHashSet();
 
