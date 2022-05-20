@@ -11,7 +11,7 @@ namespace Todl.Compiler.CodeAnalysis
         private readonly ClrTypeCache clrTypeCache;
         private readonly IDictionary<string, ClrTypeSymbol> typeAliases;
 
-        private ClrTypeSymbol ResolveBaseType(string name)
+        internal ClrTypeSymbol ResolveBaseType(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
