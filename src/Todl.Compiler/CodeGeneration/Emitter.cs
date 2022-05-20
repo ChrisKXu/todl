@@ -1,13 +1,12 @@
 ﻿using System.Linq;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeGeneration;
 
-internal sealed class Emitter
+internal sealed partial class Emitter
 {
     private readonly Compilation compilation;
     private readonly AssemblyDefinition assemblyDefinition;
@@ -77,63 +76,37 @@ internal sealed class Emitter
         return methodDefinition;
     }
 
-    private void EmitStatement(MethodBody methodBody, BoundStatement boundStatement)
-    {
-        switch (boundStatement)
-        {
-            case BoundReturnStatement boundReturnStatement:
-                EmitReturnStatement(methodBody, boundReturnStatement);
-                return;
-            default:
-                return;
-        }
-    }
-
-    private void EmitReturnStatement(MethodBody methodBody, BoundReturnStatement boundReturnStatement)
-    {
-        if (boundReturnStatement.BoundReturnValueExpression is not null)
-        {
-            EmitExpression(methodBody, boundReturnStatement.BoundReturnValueExpression);
-        }
-
-        methodBody.GetILProcessor().Emit(OpCodes.Ret);
-    }
-
-    private void EmitExpression(MethodBody methodBody, BoundExpression boundExpression)
-    {
-        switch (boundExpression)
-        {
-            case BoundConstant boundConstant:
-                EmitConstant(methodBody, boundConstant);
-                return;
-            default:
-                return;
-        }
-    }
-
-    private void EmitConstant(MethodBody methodBody, BoundConstant boundConstant)
-    {
-        if (boundConstant.ResultType.Equals(BuiltInTypes.Int32))
-        {
-            methodBody.GetILProcessor().Emit(OpCodes.Ldc_I4, (int)boundConstant.Value);
-        }
-        else if (boundConstant.ResultType.Equals(BuiltInTypes.String))
-        {
-            methodBody.GetILProcessor().Emit(OpCodes.Ldstr, (string)boundConstant.Value);
-        }
-    }
-
     private TypeReference ResolveTypeReference(ClrTypeSymbol clrTypeSymbol)
     {
         if (clrTypeSymbol.Equals(BuiltInTypes.Void))
         {
             return assemblyDefinition.MainModule.TypeSystem.Void;
         }
-        else if (clrTypeSymbol.Equals(BuiltInTypes.Int32))
+
+        if (clrTypeSymbol.Equals(BuiltInTypes.Int32))
         {
             return assemblyDefinition.MainModule.TypeSystem.Int32;
         }
 
+        if (clrTypeSymbol.Equals(BuiltInTypes.String))
+        {
+            return assemblyDefinition.MainModule.TypeSystem.String;
+        }
+
         return assemblyDefinition.MainModule.ImportReference(clrTypeSymbol.ClrType);
+    }
+
+    private MethodReference ResolveMethodReference(BoundClrFunctionCallExpression boundClrFunctionCallExpression)
+    {
+        var methodReference = assemblyDefinition.MainModule.ImportReference(boundClrFunctionCallExpression.MethodInfo);
+        methodReference.ReturnType = ResolveTypeReference(boundClrFunctionCallExpression.ResultType as ClrTypeSymbol);
+
+        for (var i = 0; i != methodReference.Parameters.Count; ++i)
+        {
+            methodReference.Parameters[i].ParameterType
+                = ResolveTypeReference(boundClrFunctionCallExpression.BoundArguments[i].ResultType as ClrTypeSymbol);
+        }
+
+        return methodReference;
     }
 }

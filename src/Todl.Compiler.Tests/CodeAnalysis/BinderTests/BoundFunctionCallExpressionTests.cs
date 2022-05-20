@@ -80,6 +80,21 @@ public sealed partial class BinderTests
     }
 
     [Fact]
+    public void TestBindClrFunctionCallExpressionWithImportDirective()
+    {
+        var inputText = @"
+            import { Console } from System;
+
+            void Main() {
+                Console.WriteLine();
+            }
+        ";
+        var syntaxTree = ParseSyntaxTree(inputText);
+        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
+        boundModule.GetDiagnostics().Should().BeEmpty();
+    }
+
+    [Fact]
     public void TestBindTodlFunctionCallExpressionWithNoArguments()
     {
         var inputText = @"
