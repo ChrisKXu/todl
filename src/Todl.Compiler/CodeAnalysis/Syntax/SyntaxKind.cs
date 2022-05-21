@@ -53,6 +53,8 @@
         StringKeywordToken,
         VoidKeywordToken,
         ReturnKeywordToken,
+        IfKeywordToken,
+        UnlessKeywordToken,
 
         // Trivia
         WhitespaceTrivia,
