@@ -55,6 +55,7 @@
         ReturnKeywordToken,
         IfKeywordToken,
         UnlessKeywordToken,
+        ElseKeywordToken,
 
         // Trivia
         WhitespaceTrivia,

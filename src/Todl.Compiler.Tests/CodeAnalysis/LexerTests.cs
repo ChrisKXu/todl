@@ -106,7 +106,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             { SyntaxKind.VoidKeywordToken, "void" },
             { SyntaxKind.ReturnKeywordToken, "return" },
             { SyntaxKind.IfKeywordToken, "if" },
-            { SyntaxKind.UnlessKeywordToken, "unless" }
+            { SyntaxKind.UnlessKeywordToken, "unless" },
+            { SyntaxKind.ElseKeywordToken, "else" }
         };
 
         [Theory]
