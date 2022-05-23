@@ -11,6 +11,7 @@
                 SyntaxKind.OpenBraceToken => ParseBlockStatement(),
                 SyntaxKind.ConstKeywordToken or SyntaxKind.LetKeywordToken => ParseVariableDeclarationStatement(),
                 SyntaxKind.ReturnKeywordToken => ParseReturnStatement(),
+                SyntaxKind.IfKeywordToken or SyntaxKind.UnlessKeywordToken => ParseIfUnlessStatement(),
                 _ => ParseExpressionStatement()
             };
         }

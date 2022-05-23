@@ -78,7 +78,8 @@ public sealed class SyntaxNodeTests
         "{ a = 5; a.ToString(); }", // BlockStatement
         "a = 5;", // ExpressionStatement
         "const a = 5;", // VariableDeclarationStatement
-        "return;" // ReturnStatement
+        "return;", // ReturnStatement
+        "if a == 0 { return; }" // IfOrUnlessStatement
     };
 
     private static readonly string[] testDirectives = new[]
