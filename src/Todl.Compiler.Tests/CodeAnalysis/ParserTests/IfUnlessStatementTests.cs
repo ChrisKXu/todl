@@ -1,3 +1,4 @@
+using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Xunit;
@@ -9,12 +10,13 @@ public sealed partial class ParserTests
     [Theory]
     [InlineData("if n == 0 { }", SyntaxKind.IfKeywordToken)]
     [InlineData("unless n == 0 { }", SyntaxKind.UnlessKeywordToken)]
-    public void TestParseIfUnlessStatementWithSimpleConditionAndNoInnerStatements(string inputText, SyntaxKind expectedSyntaxKind)
+    public void IfUnlessStatementsCanHaveSimpleConditionAndNoInnerStatements(string inputText, SyntaxKind expectedSyntaxKind)
     {
         var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
 
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.IfOrUnlessToken.Kind.Should().Be(expectedSyntaxKind);
+        ifUnlessStatement.ElseClauses.Should().BeEmpty();
         ifUnlessStatement.BlockStatement.InnerStatements.Should().BeEmpty();
 
         var condition = ifUnlessStatement.ConditionExpression.As<BinaryExpression>();
@@ -28,24 +30,26 @@ public sealed partial class ParserTests
     [Theory]
     [InlineData("if n == 0 { return n; }", 1)]
     [InlineData("if n == 0 { n = n + 1; return n; }", 2)]
-    public void TestParseIfUnlessStatementWithMultipleInnerStatements(string inputText, int expectedInnerStatements)
+    public void IfUnlessStatementsCanHaveOneOrMoreInnerStatements(string inputText, int expectedInnerStatements)
     {
         var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
 
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.IfOrUnlessToken.Kind.Should().Be(SyntaxKind.IfKeywordToken);
+        ifUnlessStatement.ElseClauses.Should().BeEmpty();
         ifUnlessStatement.BlockStatement.InnerStatements.Should().HaveCount(expectedInnerStatements);
     }
 
     [Theory]
     [InlineData("if (n == 0) { }", SyntaxKind.IfKeywordToken)]
     [InlineData("unless (n == 0) { }", SyntaxKind.UnlessKeywordToken)]
-    public void TestParseIfUnlessStatementWithParenthesisAroundConditions(string inputText, SyntaxKind expectedSyntaxKind)
+    public void IfUnlessStatementsCanHaveParenthesisAroundConditions(string inputText, SyntaxKind expectedSyntaxKind)
     {
         var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
 
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.IfOrUnlessToken.Kind.Should().Be(expectedSyntaxKind);
+        ifUnlessStatement.ElseClauses.Should().BeEmpty();
 
         var condition = ifUnlessStatement.ConditionExpression.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>();
         condition.Should().NotBeNull();
@@ -55,8 +59,33 @@ public sealed partial class ParserTests
         condition.Right.As<LiteralExpression>().Text.ToString().Should().Be("0");
     }
 
+    [Theory]
+    [InlineData("if n == 0 { return n; } else { return 0; }")]
+    [InlineData("unless n == 0 { return n; } else { return 0; }")]
+    public void IfUnlessStatementsCanHaveSimpleElseClauses(string inputText)
+    {
+        var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
+        ifUnlessStatement.Should().NotBeNull();
+
+        ifUnlessStatement.ElseClauses.Should().HaveCount(1);
+        ifUnlessStatement.ElseClauses[0].BlockStatement.InnerStatements.Should().HaveCount(1);
+        var returnStatement = ifUnlessStatement.ElseClauses[0].BlockStatement.InnerStatements[0].As<ReturnStatement>();
+        returnStatement.ReturnValueExpression.Text.Should().Be("0");
+    }
+
+    [Theory]
+    [InlineData("if n == 0 { return n; } else if n == 1 { return n + 1; } else { return 0; }", 2)]
+    [InlineData("unless a == b { return 0; } else unless a + b == 0 { return 1; } else unless a == 0 { return 2; } else { return 3; }", 3)]
+    public void IfUnlessStatementsCanHaveMultipleElseClauses(string inputText, int expectedCount)
+    {
+        var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
+        ifUnlessStatement.Should().NotBeNull();
+        ifUnlessStatement.ElseClauses.Should().HaveCount(expectedCount);
+        ifUnlessStatement.GetDiagnostics().Should().BeEmpty();
+    }
+
     [Fact]
-    public void TestParseIfUnlessStatementWithComplexConditions()
+    public void IfUnlessStatementsCanHaveComplexConditions()
     {
         var inputText = "if a == 0 && (b.IsUpper() || string.IsNullOrEmpty(c)) { }";
         var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
