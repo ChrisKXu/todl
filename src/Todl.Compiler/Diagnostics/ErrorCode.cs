@@ -11,6 +11,9 @@ namespace Todl.Compiler.Diagnostics
         // ParserErrors
         UnexpectedToken,
         MixedPositionalAndNamedArguments,
+        IfUnlessKeywordMismatch,
+        DuplicateBareElseClauses,
+        MisplacedBareElseClauses,
 
         // BinderErrors
         UndeclaredVariable,

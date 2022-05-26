@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
 
@@ -42,11 +44,56 @@ public sealed partial class Parser
         var conditionExpression = ParseExpression();
         var blockStatement = ParseBlockStatement();
         var elseClauses = new List<ElseClause>();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
 
         while (Current.Kind == SyntaxKind.ElseKeywordToken)
         {
             var elseClause = ParseElseClause();
+            if (elseClause.IfOrUnlessToken.HasValue && elseClause.IfOrUnlessToken.Value.Kind != ifOrUnlessToken.Kind)
+            {
+                diagnosticBuilder.Add(new Diagnostic()
+                {
+                    Message = "if/unless qualifier mismatch",
+                    ErrorCode = ErrorCode.IfUnlessKeywordMismatch,
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = elseClause.IfOrUnlessToken.Value.GetTextLocation()
+                });
+            }
+
             elseClauses.Add(elseClause);
+        }
+
+        if (elseClauses.Any())
+        {
+            var bareElseClauses = elseClauses.Where(e => !e.IfOrUnlessToken.HasValue);
+
+            if (elseClauses.Last().IfOrUnlessToken.HasValue && bareElseClauses.Any())
+            {
+                foreach (var b in bareElseClauses)
+                {
+                    diagnosticBuilder.Add(new Diagnostic()
+                    {
+                        Message = "bare else clauses must be after all other else clauses",
+                        ErrorCode = ErrorCode.MisplacedBareElseClauses,
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = b.ElseToken.GetTextLocation()
+                    });
+                }
+            }
+
+            if (bareElseClauses.Count() > 1)
+            {
+                foreach (var b in bareElseClauses)
+                {
+                    diagnosticBuilder.Add(new Diagnostic()
+                    {
+                        Message = "duplicate bare else clauses",
+                        ErrorCode = ErrorCode.DuplicateBareElseClauses,
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = b.ElseToken.GetTextLocation()
+                    });
+                }
+            }
         }
 
         return new()
@@ -55,7 +102,8 @@ public sealed partial class Parser
             IfOrUnlessToken = ifOrUnlessToken,
             ConditionExpression = conditionExpression,
             BlockStatement = blockStatement,
-            ElseClauses = elseClauses
+            ElseClauses = elseClauses,
+            DiagnosticBuilder = diagnosticBuilder
         };
     }
 

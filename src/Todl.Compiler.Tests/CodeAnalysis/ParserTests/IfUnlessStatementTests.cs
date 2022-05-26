@@ -1,6 +1,7 @@
 using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -82,6 +83,57 @@ public sealed partial class ParserTests
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(expectedCount);
         ifUnlessStatement.GetDiagnostics().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void IfUnlessStatementsCannotHaveMoreThanOneBareElseClauses()
+    {
+        var ifUnlessStatement = ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else { }");
+        ifUnlessStatement.Should().NotBeNull();
+        ifUnlessStatement.ElseClauses.Should().HaveCount(2);
+
+        var diagnostics = ifUnlessStatement.GetDiagnostics();
+        diagnostics.Should().NotBeEmpty();
+        diagnostics.Count(d => d.ErrorCode == ErrorCode.DuplicateBareElseClauses).Should().Be(2);
+
+        var duplicateBareElseClauses = diagnostics.First(d => d.ErrorCode == ErrorCode.DuplicateBareElseClauses);
+        duplicateBareElseClauses.Should().NotBeNull();
+        duplicateBareElseClauses.Level.Should().Be(DiagnosticLevel.Error);
+        duplicateBareElseClauses.TextLocation.TextSpan.ToString().Should().Be("else");
+    }
+
+    [Fact]
+    public void IfUnlessStatementsCannotHaveMisplacedElseClause()
+    {
+        var ifUnlessStatement = ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else if b == 0 { }");
+        ifUnlessStatement.Should().NotBeNull();
+        ifUnlessStatement.ElseClauses.Should().HaveCount(2);
+
+        var diagnostics = ifUnlessStatement.GetDiagnostics();
+        diagnostics.Should().NotBeEmpty();
+        diagnostics.Count(d => d.ErrorCode == ErrorCode.MisplacedBareElseClauses).Should().Be(1);
+
+        var misplacedBareElseClauses = diagnostics.First(d => d.ErrorCode == ErrorCode.MisplacedBareElseClauses);
+        misplacedBareElseClauses.Should().NotBeNull();
+        misplacedBareElseClauses.Level.Should().Be(DiagnosticLevel.Error);
+        misplacedBareElseClauses.TextLocation.TextSpan.ToString().Should().Be("else");
+    }
+
+    [Fact]
+    public void IfUnlessStatementsCannotHaveMismatchedIfOrUnlessKeywords()
+    {
+        var ifUnlessStatement = ParseStatement<IfUnlessStatement>("if a == 0 { } else unless b == 0 { }");
+        ifUnlessStatement.Should().NotBeNull();
+        ifUnlessStatement.ElseClauses.Should().HaveCount(1);
+
+        var diagnostics = ifUnlessStatement.GetDiagnostics();
+        diagnostics.Should().NotBeEmpty();
+        diagnostics.Count(d => d.ErrorCode == ErrorCode.IfUnlessKeywordMismatch).Should().Be(1);
+
+        var ifUnlessKeywordMismatch = diagnostics.First(d => d.ErrorCode == ErrorCode.IfUnlessKeywordMismatch);
+        ifUnlessKeywordMismatch.Should().NotBeNull();
+        ifUnlessKeywordMismatch.Level.Should().Be(DiagnosticLevel.Error);
+        ifUnlessKeywordMismatch.TextLocation.TextSpan.ToString().Should().Be("unless");
     }
 
     [Fact]
