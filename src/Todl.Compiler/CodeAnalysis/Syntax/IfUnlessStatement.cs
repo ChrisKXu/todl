@@ -31,6 +31,8 @@ public sealed class ElseClause : SyntaxNode
 
     public override TextSpan Text
         => TextSpan.FromTextSpans(ElseToken.Text, BlockStatement.Text);
+
+    public bool IsBareElseClause => IfOrUnlessToken is null;
 }
 
 public sealed partial class Parser

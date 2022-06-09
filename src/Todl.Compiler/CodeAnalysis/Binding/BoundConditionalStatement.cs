@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
@@ -11,14 +13,20 @@ public sealed class BoundConditionalStatement : BoundStatement
 
     public BoundConditionalStatement Validate()
     {
-        var ifUnlessStatement = SyntaxNode as IfUnlessStatement;
-        if (!Condition.ResultType.Equals(ifUnlessStatement.SyntaxTree.ClrTypeCache.BuiltInTypes.Boolean))
+        if (!Condition.ResultType.Equals(SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Boolean))
         {
+            var text = SyntaxNode switch
+            {
+                IfUnlessStatement ifUnlessStatement => ifUnlessStatement.ConditionExpression.Text,
+                ElseClause elseClause => elseClause.ConditionExpression.Text,
+                _ => SyntaxNode.Text
+            };
+
             DiagnosticBuilder.Add(new Diagnostic()
             {
                 Message = "Condition expressions need to be of boolean type",
                 ErrorCode = ErrorCode.TypeMismatch,
-                TextLocation = ifUnlessStatement.ConditionExpression.Text.GetTextLocation(),
+                TextLocation = text.GetTextLocation(),
                 Level = DiagnosticLevel.Error
             });
         }
@@ -29,17 +37,47 @@ public sealed class BoundConditionalStatement : BoundStatement
 
 public partial class Binder
 {
+    private BoundStatement BindElseClause(ElseClause elseClause, ReadOnlySpan<ElseClause> remaining)
+    {
+        if (elseClause.IsBareElseClause)
+        {
+            return BindBlockStatement(elseClause.BlockStatement);
+        }
+
+        var inverted = elseClause.IfOrUnlessToken.Value.Kind == SyntaxKind.UnlessKeywordToken;
+        var condition = BindExpression(elseClause.ConditionExpression);
+        var boundBlockStatement = BindBlockStatement(elseClause.BlockStatement);
+        BoundStatement next = null;
+
+        if (!remaining.IsEmpty)
+        {
+            next = BindElseClause(remaining[0], remaining.Slice(1));
+        }
+
+        return BoundNodeFactory.CreateBoundConditionalStatement(
+            syntaxNode: elseClause,
+            condition: condition,
+            consequence: inverted ? next : boundBlockStatement,
+            alternative: inverted ? boundBlockStatement : next).Validate();
+    }
+
     private BoundConditionalStatement BindIfUnlessStatement(IfUnlessStatement ifUnlessStatement)
     {
         var inverted = ifUnlessStatement.IfOrUnlessToken.Kind == SyntaxKind.UnlessKeywordToken;
-
         var condition = BindExpression(ifUnlessStatement.ConditionExpression);
         var boundBlockStatement = BindBlockStatement(ifUnlessStatement.BlockStatement);
+        BoundStatement boundElseClause = null;
+
+        if (ifUnlessStatement.ElseClauses.Any())
+        {
+            var elseClauses = new ReadOnlySpan<ElseClause>(ifUnlessStatement.ElseClauses.ToArray());
+            boundElseClause = BindElseClause(elseClauses[0], elseClauses.Slice(1));
+        }
 
         return BoundNodeFactory.CreateBoundConditionalStatement(
             syntaxNode: ifUnlessStatement,
             condition: condition,
-            consequence: inverted ? null : boundBlockStatement,
-            alternative: inverted ? boundBlockStatement : null).Validate();
+            consequence: inverted ? boundElseClause : boundBlockStatement,
+            alternative: inverted ? boundBlockStatement : boundElseClause).Validate();
     }
 }
