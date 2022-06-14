@@ -2,8 +2,8 @@
   "omnisharp.enableRoslynAnalyzers": true,
   "omnisharp.enableEditorConfigSupport": true,
   "omnisharp.useGlobalMono": "never",
-  "omnisharp.defaultLaunchSolution": "src/Todl.sln",
-  "dotnet-test-explorer.testProjectPath": "**/*Tests.@(csproj)",
+  "omnisharp.defaultLaunchSolution": "${workspaceFolder}/src/Todl.sln",
+  "dotnet-test-explorer.testProjectPath": "${workspaceFolder}/src/Todl.Compiler.Tests/*.csproj",
   "files.associations": {
     "*.tdlproj": "xml"
   }
