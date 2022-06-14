@@ -3,7 +3,7 @@
   "omnisharp.enableEditorConfigSupport": true,
   "omnisharp.useGlobalMono": "never",
   "omnisharp.defaultLaunchSolution": "${workspaceFolder}/src/Todl.sln",
-  "dotnet-test-explorer.testProjectPath": "${workspaceFolder}/**/*Tests.@(csproj)",
+  "dotnet-test-explorer.testProjectPath": "${workspaceFolder}/src/Todl.Compiler.Tests/*.csproj",
   "files.associations": {
     "*.tdlproj": "xml"
   }
