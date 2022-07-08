@@ -19,9 +19,12 @@ internal class ControlFlowAnalyzer : BoundNodeVisitor
         ControlFlowGraph controlFlowGraph,
         BoundFunctionMember boundFunctionMember)
     {
+        var start = controlFlowGraph.StartBlock;
         var end = controlFlowGraph.EndBlock;
 
-        if (!end.Reachable || end.Incoming.Any(i => !i.From.IsTeminal))
+        var endIsReachable = end.Incoming.Any(i => i.From != start);
+
+        if (!endIsReachable || end.Incoming.Any(i => i.From.Reachable && !i.From.IsTeminal))
         {
             boundFunctionMember.DiagnosticBuilder.Add(new Diagnostic()
             {

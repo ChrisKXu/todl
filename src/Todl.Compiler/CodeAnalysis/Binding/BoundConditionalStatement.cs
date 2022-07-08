@@ -47,11 +47,15 @@ public partial class Binder
         var inverted = elseClause.IfOrUnlessToken.Value.Kind == SyntaxKind.UnlessKeywordToken;
         var condition = BindExpression(elseClause.ConditionExpression);
         var boundBlockStatement = BindBlockStatement(elseClause.BlockStatement);
-        BoundStatement next = null;
+        BoundStatement next;
 
         if (!remaining.IsEmpty)
         {
             next = BindElseClause(remaining[0], remaining.Slice(1));
+        }
+        else
+        {
+            next = new BoundNoOpStatement();
         }
 
         return BoundNodeFactory.CreateBoundConditionalStatement(
@@ -66,12 +70,16 @@ public partial class Binder
         var inverted = ifUnlessStatement.IfOrUnlessToken.Kind == SyntaxKind.UnlessKeywordToken;
         var condition = BindExpression(ifUnlessStatement.ConditionExpression);
         var boundBlockStatement = BindBlockStatement(ifUnlessStatement.BlockStatement);
-        BoundStatement boundElseClause = null;
+        BoundStatement boundElseClause;
 
         if (ifUnlessStatement.ElseClauses.Any())
         {
             var elseClauses = new ReadOnlySpan<ElseClause>(ifUnlessStatement.ElseClauses.ToArray());
             boundElseClause = BindElseClause(elseClauses[0], elseClauses.Slice(1));
+        }
+        else
+        {
+            boundElseClause = new BoundNoOpStatement();
         }
 
         return BoundNodeFactory.CreateBoundConditionalStatement(

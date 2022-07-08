@@ -34,7 +34,7 @@ public sealed class BoundNodeTests
     public void AllBoundNodeVariantsAreCovered()
     {
         var types = GetAllSyntaxNodesForTest().Select(pair => pair[1].GetType());
-        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition) };
+        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition), typeof(BoundNoOpStatement) };
 
         var allBoundNodeTypes = typeof(BoundNode)
             .Assembly
