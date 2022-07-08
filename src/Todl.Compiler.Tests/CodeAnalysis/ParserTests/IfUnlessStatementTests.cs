@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -82,6 +82,17 @@ public sealed partial class ParserTests
         var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(expectedCount);
+        ifUnlessStatement.GetDiagnostics().Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("if a == 0 { return int.MaxValue; } else { unless a == 1 { return 1; } }")]
+    [InlineData("unless a == 0 { return int.MaxValue; } else { if a == 1 { return 1; } }")]
+    public void IfUnlessStatementsCanBeNested(string inputText)
+    {
+        var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
+        ifUnlessStatement.Should().NotBeNull();
+        ifUnlessStatement.ElseClauses.Should().HaveCount(1);
         ifUnlessStatement.GetDiagnostics().Should().BeEmpty();
     }
 
