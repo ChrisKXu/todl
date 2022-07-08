@@ -36,14 +36,40 @@ internal sealed class ControlFlowGraph
             {
                 case BoundReturnStatement:
                     current.Statements.Add(boundStatement);
-                    Connect(current, end);
                     StartNewBlock();
                     break;
                 case BoundBlockStatement boundBlockStatement:
-                    foreach (var innerStatement in boundBlockStatement.Statements)
+                    if (!boundBlockStatement.Statements.Any())
                     {
-                        AddStatement(innerStatement);
+                        AddStatement(new BoundNoOpStatement());
                     }
+                    else
+                    {
+                        foreach (var innerStatement in boundBlockStatement.Statements)
+                        {
+                            AddStatement(innerStatement);
+                        }
+                    }
+                    break;
+                case BoundConditionalStatement boundConditionalStatement:
+                    var begin = current;
+
+                    if (boundConditionalStatement.Consequence is not null)
+                    {
+                        StartNewBlock();
+                        Connect(begin, current);
+                        AddStatement(boundConditionalStatement.Consequence);
+                    }
+
+                    if (boundConditionalStatement.Alternative is not null)
+                    {
+                        StartNewBlock();
+                        Connect(begin, current);
+                        AddStatement(boundConditionalStatement.Alternative);
+                    }
+
+                    StartNewBlock();
+                    Connect(begin, current);
                     break;
                 default:
                     current.Statements.Add(boundStatement);
@@ -53,6 +79,11 @@ internal sealed class ControlFlowGraph
 
         private void Connect(BasicBlock from, BasicBlock to)
         {
+            if (from == to)
+            {
+                return;
+            }
+
             var branch = new BasicBlockBranch() { From = from, To = to };
             branches.Add(branch);
             from.Outgoing.Add(branch);
@@ -67,7 +98,18 @@ internal sealed class ControlFlowGraph
             }
 
             blocks.Add(current);
-            current = new();
+            var next = new BasicBlock();
+
+            if (current.IsTeminal)
+            {
+                Connect(current, end);
+            }
+            else
+            {
+                Connect(current, next);
+            }
+
+            current = next;
         }
 
         public ControlFlowGraph Build()
@@ -81,6 +123,11 @@ internal sealed class ControlFlowGraph
             blocks.Add(end);
 
             Connect(start, blocks[1]);
+
+            if (blocks.Count > 2)
+            {
+                Connect(blocks[^2], end);
+            }
 
             return new()
             {

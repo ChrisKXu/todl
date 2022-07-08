@@ -34,7 +34,7 @@ public sealed class BoundNodeTests
     public void AllBoundNodeVariantsAreCovered()
     {
         var types = GetAllSyntaxNodesForTest().Select(pair => pair[1].GetType());
-        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition) };
+        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition), typeof(BoundNoOpStatement) };
 
         var allBoundNodeTypes = typeof(BoundNode)
             .Assembly
@@ -65,7 +65,8 @@ public sealed class BoundNodeTests
         "const a = 10;", // BoundVariableDeclarationStatement
         "a = 10;", // BoundExpressionStatement
         "{ const a = 5; a.ToString(); }", // BoundBlockStatement
-        "return 10;" // ReturnStatement
+        "return 10;", // ReturnStatement,
+        "if true { }" // IfUnlessStatement
     };
 
     private static readonly string[] testMembers = new[]

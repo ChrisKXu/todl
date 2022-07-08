@@ -44,7 +44,8 @@ public sealed class SyntaxNodeTests
             typeof(Parameter),
             typeof(SyntaxToken),
             typeof(TypeExpression),
-            typeof(ArrayRankSpecifier)
+            typeof(ArrayRankSpecifier),
+            typeof(ElseClause)
         }).ToHashSet();
 
         var allSyntaxNodeTypes = typeof(Expression)
@@ -78,7 +79,8 @@ public sealed class SyntaxNodeTests
         "{ a = 5; a.ToString(); }", // BlockStatement
         "a = 5;", // ExpressionStatement
         "const a = 5;", // VariableDeclarationStatement
-        "return;" // ReturnStatement
+        "return;", // ReturnStatement
+        "if a == 0 { return; }" // IfOrUnlessStatement
     };
 
     private static readonly string[] testDirectives = new[]

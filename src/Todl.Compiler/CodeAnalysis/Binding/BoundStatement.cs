@@ -14,6 +14,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 BlockStatement blockStatement => BindBlockStatement(blockStatement),
                 VariableDeclarationStatement variableDeclarationStatement => BindVariableDeclarationStatement(variableDeclarationStatement),
                 ReturnStatement returnStatement => BindReturnStatement(returnStatement),
+                IfUnlessStatement ifUnlessStatement => BindIfUnlessStatement(ifUnlessStatement),
                 _ => throw new NotSupportedException() // keep compiler happy, this shouldn't happen as guarded by test cases
             };
     }

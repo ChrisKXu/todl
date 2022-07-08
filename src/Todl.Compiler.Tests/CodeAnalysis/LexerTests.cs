@@ -104,7 +104,10 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             { SyntaxKind.LongKeywordToken, "long" },
             { SyntaxKind.StringKeywordToken, "string" },
             { SyntaxKind.VoidKeywordToken, "void" },
-            { SyntaxKind.ReturnKeywordToken, "return" }
+            { SyntaxKind.ReturnKeywordToken, "return" },
+            { SyntaxKind.IfKeywordToken, "if" },
+            { SyntaxKind.UnlessKeywordToken, "unless" },
+            { SyntaxKind.ElseKeywordToken, "else" }
         };
 
         [Theory]
