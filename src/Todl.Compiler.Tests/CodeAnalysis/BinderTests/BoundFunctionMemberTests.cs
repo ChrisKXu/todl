@@ -213,8 +213,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Theory]
         [InlineData("void func() {}")]
         [InlineData("void func() { return; }")]
-        [InlineData("void func() { System.Threading.Thread.Sleep(a); }")]
-        [InlineData("void func() { System.Threading.Thread.Sleep(a); return; }")]
+        [InlineData("void func(int a) { System.Threading.Thread.Sleep(a); }")]
+        [InlineData("void func(int a) { System.Threading.Thread.Sleep(a); return; }")]
         public void FunctionsThatReturnsVoidShouldNotHaveDuplicateReturnStatements(string inputText)
         {
             var function = BindMember<BoundFunctionMember>(inputText);
