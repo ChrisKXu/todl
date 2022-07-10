@@ -68,10 +68,7 @@ internal sealed partial class Emitter
                 parameterType: ResolveTypeReference(parameter.Type as ClrTypeSymbol)));
         }
 
-        foreach (var statement in functionMember.Body.Statements)
-        {
-            EmitStatement(methodDefinition.Body, statement);
-        }
+        EmitStatement(methodDefinition.Body, functionMember.Body);
 
         return methodDefinition;
     }
