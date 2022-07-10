@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -47,6 +47,8 @@ public partial class Binder
         var inverted = elseClause.IfOrUnlessToken.Value.Kind == SyntaxKind.UnlessKeywordToken;
         var condition = BindExpression(elseClause.ConditionExpression);
         var boundBlockStatement = BindBlockStatement(elseClause.BlockStatement);
+
+        BoundStatement current = boundBlockStatement.Statements.Any() ? boundBlockStatement : new BoundNoOpStatement();
         BoundStatement next;
 
         if (!remaining.IsEmpty)
@@ -61,8 +63,8 @@ public partial class Binder
         return BoundNodeFactory.CreateBoundConditionalStatement(
             syntaxNode: elseClause,
             condition: condition,
-            consequence: inverted ? next : boundBlockStatement,
-            alternative: inverted ? boundBlockStatement : next).Validate();
+            consequence: inverted ? next : current,
+            alternative: inverted ? current : next).Validate();
     }
 
     private BoundConditionalStatement BindIfUnlessStatement(IfUnlessStatement ifUnlessStatement)
@@ -70,6 +72,8 @@ public partial class Binder
         var inverted = ifUnlessStatement.IfOrUnlessToken.Kind == SyntaxKind.UnlessKeywordToken;
         var condition = BindExpression(ifUnlessStatement.ConditionExpression);
         var boundBlockStatement = BindBlockStatement(ifUnlessStatement.BlockStatement);
+
+        BoundStatement current = boundBlockStatement.Statements.Any() ? boundBlockStatement : new BoundNoOpStatement();
         BoundStatement boundElseClause;
 
         if (ifUnlessStatement.ElseClauses.Any())
@@ -85,7 +89,7 @@ public partial class Binder
         return BoundNodeFactory.CreateBoundConditionalStatement(
             syntaxNode: ifUnlessStatement,
             condition: condition,
-            consequence: inverted ? boundElseClause : boundBlockStatement,
-            alternative: inverted ? boundBlockStatement : boundElseClause).Validate();
+            consequence: inverted ? boundElseClause : current,
+            alternative: inverted ? current : boundElseClause).Validate();
     }
 }

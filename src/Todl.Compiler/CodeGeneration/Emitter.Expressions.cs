@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -16,6 +16,12 @@ internal sealed partial class Emitter
                 return;
             case BoundClrFunctionCallExpression boundClrFunctionCallExpression:
                 EmitClrFunctionCallExpression(methodBody, boundClrFunctionCallExpression);
+                return;
+            case BoundBinaryExpression boundBinaryExpression:
+                EmitBinaryExpression(methodBody, boundBinaryExpression);
+                return;
+            case BoundVariableExpression boundVariableExpression:
+                EmitVariableExpression(methodBody, boundVariableExpression);
                 return;
             default:
                 throw new NotSupportedException();
@@ -47,6 +53,29 @@ internal sealed partial class Emitter
         if (methodReference.ReturnType != assemblyDefinition.MainModule.TypeSystem.Void)
         {
             methodBody.GetILProcessor().Emit(OpCodes.Pop);
+        }
+    }
+
+    private void EmitBinaryExpression(MethodBody methodBody, BoundBinaryExpression boundBinaryExpression)
+    {
+        EmitExpression(methodBody, boundBinaryExpression.Left);
+        EmitExpression(methodBody, boundBinaryExpression.Right);
+
+        switch (boundBinaryExpression.Operator.BoundBinaryOperatorKind)
+        {
+            case BoundBinaryOperatorKind.Equality:
+                methodBody.GetILProcessor().Emit(OpCodes.Ceq);
+                return;
+            default:
+                return;
+        }
+    }
+
+    private void EmitVariableExpression(MethodBody methodBody, BoundVariableExpression boundVariableExpression)
+    {
+        if (boundVariableExpression.Variable is ParameterSymbol)
+        {
+            methodBody.GetILProcessor().Emit(OpCodes.Ldarg_0);
         }
     }
 }

@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -22,6 +22,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { if true { return int.MaxValue; } else { return 0; } }")]
     [InlineData("int func() { if true { } return 0; }")]
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else if a == 1 { return 1; } else { return 0; } }")]
+    [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else { if a == 1 { return 1; } return 0; } }")]
     [InlineData("System.Uri func(string a) { return new System.Uri(a); }")]
     public void TestControlFlowAnalysisBasic(string inputText)
     {
@@ -59,7 +60,8 @@ public sealed class ControlFlowAnalysisTests
 
     [Theory]
     [InlineData("int func() { if true { return 10; } }")]
-    //[InlineData("int func() { if true { } else { return 0; } }")]
+    [InlineData("int func() { if true { } else { return 0; } }")]
+    [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else { if a == 1 { return 1; } } }")]
     public void TestControlFlowAnalysisWithConditionalStatements(string inputText)
     {
         var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);

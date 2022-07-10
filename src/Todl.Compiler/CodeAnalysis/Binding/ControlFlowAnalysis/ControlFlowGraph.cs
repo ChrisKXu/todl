@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -54,22 +54,24 @@ internal sealed class ControlFlowGraph
                 case BoundConditionalStatement boundConditionalStatement:
                     var begin = current;
 
-                    if (boundConditionalStatement.Consequence is not null)
-                    {
-                        StartNewBlock();
-                        Connect(begin, current);
-                        AddStatement(boundConditionalStatement.Consequence);
-                    }
-
-                    if (boundConditionalStatement.Alternative is not null)
-                    {
-                        StartNewBlock();
-                        Connect(begin, current);
-                        AddStatement(boundConditionalStatement.Alternative);
-                    }
+                    StartNewBlock();
+                    Connect(begin, current);
+                    AddStatement(boundConditionalStatement.Consequence);
+                    var consequence = current;
 
                     StartNewBlock();
                     Connect(begin, current);
+                    AddStatement(boundConditionalStatement.Alternative);
+                    var alternative = current;
+
+                    StartNewBlock();
+                    Connect(consequence, current);
+                    Connect(alternative, current);
+
+                    if (boundConditionalStatement.Consequence is BoundNoOpStatement || boundConditionalStatement.Alternative is BoundNoOpStatement)
+                    {
+                        AddStatement(new BoundNoOpStatement());
+                    }
                     break;
                 default:
                     current.Statements.Add(boundStatement);
@@ -84,7 +86,7 @@ internal sealed class ControlFlowGraph
                 return;
             }
 
-            var branch = new BasicBlockBranch() { From = from, To = to };
+            var branch = new BasicBlockBranch(from, to);
             branches.Add(branch);
             from.Outgoing.Add(branch);
             to.Incoming.Add(branch);
@@ -157,9 +159,5 @@ internal sealed class ControlFlowGraph
         public bool Reachable => Incoming.Any();
     }
 
-    internal sealed class BasicBlockBranch
-    {
-        public BasicBlock From { get; internal init; }
-        public BasicBlock To { get; internal init; }
-    }
+    internal sealed record BasicBlockBranch(BasicBlock From, BasicBlock To);
 }
