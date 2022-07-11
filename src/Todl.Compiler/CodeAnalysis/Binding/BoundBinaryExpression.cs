@@ -38,6 +38,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         // Comparison
         Equality,
         Inequality,
+        Comparison,
 
         // String
         StringConcatenation
@@ -64,7 +65,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 { (builtInTypes.String, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
 
                 { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.EqualsEqualsToken), new(SyntaxKind.EqualsEqualsToken, BoundBinaryOperatorKind.Equality, builtInTypes.Boolean) },
-                { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.BangEqualsToken), new(SyntaxKind.BangEqualsToken, BoundBinaryOperatorKind.Inequality, builtInTypes.Boolean) }
+                { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.BangEqualsToken), new(SyntaxKind.BangEqualsToken, BoundBinaryOperatorKind.Inequality, builtInTypes.Boolean) },
+                { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.LessThanOrEqualsToken), new(SyntaxKind.LessThanOrEqualsToken, BoundBinaryOperatorKind.Comparison, builtInTypes.Boolean) },
+                { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.LessThanToken), new(SyntaxKind.LessThanToken, BoundBinaryOperatorKind.Comparison, builtInTypes.Boolean) },
+                { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.GreaterThanOrEqualsToken), new(SyntaxKind.GreaterThanOrEqualsToken, BoundBinaryOperatorKind.Comparison, builtInTypes.Boolean) },
+                { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.GreaterThanToken), new(SyntaxKind.GreaterThanToken, BoundBinaryOperatorKind.Comparison, builtInTypes.Boolean) },
             };
         }
 
