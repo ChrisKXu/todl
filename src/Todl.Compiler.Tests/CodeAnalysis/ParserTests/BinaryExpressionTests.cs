@@ -48,6 +48,29 @@ public sealed partial class ParserTests
     }
 
     [Fact]
+    public void TestParseBinaryExpressionWithPrecedence2()
+    {
+        var binaryExpression = ParseExpression<BinaryExpression>("1 + 2 * 3 <= 4");
+
+        var left = binaryExpression.Left.As<BinaryExpression>();
+        left.Left.As<LiteralExpression>().Text.Should().Be("1");
+        left.Operator.Text.Should().Be("+");
+        left.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
+
+        left.Right.As<BinaryExpression>().Invoking(multiplication =>
+        {
+            multiplication.Left.As<LiteralExpression>().Text.Should().Be("2");
+            multiplication.Operator.Text.Should().Be("*");
+            multiplication.Operator.Kind.Should().Be(SyntaxKind.StarToken);
+            multiplication.Right.As<LiteralExpression>().Text.Should().Be("3");
+
+            binaryExpression.Operator.Text.Should().Be("<=");
+            binaryExpression.Operator.Kind.Should().Be(SyntaxKind.LessThanOrEqualsToken);
+            binaryExpression.Right.As<LiteralExpression>().Text.Should().Be("4");
+        });
+    }
+
+    [Fact]
     public void TestParseBinaryExpressionWithParenthesis()
     {
         var binaryExpression = ParseExpression<BinaryExpression>("(1 + 2) * 3 - 4");
