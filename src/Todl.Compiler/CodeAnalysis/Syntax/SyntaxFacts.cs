@@ -23,6 +23,10 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
             { SyntaxKind.EqualsEqualsToken, 3 },
             { SyntaxKind.BangEqualsToken, 3 },
+            { SyntaxKind.LessThanOrEqualsToken, 3 },
+            { SyntaxKind.LessThanToken, 3 },
+            { SyntaxKind.GreaterThanOrEqualsToken, 3 },
+            { SyntaxKind.GreaterThanToken, 3 },
 
             { SyntaxKind.AmpersandAmpersandToken, 2 },
             { SyntaxKind.AmpersandToken, 2 },

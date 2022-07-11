@@ -54,22 +54,6 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         public static SyntaxTree ParseSyntaxTree(string inputText)
             => SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
 
-        [Fact]
-        public void TestBindBinaryExpression()
-        {
-            var boundBinaryExpression = BindExpression<BoundBinaryExpression>("1 + 2 + 3");
-
-            boundBinaryExpression.Should().NotBeNull();
-            boundBinaryExpression.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryOperatorKind.NumericAddition);
-            (boundBinaryExpression.Right as BoundConstant).Value.Should().Be(3);
-
-            var left = boundBinaryExpression.Left as BoundBinaryExpression;
-            left.Should().NotBeNull();
-            (left.Left as BoundConstant).Value.Should().Be(1);
-            (left.Right as BoundConstant).Value.Should().Be(2);
-            left.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryOperatorKind.NumericAddition);
-        }
-
         [Theory]
         [InlineData("\"\"", "")]
         [InlineData("\"abcd\"", "abcd")]

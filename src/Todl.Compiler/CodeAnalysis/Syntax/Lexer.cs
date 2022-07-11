@@ -330,6 +330,30 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                         ++this.position;
                     }
                     break;
+                case '<':
+                    if (Peak == '=')
+                    {
+                        kind = SyntaxKind.LessThanOrEqualsToken;
+                        position += 2;
+                    }
+                    else
+                    {
+                        kind = SyntaxKind.LessThanToken;
+                        ++position;
+                    }
+                    break;
+                case '>':
+                    if (Peak == '=')
+                    {
+                        kind = SyntaxKind.GreaterThanOrEqualsToken;
+                        position += 2;
+                    }
+                    else
+                    {
+                        kind = SyntaxKind.GreaterThanToken;
+                        ++position;
+                    }
+                    break;
                 case '&':
                     if (Peak == '&')
                     {
