@@ -2,11 +2,11 @@ import { Console } from System;
 
 void Main() {
     const result = fibonacci(5);
-    Console.WriteLine("The result of fibonacci(5) is " + result);
+    Console.WriteLine("The result of fibonacci(5) is " + result.ToString());
 }
 
 int fibonacci(int i) {
-    if i <= 0 {
+    unless i > 0 {
         return -1;
     }
 
