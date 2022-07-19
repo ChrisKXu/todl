@@ -170,6 +170,25 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
             diagnosticBuilder: boundVariableDeclarationStatement.DiagnosticBuilder);
     }
 
+    protected override BoundStatement VisitBoundReturnStatement(BoundReturnStatement boundReturnStatement)
+    {
+        if (boundReturnStatement.BoundReturnValueExpression is null)
+        {
+            return boundReturnStatement;
+        }
+
+        var boundReturnValueExpression = VisitBoundExpression(boundReturnStatement.BoundReturnValueExpression);
+        if (boundReturnValueExpression == boundReturnStatement.BoundReturnValueExpression)
+        {
+            return boundReturnStatement;
+        }
+
+        return BoundNodeFactory.CreateBoundReturnStatement(
+            syntaxNode: boundReturnStatement.SyntaxNode,
+            boundReturnValueExpression: boundReturnValueExpression,
+            diagnosticBuilder: boundReturnStatement.DiagnosticBuilder);
+    }
+
     protected override BoundExpression VisitBoundVariableExpression(BoundVariableExpression boundVariableExpression)
     {
         if (boundVariableExpression.Constant)

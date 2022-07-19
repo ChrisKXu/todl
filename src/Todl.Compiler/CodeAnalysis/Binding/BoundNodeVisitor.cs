@@ -56,7 +56,9 @@ internal abstract partial class BoundNodeVisitor
             BoundExpressionStatement boundExpressionStatement => VisitBoundExpressionStatement(boundExpressionStatement),
             BoundReturnStatement boundReturnStatement => VisitBoundReturnStatement(boundReturnStatement),
             BoundVariableDeclarationStatement boundVariableDeclarationStatement => VisitBoundVariableDeclarationStatement(boundVariableDeclarationStatement),
-            _ => throw new NotSupportedException()
+            BoundConditionalStatement boundConditionalStatement => VisitBoundConditionalStatement(boundConditionalStatement),
+            BoundNoOpStatement => boundStatement,
+            _ => throw new NotSupportedException($"Statement type {boundStatement.GetType()} is not supported")
         };
 
     public virtual IEnumerable<BoundMember> VisitBoundMembers(IEnumerable<BoundMember> boundMembers)
@@ -165,16 +167,24 @@ internal abstract partial class BoundNodeVisitor
 
     protected virtual BoundStatement VisitBoundBlockStatement(BoundBlockStatement boundBlockStatement)
     {
+        if (!boundBlockStatement.Statements.Any())
+        {
+            return boundBlockStatement;
+        }
+
         var hasChange = false;
-        var statements = boundBlockStatement.Statements.Select(boundStatement =>
+        var statements = new List<BoundStatement>();
+
+        foreach (var boundStatement in boundBlockStatement.Statements)
         {
             var newBoundStatement = VisitBoundStatement(boundStatement);
             if (newBoundStatement != boundStatement)
             {
                 hasChange = true;
             }
-            return newBoundStatement;
-        });
+
+            statements.Add(newBoundStatement);
+        }
 
         if (!hasChange)
         {
@@ -184,7 +194,7 @@ internal abstract partial class BoundNodeVisitor
         return BoundNodeFactory.CreateBoundBlockStatement(
             syntaxNode: boundBlockStatement.SyntaxNode,
             scope: boundBlockStatement.Scope,
-            statements: statements.ToList(),
+            statements: statements,
             diagnosticBuilder: boundBlockStatement.DiagnosticBuilder);
     }
 
@@ -223,4 +233,26 @@ internal abstract partial class BoundNodeVisitor
 
     protected virtual BoundStatement VisitBoundVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)
         => boundVariableDeclarationStatement;
+
+    protected virtual BoundStatement VisitBoundConditionalStatement(BoundConditionalStatement boundConditionalStatement)
+    {
+        var condition = VisitBoundExpression(boundConditionalStatement.Condition);
+
+        var consequence = VisitBoundStatement(boundConditionalStatement.Consequence);
+        var alternative = VisitBoundStatement(boundConditionalStatement.Alternative);
+
+        if (condition == boundConditionalStatement.Condition
+            && consequence == boundConditionalStatement.Consequence
+            && alternative == boundConditionalStatement.Alternative)
+        {
+            return boundConditionalStatement;
+        }
+
+        return BoundNodeFactory.CreateBoundConditionalStatement(
+            syntaxNode: boundConditionalStatement.SyntaxNode,
+            condition: condition,
+            consequence: consequence,
+            alternative: alternative,
+            diagnosticBuilder: boundConditionalStatement.DiagnosticBuilder);
+    }
 }

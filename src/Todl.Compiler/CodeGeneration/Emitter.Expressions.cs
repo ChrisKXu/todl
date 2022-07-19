@@ -24,7 +24,7 @@ internal sealed partial class Emitter
                 EmitVariableExpression(methodBody, boundVariableExpression);
                 return;
             default:
-                throw new NotSupportedException();
+                throw new NotSupportedException($"Expression type {boundExpression.GetType().Name} is not supported.");
         }
     }
 
