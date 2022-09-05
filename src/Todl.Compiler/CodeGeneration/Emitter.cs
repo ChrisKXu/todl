@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding;
@@ -10,6 +11,7 @@ internal sealed partial class Emitter
 {
     private readonly Compilation compilation;
     private readonly AssemblyDefinition assemblyDefinition;
+    private readonly Dictionary<FunctionSymbol, MethodDefinition> methodReferences = new();
 
     private BuiltInTypes BuiltInTypes => compilation.ClrTypeCache.BuiltInTypes;
 
@@ -38,19 +40,29 @@ internal sealed partial class Emitter
 
         assemblyDefinition.MainModule.Types.Add(entryPointType);
 
-        foreach (var functionMember in boundEntryPointTypeDefinition.BoundMembers.OfType<BoundFunctionMember>())
+        var functionMembers = boundEntryPointTypeDefinition.BoundMembers.OfType<BoundFunctionMember>();
+
+        // Emit function reference first
+        foreach (var functionMember in functionMembers)
         {
-            var methodDefinition = EmitFunctionMember(functionMember);
+            var methodDefinition = EmitFunctionMemberReference(functionMember);
             entryPointType.Methods.Add(methodDefinition);
+            methodReferences[functionMember.FunctionSymbol] = methodDefinition;
 
             if (functionMember == boundEntryPointTypeDefinition.EntryPointFunctionMember)
             {
                 assemblyDefinition.EntryPoint = methodDefinition;
             }
         }
+
+        // Emit function body
+        foreach (var functionMember in functionMembers)
+        {
+            EmitFunctionMember(methodReferences[functionMember.FunctionSymbol], functionMember);
+        }
     }
 
-    public MethodDefinition EmitFunctionMember(BoundFunctionMember functionMember)
+    private MethodDefinition EmitFunctionMemberReference(BoundFunctionMember functionMember)
     {
         var attributes = MethodAttributes.Static;
         attributes |= functionMember.IsPublic ? MethodAttributes.Public : MethodAttributes.Private;
@@ -68,9 +80,12 @@ internal sealed partial class Emitter
                 parameterType: ResolveTypeReference(parameter.Type as ClrTypeSymbol)));
         }
 
-        EmitStatement(methodDefinition.Body, functionMember.Body);
-
         return methodDefinition;
+    }
+
+    private void EmitFunctionMember(MethodDefinition methodDefinition, BoundFunctionMember functionMember)
+    {
+        EmitStatement(methodDefinition.Body, functionMember.Body);
     }
 
     private TypeReference ResolveTypeReference(ClrTypeSymbol clrTypeSymbol)

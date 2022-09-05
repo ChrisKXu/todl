@@ -21,6 +21,9 @@ internal sealed partial class Emitter
             case BoundConditionalStatement boundConditionalStatement:
                 EmitConditionalStatement(methodBody, boundConditionalStatement);
                 return;
+            case BoundVariableDeclarationStatement boundVariableDeclarationStatement:
+                EmitVariableDeclarationStatement(methodBody, boundVariableDeclarationStatement);
+                return;
             default:
                 return;
         }
@@ -58,5 +61,13 @@ internal sealed partial class Emitter
         ilProcessor.Append(elseLabel);
 
         EmitStatement(methodBody, boundConditionalStatement.Alternative);
+    }
+
+    private void EmitVariableDeclarationStatement(MethodBody methodBody, BoundVariableDeclarationStatement boundVariableDeclarationStatement)
+    {
+        if (boundVariableDeclarationStatement.InitializerExpression is not null)
+        {
+            EmitExpression(methodBody, boundVariableDeclarationStatement.InitializerExpression);
+        }
     }
 }

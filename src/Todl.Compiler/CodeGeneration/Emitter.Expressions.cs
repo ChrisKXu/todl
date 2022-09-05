@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -16,6 +18,9 @@ internal sealed partial class Emitter
                 return;
             case BoundClrFunctionCallExpression boundClrFunctionCallExpression:
                 EmitClrFunctionCallExpression(methodBody, boundClrFunctionCallExpression);
+                return;
+            case BoundTodlFunctionCallExpression boundTodlFunctionCallExpression:
+                EmitTodlFunctionCallExpression(methodBody, boundTodlFunctionCallExpression);
                 return;
             case BoundBinaryExpression boundBinaryExpression:
                 EmitBinaryExpression(methodBody, boundBinaryExpression);
@@ -49,11 +54,6 @@ internal sealed partial class Emitter
 
         var methodReference = ResolveMethodReference(boundClrFunctionCallExpression);
         methodBody.GetILProcessor().Emit(OpCodes.Call, methodReference);
-
-        if (methodReference.ReturnType != assemblyDefinition.MainModule.TypeSystem.Void)
-        {
-            methodBody.GetILProcessor().Emit(OpCodes.Pop);
-        }
     }
 
     private void EmitBinaryExpression(MethodBody methodBody, BoundBinaryExpression boundBinaryExpression)
@@ -66,6 +66,12 @@ internal sealed partial class Emitter
             case BoundBinaryOperatorKind.Equality:
                 methodBody.GetILProcessor().Emit(OpCodes.Ceq);
                 return;
+            case BoundBinaryOperatorKind.Comparison:
+                methodBody.GetILProcessor().Emit(OpCodes.Cgt);
+                return;
+            case BoundBinaryOperatorKind.LogicalAnd:
+            case BoundBinaryOperatorKind.LogicalOr:
+                return;
             default:
                 return;
         }
@@ -77,5 +83,18 @@ internal sealed partial class Emitter
         {
             methodBody.GetILProcessor().Emit(OpCodes.Ldarg_0);
         }
+    }
+
+    private void EmitTodlFunctionCallExpression(MethodBody methodBody, BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
+    {
+        Debug.Assert(methodReferences.ContainsKey(boundTodlFunctionCallExpression.FunctionSymbol));
+
+        foreach (var argument in boundTodlFunctionCallExpression.BoundArguments.Values)
+        {
+            EmitExpression(methodBody, argument);
+        }
+
+        var methodReference = methodReferences[boundTodlFunctionCallExpression.FunctionSymbol];
+        methodBody.GetILProcessor().Emit(OpCodes.Call, methodReference);
     }
 }
