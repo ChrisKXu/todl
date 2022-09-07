@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Todl.Playground": {
+      "commandName": "Project",
+      "workingDirectory": "$(OutDir)"
+    }
+  }
+}
