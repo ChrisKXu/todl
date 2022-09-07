@@ -16,5 +16,6 @@
     <BaseIntermediateOutputPath>$(ObjRoot)\$(IntermediateRelativeProjectDirectory)</BaseIntermediateOutputPath>
     <PublishDir>$(OutDir)\Published</PublishDir>
     <PackageOutputPath>$(OutputRoot)\Packages</PackageOutputPath>
+    <BuildDependsOn>$(BuildDependsOn);GetGitRef</BuildDependsOn>
   </PropertyGroup>
 </Project>
