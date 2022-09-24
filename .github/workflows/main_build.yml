@@ -2,7 +2,10 @@ name: Main build
 
 on:
   push:
-    branches: [ main, release/*, build/* ]
+    branches:
+      - 'main'
+      - 'release/**'
+      - 'build/**'
 
 jobs:
   build:
