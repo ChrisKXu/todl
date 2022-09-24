@@ -1,14 +1,20 @@
-name: Build And Test
+name: Main build
 
 on:
-  pull_request:
+  push:
     branches:
       - 'main'
+      - 'release/**'
+      - 'build/**'
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+    
+    runs-on: ${{ matrix.os }}
+    continue-on-error: false
 
     steps:
     - uses: actions/checkout@v3
@@ -22,3 +28,4 @@ jobs:
       run: dotnet build src --no-restore
     - name: Test
       run: dotnet test src --no-build --verbosity normal
+    
