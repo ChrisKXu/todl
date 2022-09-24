@@ -59,7 +59,7 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        build-args:
-          - ARG_GIT_BRANCH=${{ github.ref_name }}
-          - ARG_GIT_COMMIT=${{ github.sha }}
+        build-args: |
+          ARG_GIT_BRANCH=${{ github.ref_name }}
+          ARG_GIT_COMMIT=${{ github.sha }}
     
