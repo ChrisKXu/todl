@@ -55,9 +55,9 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v2
       with:
-        context: ./out/Release/src/Todl.Playground/Publish
+        context: out/Release/src/Todl.Playground/Published
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
+        tags: ${{ steps.meta.outputs.tags }}-latest
         labels: ${{ steps.meta.outputs.labels }}
         build-args: |
           ARG_GIT_BRANCH=${{ github.ref_name }}
