@@ -7,14 +7,14 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Reflection;
-using System.Linq;
-using System.Collections.Generic;
 
 namespace Todl.Playground.Functions;
 
 public class InfoFunction
 {
     private static readonly Assembly assembly = Assembly.GetExecutingAssembly();
+    private static readonly string gitBranch = Environment.GetEnvironmentVariable("GIT_BRANCH");
+    private static readonly string gitCommit = Environment.GetEnvironmentVariable("GIT_COMMIT");
 
     [FunctionName("info")]
     public IActionResult Run(
@@ -32,7 +32,9 @@ public class InfoFunction
             BuildInfo = new
             {
                 Debug = assembly.GetCustomAttribute<DebuggableAttribute>() is not null,
-                Version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion
+                Version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion,
+                GitBranch = gitBranch,
+                GitCommit = gitCommit
             }
         });
     }
