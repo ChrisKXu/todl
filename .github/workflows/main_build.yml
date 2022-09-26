@@ -51,7 +51,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v2
       with:
-        images: ghcr.io/${{ github.repository }}/playground-azure-functions
+        images: ghcr.io/${{ github.repository }}/playground
     - name: Build and push Docker image
       uses: docker/build-push-action@v2
       with:

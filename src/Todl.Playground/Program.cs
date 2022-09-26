@@ -1,27 +1,24 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
+﻿using System.Reflection;
 using System;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Reflection;
 
-namespace Todl.Playground.Functions;
+namespace Todl.Playground;
 
-public class InfoFunction
+sealed class Program
 {
     private static readonly Assembly assembly = Assembly.GetExecutingAssembly();
     private static readonly string gitBranch = Environment.GetEnvironmentVariable("GIT_BRANCH");
     private static readonly string gitCommit = Environment.GetEnvironmentVariable("GIT_COMMIT");
 
-    [FunctionName("info")]
-    public IActionResult Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest request,
-        ILogger logger)
+    static void Main(string[] args)
     {
-        return new OkObjectResult(new
+        var builder = WebApplication.CreateBuilder(args);
+        var app = builder.Build();
+
+        app.MapGet("/api/info", () => Results.Ok(new
         {
             RuntimeInfo = new
             {
@@ -36,6 +33,8 @@ public class InfoFunction
                 GitBranch = gitBranch,
                 GitCommit = gitCommit
             }
-        });
+        }));
+
+        app.Run();
     }
 }
