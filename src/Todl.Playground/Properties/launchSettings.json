@@ -2,7 +2,11 @@
   "profiles": {
     "Todl.Playground": {
       "commandName": "Project",
-      "workingDirectory": "$(OutDir)"
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "http://localhost:8080"
     }
   }
 }
