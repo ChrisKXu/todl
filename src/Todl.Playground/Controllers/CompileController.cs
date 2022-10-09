@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +43,7 @@ public class CompileController : ControllerBase
 
         if (diagnostics.HasError())
         {
-            return Ok(new CompileResponse(diagnostics, null, string.Empty));
+            return Ok(new CompileResponse(diagnostics, string.Empty));
         }
 
         var assemblyDefinition = compilation.Emit();
@@ -57,6 +56,6 @@ public class CompileController : ControllerBase
         using var decompilationProvider = decompilerProviderResolver.Resolve(compileRequest.Type, assemblyResolver, stream);
         var decompiledString = decompilationProvider.Decompile();
 
-        return Ok(new CompileResponse(diagnostics, null, decompiledString));
+        return Ok(new CompileResponse(diagnostics, decompiledString));
     }
 }

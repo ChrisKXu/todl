@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Todl.Playground.Controllers;
 using Todl.Playground.Decompilation;
 
 namespace Todl.Playground;
@@ -16,7 +17,10 @@ sealed class Program
         services.AddSingleton<DecompilerProviderResolver>();
 
         services
-            .AddControllers()
+            .AddControllers(options =>
+            {
+                options.Filters.Add(new ExceptionFilter());
+            })
             .AddJsonOptions(json =>
             {
                 json.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());

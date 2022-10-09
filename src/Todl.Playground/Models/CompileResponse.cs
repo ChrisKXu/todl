@@ -7,6 +7,5 @@ namespace Todl.Playground.Models;
 public record CompileResponse
 (
     IEnumerable<Diagnostic> Diagnostics,
-    Exception Exception,
     string DecompiledText
 );
