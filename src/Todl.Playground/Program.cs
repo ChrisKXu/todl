@@ -1,4 +1,4 @@
-﻿using ICSharpCode.Decompiler.Metadata;
+﻿using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Todl.Playground.Decompilation;
@@ -12,9 +12,16 @@ sealed class Program
         var builder = WebApplication.CreateBuilder(args);
 
         var services = builder.Services;
-        services.AddControllers();
         services.AddTransient<AssemblyResolver>();
         services.AddSingleton<DecompilerProviderResolver>();
+
+        services
+            .AddControllers()
+            .AddJsonOptions(json =>
+            {
+                json.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                json.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            });
 
         var app = builder.Build();
         app.MapControllers();
