@@ -38,7 +38,7 @@ public class CompileController : ControllerBase
             Text = s.Content
         });
 
-        using var compilation = new Compilation(AssemblyName, AssemblyVersion, sourceTexts, assemblyResolver.AssemblyPaths);
+        using var compilation = new Compilation(AssemblyName, AssemblyVersion, sourceTexts, assemblyResolver.MetadataLoadContext);
         var diagnostics = compilation.MainModule.GetDiagnostics();
 
         if (diagnostics.HasError())
