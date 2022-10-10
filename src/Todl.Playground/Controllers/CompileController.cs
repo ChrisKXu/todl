@@ -15,7 +15,7 @@ namespace Todl.Playground.Controllers;
 public class CompileController : ControllerBase
 {
     public const string AssemblyName = "test";
-    public static readonly Version AssemblyVersion = new Version(1, 0);
+    public static readonly Version AssemblyVersion = new(1, 0);
 
     private readonly DecompilerProviderResolver decompilerProviderResolver;
     private readonly AssemblyResolver assemblyResolver;
@@ -30,8 +30,6 @@ public class CompileController : ControllerBase
 
     public ActionResult<CompileResponse> Post(CompileRequest compileRequest)
     {
-        compileRequest.Validate();
-
         var sourceTexts = compileRequest.SourceFiles.Select(s => new SourceText
         {
             FilePath = s.Name,

@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Immutable;
-using System.Linq;
+﻿using System.Collections.Immutable;
+using System.ComponentModel.DataAnnotations;
 
 namespace Todl.Playground.Models;
 
@@ -10,34 +9,20 @@ public enum CompileRequestType
     CSharp
 }
 
-public record SourceFile(string Name, string Content)
+public class SourceFile
 {
-    public void Validate()
-    {
-        if (string.IsNullOrEmpty(Name))
-        {
-            throw new ArgumentException("Invalid source file: Name cannot be empty");
-        }
+    [Required]
+    public string Name { get; init; }
 
-        if (string.IsNullOrEmpty(Content))
-        {
-            throw new ArgumentException("Invalid source file: Content cannot be empty");
-        }
-    }
+    [Required]
+    public string Content { get; init; }
 }
 
-public record CompileRequest(CompileRequestType Type, ImmutableArray<SourceFile> SourceFiles)
+public class CompileRequest
 {
-    public void Validate()
-    {
-        if (!SourceFiles.Any())
-        {
-            throw new ArgumentException("Invalid request: sourceFiles cannot be empty");
-        }
+    [Required]
+    public CompileRequestType Type { get; init; }
 
-        foreach (var s in SourceFiles)
-        {
-            s.Validate();
-        }
-    }
+    [Required]
+    public ImmutableArray<SourceFile> SourceFiles { get; init; }
 }

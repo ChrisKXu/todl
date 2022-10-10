@@ -8,6 +8,9 @@ public class ExceptionFilter : IExceptionFilter
 {
     public void OnException(ExceptionContext context)
     {
-        context.Result = new JsonResult(new ErrorResponse(context.Exception));
+        context.Result = new JsonResult(new ErrorResponse(context.Exception))
+        {
+            StatusCode = 500
+        };
     }
 }
