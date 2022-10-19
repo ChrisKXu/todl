@@ -57,7 +57,16 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 && Current.Kind != SyntaxKind.EndOfFileToken
                 && Current.Kind != SyntaxKind.BadToken)
             {
+                var oldPosition = position;
+
                 action();
+
+                // if the action hasn't taken any tokens it's unlikely that it will ever do so
+                // in the following rounds, this could cause an infinite loop.
+                if (position == oldPosition)
+                {
+                    break;
+                }
             }
 
             return ExpectToken(syntaxKind);
