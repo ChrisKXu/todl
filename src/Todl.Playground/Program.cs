@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Todl.Playground.Compilation;
 using Todl.Playground.Controllers;
 using Todl.Playground.Decompilation;
 
@@ -14,6 +15,7 @@ sealed class Program
 
         var services = builder.Services;
         services.AddTransient<AssemblyResolver>();
+        services.AddTransient<CompilationProvider>();
         services.AddSingleton<DecompilerProviderResolver>();
 
         services
