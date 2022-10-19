@@ -72,4 +72,14 @@ public sealed partial class ParserTests
             argument.Expression.As<LiteralExpression>().Text.Should().Be("\"123\"");
         });
     }
+
+    [Fact]
+    public void TestParseFunctionCallExpressionWithoutClosingBracket()
+    {
+        var inputText = "System.Int32.Parse(s: \"123\"";
+        var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
+
+        functionCallExpression.Arguments.CloseParenthesisToken.Missing.Should().BeTrue();
+        //functionCallExpression.GetDiagnostics().Should().NotBeEmpty();
+    }
 }

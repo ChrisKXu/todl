@@ -20,7 +20,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             var openParenthesisToken = ExpectToken(SyntaxKind.OpenParenthesisToken);
             var items = new List<T>();
 
-            while (Current.Kind != SyntaxKind.CloseParenthesisToken)
+            var closeParenthesisToken = ExpectUntil(SyntaxKind.CloseParenthesisToken, () =>
             {
                 if (Current.Kind == SyntaxKind.CommaToken)
                 {
@@ -29,9 +29,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
                 var item = parseFunc();
                 items.Add(item);
-            }
-
-            var closeParenthesisToken = ExpectToken(SyntaxKind.CloseParenthesisToken);
+            });
 
             return new CommaSeparatedSyntaxList<T>()
             {
