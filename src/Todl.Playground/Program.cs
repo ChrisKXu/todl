@@ -1,40 +1,36 @@
-﻿using System.Reflection;
-using System;
+﻿using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+using Microsoft.Extensions.DependencyInjection;
+using Todl.Playground.Compilation;
+using Todl.Playground.Controllers;
+using Todl.Playground.Decompilation;
 
 namespace Todl.Playground;
 
 sealed class Program
 {
-    private static readonly Assembly assembly = Assembly.GetExecutingAssembly();
-    private static readonly string gitBranch = Environment.GetEnvironmentVariable("GIT_BRANCH");
-    private static readonly string gitCommit = Environment.GetEnvironmentVariable("GIT_COMMIT");
-
     static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        var services = builder.Services;
+        services.AddTransient<AssemblyResolver>();
+        services.AddTransient<CompilationProvider>();
+        services.AddSingleton<DecompilerProviderResolver>();
+
+        services
+            .AddControllers(options =>
+            {
+                options.Filters.Add(new ExceptionFilter());
+            })
+            .AddJsonOptions(json =>
+            {
+                json.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                json.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            });
+
         var app = builder.Build();
-
-        app.MapGet("/api/info", () => Results.Ok(new
-        {
-            RuntimeInfo = new
-            {
-                OSEnvironment = Environment.OSVersion,
-                Runtime = RuntimeInformation.FrameworkDescription,
-                Architecture = RuntimeInformation.ProcessArchitecture.ToString()
-            },
-            BuildInfo = new
-            {
-                Debug = assembly.GetCustomAttribute<DebuggableAttribute>() is not null,
-                Version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion,
-                GitBranch = gitBranch,
-                GitCommit = gitCommit
-            }
-        }));
-
+        app.MapControllers();
         app.Run();
     }
 }

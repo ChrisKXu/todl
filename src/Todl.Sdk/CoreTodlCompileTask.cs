@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Todl.Compiler.CodeAnalysis.Text;
@@ -26,11 +27,19 @@ public sealed class CoreTodlCompileTask : Task
         {
             Log.LogMessage("Compiling Todl assembly {0}", IntermediateAssembly);
 
+            var pathAssemblyResolver = new PathAssemblyResolver(References);
+            var metadataLoadContext = new MetadataLoadContext(pathAssemblyResolver);
+
+            foreach (var reference in References)
+            {
+                metadataLoadContext.LoadFromAssemblyPath(reference);
+            }
+
             using var compilation = new Compilation(
                 assemblyName: Path.GetFileNameWithoutExtension(IntermediateAssembly),
                 version: new Version(1, 0),
                 sourceTexts: SourceFiles.Select(SourceText.FromFile),
-                assemblyPaths: References);
+                metadataLoadContext: metadataLoadContext);
 
             var diagnostics = compilation.MainModule.GetDiagnostics();
 

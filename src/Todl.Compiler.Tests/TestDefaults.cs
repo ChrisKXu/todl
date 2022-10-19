@@ -1,5 +1,4 @@
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Reflection;
 using Todl.Compiler.CodeAnalysis;
@@ -9,18 +8,22 @@ namespace Todl.Compiler.Tests;
 static class TestDefaults
 {
     public static readonly ClrTypeCache DefaultClrTypeCache;
-    public static readonly IReadOnlyList<string> AssemblyPaths;
+    public static readonly MetadataLoadContext MetadataLoadContext;
 
     static TestDefaults()
     {
-        AssemblyPaths = AppDomain.CurrentDomain.GetAssemblies()
+        var assemblyPaths = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic)
             .Select(a => a.Location).Distinct().ToList();
 
-        var resolver = new PathAssemblyResolver(AssemblyPaths);
-        var metadataLoadContext = new MetadataLoadContext(resolver, typeof(object).Assembly.GetName().FullName);
+        var resolver = new PathAssemblyResolver(assemblyPaths);
+        MetadataLoadContext = new MetadataLoadContext(resolver, typeof(object).Assembly.GetName().FullName);
 
-        DefaultClrTypeCache = ClrTypeCache.FromAssemblies(
-            assemblies: AssemblyPaths.Select(metadataLoadContext.LoadFromAssemblyPath));
+        foreach (var assemblyPath in assemblyPaths)
+        {
+            MetadataLoadContext.LoadFromAssemblyPath(assemblyPath);
+        }
+
+        DefaultClrTypeCache = ClrTypeCache.FromAssemblies(assemblies: MetadataLoadContext.GetAssemblies());
     }
 }
