@@ -17,15 +17,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         private BlockStatement ParseBlockStatement()
         {
-            var openBraceToken = this.ExpectToken(SyntaxKind.OpenBraceToken);
+            var openBraceToken = ExpectToken(SyntaxKind.OpenBraceToken);
             var innerStatements = new List<Statement>();
 
-            while (Current.Kind != SyntaxKind.CloseBraceToken)
+            var closeBraceToken = ExpectUntil(SyntaxKind.CloseBraceToken, () =>
             {
                 innerStatements.Add(ParseStatement());
-            }
-
-            var closeBraceToken = this.ExpectToken(SyntaxKind.CloseBraceToken);
+            });
 
             return new BlockStatement()
             {
