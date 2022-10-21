@@ -20,7 +20,7 @@ public sealed class EntryPointTests
             assemblyName: "test",
             version: new Version(1, 0),
             sourceTexts: new[] { sourceText },
-            assemblyPaths: TestDefaults.AssemblyPaths);
+            metadataLoadContext: TestDefaults.MetadataLoadContext);
 
         return (compilation.Emit(), compilation.GetDiagnostics());
     }

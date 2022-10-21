@@ -1,12 +1,12 @@
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
 
 namespace Todl.Compiler.CodeAnalysis.Text
 {
     public sealed class SourceText
     {
-        public string FilePath { get; private init; }
-        public string Text { get; private init; }
+        public string FilePath { get; init; }
+        public string Text { get; init; }
 
         public int Length => this.Text.Length;
 

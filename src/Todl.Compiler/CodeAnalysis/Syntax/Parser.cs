@@ -43,12 +43,33 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         private SyntaxToken ExpectToken(SyntaxKind syntaxKind)
         {
-            if (this.Current.Kind == syntaxKind)
+            if (Current.Kind == syntaxKind)
             {
-                return this.NextToken();
+                return NextToken();
             }
 
             return ReportUnexpectedToken(syntaxKind);
+        }
+
+        private SyntaxToken ExpectUntil(SyntaxKind syntaxKind, Action action)
+        {
+            while (Current.Kind != syntaxKind
+                && Current.Kind != SyntaxKind.EndOfFileToken
+                && Current.Kind != SyntaxKind.BadToken)
+            {
+                var oldPosition = position;
+
+                action();
+
+                // if the action hasn't taken any tokens it's unlikely that it will ever do so
+                // in the following rounds, this could cause an infinite loop.
+                if (position == oldPosition)
+                {
+                    break;
+                }
+            }
+
+            return ExpectToken(syntaxKind);
         }
 
         internal Parser(SyntaxTree syntaxTree)
@@ -63,7 +84,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 directives.Add(ParseDirective());
             }
 
-            while (Current.Kind != SyntaxKind.EndOfFileToken)
+            while (Current.Kind != SyntaxKind.EndOfFileToken
+                && Current.Kind != SyntaxKind.BadToken)
             {
                 members.Add(ParseMember());
             }

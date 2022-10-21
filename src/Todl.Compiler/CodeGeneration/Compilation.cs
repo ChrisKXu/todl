@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -26,7 +26,7 @@ public sealed class Compilation : IDisposable, IDiagnosable
         string assemblyName,
         Version version,
         IEnumerable<SourceText> sourceTexts,
-        IEnumerable<string> assemblyPaths)
+        MetadataLoadContext metadataLoadContext)
     {
         if (string.IsNullOrEmpty(assemblyName))
         {
@@ -38,19 +38,17 @@ public sealed class Compilation : IDisposable, IDiagnosable
             throw new ArgumentNullException(nameof(sourceTexts));
         }
 
-        if (assemblyPaths is null)
+        if (metadataLoadContext is null)
         {
-            throw new ArgumentNullException(nameof(assemblyPaths));
+            throw new ArgumentNullException(nameof(metadataLoadContext));
         }
-
-        var resolver = new PathAssemblyResolver(assemblyPaths);
-        metadataLoadContext = new MetadataLoadContext(resolver);
 
         AssemblyName = assemblyName;
         Version = version;
 
-        var assemblies = assemblyPaths.Select(metadataLoadContext.LoadFromAssemblyPath);
-        ClrTypeCache = ClrTypeCache.FromAssemblies(assemblies);
+        this.metadataLoadContext = metadataLoadContext;
+
+        ClrTypeCache = ClrTypeCache.FromAssemblies(metadataLoadContext.GetAssemblies());
 
         var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, ClrTypeCache));
         MainModule = BoundModule.Create(ClrTypeCache, syntaxTrees.ToImmutableList());
