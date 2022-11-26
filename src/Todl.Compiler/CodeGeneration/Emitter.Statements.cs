@@ -28,7 +28,7 @@ internal sealed partial class Emitter
 
     private void EmitBlockStatement(MethodBody methodBody, BoundBlockStatement boundBlockStatement)
     {
-        foreach(var statement in boundBlockStatement.Statements)
+        foreach (var statement in boundBlockStatement.Statements)
         {
             EmitStatement(methodBody, statement);
         }

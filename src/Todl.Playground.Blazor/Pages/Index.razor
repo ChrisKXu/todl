@@ -1,9 +1,43 @@
 ﻿@page "/"
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Todl Playground</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Welcome to Todl Playground</h1>
+<div class="container-fluid">
+    <div class="row" style="height: 800px">
+        <div id="editor" class="col" style="border: 1px solid grey"></div>
+        <button @onclick="Submit">Compile</button>
+        <div id="result" class="col" style="border: 1px solid grey"></div>
+    </div>
+</div>
 
-Welcome to your new app.
+@code {
+    // Load the module and keep a reference to it
+    // You need to use .AsTask() to convert the ValueTask to Task as it may be awaited multiple times
+    private Task<IJSObjectReference> _module;
+    private Task<IJSObjectReference> Module => _module ??= JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/editor.js").AsTask();
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+    protected override async Task OnInitializedAsync()
+    {
+        var module = await Module;
+        await module.InvokeVoidAsync("init");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_module != null)
+        {
+            var module = await _module;
+            await module.DisposeAsync();
+        }
+    }
+
+    async Task Submit()
+    {
+        var module = await Module;
+        var todlCode = await module.InvokeAsync<String>("getEditorText");
+        await module.InvokeVoidAsync("setResultText", todlCode);
+    }
+}
