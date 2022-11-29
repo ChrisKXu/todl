@@ -1,5 +1,6 @@
 ﻿using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeGeneration;
 
@@ -31,7 +32,7 @@ internal sealed partial class Emitter
 
     private void EmitBlockStatement(MethodBody methodBody, BoundBlockStatement boundBlockStatement)
     {
-        foreach(var statement in boundBlockStatement.Statements)
+        foreach (var statement in boundBlockStatement.Statements)
         {
             EmitStatement(methodBody, statement);
         }
@@ -65,9 +66,17 @@ internal sealed partial class Emitter
 
     private void EmitVariableDeclarationStatement(MethodBody methodBody, BoundVariableDeclarationStatement boundVariableDeclarationStatement)
     {
+        methodBody.InitLocals = true;
+
+        var variable = boundVariableDeclarationStatement.Variable;
+        var variableDefinition = new VariableDefinition(ResolveTypeReference(variable.Type as ClrTypeSymbol));
+        methodBody.Variables.Add(variableDefinition);
+        variables[variable] = variableDefinition;
+
         if (boundVariableDeclarationStatement.InitializerExpression is not null)
         {
             EmitExpression(methodBody, boundVariableDeclarationStatement.InitializerExpression);
+            methodBody.GetILProcessor().Emit(OpCodes.Stloc, variableDefinition);
         }
     }
 }

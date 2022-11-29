@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using Mono.Cecil;
+using System.Linq;
 using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -52,25 +52,34 @@ internal sealed partial class Emitter
             EmitExpression(methodBody, argument);
         }
 
+        if (!boundClrFunctionCallExpression.IsStatic)
+        {
+            EmitExpression(methodBody, boundClrFunctionCallExpression.BoundBaseExpression);
+        }
+
         var methodReference = ResolveMethodReference(boundClrFunctionCallExpression);
         methodBody.GetILProcessor().Emit(OpCodes.Call, methodReference);
     }
 
     private void EmitBinaryExpression(MethodBody methodBody, BoundBinaryExpression boundBinaryExpression)
     {
+        var ilProcessor = methodBody.GetILProcessor();
+
         EmitExpression(methodBody, boundBinaryExpression.Left);
         EmitExpression(methodBody, boundBinaryExpression.Right);
 
         switch (boundBinaryExpression.Operator.BoundBinaryOperatorKind)
         {
             case BoundBinaryOperatorKind.Equality:
-                methodBody.GetILProcessor().Emit(OpCodes.Ceq);
+                ilProcessor.Emit(OpCodes.Ceq);
                 return;
             case BoundBinaryOperatorKind.Comparison:
-                methodBody.GetILProcessor().Emit(OpCodes.Cgt);
+                ilProcessor.Emit(OpCodes.Cgt);
                 return;
             case BoundBinaryOperatorKind.LogicalAnd:
             case BoundBinaryOperatorKind.LogicalOr:
+                return;
+            case BoundBinaryOperatorKind.StringConcatenation:
                 return;
             default:
                 return;
@@ -79,9 +88,17 @@ internal sealed partial class Emitter
 
     private void EmitVariableExpression(MethodBody methodBody, BoundVariableExpression boundVariableExpression)
     {
-        if (boundVariableExpression.Variable is ParameterSymbol)
+        switch (boundVariableExpression.Variable)
         {
-            methodBody.GetILProcessor().Emit(OpCodes.Ldarg_0);
+            case ParameterSymbol parameter:
+                var parameterDefinition = methodBody.Method.Parameters.FirstOrDefault(p => p.Name.Equals(parameter.Name));
+                methodBody.GetILProcessor().Emit(OpCodes.Ldarg, parameterDefinition);
+                break;
+            case LocalVariableSymbol localVariable:
+                methodBody.GetILProcessor().Emit(OpCodes.Ldloca_S, variables[localVariable]);
+                break;
+            default:
+                throw new NotSupportedException();
         }
     }
 

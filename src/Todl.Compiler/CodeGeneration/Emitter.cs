@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -12,6 +13,7 @@ internal sealed partial class Emitter
     private readonly Compilation compilation;
     private readonly AssemblyDefinition assemblyDefinition;
     private readonly Dictionary<FunctionSymbol, MethodDefinition> methodReferences = new();
+    private readonly Dictionary<LocalVariableSymbol, VariableDefinition> variables = new();
 
     private BuiltInTypes BuiltInTypes => compilation.ClrTypeCache.BuiltInTypes;
 
