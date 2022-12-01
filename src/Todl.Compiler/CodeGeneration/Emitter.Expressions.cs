@@ -1,14 +1,23 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
+
+using MethodInfo = System.Reflection.MethodInfo;
 
 namespace Todl.Compiler.CodeGeneration;
 
 internal sealed partial class Emitter
 {
+    private static readonly MethodInfo StringConcatMethodInfo = typeof(string)
+        .GetMethods(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
+        .Single(m => m.Name == nameof(string.Concat)
+            && m.GetParameters().Length == 2
+            && m.GetParameters()[0].ParameterType.Equals(typeof(string)));
+
     private void EmitExpression(MethodBody methodBody, BoundExpression boundExpression)
     {
         switch (boundExpression)
@@ -80,6 +89,8 @@ internal sealed partial class Emitter
             case BoundBinaryOperatorKind.LogicalOr:
                 return;
             case BoundBinaryOperatorKind.StringConcatenation:
+                var methodReference = methodBody.Method.Module.ImportReference(StringConcatMethodInfo);
+                ilProcessor.Emit(OpCodes.Call, methodReference);
                 return;
             default:
                 return;
