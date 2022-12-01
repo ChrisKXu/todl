@@ -86,7 +86,16 @@ internal sealed partial class Emitter
                 ilProcessor.Emit(OpCodes.Cgt);
                 return;
             case BoundBinaryOperatorKind.LogicalAnd:
+                ilProcessor.Emit(OpCodes.And);
+                return;
             case BoundBinaryOperatorKind.LogicalOr:
+                ilProcessor.Emit(OpCodes.Or);
+                return;
+            case BoundBinaryOperatorKind.NumericAddition:
+                ilProcessor.Emit(OpCodes.Add);
+                return;
+            case BoundBinaryOperatorKind.NumericSubstraction:
+                ilProcessor.Emit(OpCodes.Sub);
                 return;
             case BoundBinaryOperatorKind.StringConcatenation:
                 var methodReference = methodBody.Method.Module.ImportReference(StringConcatMethodInfo);

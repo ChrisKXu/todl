@@ -1,4 +1,6 @@
-﻿using Mono.Cecil.Cil;
+﻿using System;
+using System.Diagnostics;
+using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
