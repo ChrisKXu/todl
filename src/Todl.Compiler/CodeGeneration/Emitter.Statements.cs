@@ -57,13 +57,19 @@ internal sealed partial class Emitter
         var ilProcessor = methodBody.GetILProcessor();
 
         var elseLabel = ilProcessor.Create(OpCodes.Nop);
+        var continuationLabel = ilProcessor.Create(OpCodes.Nop);
+
         ilProcessor.Emit(OpCodes.Brfalse, elseLabel);
 
         EmitStatement(methodBody, boundConditionalStatement.Consequence);
+        ilProcessor.Emit(OpCodes.Br, continuationLabel);
 
         ilProcessor.Append(elseLabel);
 
         EmitStatement(methodBody, boundConditionalStatement.Alternative);
+        ilProcessor.Emit(OpCodes.Br, continuationLabel);
+
+        ilProcessor.Append(continuationLabel);
     }
 
     private void EmitVariableDeclarationStatement(MethodBody methodBody, BoundVariableDeclarationStatement boundVariableDeclarationStatement)

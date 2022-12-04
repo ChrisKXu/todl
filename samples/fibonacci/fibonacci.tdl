@@ -6,7 +6,7 @@ void Main() {
 }
 
 int fibonacci(int i) {
-    if i <= 0 {
+    unless i > 0 {
         return -1;
     }
 
