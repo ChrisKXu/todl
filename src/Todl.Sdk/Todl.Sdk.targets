@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask TaskName="Todl.Sdk.CoreTodlCompileTask"
+             AssemblyFile="Todl.Sdk.dll"
+             Condition="$(IsTodlProject)"/>
+
+  <Target Name="CreateManifestResourceNames" Condition="$(IsTodlProject)" />
+
+  <Target Name="CoreCompile" DependsOnTargets="$(CoreCompileDependsOn)" Condition="$(IsTodlProject)">
+    <CoreTodlCompileTask IntermediateAssembly="@(IntermediateAssembly)"
+                         SourceFiles="@(Compile)"
+                         References="@(ReferencePath)" />
+  </Target>
+</Project>
