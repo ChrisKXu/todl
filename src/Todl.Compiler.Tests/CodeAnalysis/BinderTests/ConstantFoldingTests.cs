@@ -15,6 +15,7 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = 10; const b = a * 2;", 20)]
     [InlineData("const a = true;", true)]
     [InlineData("const a = true; const b = a && false", false)]
+    [InlineData("const a = -20;", -20)]
     public void BasicConstantFoldingTests(string inputText, object expectedValue)
     {
         var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
