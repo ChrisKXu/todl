@@ -1,8 +1,8 @@
 import { Console } from System;
 
 void Main() {
-    const result = fibonacci(5);
-    Console.WriteLine("The result of fibonacci(5) is " + result.ToString());
+    const result = fibonacci(20);
+    Console.WriteLine("The result of fibonacci(20) is " + result.ToString());
 }
 
 int fibonacci(int i) {

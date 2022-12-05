@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="../Directory.Build.props" />
-  <Import Project="$(OutputRoot)/src/Todl.Sdk/Published/Todl.Sdk.props" />
-  <Import Project="$(OutputRoot)/src/Todl.Sdk/Published/Todl.Sdk.targets" />
+  
+  <PropertyGroup>
+    <_TodlSdkPath>$(OutputRoot)/src/Todl.Sdk/Published</_TodlSdkPath>
+  </PropertyGroup>
+  
+  <Import Project="$(_TodlSdkPath)/Todl.Sdk.props" />
 </Project>

@@ -3,6 +3,5 @@
   <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.tdlproj'">
     <DefaultLanguageSourceExtension>.tdl</DefaultLanguageSourceExtension>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-    <IsTodlProject>true</IsTodlProject>
   </PropertyGroup>
 </Project>
