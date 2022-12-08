@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -10,7 +9,7 @@ using MethodInfo = System.Reflection.MethodInfo;
 
 namespace Todl.Compiler.CodeGeneration;
 
-internal sealed partial class Emitter
+internal partial class Emitter
 {
     private static readonly MethodInfo StringConcatMethodInfo = typeof(string)
         .GetMethods(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)

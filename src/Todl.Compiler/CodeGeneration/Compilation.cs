@@ -67,7 +67,7 @@ public sealed class Compilation : IDisposable, IDiagnosable
 
     public AssemblyDefinition Emit()
     {
-        var emitter = new Emitter(this);
+        var emitter = Emitter.CreateAssemblyEmitter(this);
         return emitter.Emit();
     }
 
