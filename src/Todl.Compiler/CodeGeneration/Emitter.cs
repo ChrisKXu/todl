@@ -14,7 +14,7 @@ internal partial class Emitter
 
     private BuiltInTypes BuiltInTypes => Compilation.ClrTypeCache.BuiltInTypes;
 
-    public Emitter Parent { get; private init; }
+    public Emitter Parent { get; protected init; }
 
     public virtual Compilation Compilation
         => Parent?.Compilation;
@@ -22,12 +22,17 @@ internal partial class Emitter
     public virtual AssemblyDefinition AssemblyDefinition
         => Parent?.AssemblyDefinition;
 
+    public virtual BoundTodlTypeDefinition BoundTodlTypeDefinition
+        => Parent?.BoundTodlTypeDefinition;
+
+    public virtual TypeDefinition TypeDefinition
+        => Parent?.TypeDefinition;
+
     public AssemblyDefinition Emit()
     {
-        var entryPointType = EmitEntryPointType(Compilation.MainModule.EntryPointType);
-
+        var typeEmitter = CreateTypeEmitter(Compilation.MainModule.EntryPointType);
+        var entryPointType = typeEmitter.EmitTodlType();
         AssemblyDefinition.MainModule.Types.Add(entryPointType);
-
         return AssemblyDefinition;
     }
 
@@ -68,6 +73,9 @@ internal partial class Emitter
     public static AssemblyEmitter CreateAssemblyEmitter(Compilation compilation)
         => new(compilation);
 
+    public TypeEmitter CreateTypeEmitter(BoundTodlTypeDefinition boundTodlTypeDefinition)
+        => new(this, boundTodlTypeDefinition);
+
     internal sealed class AssemblyEmitter : Emitter
     {
         private readonly Compilation compilation;
@@ -83,5 +91,26 @@ internal partial class Emitter
 
         public override Compilation Compilation => compilation;
         public override AssemblyDefinition AssemblyDefinition => assemblyDefinition;
+    }
+
+    internal sealed class TypeEmitter : Emitter
+    {
+        private readonly BoundTodlTypeDefinition boundTodlTypeDefinition;
+        private readonly TypeDefinition typeDefinition;
+
+        internal TypeEmitter(Emitter parent, BoundTodlTypeDefinition boundTodlTypeDefinition)
+        {
+            Parent = parent;
+            this.boundTodlTypeDefinition = boundTodlTypeDefinition;
+
+            typeDefinition = new TypeDefinition(
+                @namespace: Compilation.AssemblyName,
+                name: boundTodlTypeDefinition.Name,
+                attributes: TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract,
+                baseType: ResolveTypeReference(BuiltInTypes.Object));
+        }
+
+        public override BoundTodlTypeDefinition BoundTodlTypeDefinition => boundTodlTypeDefinition;
+        public override TypeDefinition TypeDefinition => typeDefinition;
     }
 }

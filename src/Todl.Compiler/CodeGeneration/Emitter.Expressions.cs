@@ -11,6 +11,7 @@ namespace Todl.Compiler.CodeGeneration;
 
 internal partial class Emitter
 {
+    // TODO: Replace this with proper lowering logic
     private static readonly MethodInfo StringConcatMethodInfo = typeof(string)
         .GetMethods(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
         .Single(m => m.Name == nameof(string.Concat)

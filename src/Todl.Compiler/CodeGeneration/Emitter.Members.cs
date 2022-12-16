@@ -7,24 +7,19 @@ namespace Todl.Compiler.CodeGeneration;
 
 internal partial class Emitter
 {
-    public TypeDefinition EmitEntryPointType(BoundEntryPointTypeDefinition boundEntryPointTypeDefinition)
+    public TypeDefinition EmitTodlType()
     {
-        var entryPointType = new TypeDefinition(
-            @namespace: Compilation.AssemblyName,
-            name: boundEntryPointTypeDefinition.Name,
-            attributes: TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract,
-            baseType: ResolveTypeReference(BuiltInTypes.Object));
-
-        var functionMembers = boundEntryPointTypeDefinition.BoundMembers.OfType<BoundFunctionMember>();
+        var functionMembers = BoundTodlTypeDefinition.BoundMembers.OfType<BoundFunctionMember>();
 
         // Emit function reference first
         foreach (var functionMember in functionMembers)
         {
             var methodDefinition = EmitFunctionMemberReference(functionMember);
-            entryPointType.Methods.Add(methodDefinition);
+            TypeDefinition.Methods.Add(methodDefinition);
             methodReferences[functionMember.FunctionSymbol] = methodDefinition;
 
-            if (functionMember == boundEntryPointTypeDefinition.EntryPointFunctionMember)
+            if (BoundTodlTypeDefinition is BoundEntryPointTypeDefinition entryPointType
+                && functionMember == entryPointType.EntryPointFunctionMember)
             {
                 AssemblyDefinition.EntryPoint = methodDefinition;
             }
@@ -36,7 +31,7 @@ internal partial class Emitter
             EmitFunctionMember(methodReferences[functionMember.FunctionSymbol], functionMember);
         }
 
-        return entryPointType;
+        return TypeDefinition;
     }
 
     private MethodDefinition EmitFunctionMemberReference(BoundFunctionMember functionMember)
