@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
@@ -124,14 +123,12 @@ internal partial class Emitter
 
     private void EmitTodlFunctionCallExpression(MethodBody methodBody, BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
     {
-        Debug.Assert(methodReferences.ContainsKey(boundTodlFunctionCallExpression.FunctionSymbol));
-
         foreach (var argument in boundTodlFunctionCallExpression.BoundArguments.Values)
         {
             EmitExpression(methodBody, argument);
         }
 
-        var methodReference = methodReferences[boundTodlFunctionCallExpression.FunctionSymbol];
+        var methodReference = ResolveMethodReference(boundTodlFunctionCallExpression);
         methodBody.GetILProcessor().Emit(OpCodes.Call, methodReference);
     }
 }

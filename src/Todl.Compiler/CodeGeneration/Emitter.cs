@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis;
@@ -9,7 +10,6 @@ namespace Todl.Compiler.CodeGeneration;
 
 internal partial class Emitter
 {
-    private readonly Dictionary<FunctionSymbol, MethodDefinition> methodReferences = new();
     private readonly Dictionary<LocalVariableSymbol, VariableDefinition> variables = new();
 
     private BuiltInTypes BuiltInTypes => Compilation.ClrTypeCache.BuiltInTypes;
@@ -28,13 +28,11 @@ internal partial class Emitter
     public virtual TypeDefinition TypeDefinition
         => Parent?.TypeDefinition;
 
-    public AssemblyDefinition Emit()
-    {
-        var typeEmitter = CreateTypeEmitter(Compilation.MainModule.EntryPointType);
-        var entryPointType = typeEmitter.EmitTodlType();
-        AssemblyDefinition.MainModule.Types.Add(entryPointType);
-        return AssemblyDefinition;
-    }
+    public virtual BoundFunctionMember BoundFunctionMember
+        => Parent?.BoundFunctionMember;
+
+    public virtual MethodDefinition MethodDefinition
+        => Parent?.MethodDefinition;
 
     private TypeReference ResolveTypeReference(ClrTypeSymbol clrTypeSymbol)
     {
@@ -70,11 +68,19 @@ internal partial class Emitter
         return methodReference;
     }
 
+    protected virtual MethodReference ResolveMethodReference(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
+    {
+        return Parent.ResolveMethodReference(boundTodlFunctionCallExpression);
+    }
+
     public static AssemblyEmitter CreateAssemblyEmitter(Compilation compilation)
         => new(compilation);
 
     public TypeEmitter CreateTypeEmitter(BoundTodlTypeDefinition boundTodlTypeDefinition)
         => new(this, boundTodlTypeDefinition);
+
+    public FunctionEmitter CreateFunctionEmitter(BoundFunctionMember boundFunctionMember)
+        => new(this, boundFunctionMember);
 
     internal sealed class AssemblyEmitter : Emitter
     {
@@ -91,10 +97,19 @@ internal partial class Emitter
 
         public override Compilation Compilation => compilation;
         public override AssemblyDefinition AssemblyDefinition => assemblyDefinition;
+
+        public AssemblyDefinition Emit()
+        {
+            var typeEmitter = CreateTypeEmitter(Compilation.MainModule.EntryPointType);
+            var entryPointType = typeEmitter.Emit();
+            AssemblyDefinition.MainModule.Types.Add(entryPointType);
+            return AssemblyDefinition;
+        }
     }
 
     internal sealed class TypeEmitter : Emitter
     {
+        private readonly Dictionary<FunctionSymbol, MethodDefinition> methodReferences = new();
         private readonly BoundTodlTypeDefinition boundTodlTypeDefinition;
         private readonly TypeDefinition typeDefinition;
 
@@ -112,5 +127,72 @@ internal partial class Emitter
 
         public override BoundTodlTypeDefinition BoundTodlTypeDefinition => boundTodlTypeDefinition;
         public override TypeDefinition TypeDefinition => typeDefinition;
+
+        public TypeDefinition Emit()
+        {
+            var functionMembers = BoundTodlTypeDefinition.BoundMembers.OfType<BoundFunctionMember>();
+            var functionEmitters = new List<FunctionEmitter>();
+
+            // Emit function reference first
+            foreach (var functionMember in functionMembers)
+            {
+                var functionEmitter = CreateFunctionEmitter(functionMember);
+                var methodDefinition = functionEmitter.MethodDefinition;
+                functionEmitters.Add(functionEmitter);
+                TypeDefinition.Methods.Add(methodDefinition);
+                methodReferences[functionMember.FunctionSymbol] = methodDefinition;
+
+                if (BoundTodlTypeDefinition is BoundEntryPointTypeDefinition entryPointType
+                    && functionMember == entryPointType.EntryPointFunctionMember)
+                {
+                    AssemblyDefinition.EntryPoint = methodDefinition;
+                }
+            }
+
+            // Emit function body
+            functionEmitters.ForEach(e => e.Emit());
+
+            return TypeDefinition;
+        }
+
+        protected override MethodReference ResolveMethodReference(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
+            => methodReferences[boundTodlFunctionCallExpression.FunctionSymbol];
+    }
+
+    internal sealed partial class FunctionEmitter : Emitter
+    {
+        private readonly BoundFunctionMember boundFunctionMember;
+        private readonly MethodDefinition methodDefinition;
+
+        internal FunctionEmitter(Emitter parent, BoundFunctionMember boundFunctionMember)
+        {
+            Parent = parent;
+            this.boundFunctionMember = boundFunctionMember;
+
+            var attributes = MethodAttributes.Static;
+            attributes |= boundFunctionMember.IsPublic ? MethodAttributes.Public : MethodAttributes.Private;
+
+            methodDefinition = new MethodDefinition(
+                name: boundFunctionMember.FunctionSymbol.Name,
+                attributes: attributes,
+                returnType: ResolveTypeReference(boundFunctionMember.ReturnType as ClrTypeSymbol));
+
+            foreach (var parameter in BoundFunctionMember.FunctionSymbol.Parameters)
+            {
+                methodDefinition.Parameters.Add(new(
+                    name: parameter.Name,
+                    attributes: ParameterAttributes.None,
+                    parameterType: ResolveTypeReference(parameter.Type as ClrTypeSymbol)));
+            }
+        }
+
+        public override BoundFunctionMember BoundFunctionMember => boundFunctionMember;
+        public override MethodDefinition MethodDefinition => methodDefinition;
+
+        public MethodDefinition Emit()
+        {
+            EmitStatement(MethodDefinition.Body, BoundFunctionMember.Body);
+            return MethodDefinition;
+        }
     }
 }
