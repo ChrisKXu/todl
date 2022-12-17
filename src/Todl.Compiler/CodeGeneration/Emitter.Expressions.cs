@@ -98,7 +98,7 @@ internal partial class Emitter
                 ilProcessor.Emit(OpCodes.Sub);
                 return;
             case BoundBinaryOperatorKind.StringConcatenation:
-                var methodReference = methodBody.Method.Module.ImportReference(StringConcatMethodInfo);
+                var methodReference = AssemblyDefinition.MainModule.ImportReference(StringConcatMethodInfo);
                 ilProcessor.Emit(OpCodes.Call, methodReference);
                 return;
             default:
