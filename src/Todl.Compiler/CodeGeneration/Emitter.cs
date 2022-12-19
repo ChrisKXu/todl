@@ -163,6 +163,7 @@ internal partial class Emitter
     {
         private readonly BoundFunctionMember boundFunctionMember;
         private readonly MethodDefinition methodDefinition;
+        private readonly ILProcessor ilProcessor;
 
         internal FunctionEmitter(Emitter parent, BoundFunctionMember boundFunctionMember)
         {
@@ -184,6 +185,8 @@ internal partial class Emitter
                     attributes: ParameterAttributes.None,
                     parameterType: ResolveTypeReference(parameter.Type as ClrTypeSymbol)));
             }
+
+            ilProcessor = methodDefinition.Body.GetILProcessor();
         }
 
         public override BoundFunctionMember BoundFunctionMember => boundFunctionMember;
@@ -191,7 +194,7 @@ internal partial class Emitter
 
         public MethodDefinition Emit()
         {
-            EmitStatement(MethodDefinition.Body, BoundFunctionMember.Body);
+            EmitStatement(BoundFunctionMember.Body);
             return MethodDefinition;
         }
     }
