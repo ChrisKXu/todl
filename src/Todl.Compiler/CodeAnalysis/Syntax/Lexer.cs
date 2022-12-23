@@ -102,7 +102,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             }
         }
 
-        private SyntaxKind ReadNumber()
+        private SyntaxKind ReadNumericLiteral()
         {
             // currently we only support integers (123) or floating points in 123.45 format
             // will revisit this part and support other formats as well
@@ -205,7 +205,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 case '7':
                 case '8':
                 case '9':
-                    kind = ReadNumber();
+                    kind = ReadNumericLiteral();
                     break;
                 case '"':
                     (kind, errorCode) = ReadString();
@@ -379,6 +379,11 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     }
                     break;
                 case '.':
+                    if (char.IsDigit(Peak))
+                    {
+                        kind = ReadNumericLiteral();
+                        break;
+                    }
                     kind = SyntaxKind.DotToken;
                     ++this.position;
                     break;
