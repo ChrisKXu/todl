@@ -86,6 +86,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             { SyntaxKind.AmpersandAmpersandToken, "&&" },
             { SyntaxKind.PipeToken, "|" },
             { SyntaxKind.PipePipeToken, "||" },
+            { SyntaxKind.TildeToken, "~" },
             { SyntaxKind.DotToken, "." },
             { SyntaxKind.CommaToken, "," },
             { SyntaxKind.TrueKeywordToken, "true" },
