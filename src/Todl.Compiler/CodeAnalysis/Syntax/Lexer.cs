@@ -104,19 +104,72 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
 
         private SyntaxKind ReadNumericLiteral()
         {
-            // currently we only support integers (123) or floating points in 123.45 format
-            // will revisit this part and support other formats as well
-            while (true)
-            {
-                if (char.IsDigit(Current)
+            while (char.IsDigit(Current)
                     || (Current == '.' && char.IsDigit(Peak)))
+            {
+                ++position;
+            }
+
+            if (Current == 'f' || Current == 'F' || Current == 'd' || Current == 'D')
+            {
+                ++position;
+            }
+            else
+            {
+                if (Current == 'u' || Current == 'U')
                 {
-                    ++this.position;
+                    ++position;
                 }
-                else
+
+                if (Current == 'l' || Current == 'L')
                 {
-                    break;
+                    ++position;
                 }
+            }
+
+            return SyntaxKind.NumberToken;
+        }
+
+        private SyntaxKind ReadBinaryNumericLiteral()
+        {
+            position += 2;
+            while (Current == '0' || Current == '1')
+            {
+                ++position;
+            }
+
+            if (Current == 'u' || Current == 'U')
+            {
+                ++position;
+            }
+
+            if (Current == 'l' || Current == 'L')
+            {
+                ++position;
+            }
+
+            return SyntaxKind.NumberToken;
+        }
+
+        private SyntaxKind ReadHexadecimalNumericLiteral()
+        {
+            position += 2;
+
+            while (char.IsDigit(Current)
+                || (Current >= 'a' && Current <= 'f')
+                || (Current >= 'A' && Current <= 'F'))
+            {
+                ++position;
+            }
+
+            if (Current == 'u' || Current == 'U')
+            {
+                ++position;
+            }
+
+            if (Current == 'l' || Current == 'L')
+            {
+                ++position;
             }
 
             return SyntaxKind.NumberToken;
@@ -196,6 +249,19 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                     kind = SyntaxKind.EndOfFileToken;
                     break;
                 case '0':
+                    if (Peak == 'b' || Peak == 'B')
+                    {
+                        kind = ReadBinaryNumericLiteral();
+                    }
+                    else if (Peak == 'x' || Peak == 'X')
+                    {
+                        kind = ReadHexadecimalNumericLiteral();
+                    }
+                    else
+                    {
+                        kind = ReadNumericLiteral();
+                    }
+                    break;
                 case '1':
                 case '2':
                 case '3':
