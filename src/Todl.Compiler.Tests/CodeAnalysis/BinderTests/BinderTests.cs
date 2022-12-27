@@ -55,21 +55,6 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             => SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
 
         [Theory]
-        [InlineData("\"\"", "")]
-        [InlineData("\"abcd\"", "abcd")]
-        [InlineData("\"ab\\\"cd\"", "ab\"cd")]
-        [InlineData("@\"abcd\"", "abcd")]
-        [InlineData("@\"ab\\\"cd\"", "ab\\\"cd")]
-        public void TestBindStringConstant(string input, string expectedOutput)
-        {
-            var boundConstant = BindExpression<BoundConstant>(input);
-
-            boundConstant.Should().NotBeNull();
-            boundConstant.ResultType.Should().Be(builtInTypes.String);
-            boundConstant.Value.Should().Be(expectedOutput);
-        }
-
-        [Theory]
         [MemberData(nameof(GetTestBindAssignmentExpressionDataWithEqualsToken))]
         public void TestBindAssignmentExpressionEqualsToken(string input, string variableName, TypeSymbol expectedResultType)
         {

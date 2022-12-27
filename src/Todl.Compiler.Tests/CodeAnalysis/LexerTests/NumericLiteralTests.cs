@@ -21,6 +21,8 @@ public sealed partial class LexerTests
     [InlineData("100L")]
     [InlineData("100ul")]
     [InlineData("100UL")]
+    [InlineData("123f")]
+    [InlineData("123d")]
     [InlineData("123.456f")]
     [InlineData("123.456F")]
     [InlineData("123.456d")]

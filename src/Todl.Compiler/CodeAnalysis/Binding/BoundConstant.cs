@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -18,8 +19,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
     public partial class Binder
     {
         private BoundExpression BindLiteralExpression(LiteralExpression literalExpression)
-        {
-            return literalExpression.LiteralToken.Kind switch
+            => literalExpression.LiteralToken.Kind switch
             {
                 SyntaxKind.NumberToken => BindNumericConstant(literalExpression),
                 SyntaxKind.StringToken => BindStringConstant(literalExpression),
@@ -27,27 +27,64 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     => BindBooleanConstant(literalExpression),
                 _ => ReportUnsupportedLiteral(literalExpression)
             };
+
+        private object ConvertToIntOrLong(string input, int @base)
+        {
+            try
+            {
+                return Convert.ToInt32(input, @base);
+            }
+            catch (OverflowException)
+            {
+                return Convert.ToInt64(input, @base);
+            }
         }
 
         private BoundConstant BindNumericConstant(LiteralExpression literalExpression)
         {
             var text = literalExpression.LiteralToken.Text.ToReadOnlyTextSpan();
 
-            if (int.TryParse(text, out var parsedInt))
+            var @base = 10;
+            var startIndex = 0;
+
+            if (text.StartsWith("0x") || text.StartsWith("0X"))
             {
-                return BoundNodeFactory.CreateBoundConstant(
-                    syntaxNode: literalExpression,
-                    value: parsedInt);
+                @base = 16;
+                startIndex = 2;
+            }
+            else if (text.StartsWith("0b") || text.StartsWith("0B"))
+            {
+                @base = 2;
+                startIndex = 2;
             }
 
-            if (double.TryParse(text, out var parsedDouble))
+            var value = text[^1] switch
             {
-                return BoundNodeFactory.CreateBoundConstant(
-                    syntaxNode: literalExpression,
-                    value: parsedDouble);
-            }
+                'f' or 'F' => @base switch
+                {
+                    10 => float.Parse(text[0..^1]),
+                    _ => ConvertToIntOrLong(text[startIndex..].ToString(), @base)
+                },
+                'd' or 'D' => @base switch
+                {
+                    10 => double.Parse(text[0..^1]),
+                    _ => ConvertToIntOrLong(text[startIndex..].ToString(), @base),
+                },
+                'u' or 'U' => Convert.ToUInt32(text[startIndex..^1].ToString(), @base),
+                'l' or 'L' => text[^2] switch
+                {
+                    'u' or 'U' => Convert.ToUInt64(text[startIndex..^2].ToString(), @base),
+                    _ => Convert.ToInt64(text[startIndex..^1].ToString(), @base)
+                },
+                _ when text.Contains('.') => double.Parse(text),
+                _ => ConvertToIntOrLong(text[startIndex..].ToString(), @base)
+            };
 
-            return ReportUnsupportedLiteral(literalExpression);
+            return value is not null
+                ? BoundNodeFactory.CreateBoundConstant(
+                syntaxNode: literalExpression,
+                value: value)
+                : ReportUnsupportedLiteral(literalExpression);
         }
 
         private BoundConstant BindStringConstant(LiteralExpression literalExpression)
