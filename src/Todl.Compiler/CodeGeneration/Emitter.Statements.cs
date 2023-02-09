@@ -6,9 +6,9 @@ namespace Todl.Compiler.CodeGeneration;
 
 internal partial class Emitter
 {
-    internal sealed partial class FunctionEmitter
+    internal partial class InstructionEmitter
     {
-        private void EmitStatement(BoundStatement boundStatement)
+        public void EmitStatement(BoundStatement boundStatement)
         {
             switch (boundStatement)
             {
@@ -47,42 +47,42 @@ internal partial class Emitter
                 EmitExpression(boundReturnStatement.BoundReturnValueExpression);
             }
 
-            ilProcessor.Emit(OpCodes.Ret);
+            ILProcessor.Emit(OpCodes.Ret);
         }
 
         private void EmitConditionalStatement(BoundConditionalStatement boundConditionalStatement)
         {
             EmitExpression(boundConditionalStatement.Condition);
 
-            var elseLabel = ilProcessor.Create(OpCodes.Nop);
-            var continuationLabel = ilProcessor.Create(OpCodes.Nop);
+            var elseLabel = ILProcessor.Create(OpCodes.Nop);
+            var continuationLabel = ILProcessor.Create(OpCodes.Nop);
 
-            ilProcessor.Emit(OpCodes.Brfalse, elseLabel);
+            ILProcessor.Emit(OpCodes.Brfalse, elseLabel);
 
             EmitStatement(boundConditionalStatement.Consequence);
-            ilProcessor.Emit(OpCodes.Br, continuationLabel);
+            ILProcessor.Emit(OpCodes.Br, continuationLabel);
 
-            ilProcessor.Append(elseLabel);
+            ILProcessor.Append(elseLabel);
 
             EmitStatement(boundConditionalStatement.Alternative);
-            ilProcessor.Emit(OpCodes.Br, continuationLabel);
+            ILProcessor.Emit(OpCodes.Br, continuationLabel);
 
-            ilProcessor.Append(continuationLabel);
+            ILProcessor.Append(continuationLabel);
         }
 
         private void EmitVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)
         {
-            methodDefinition.Body.InitLocals = true;
+            ILProcessor.Body.InitLocals = true;
 
             var variable = boundVariableDeclarationStatement.Variable;
             var variableDefinition = new VariableDefinition(ResolveTypeReference(variable.Type as ClrTypeSymbol));
-            methodDefinition.Body.Variables.Add(variableDefinition);
+            ILProcessor.Body.Variables.Add(variableDefinition);
             variables[variable] = variableDefinition;
 
             if (boundVariableDeclarationStatement.InitializerExpression is not null)
             {
                 EmitExpression(boundVariableDeclarationStatement.InitializerExpression);
-                ilProcessor.Emit(OpCodes.Stloc, variableDefinition);
+                ILProcessor.Emit(OpCodes.Stloc, variableDefinition);
             }
         }
     }
