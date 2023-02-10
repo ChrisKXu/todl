@@ -8,8 +8,21 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
-    public sealed class LexerTests
+    public sealed partial class LexerTests
     {
+        private SyntaxToken LexSingle(string text)
+        {
+            var lexer = new Lexer() { SourceText = SourceText.FromString(text) };
+            lexer.Lex();
+
+            var tokens = lexer.SyntaxTokens;
+            tokens.Count.Should().Be(2);
+            tokens.Last().Kind.Should().Be(SyntaxKind.EndOfFileToken);
+            lexer.SyntaxTokens[0].GetDiagnostics().Should().BeEmpty();
+
+            return tokens.First();
+        }
+
         [Fact]
         public void TestLexerBasics()
         {
@@ -26,14 +39,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [MemberData(nameof(GetTestSingleTokenData))]
         public void TestSingleToken(SyntaxKind kind, string text)
         {
-            var sourceText = SourceText.FromString(text);
-            var lexer = new Lexer() { SourceText = sourceText };
-            lexer.Lex();
-
-            lexer.SyntaxTokens.Count.Should().Be(2); // the expected token + EndOfFileToken
-            lexer.SyntaxTokens[0].GetDiagnostics().Should().BeEmpty();
-
-            var token = lexer.SyntaxTokens[0];
+            var token = LexSingle(text);
             token.Kind.Should().Be(kind);
             token.Text.Should().Be(text);
         }
@@ -125,14 +131,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("@\"ab\\\"cd\"")]
         public void TestStringToken(string text)
         {
-            var sourceText = SourceText.FromString(text);
-            var lexer = new Lexer() { SourceText = sourceText };
-            lexer.Lex();
-
-            lexer.SyntaxTokens.Count.Should().Be(2); // the expected token + EndOfFileToken
-            lexer.SyntaxTokens[0].GetDiagnostics().Should().BeEmpty();
-
-            var token = lexer.SyntaxTokens[0];
+            var token = LexSingle(text);
             token.Kind.Should().Be(SyntaxKind.StringToken);
             token.Text.Should().Be(text);
         }

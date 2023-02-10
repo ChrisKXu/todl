@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Mono.Cecil.Cil;
+using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
@@ -10,7 +11,7 @@ namespace Todl.Compiler.CodeGeneration;
 
 internal partial class Emitter
 {
-    internal sealed partial class FunctionEmitter
+    internal partial class InstructionEmitter
     {
         // TODO: Replace this with proper lowering logic
         private static readonly MethodInfo StringConcatMethodInfo = typeof(string)
@@ -19,7 +20,7 @@ internal partial class Emitter
                 && m.GetParameters().Length == 2
                 && m.GetParameters()[0].ParameterType.Equals(typeof(string)));
 
-        private void EmitExpression(BoundExpression boundExpression)
+        public void EmitExpression(BoundExpression boundExpression)
         {
             switch (boundExpression)
             {
@@ -45,13 +46,95 @@ internal partial class Emitter
 
         private void EmitConstant(BoundConstant boundConstant)
         {
-            if (boundConstant.ResultType.Equals(BuiltInTypes.Int32))
+            var resultType = boundConstant.ResultType;
+
+            if (resultType.Equals(BuiltInTypes.String))
             {
-                ilProcessor.Emit(OpCodes.Ldc_I4, (int)boundConstant.Value);
+                ILProcessor.Emit(OpCodes.Ldstr, (string)boundConstant.Value);
             }
-            else if (boundConstant.ResultType.Equals(BuiltInTypes.String))
+            else if (resultType.Equals(BuiltInTypes.Boolean))
             {
-                ilProcessor.Emit(OpCodes.Ldstr, (string)boundConstant.Value);
+                EmitIntValue((bool)boundConstant.Value ? 1 : 0);
+            }
+            else if (resultType.Equals(BuiltInTypes.Float))
+            {
+                ILProcessor.Emit(OpCodes.Ldc_R4, (float)boundConstant.Value);
+            }
+            else if (resultType.Equals(BuiltInTypes.Double))
+            {
+                ILProcessor.Emit(OpCodes.Ldc_R8, (double)boundConstant.Value);
+            }
+            else if (resultType.Equals(BuiltInTypes.Int32) || resultType.Equals(BuiltInTypes.UInt32))
+            {
+                EmitInt32Constant(boundConstant);
+            }
+            else if (resultType.Equals(BuiltInTypes.Int64) || resultType.Equals(BuiltInTypes.UInt64))
+            {
+                EmitInt64Constant(boundConstant);
+            }
+        }
+
+        private void EmitIntValue(int intValue)
+        {
+            var opCode = intValue switch
+            {
+                -1 => OpCodes.Ldc_I4_M1,
+                0 => OpCodes.Ldc_I4_0,
+                1 => OpCodes.Ldc_I4_1,
+                2 => OpCodes.Ldc_I4_2,
+                3 => OpCodes.Ldc_I4_3,
+                4 => OpCodes.Ldc_I4_4,
+                5 => OpCodes.Ldc_I4_5,
+                6 => OpCodes.Ldc_I4_6,
+                7 => OpCodes.Ldc_I4_7,
+                8 => OpCodes.Ldc_I4_8,
+                _ => OpCodes.Nop
+            };
+
+            if (opCode != OpCodes.Nop)
+            {
+                ILProcessor.Emit(opCode);
+                return;
+            }
+
+            if (unchecked((sbyte)intValue) == intValue)
+            {
+                ILProcessor.Emit(OpCodes.Ldc_I4_S, unchecked((sbyte)intValue));
+            }
+            else
+            {
+                ILProcessor.Emit(OpCodes.Ldc_I4, intValue);
+            }
+        }
+
+        private void EmitInt32Constant(BoundConstant boundConstant)
+        {
+            var intValue = boundConstant.ResultType.Equals(BuiltInTypes.Int32)
+                ? unchecked((int)boundConstant.Value)
+                : unchecked((int)(uint)boundConstant.Value);
+
+            EmitIntValue(intValue);
+        }
+
+        private void EmitInt64Constant(BoundConstant boundConstant)
+        {
+            var longValue = boundConstant.ResultType.Equals(BuiltInTypes.Int64)
+                ? unchecked((long)boundConstant.Value)
+                : unchecked((long)(ulong)boundConstant.Value);
+
+            if (longValue >= int.MinValue && longValue <= int.MaxValue)
+            {
+                EmitIntValue(unchecked((int)longValue));
+                ILProcessor.Emit(OpCodes.Conv_I8);
+            }
+            else if (longValue > int.MaxValue && longValue <= uint.MaxValue)
+            {
+                EmitIntValue(unchecked((int)longValue));
+                ILProcessor.Emit(OpCodes.Conv_U8);
+            }
+            else
+            {
+                ILProcessor.Emit(OpCodes.Ldc_I8, longValue);
             }
         }
 
@@ -68,7 +151,7 @@ internal partial class Emitter
             }
 
             var methodReference = ResolveMethodReference(boundClrFunctionCallExpression);
-            ilProcessor.Emit(OpCodes.Call, methodReference);
+            ILProcessor.Emit(OpCodes.Call, methodReference);
         }
 
         private void EmitBinaryExpression(BoundBinaryExpression boundBinaryExpression)
@@ -79,26 +162,26 @@ internal partial class Emitter
             switch (boundBinaryExpression.Operator.BoundBinaryOperatorKind)
             {
                 case BoundBinaryOperatorKind.Equality:
-                    ilProcessor.Emit(OpCodes.Ceq);
+                    ILProcessor.Emit(OpCodes.Ceq);
                     return;
                 case BoundBinaryOperatorKind.Comparison:
-                    ilProcessor.Emit(OpCodes.Cgt);
+                    ILProcessor.Emit(OpCodes.Cgt);
                     return;
                 case BoundBinaryOperatorKind.LogicalAnd:
-                    ilProcessor.Emit(OpCodes.And);
+                    ILProcessor.Emit(OpCodes.And);
                     return;
                 case BoundBinaryOperatorKind.LogicalOr:
-                    ilProcessor.Emit(OpCodes.Or);
+                    ILProcessor.Emit(OpCodes.Or);
                     return;
                 case BoundBinaryOperatorKind.NumericAddition:
-                    ilProcessor.Emit(OpCodes.Add);
+                    ILProcessor.Emit(OpCodes.Add);
                     return;
                 case BoundBinaryOperatorKind.NumericSubstraction:
-                    ilProcessor.Emit(OpCodes.Sub);
+                    ILProcessor.Emit(OpCodes.Sub);
                     return;
                 case BoundBinaryOperatorKind.StringConcatenation:
                     var methodReference = AssemblyDefinition.MainModule.ImportReference(StringConcatMethodInfo);
-                    ilProcessor.Emit(OpCodes.Call, methodReference);
+                    ILProcessor.Emit(OpCodes.Call, methodReference);
                     return;
                 default:
                     return;
@@ -110,11 +193,11 @@ internal partial class Emitter
             switch (boundVariableExpression.Variable)
             {
                 case ParameterSymbol parameter:
-                    var parameterDefinition = methodDefinition.Parameters.FirstOrDefault(p => p.Name.Equals(parameter.Name));
-                    ilProcessor.Emit(OpCodes.Ldarg, parameterDefinition);
+                    var parameterDefinition = ILProcessor.Body.Method.Parameters.FirstOrDefault(p => p.Name.Equals(parameter.Name));
+                    ILProcessor.Emit(OpCodes.Ldarg, parameterDefinition);
                     break;
                 case LocalVariableSymbol localVariable:
-                    ilProcessor.Emit(OpCodes.Ldloca_S, variables[localVariable]);
+                    ILProcessor.Emit(OpCodes.Ldloca_S, variables[localVariable]);
                     break;
                 default:
                     throw new NotSupportedException();
@@ -129,7 +212,7 @@ internal partial class Emitter
             }
 
             var methodReference = ResolveMethodReference(boundTodlFunctionCallExpression);
-            ilProcessor.Emit(OpCodes.Call, methodReference);
+            ILProcessor.Emit(OpCodes.Call, methodReference);
         }
 
     }

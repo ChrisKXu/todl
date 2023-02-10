@@ -12,7 +12,7 @@ internal partial class Emitter
 {
     private readonly Dictionary<LocalVariableSymbol, VariableDefinition> variables = new();
 
-    private BuiltInTypes BuiltInTypes => Compilation.ClrTypeCache.BuiltInTypes;
+    protected virtual BuiltInTypes BuiltInTypes => Compilation.ClrTypeCache.BuiltInTypes;
 
     public Emitter Parent { get; protected init; }
 
@@ -27,12 +27,6 @@ internal partial class Emitter
 
     public virtual TypeDefinition TypeDefinition
         => Parent?.TypeDefinition;
-
-    public virtual BoundFunctionMember BoundFunctionMember
-        => Parent?.BoundFunctionMember;
-
-    public virtual MethodDefinition MethodDefinition
-        => Parent?.MethodDefinition;
 
     private TypeReference ResolveTypeReference(ClrTypeSymbol clrTypeSymbol)
     {
@@ -78,9 +72,6 @@ internal partial class Emitter
 
     public TypeEmitter CreateTypeEmitter(BoundTodlTypeDefinition boundTodlTypeDefinition)
         => new(this, boundTodlTypeDefinition);
-
-    public FunctionEmitter CreateFunctionEmitter(BoundFunctionMember boundFunctionMember)
-        => new(this, boundFunctionMember);
 
     internal sealed class AssemblyEmitter : Emitter
     {
@@ -155,17 +146,31 @@ internal partial class Emitter
             return TypeDefinition;
         }
 
+        public FunctionEmitter CreateFunctionEmitter(BoundFunctionMember boundFunctionMember)
+            => new(this, boundFunctionMember);
+
         protected override MethodReference ResolveMethodReference(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
             => methodReferences[boundTodlFunctionCallExpression.FunctionSymbol];
     }
 
-    internal sealed partial class FunctionEmitter : Emitter
+    internal abstract partial class InstructionEmitter : Emitter
+    {
+        public abstract ILProcessor ILProcessor { get; }
+
+        internal InstructionEmitter(Emitter parent)
+        {
+            Parent = parent;
+        }
+    }
+
+    internal sealed partial class FunctionEmitter : InstructionEmitter
     {
         private readonly BoundFunctionMember boundFunctionMember;
         private readonly MethodDefinition methodDefinition;
         private readonly ILProcessor ilProcessor;
 
         internal FunctionEmitter(Emitter parent, BoundFunctionMember boundFunctionMember)
+            : base(parent)
         {
             Parent = parent;
             this.boundFunctionMember = boundFunctionMember;
@@ -173,12 +178,12 @@ internal partial class Emitter
             var attributes = MethodAttributes.Static;
             attributes |= boundFunctionMember.IsPublic ? MethodAttributes.Public : MethodAttributes.Private;
 
-            methodDefinition = new MethodDefinition(
+            this.methodDefinition = new MethodDefinition(
                 name: boundFunctionMember.FunctionSymbol.Name,
                 attributes: attributes,
                 returnType: ResolveTypeReference(boundFunctionMember.ReturnType as ClrTypeSymbol));
 
-            foreach (var parameter in BoundFunctionMember.FunctionSymbol.Parameters)
+            foreach (var parameter in boundFunctionMember.FunctionSymbol.Parameters)
             {
                 methodDefinition.Parameters.Add(new(
                     name: parameter.Name,
@@ -189,13 +194,13 @@ internal partial class Emitter
             ilProcessor = methodDefinition.Body.GetILProcessor();
         }
 
-        public override BoundFunctionMember BoundFunctionMember => boundFunctionMember;
-        public override MethodDefinition MethodDefinition => methodDefinition;
+        public MethodDefinition MethodDefinition => methodDefinition;
+        public override ILProcessor ILProcessor => ilProcessor;
 
         public MethodDefinition Emit()
         {
-            EmitStatement(BoundFunctionMember.Body);
-            return MethodDefinition;
+            EmitStatement(boundFunctionMember.Body);
+            return methodDefinition;
         }
     }
 }
