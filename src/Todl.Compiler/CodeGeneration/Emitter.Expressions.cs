@@ -46,31 +46,31 @@ internal partial class Emitter
 
         private void EmitConstant(BoundConstant boundConstant)
         {
-            var resultType = boundConstant.ResultType;
-
-            if (resultType.Equals(BuiltInTypes.String))
+            switch (boundConstant.Value)
             {
-                ILProcessor.Emit(OpCodes.Ldstr, (string)boundConstant.Value);
-            }
-            else if (resultType.Equals(BuiltInTypes.Boolean))
-            {
-                EmitIntValue((bool)boundConstant.Value ? 1 : 0);
-            }
-            else if (resultType.Equals(BuiltInTypes.Float))
-            {
-                ILProcessor.Emit(OpCodes.Ldc_R4, (float)boundConstant.Value);
-            }
-            else if (resultType.Equals(BuiltInTypes.Double))
-            {
-                ILProcessor.Emit(OpCodes.Ldc_R8, (double)boundConstant.Value);
-            }
-            else if (resultType.Equals(BuiltInTypes.Int32) || resultType.Equals(BuiltInTypes.UInt32))
-            {
-                EmitInt32Constant(boundConstant);
-            }
-            else if (resultType.Equals(BuiltInTypes.Int64) || resultType.Equals(BuiltInTypes.UInt64))
-            {
-                EmitInt64Constant(boundConstant);
+                case ConstantNullValue:
+                    ILProcessor.Emit(OpCodes.Ldnull);
+                    return;
+                case ConstantStringValue constantStringValue:
+                    ILProcessor.Emit(OpCodes.Ldstr, constantStringValue.StringValue);
+                    return;
+                case ConstantBooleanValue constantBooleanValue:
+                    EmitIntValue(constantBooleanValue.Int32Value);
+                    return;
+                case ConstantFloatValue constantFloatValue:
+                    ILProcessor.Emit(OpCodes.Ldc_R4, constantFloatValue.FloatValue);
+                    return;
+                case ConstantDoubleValue constantDoubleValue:
+                    ILProcessor.Emit(OpCodes.Ldc_R8, constantDoubleValue.DoubleValue);
+                    return;
+                case ConstantInt32Value:
+                case ConstantUInt32Value:
+                    EmitIntValue(boundConstant.Value.Int32Value);
+                    return;
+                case ConstantInt64Value:
+                case ConstantUInt64Value:
+                    EmitInt64ConstantValue(boundConstant.Value);
+                    return;
             }
         }
 
@@ -107,20 +107,9 @@ internal partial class Emitter
             }
         }
 
-        private void EmitInt32Constant(BoundConstant boundConstant)
+        private void EmitInt64ConstantValue(ConstantValue constantValue)
         {
-            var intValue = boundConstant.ResultType.Equals(BuiltInTypes.Int32)
-                ? unchecked((int)boundConstant.Value)
-                : unchecked((int)(uint)boundConstant.Value);
-
-            EmitIntValue(intValue);
-        }
-
-        private void EmitInt64Constant(BoundConstant boundConstant)
-        {
-            var longValue = boundConstant.ResultType.Equals(BuiltInTypes.Int64)
-                ? unchecked((long)boundConstant.Value)
-                : unchecked((long)(ulong)boundConstant.Value);
+            var longValue = constantValue.Int64Value;
 
             if (longValue >= int.MinValue && longValue <= int.MaxValue)
             {

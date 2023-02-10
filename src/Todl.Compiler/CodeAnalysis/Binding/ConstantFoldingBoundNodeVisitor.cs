@@ -6,6 +6,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding;
 internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
 {
     private readonly Dictionary<VariableSymbol, BoundConstant> constantMap = new();
+    private readonly ConstantValueFactory constantValueFactory;
+
+    public ConstantFoldingBoundNodeVisitor(ConstantValueFactory constantValueFactory)
+    {
+        this.constantValueFactory = constantValueFactory;
+    }
 
     protected override BoundExpression VisitBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
     {
@@ -33,65 +39,70 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
             diagnosticBuilder: boundBinaryExpression.DiagnosticBuilder);
     }
 
-    private static BoundConstant FoldBinaryConstant(BoundConstant left, BoundConstant right, BoundBinaryExpression boundBinaryExpression)
+    private BoundExpression FoldBinaryConstant(BoundConstant left, BoundConstant right, BoundBinaryExpression boundBinaryExpression)
     {
         var l = left.Value;
         var r = right.Value;
 
-        object value = boundBinaryExpression.Operator.BoundBinaryOperatorKind switch
+        ConstantValue value = boundBinaryExpression.Operator.BoundBinaryOperatorKind switch
         {
             BoundBinaryOperatorKind.NumericAddition
                 => (l, r) switch
                 {
-                    (int a, int b) => a + b,
-                    (long a, long b) => a + b,
-                    (double a, double b) => a + b,
+                    (ConstantInt32Value a, ConstantInt32Value b) => constantValueFactory.Create(a.Int32Value + b.Int32Value),
+                    (ConstantInt64Value a, ConstantInt64Value b) => constantValueFactory.Create(a.Int64Value + b.Int64Value),
+                    (ConstantDoubleValue a, ConstantDoubleValue b) => constantValueFactory.Create(a.DoubleValue + b.DoubleValue),
                     _ => null
                 },
             BoundBinaryOperatorKind.NumericSubstraction
                 => (l, r) switch
                 {
-                    (int a, int b) => a - b,
-                    (long a, long b) => a - b,
-                    (double a, double b) => a - b,
+                    (ConstantInt32Value a, ConstantInt32Value b) => constantValueFactory.Create(a.Int32Value - b.Int32Value),
+                    (ConstantInt64Value a, ConstantInt64Value b) => constantValueFactory.Create(a.Int64Value - b.Int64Value),
+                    (ConstantDoubleValue a, ConstantDoubleValue b) => constantValueFactory.Create(a.DoubleValue - b.DoubleValue),
                     _ => null
                 },
             BoundBinaryOperatorKind.NumericMultiplication
                 => (l, r) switch
                 {
-                    (int a, int b) => a * b,
-                    (long a, long b) => a * b,
-                    (double a, double b) => a * b,
+                    (ConstantInt32Value a, ConstantInt32Value b) => constantValueFactory.Create(a.Int32Value * b.Int32Value),
+                    (ConstantInt64Value a, ConstantInt64Value b) => constantValueFactory.Create(a.Int64Value * b.Int64Value),
+                    (ConstantDoubleValue a, ConstantDoubleValue b) => constantValueFactory.Create(a.DoubleValue * b.DoubleValue),
                     _ => null
                 },
             BoundBinaryOperatorKind.NumericDivision
                 => (l, r) switch
                 {
-                    (int a, int b) => a / b,
-                    (long a, long b) => a / b,
-                    (double a, double b) => a / b,
+                    (ConstantInt32Value a, ConstantInt32Value b) => constantValueFactory.Create(a.Int32Value / b.Int32Value),
+                    (ConstantInt64Value a, ConstantInt64Value b) => constantValueFactory.Create(a.Int64Value / b.Int64Value),
+                    (ConstantDoubleValue a, ConstantDoubleValue b) => constantValueFactory.Create(a.DoubleValue / b.DoubleValue),
                     _ => null
                 },
             BoundBinaryOperatorKind.LogicalAnd
                 => (l, r) switch
                 {
-                    (bool a, bool b) => a && b,
+                    (ConstantBooleanValue a, ConstantBooleanValue b) => constantValueFactory.Create(a.BooleanValue && b.BooleanValue),
                     _ => null
                 },
             BoundBinaryOperatorKind.LogicalOr
                 => (l, r) switch
                 {
-                    (bool a, bool b) => a || b,
+                    (ConstantBooleanValue a, ConstantBooleanValue b) => constantValueFactory.Create(a.BooleanValue || b.BooleanValue),
                     _ => null
                 },
             BoundBinaryOperatorKind.StringConcatenation
                 => (l, r) switch
                 {
-                    (string a, string b) => a + b,
+                    (ConstantStringValue a, ConstantStringValue b) => constantValueFactory.Create(a.StringValue + b.StringValue),
                     _ => null
                 },
             _ => null
         };
+
+        if (value is null)
+        {
+            return boundBinaryExpression;
+        }
 
         return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: boundBinaryExpression.SyntaxNode,
@@ -111,14 +122,24 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
                 BoundUnaryOperatorKind.Negation
                     => constant.Value switch
                     {
-                        int intValue => -intValue,
-                        long longValue => -longValue,
-                        double doubleValue => -doubleValue,
+                        ConstantInt32Value intValue => constantValueFactory.Create(-intValue.Int32Value),
+                        ConstantInt64Value longValue => constantValueFactory.Create(-longValue.Int64Value),
+                        ConstantDoubleValue doubleValue => constantValueFactory.Create(-doubleValue.DoubleValue),
                         _ => null
                     },
-                BoundUnaryOperatorKind.LogicalNegation => !(bool)constant.Value,
+                BoundUnaryOperatorKind.LogicalNegation
+                    => constant.Value switch
+                    {
+                        ConstantBooleanValue booleanValue => constantValueFactory.Create(!booleanValue.BooleanValue),
+                        _ => null
+                    },
                 _ => null
             };
+
+            if (value is null)
+            {
+                return boundUnaryExpression;
+            }
 
             return BoundNodeFactory.CreateBoundConstant(
                 syntaxNode: boundUnaryExpression.SyntaxNode,
