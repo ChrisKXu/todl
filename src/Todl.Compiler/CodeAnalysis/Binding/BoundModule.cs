@@ -23,7 +23,7 @@ public sealed class BoundModule : IDiagnosable
         var boundNodeVisitors = new BoundNodeVisitor[]
         {
             new ControlFlowAnalyzer(),
-            new ConstantFoldingBoundNodeVisitor()
+            new ConstantFoldingBoundNodeVisitor(binder.ConstantValueFactory)
         };
 
         foreach (var v in boundNodeVisitors)

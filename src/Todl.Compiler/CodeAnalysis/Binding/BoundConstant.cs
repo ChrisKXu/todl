@@ -6,12 +6,11 @@ using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
-    public sealed class BoundConstant : BoundExpression
+    public sealed partial class BoundConstant : BoundExpression
     {
-        public object Value { get; internal init; }
+        public ConstantValue Value { get; internal init; }
 
-        public override TypeSymbol ResultType
-            => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(Value.GetType().FullName);
+        public override TypeSymbol ResultType => Value.ResultType;
 
         public override bool Constant => true;
     }
@@ -29,27 +28,27 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             };
 
         // We might want to optimize this later but this does the job for now
-        private object ConvertToIntOrLong(string input, int @base)
+        private ConstantValue CreateConstantIntegerValue(string input, int @base)
         {
             try
             {
-                return Convert.ToInt32(input, @base);
+                return ConstantValueFactory.Create(Convert.ToInt32(input, @base));
             }
             catch (OverflowException) { }
 
             try
             {
-                return Convert.ToUInt32(input, @base);
+                return ConstantValueFactory.Create(Convert.ToUInt32(input, @base));
             }
             catch (OverflowException) { }
 
             try
             {
-                return Convert.ToInt64(input, @base);
+                return ConstantValueFactory.Create(Convert.ToInt64(input, @base));
             }
             catch (OverflowException)
             {
-                return Convert.ToUInt64(input, @base);
+                return ConstantValueFactory.Create(Convert.ToUInt64(input, @base));
             }
         }
 
@@ -75,29 +74,27 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 'f' or 'F' => @base switch
                 {
-                    10 => float.Parse(text[0..^1]),
-                    _ => ConvertToIntOrLong(text[startIndex..].ToString(), @base)
+                    10 => ConstantValueFactory.Create(float.Parse(text[0..^1])),
+                    _ => CreateConstantIntegerValue(text[startIndex..].ToString(), @base)
                 },
                 'd' or 'D' => @base switch
                 {
-                    10 => double.Parse(text[0..^1]),
-                    _ => ConvertToIntOrLong(text[startIndex..].ToString(), @base),
+                    10 => ConstantValueFactory.Create(double.Parse(text[0..^1])),
+                    _ => CreateConstantIntegerValue(text[startIndex..].ToString(), @base),
                 },
-                'u' or 'U' => Convert.ToUInt32(text[startIndex..^1].ToString(), @base),
+                'u' or 'U' => ConstantValueFactory.Create(Convert.ToUInt32(text[startIndex..^1].ToString(), @base)),
                 'l' or 'L' => text[^2] switch
                 {
-                    'u' or 'U' => Convert.ToUInt64(text[startIndex..^2].ToString(), @base),
-                    _ => Convert.ToInt64(text[startIndex..^1].ToString(), @base)
+                    'u' or 'U' => ConstantValueFactory.Create(Convert.ToUInt64(text[startIndex..^2].ToString(), @base)),
+                    _ => ConstantValueFactory.Create(Convert.ToInt64(text[startIndex..^1].ToString(), @base))
                 },
-                _ when text.Contains('.') => double.Parse(text),
-                _ => ConvertToIntOrLong(text[startIndex..].ToString(), @base)
+                _ when text.Contains('.') => ConstantValueFactory.Create(double.Parse(text)),
+                _ => CreateConstantIntegerValue(text[startIndex..].ToString(), @base)
             };
 
-            return value is not null
-                ? BoundNodeFactory.CreateBoundConstant(
+            return BoundNodeFactory.CreateBoundConstant(
                 syntaxNode: literalExpression,
-                value: value)
-                : ReportUnsupportedLiteral(literalExpression);
+                value: value);
         }
 
         private BoundConstant BindStringConstant(LiteralExpression literalExpression)
@@ -140,13 +137,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             return BoundNodeFactory.CreateBoundConstant(
                 syntaxNode: literalExpression,
-                value: builder.ToString());
+                value: ConstantValueFactory.Create(builder.ToString()));
         }
 
         private BoundConstant BindBooleanConstant(LiteralExpression literalExpression)
             => BoundNodeFactory.CreateBoundConstant(
                 syntaxNode: literalExpression,
-                value: literalExpression.LiteralToken.Kind == SyntaxKind.TrueKeywordToken);
+                value: ConstantValueFactory.Create(literalExpression.LiteralToken.Kind == SyntaxKind.TrueKeywordToken));
 
         private BoundConstant ReportUnsupportedLiteral(LiteralExpression literalExpression)
         {
@@ -162,7 +159,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
             return BoundNodeFactory.CreateBoundConstant(
                 syntaxNode: literalExpression,
-                value: null,
+                value: ConstantValueFactory.Null,
                 diagnosticBuilder: diagnosticBuilder);
         }
     }
