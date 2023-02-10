@@ -37,7 +37,7 @@ public sealed partial class EmitterTests
         TestEmitConstantCore("8u", Instruction.Create(OpCodes.Ldc_I4_8));
         TestEmitConstantCore("100u", Instruction.Create(OpCodes.Ldc_I4_S, (sbyte)100));
         TestEmitConstantCore("1024u", Instruction.Create(OpCodes.Ldc_I4, 1024));
-        //TestEmitConstantCore("3000000000", Instruction.Create(OpCodes.Ldc_I4, -1294967296));
+        TestEmitConstantCore("3000000000", Instruction.Create(OpCodes.Ldc_I4, -1294967296));
         TestEmitConstantCore("3000000000u", Instruction.Create(OpCodes.Ldc_I4, -1294967296));
     }
 

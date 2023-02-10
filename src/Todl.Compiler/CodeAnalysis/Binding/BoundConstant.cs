@@ -28,15 +28,28 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 _ => ReportUnsupportedLiteral(literalExpression)
             };
 
+        // We might want to optimize this later but this does the job for now
         private object ConvertToIntOrLong(string input, int @base)
         {
             try
             {
                 return Convert.ToInt32(input, @base);
             }
-            catch (OverflowException)
+            catch (OverflowException) { }
+
+            try
+            {
+                return Convert.ToUInt32(input, @base);
+            }
+            catch (OverflowException) { }
+
+            try
             {
                 return Convert.ToInt64(input, @base);
+            }
+            catch (OverflowException)
+            {
+                return Convert.ToUInt64(input, @base);
             }
         }
 

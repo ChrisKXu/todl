@@ -34,6 +34,8 @@ public partial class BinderTests
     [InlineData("100L", 100L)]
     [InlineData("100ul", 100ul)]
     [InlineData("100UL", 100UL)]
+    [InlineData("3000000000", 3000000000)]
+    [InlineData("3000000000u", 3000000000u)]
     [InlineData("0b0", 0b0)]
     [InlineData("0b00", 0b00)]
     [InlineData("0b0100", 0b0100)]
