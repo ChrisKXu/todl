@@ -46,17 +46,22 @@ internal partial class Emitter
 
         private void EmitConstant(BoundConstant boundConstant)
         {
+            switch (boundConstant)
+            {
+                case BoundStringConstant boundStringConstant:
+                    EmitStringConstant(boundStringConstant);
+                    return;
+                case BoundBooleanConstant boundBooleanConstant:
+                    EmitIntValue(boundBooleanConstant.BooleanValue ? 1 : 0);
+                    return;
+                case BoundNullConstant:
+                    ILProcessor.Emit(OpCodes.Ldnull);
+                    return;
+            }
+
             var resultType = boundConstant.ResultType;
 
-            if (resultType.Equals(BuiltInTypes.String))
-            {
-                ILProcessor.Emit(OpCodes.Ldstr, (string)boundConstant.Value);
-            }
-            else if (resultType.Equals(BuiltInTypes.Boolean))
-            {
-                EmitIntValue((bool)boundConstant.Value ? 1 : 0);
-            }
-            else if (resultType.Equals(BuiltInTypes.Float))
+            if (resultType.Equals(BuiltInTypes.Float))
             {
                 ILProcessor.Emit(OpCodes.Ldc_R4, (float)boundConstant.Value);
             }
@@ -72,6 +77,17 @@ internal partial class Emitter
             {
                 EmitInt64Constant(boundConstant);
             }
+        }
+
+        private void EmitStringConstant(BoundStringConstant boundStringConstant)
+        {
+            if (boundStringConstant.Value is null)
+            {
+                ILProcessor.Emit(OpCodes.Ldnull);
+                return;
+            }
+
+            ILProcessor.Emit(OpCodes.Ldstr, boundStringConstant.StringValue);
         }
 
         private void EmitIntValue(int intValue)

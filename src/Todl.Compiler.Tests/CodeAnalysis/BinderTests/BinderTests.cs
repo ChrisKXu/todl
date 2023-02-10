@@ -198,8 +198,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             boundObjectCreationExpression.ConstructorInfo.Should().NotBeNull();
             boundObjectCreationExpression.BoundArguments.Count.Should().Be(1);
 
-            var message = boundObjectCreationExpression.BoundArguments[0].As<BoundConstant>();
-            message.Value.Should().Be("exception message");
+            var message = boundObjectCreationExpression.BoundArguments[0].As<BoundStringConstant>();
+            message.StringValue.Should().Be("exception message");
         }
     }
 }

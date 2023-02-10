@@ -34,7 +34,7 @@ public sealed class BoundNodeTests
     public void AllBoundNodeVariantsAreCovered()
     {
         var types = GetAllSyntaxNodesForTest().Select(pair => pair[1].GetType());
-        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition), typeof(BoundNoOpStatement) };
+        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition), typeof(BoundNoOpStatement), typeof(BoundNullConstant) };
 
         var allBoundNodeTypes = typeof(BoundNode)
             .Assembly
@@ -55,7 +55,9 @@ public sealed class BoundNodeTests
         "System.Int32.MinValue + 10", // BoundBinaryExpression
         "100.ToString()", // BoundClrFunctionCallExpression
         "func()", // BoundTodlFunctionCallExpression
-        "\"Hello World!\"", // BoundConstant
+        "\"Hello World!\"", // BoundStringConstant
+        "true", // BoundBooleanConstant
+        "1.2", // BoundNumericConstant
         "\"abc\".Length", // BoundMemberAccessExpression
         "new System.Exception()" // BoundNewExpression
     };

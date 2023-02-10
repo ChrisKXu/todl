@@ -6,14 +6,46 @@ using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
-    public sealed class BoundConstant : BoundExpression
+    public abstract class BoundConstant : BoundExpression
     {
-        public object Value { get; internal init; }
+        public virtual object Value { get; }
+
+        public override bool Constant => true;
+    }
+
+    public sealed class BoundStringConstant : BoundConstant
+    {
+        public string StringValue { get; internal init; }
+
+        public override object Value => StringValue;
+
+        public override TypeSymbol ResultType
+            => SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.String;
+    }
+
+    public sealed class BoundBooleanConstant : BoundConstant
+    {
+        public bool BooleanValue { get; internal init; }
+
+        public override object Value => BooleanValue;
+
+        public override TypeSymbol ResultType
+            => SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Boolean;
+    }
+
+    public sealed class BoundNullConstant : BoundConstant
+    {
+        public override object Value => null;
+    }
+
+    public sealed class BoundNumericConstant : BoundConstant
+    {
+        public object NumericValue { get; internal init; }
+
+        public override object Value => NumericValue;
 
         public override TypeSymbol ResultType
             => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(Value.GetType().FullName);
-
-        public override bool Constant => true;
     }
 
     public partial class Binder
@@ -94,9 +126,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             };
 
             return value is not null
-                ? BoundNodeFactory.CreateBoundConstant(
-                syntaxNode: literalExpression,
-                value: value)
+                ? BoundNodeFactory.CreateBoundNumericConstant(
+                    syntaxNode: literalExpression,
+                    numericValue: value)
                 : ReportUnsupportedLiteral(literalExpression);
         }
 
@@ -138,15 +170,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 }
             }
 
-            return BoundNodeFactory.CreateBoundConstant(
+            return BoundNodeFactory.CreateBoundStringConstant(
                 syntaxNode: literalExpression,
-                value: builder.ToString());
+                stringValue: builder.ToString());
         }
 
         private BoundConstant BindBooleanConstant(LiteralExpression literalExpression)
-            => BoundNodeFactory.CreateBoundConstant(
+            => BoundNodeFactory.CreateBoundBooleanConstant(
                 syntaxNode: literalExpression,
-                value: literalExpression.LiteralToken.Kind == SyntaxKind.TrueKeywordToken);
+                booleanValue: literalExpression.LiteralToken.Kind == SyntaxKind.TrueKeywordToken);
 
         private BoundConstant ReportUnsupportedLiteral(LiteralExpression literalExpression)
         {
@@ -160,9 +192,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                     ErrorCode = ErrorCode.UnsupportedLiteral
                 });
 
-            return BoundNodeFactory.CreateBoundConstant(
+            return BoundNodeFactory.CreateBoundNullConstant(
                 syntaxNode: literalExpression,
-                value: null,
                 diagnosticBuilder: diagnosticBuilder);
         }
     }

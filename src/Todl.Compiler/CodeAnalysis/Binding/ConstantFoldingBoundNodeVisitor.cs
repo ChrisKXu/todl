@@ -93,10 +93,27 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
             _ => null
         };
 
-        return BoundNodeFactory.CreateBoundConstant(
-            syntaxNode: boundBinaryExpression.SyntaxNode,
-            value: value,
-            diagnosticBuilder: boundBinaryExpression.DiagnosticBuilder);
+        return value switch
+        {
+            bool b => BoundNodeFactory.CreateBoundBooleanConstant(
+                syntaxNode: boundBinaryExpression.SyntaxNode,
+                booleanValue: b,
+                diagnosticBuilder: boundBinaryExpression.DiagnosticBuilder),
+
+            string s => BoundNodeFactory.CreateBoundStringConstant(
+                syntaxNode: boundBinaryExpression.SyntaxNode,
+                stringValue: s,
+                diagnosticBuilder: boundBinaryExpression.DiagnosticBuilder),
+
+            null => BoundNodeFactory.CreateBoundNullConstant(
+                syntaxNode: boundBinaryExpression.SyntaxNode,
+                diagnosticBuilder: boundBinaryExpression.DiagnosticBuilder),
+
+            _ => BoundNodeFactory.CreateBoundNumericConstant(
+                syntaxNode: boundBinaryExpression.SyntaxNode,
+                numericValue: value,
+                diagnosticBuilder: boundBinaryExpression.DiagnosticBuilder)
+        };
     }
 
     protected override BoundExpression VisitBoundUnaryExpression(BoundUnaryExpression boundUnaryExpression)
@@ -120,10 +137,22 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
                 _ => null
             };
 
-            return BoundNodeFactory.CreateBoundConstant(
-                syntaxNode: boundUnaryExpression.SyntaxNode,
-                value: value,
-                diagnosticBuilder: boundUnaryExpression.DiagnosticBuilder);
+            return value switch
+            {
+                bool b => BoundNodeFactory.CreateBoundBooleanConstant(
+                    syntaxNode: boundUnaryExpression.SyntaxNode,
+                    booleanValue: b,
+                    diagnosticBuilder: boundUnaryExpression.DiagnosticBuilder),
+
+                null => BoundNodeFactory.CreateBoundNullConstant(
+                    syntaxNode: boundUnaryExpression.SyntaxNode,
+                    diagnosticBuilder: boundUnaryExpression.DiagnosticBuilder),
+
+                _ => BoundNodeFactory.CreateBoundNumericConstant(
+                    syntaxNode: boundUnaryExpression.SyntaxNode,
+                    numericValue: value,
+                    diagnosticBuilder: boundUnaryExpression.DiagnosticBuilder)
+            };
         };
 
         if (visitedOperand == boundUnaryExpression.Operand)
