@@ -22,6 +22,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public virtual ClrTypeCache ClrTypeCache
             => Parent?.ClrTypeCache;
 
+        public virtual ConstantValueFactory ConstantValueFactory
+            => Parent?.ConstantValueFactory;
+
         public virtual bool AllowVariableDeclarationInAssignment
             => Parent.AllowVariableDeclarationInAssignment;
 
@@ -70,12 +73,14 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 ClrTypeCache = clrTypeCache;
                 BoundUnaryOperatorFactory = new(clrTypeCache);
                 BoundBinaryOperatorFactory = new(clrTypeCache);
+                ConstantValueFactory = new(clrTypeCache.BuiltInTypes);
             }
 
             public override bool AllowVariableDeclarationInAssignment => true;
             public override ClrTypeCache ClrTypeCache { get; }
             public override BoundUnaryOperatorFactory BoundUnaryOperatorFactory { get; }
             public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
+            public override ConstantValueFactory ConstantValueFactory { get; }
         }
 
         internal sealed class ModuleBinder : Binder
@@ -85,12 +90,14 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 ClrTypeCache = clrTypeCache;
                 BoundUnaryOperatorFactory = new(clrTypeCache);
                 BoundBinaryOperatorFactory = new(clrTypeCache);
+                ConstantValueFactory = new(clrTypeCache.BuiltInTypes);
             }
 
             public override bool AllowVariableDeclarationInAssignment => false;
             public override ClrTypeCache ClrTypeCache { get; }
             public override BoundUnaryOperatorFactory BoundUnaryOperatorFactory { get; }
             public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
+            public override ConstantValueFactory ConstantValueFactory { get; }
         }
 
         internal sealed class TypeBinder : Binder
