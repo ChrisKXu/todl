@@ -6,7 +6,7 @@ using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
-    public sealed partial class BoundConstant : BoundExpression
+    public sealed class BoundConstant : BoundExpression
     {
         public ConstantValue Value { get; internal init; }
 
