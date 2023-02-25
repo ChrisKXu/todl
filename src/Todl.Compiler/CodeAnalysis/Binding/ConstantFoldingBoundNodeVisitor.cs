@@ -118,8 +118,8 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
         {
             var value = boundUnaryExpression.Operator.BoundUnaryOperatorKind switch
             {
-                BoundUnaryOperatorKind.Identity => constant.Value,
-                BoundUnaryOperatorKind.Negation
+                BoundUnaryOperatorKind.UnaryPlus => constant.Value,
+                BoundUnaryOperatorKind.UnaryMinus
                     => constant.Value switch
                     {
                         ConstantInt32Value intValue => constantValueFactory.Create(-intValue.Int32Value),

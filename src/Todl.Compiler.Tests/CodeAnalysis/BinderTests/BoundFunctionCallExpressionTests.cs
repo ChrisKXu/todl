@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Xunit;
@@ -28,7 +28,7 @@ public sealed partial class BinderTests
         boundFunctionCallExpression.BoundArguments.Count.Should().Be(1);
 
         var argument = boundFunctionCallExpression.BoundArguments[0].As<BoundUnaryExpression>();
-        argument.Operator.BoundUnaryOperatorKind.Should().Be(BoundUnaryOperatorKind.Negation);
+        argument.Operator.BoundUnaryOperatorKind.Should().Be(BoundUnaryOperatorKind.UnaryMinus);
         argument.Operand.As<BoundConstant>().Value.Should().Be(10);
     }
 
