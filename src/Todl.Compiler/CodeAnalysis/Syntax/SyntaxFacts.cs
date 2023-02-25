@@ -11,6 +11,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             { SyntaxKind.MinusToken, 6 },
             { SyntaxKind.MinusMinusToken, 6 },
             { SyntaxKind.BangToken, 6 },
+            { SyntaxKind.TildeToken, 6 },
         };
 
         public static readonly IReadOnlyDictionary<SyntaxKind, int> BinaryOperatorPrecedence = new Dictionary<SyntaxKind, int>()
