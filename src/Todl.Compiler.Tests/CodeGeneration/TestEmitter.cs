@@ -15,8 +15,6 @@ internal sealed class TestEmitter : Emitter.InstructionEmitter
     public override TypeDefinition TypeDefinition { get; }
     public override ILProcessor ILProcessor { get; }
 
-    protected override BuiltInTypes BuiltInTypes => TestDefaults.DefaultClrTypeCache.BuiltInTypes;
-
     public TestEmitter()
         : base(null)
     {

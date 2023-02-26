@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -27,8 +27,8 @@ public sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
 
         // entry point function should either return "void" or "int"
         var builtInTypes = f.SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes;
-        if (!f.ReturnType.Equals(builtInTypes.Void)
-            && !f.ReturnType.Equals(builtInTypes.Int32))
+        if (f.ReturnType.SpecialType != SpecialType.ClrVoid
+            && f.ReturnType.SpecialType != SpecialType.ClrInt32)
         {
             return false;
         }

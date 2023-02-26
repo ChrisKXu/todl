@@ -2,7 +2,6 @@
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
@@ -11,8 +10,6 @@ namespace Todl.Compiler.CodeGeneration;
 internal partial class Emitter
 {
     private readonly Dictionary<LocalVariableSymbol, VariableDefinition> variables = new();
-
-    protected virtual BuiltInTypes BuiltInTypes => Compilation.ClrTypeCache.BuiltInTypes;
 
     public Emitter Parent { get; protected init; }
 
@@ -30,22 +27,24 @@ internal partial class Emitter
 
     private TypeReference ResolveTypeReference(ClrTypeSymbol clrTypeSymbol)
     {
-        if (clrTypeSymbol.Equals(BuiltInTypes.Void))
-        {
-            return AssemblyDefinition.MainModule.TypeSystem.Void;
-        }
+        var typeSystem = AssemblyDefinition.MainModule.TypeSystem;
 
-        if (clrTypeSymbol.Equals(BuiltInTypes.Int32))
+        return clrTypeSymbol.SpecialType switch
         {
-            return AssemblyDefinition.MainModule.TypeSystem.Int32;
-        }
-
-        if (clrTypeSymbol.Equals(BuiltInTypes.String))
-        {
-            return AssemblyDefinition.MainModule.TypeSystem.String;
-        }
-
-        return AssemblyDefinition.MainModule.ImportReference(clrTypeSymbol.ClrType);
+            SpecialType.ClrVoid => typeSystem.Void,
+            SpecialType.ClrBoolean => typeSystem.Boolean,
+            SpecialType.ClrByte => typeSystem.Byte,
+            SpecialType.ClrObject => typeSystem.Object,
+            SpecialType.ClrChar => typeSystem.Char,
+            SpecialType.ClrString => typeSystem.String,
+            SpecialType.ClrInt32 => typeSystem.Int32,
+            SpecialType.ClrUInt32 => typeSystem.UInt32,
+            SpecialType.ClrInt64 => typeSystem.Int64,
+            SpecialType.ClrUInt64 => typeSystem.UInt64,
+            SpecialType.ClrFloat => typeSystem.Single,
+            SpecialType.ClrDouble => typeSystem.Double,
+            _ => AssemblyDefinition.MainModule.ImportReference(clrTypeSymbol.ClrType)
+        };
     }
 
     private MethodReference ResolveMethodReference(BoundClrFunctionCallExpression boundClrFunctionCallExpression)
@@ -113,7 +112,7 @@ internal partial class Emitter
                 @namespace: Compilation.AssemblyName,
                 name: boundTodlTypeDefinition.Name,
                 attributes: TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract,
-                baseType: ResolveTypeReference(BuiltInTypes.Object));
+                baseType: AssemblyDefinition.MainModule.TypeSystem.Object);
         }
 
         public override BoundTodlTypeDefinition BoundTodlTypeDefinition => boundTodlTypeDefinition;

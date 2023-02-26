@@ -1,4 +1,4 @@
-using Todl.Compiler.CodeAnalysis.Symbols;
+﻿using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeAnalysis;
 
@@ -19,17 +19,17 @@ public sealed class BuiltInTypes
 
     internal BuiltInTypes(ClrTypeCache clrTypeCache)
     {
-        Boolean = clrTypeCache.Resolve(typeof(bool).FullName);
-        Byte = clrTypeCache.Resolve(typeof(byte).FullName);
-        Char = clrTypeCache.Resolve(typeof(char).FullName);
-        Int32 = clrTypeCache.Resolve(typeof(int).FullName);
-        UInt32 = clrTypeCache.Resolve(typeof(uint).FullName);
-        Int64 = clrTypeCache.Resolve(typeof(long).FullName);
-        UInt64 = clrTypeCache.Resolve(typeof(ulong).FullName);
-        Float = clrTypeCache.Resolve(typeof(float).FullName);
-        Double = clrTypeCache.Resolve(typeof(double).FullName);
-        Void = clrTypeCache.Resolve(typeof(void).FullName);
-        Object = clrTypeCache.Resolve(typeof(object).FullName);
-        String = clrTypeCache.Resolve(typeof(string).FullName);
+        Boolean = clrTypeCache.ResolveSpecialType(SpecialType.ClrBoolean);
+        Byte = clrTypeCache.ResolveSpecialType(SpecialType.ClrByte);
+        Char = clrTypeCache.ResolveSpecialType(SpecialType.ClrChar);
+        Int32 = clrTypeCache.ResolveSpecialType(SpecialType.ClrInt32);
+        UInt32 = clrTypeCache.ResolveSpecialType(SpecialType.ClrUInt32);
+        Int64 = clrTypeCache.ResolveSpecialType(SpecialType.ClrInt64);
+        UInt64 = clrTypeCache.ResolveSpecialType(SpecialType.ClrUInt64);
+        Float = clrTypeCache.ResolveSpecialType(SpecialType.ClrFloat);
+        Double = clrTypeCache.ResolveSpecialType(SpecialType.ClrDouble);
+        Void = clrTypeCache.ResolveSpecialType(SpecialType.ClrVoid);
+        Object = clrTypeCache.ResolveSpecialType(SpecialType.ClrObject);
+        String = clrTypeCache.ResolveSpecialType(SpecialType.ClrString);
     }
 }

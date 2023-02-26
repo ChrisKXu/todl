@@ -24,6 +24,6 @@ static class TestDefaults
             MetadataLoadContext.LoadFromAssemblyPath(assemblyPath);
         }
 
-        DefaultClrTypeCache = ClrTypeCache.FromAssemblies(assemblies: MetadataLoadContext.GetAssemblies());
+        DefaultClrTypeCache = ClrTypeCache.FromAssemblies(assemblies: MetadataLoadContext.GetAssemblies(), MetadataLoadContext.CoreAssembly);
     }
 }
