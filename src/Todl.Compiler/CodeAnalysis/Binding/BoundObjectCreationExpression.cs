@@ -14,7 +14,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public ConstructorInfo ConstructorInfo { get; internal init; }
         public IReadOnlyList<BoundExpression> BoundArguments { get; internal init; }
         public override TypeSymbol ResultType
-            => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(ConstructorInfo.DeclaringType.FullName);
+            => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(ConstructorInfo.DeclaringType);
     }
 
     public partial class Binder

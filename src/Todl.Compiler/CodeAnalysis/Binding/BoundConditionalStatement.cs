@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
@@ -13,7 +14,7 @@ public sealed class BoundConditionalStatement : BoundStatement
 
     public BoundConditionalStatement Validate()
     {
-        if (!Condition.ResultType.Equals(SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Boolean))
+        if (Condition.ResultType.SpecialType != SpecialType.ClrBoolean)
         {
             var text = SyntaxNode switch
             {
