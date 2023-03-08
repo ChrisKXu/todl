@@ -45,7 +45,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             }
 
             var body = functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body);
-            if (functionSymbol.ReturnType.Equals(ClrTypeCache.BuiltInTypes.Void))
+            if (functionSymbol.ReturnType.SpecialType == SpecialType.ClrVoid)
             {
                 if (!body.Statements.Any() || body.Statements[^1] is not BoundReturnStatement)
                 {

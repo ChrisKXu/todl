@@ -44,10 +44,7 @@ namespace Todl.Compiler.CodeAnalysis
 
             var resolvedTypeString = typeExpression.Text.ToString().Replace(typeExpression.BaseTypeExpression.Text.ToString(), baseType.Name);
 
-            return new()
-            {
-                ClrType = baseType.ClrType.Assembly.GetType(resolvedTypeString)
-            };
+            return new(baseType.ClrType.Assembly.GetType(resolvedTypeString));
         }
 
         private IDictionary<string, ClrTypeSymbol> ImportTypeAliases(IEnumerable<ImportDirective> importDirectives)

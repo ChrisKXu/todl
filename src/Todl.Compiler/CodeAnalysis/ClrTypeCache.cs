@@ -5,86 +5,140 @@ using System.Reflection;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
-namespace Todl.Compiler.CodeAnalysis
+namespace Todl.Compiler.CodeAnalysis;
+
+public sealed class ClrTypeCache
 {
-    public sealed class ClrTypeCache
+    private readonly HashSet<string> loadedNamespaces = new();
+
+    public IReadOnlySet<Assembly> Assemblies { get; }
+    public Assembly CoreAssembly { get; } // the assembly that contains object, bool, int, etc...
+    public IReadOnlySet<ClrTypeSymbol> Types { get; }
+    public IReadOnlySet<string> Namespaces => loadedNamespaces;
+
+    public BuiltInTypes BuiltInTypes { get; }
+
+    private static readonly IReadOnlyDictionary<string, SpecialType> builtInTypeNames
+        = new Dictionary<string, SpecialType>()
+        {
+            { "bool", SpecialType.ClrBoolean },
+            { typeof(bool).FullName, SpecialType.ClrBoolean },
+            { "byte", SpecialType.ClrByte },
+            { typeof(byte).FullName, SpecialType.ClrByte },
+            { "char", SpecialType.ClrChar },
+            { typeof(char).FullName, SpecialType.ClrChar },
+            { "int", SpecialType.ClrInt32 },
+            { typeof(int).FullName, SpecialType.ClrInt32 },
+            { "uint", SpecialType.ClrUInt32 },
+            { typeof(uint).FullName, SpecialType.ClrUInt32 },
+            { "long", SpecialType.ClrInt64 },
+            { typeof(long).FullName, SpecialType.ClrInt64 },
+            { "ulong", SpecialType.ClrUInt64 },
+            { typeof(ulong).FullName, SpecialType.ClrUInt64 },
+            { "string", SpecialType.ClrString },
+            { typeof(string).FullName, SpecialType.ClrString },
+            { "void", SpecialType.ClrVoid },
+            { typeof(void).FullName, SpecialType.ClrVoid },
+            { "object", SpecialType.ClrObject },
+            { typeof(object).FullName, SpecialType.ClrObject },
+            { "float", SpecialType.ClrFloat },
+            { typeof(float).FullName, SpecialType.ClrFloat },
+            { "double", SpecialType.ClrDouble },
+            { typeof(double).FullName, SpecialType.ClrDouble }
+        };
+
+    private ClrTypeCache(IEnumerable<Assembly> assemblies, Assembly coreAssembly)
     {
-        private readonly HashSet<string> loadedNamespaces = new();
+        Assemblies = assemblies.ToHashSet();
+        CoreAssembly = coreAssembly;
 
-        public IReadOnlySet<Assembly> Assemblies { get; private init; }
-        public IReadOnlySet<ClrTypeSymbol> Types { get; private init; }
-        public IReadOnlySet<string> Namespaces => loadedNamespaces;
+        Types = assemblies
+            .SelectMany(a => a.GetExportedTypes())
+            .Where(t => !t.IsGenericType) // TODO: support generic type
+            .Where(t => !builtInTypeNames.ContainsKey(t.FullName))
+            .Select(t => new ClrTypeSymbol(t))
+            .ToHashSet();
 
-        public readonly BuiltInTypes BuiltInTypes;
+        BuiltInTypes = new BuiltInTypes(this);
 
-        public static readonly IReadOnlyDictionary<string, string> BuiltInTypeNames
-            = new Dictionary<string, string>()
-            {
-                { "bool", typeof(bool).FullName },
-                { "byte", typeof(byte).FullName },
-                { "char", typeof(char).FullName },
-                { "int", typeof(int).FullName },
-                { "long", typeof(long).FullName },
-                { "string", typeof(string).FullName },
-                { "void", typeof(void).FullName },
-                { "object", typeof(object).FullName }
-            };
+        PopulateNamespaces();
+    }
 
-        private ClrTypeCache(IEnumerable<Assembly> assemblies)
+    public ClrTypeSymbol Resolve(string name)
+    {
+        if (builtInTypeNames.ContainsKey(name))
         {
-            Assemblies = assemblies.ToHashSet();
-            Types = assemblies
-                .SelectMany(a => a.GetExportedTypes())
-                .Where(t => !t.IsGenericType) // TODO: support generic type
-                .Select(t => new ClrTypeSymbol() { ClrType = t })
-                .ToHashSet();
-
-            BuiltInTypes = new BuiltInTypes(this);
-
-            PopulateNamespaces();
+            return ResolveSpecialType(builtInTypeNames[name]);
         }
 
-        public ClrTypeSymbol Resolve(string name)
-        {
-            if (BuiltInTypeNames.ContainsKey(name))
-            {
-                name = BuiltInTypeNames[name];
-            }
+        // TODO: obviously we need to optimize this
+        return Types.FirstOrDefault(t => t.Name == name);
+    }
 
-            return Types.FirstOrDefault(t => t.Name == name);
+    public ClrTypeSymbol Resolve(Type type)
+    {
+        if (builtInTypeNames.ContainsKey(type.FullName))
+        {
+            return ResolveSpecialType(builtInTypeNames[type.FullName]);
         }
 
-        public ClrTypeCacheView CreateView(IEnumerable<ImportDirective> importDirectives) => new(this, importDirectives);
+        // TODO: obviously we need to optimize this
+        return Types.FirstOrDefault(t => t.ClrType.Equals(type));
+    }
 
-        public static ClrTypeCache FromAssemblies(IEnumerable<Assembly> assemblies)
-            => new(assemblies);
-
-        /// <summary>
-        /// Populating loadedNamespaces with a full list of namespaces
-        /// e.g.
-        /// when input is "System.Collections.Generic"
-        /// the result should be
-        /// {
-        ///     "System",
-        ///     "System.Collections",
-        ///     "System.Collections.Generic"
-        /// }
-        /// </summary>
-        private void PopulateNamespaces()
+    public ClrTypeSymbol ResolveSpecialType(SpecialType specialType)
+    {
+        var type = specialType switch
         {
-            var namespaces = Types
-                .Where(t => !string.IsNullOrEmpty(t.Namespace))
-                .Select(t => t.Namespace);
+            SpecialType.ClrBoolean => CoreAssembly.GetType(typeof(bool).FullName),
+            SpecialType.ClrObject => CoreAssembly.GetType(typeof(object).FullName),
+            SpecialType.ClrVoid => CoreAssembly.GetType(typeof(void).FullName),
+            SpecialType.ClrString => CoreAssembly.GetType(typeof(string).FullName),
+            SpecialType.ClrByte => CoreAssembly.GetType(typeof(byte).FullName),
+            SpecialType.ClrChar => CoreAssembly.GetType(typeof(char).FullName),
+            SpecialType.ClrInt32 => CoreAssembly.GetType(typeof(int).FullName),
+            SpecialType.ClrUInt32 => CoreAssembly.GetType(typeof(uint).FullName),
+            SpecialType.ClrInt64 => CoreAssembly.GetType(typeof(long).FullName),
+            SpecialType.ClrUInt64 => CoreAssembly.GetType(typeof(ulong).FullName),
+            SpecialType.ClrDouble => CoreAssembly.GetType(typeof(double).FullName),
+            SpecialType.ClrFloat => CoreAssembly.GetType(typeof(float).FullName),
+            _ => throw new NotSupportedException($"Special type {specialType} is not supported")
+        };
 
-            foreach (var n in namespaces)
+        return new(type, specialType);
+    }
+
+    public ClrTypeCacheView CreateView(IEnumerable<ImportDirective> importDirectives)
+        => new(this, importDirectives);
+
+    public static ClrTypeCache FromAssemblies(IEnumerable<Assembly> assemblies, Assembly coreAssembly)
+        => new(assemblies, coreAssembly);
+
+    /// <summary>
+    /// Populating loadedNamespaces with a full list of namespaces
+    /// e.g.
+    /// when input is "System.Collections.Generic"
+    /// the result should be
+    /// {
+    ///     "System",
+    ///     "System.Collections",
+    ///     "System.Collections.Generic"
+    /// }
+    /// </summary>
+    private void PopulateNamespaces()
+    {
+        var namespaces = Types
+            .Where(t => !string.IsNullOrEmpty(t.Namespace))
+            .Select(t => t.Namespace);
+
+        foreach (var n in namespaces)
+        {
+            var position = -1;
+            while ((position = n.IndexOf('.', position + 1)) != -1)
             {
-                var position = -1;
-                while ((position = n.IndexOf('.', position + 1)) != -1)
-                {
-                    loadedNamespaces.Add(n[..position]);
-                }
-                loadedNamespaces.Add(n);
+                loadedNamespaces.Add(n[..position]);
             }
+            loadedNamespaces.Add(n);
         }
     }
 }
