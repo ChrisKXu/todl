@@ -28,7 +28,7 @@ public sealed partial class BinderTests
         boundFunctionCallExpression.BoundArguments.Count.Should().Be(1);
 
         var argument = boundFunctionCallExpression.BoundArguments[0].As<BoundUnaryExpression>();
-        argument.Operator.BoundUnaryOperatorKind.Should().Be(BoundUnaryOperatorKind.UnaryMinus);
+        argument.Operator.BoundUnaryOperatorKind.Should().Be(BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Int);
         argument.Operand.As<BoundConstant>().Value.Should().Be(10);
     }
 

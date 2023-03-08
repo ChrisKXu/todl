@@ -116,7 +116,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
 
         if (visitedOperand is BoundConstant constant)
         {
-            var value = boundUnaryExpression.Operator.BoundUnaryOperatorKind switch
+            var value = boundUnaryExpression.Operator.BoundUnaryOperatorKind.GetOperationKind() switch
             {
                 BoundUnaryOperatorKind.UnaryPlus => constant.Value,
                 BoundUnaryOperatorKind.UnaryMinus

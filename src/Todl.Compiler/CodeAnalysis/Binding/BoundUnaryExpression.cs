@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -51,6 +53,12 @@ public enum BoundUnaryOperatorKind
     Error = 0x00000000
 }
 
+public static class BoundUnaryOperatorKindExtensions
+{
+    public static BoundUnaryOperatorKind GetOperationKind(this BoundUnaryOperatorKind boundUnaryOperatorKind)
+        => boundUnaryOperatorKind & BoundUnaryOperatorKind.OpMask;
+}
+
 public sealed record BoundUnaryOperator(
     SyntaxKind SyntaxKind,
     BoundUnaryOperatorKind BoundUnaryOperatorKind,
@@ -61,7 +69,7 @@ public sealed record BoundUnaryOperator(
         SyntaxKind syntaxKind,
         bool trailing)
     {
-        BoundUnaryOperatorKind boundUnaryOperatorKind = default;
+        var boundUnaryOperatorKind = BoundUnaryOperatorKind.Error;
 
         boundUnaryOperatorKind |= syntaxKind switch
         {
@@ -74,20 +82,104 @@ public sealed record BoundUnaryOperator(
             _ => BoundUnaryOperatorKind.Error
         };
 
-
+        boundUnaryOperatorKind |= operandType.SpecialType switch
+        {
+            SpecialType.ClrBoolean => BoundUnaryOperatorKind.Bool,
+            SpecialType.ClrByte => BoundUnaryOperatorKind.Byte,
+            SpecialType.ClrInt32 => BoundUnaryOperatorKind.Int,
+            SpecialType.ClrUInt32 => BoundUnaryOperatorKind.UInt,
+            SpecialType.ClrInt64 => BoundUnaryOperatorKind.Long,
+            SpecialType.ClrUInt64 => BoundUnaryOperatorKind.ULong,
+            SpecialType.ClrFloat => BoundUnaryOperatorKind.Float,
+            SpecialType.ClrDouble => BoundUnaryOperatorKind.Double,
+            _ => BoundUnaryOperatorKind.Error
+        };
 
         return new(syntaxKind, boundUnaryOperatorKind, operandType);
     }
 
     public bool Validate()
-    {
-        if (BoundUnaryOperatorKind == BoundUnaryOperatorKind.Error)
-        {
-            return false;
-        }
+        => validUnaryOperators.Contains(BoundUnaryOperatorKind);
 
-        return true;
-    }
+    private static readonly ImmutableHashSet<BoundUnaryOperatorKind> validUnaryOperators = new HashSet<BoundUnaryOperatorKind>()
+    {
+        // UnaryPlus
+        BoundUnaryOperatorKind.UnaryPlus | BoundUnaryOperatorKind.SByte,
+        BoundUnaryOperatorKind.UnaryPlus | BoundUnaryOperatorKind.Byte,
+        BoundUnaryOperatorKind.UnaryPlus | BoundUnaryOperatorKind.Short,
+        BoundUnaryOperatorKind.UnaryPlus | BoundUnaryOperatorKind.UShort,
+        BoundUnaryOperatorKind.UnaryPlus | BoundUnaryOperatorKind.Int,
+        BoundUnaryOperatorKind.UnaryPlus | BoundUnaryOperatorKind.UInt,
+        BoundUnaryOperatorKind.UnaryPlus | BoundUnaryOperatorKind.Long,
+        BoundUnaryOperatorKind.UnaryPlus | BoundUnaryOperatorKind.ULong,
+        BoundUnaryOperatorKind.UnaryPlus | BoundUnaryOperatorKind.Float,
+        BoundUnaryOperatorKind.UnaryPlus | BoundUnaryOperatorKind.Double,
+
+        // UnaryMinus
+        BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.SByte,
+        BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Byte,
+        BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Short,
+        BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.UShort,
+        BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Int,
+        BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.UInt,
+        BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Long,
+        BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.ULong,
+        BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Float,
+        BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Double,
+
+        // LogicalNegation
+        BoundUnaryOperatorKind.LogicalNegation | BoundUnaryOperatorKind.Bool,
+
+        // BitwiseComplement
+        BoundUnaryOperatorKind.BitwiseComplement | BoundUnaryOperatorKind.SByte,
+        BoundUnaryOperatorKind.BitwiseComplement | BoundUnaryOperatorKind.Byte,
+        BoundUnaryOperatorKind.BitwiseComplement | BoundUnaryOperatorKind.Short,
+        BoundUnaryOperatorKind.BitwiseComplement | BoundUnaryOperatorKind.UShort,
+        BoundUnaryOperatorKind.BitwiseComplement | BoundUnaryOperatorKind.Int,
+        BoundUnaryOperatorKind.BitwiseComplement | BoundUnaryOperatorKind.UInt,
+        BoundUnaryOperatorKind.BitwiseComplement | BoundUnaryOperatorKind.Long,
+        BoundUnaryOperatorKind.BitwiseComplement | BoundUnaryOperatorKind.ULong,
+
+        // PostfixIncrement
+        BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.SByte,
+        BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Byte,
+        BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Short,
+        BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.UShort,
+        BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Int,
+        BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.UInt,
+        BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Long,
+        BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.ULong,
+
+        // PostfixDecrement
+        BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.SByte,
+        BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Byte,
+        BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Short,
+        BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.UShort,
+        BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Int,
+        BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.UInt,
+        BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Long,
+        BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.ULong,
+
+        // PrefixIncrement
+        BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.SByte,
+        BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Byte,
+        BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Short,
+        BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.UShort,
+        BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Int,
+        BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.UInt,
+        BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Long,
+        BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.ULong,
+
+        // PrefixDecrement
+        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.SByte,
+        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Byte,
+        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Short,
+        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.UShort,
+        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Int,
+        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.UInt,
+        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Long,
+        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.ULong
+    }.ToImmutableHashSet();
 }
 
 public partial class Binder
@@ -106,7 +198,7 @@ public partial class Binder
             diagnosticBuilder.Add(
                 new Diagnostic()
                 {
-                    Message = $"Operator {unaryExpression.Operator.Text} is not supported on type {boundOperand.ResultType.Name}",
+                    Message = $"Unary operator \"{unaryExpression.Operator.Text}\" is not supported on type \"{boundOperand.ResultType.Name}\"",
                     Level = DiagnosticLevel.Error,
                     TextLocation = unaryExpression.Operator.GetTextLocation(),
                     ErrorCode = ErrorCode.UnsupportedOperator
