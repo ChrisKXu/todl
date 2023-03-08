@@ -75,6 +75,17 @@ public sealed class ClrTypeCache
         return Types.FirstOrDefault(t => t.Name == name);
     }
 
+    public ClrTypeSymbol Resolve(Type type)
+    {
+        if (builtInTypeNames.ContainsKey(type.FullName))
+        {
+            return ResolveSpecialType(builtInTypeNames[type.FullName]);
+        }
+
+        // TODO: obviously we need to optimize this
+        return Types.FirstOrDefault(t => t.ClrType.Equals(type));
+    }
+
     public ClrTypeSymbol ResolveSpecialType(SpecialType specialType)
     {
         var type = specialType switch
