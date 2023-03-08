@@ -18,7 +18,7 @@ public sealed class ClrTypeCache
 
     public BuiltInTypes BuiltInTypes { get; }
 
-    private static readonly IReadOnlyDictionary<string, SpecialType> BuiltInTypeNames
+    private static readonly IReadOnlyDictionary<string, SpecialType> builtInTypeNames
         = new Dictionary<string, SpecialType>()
         {
             { "bool", SpecialType.ClrBoolean },
@@ -55,7 +55,7 @@ public sealed class ClrTypeCache
         Types = assemblies
             .SelectMany(a => a.GetExportedTypes())
             .Where(t => !t.IsGenericType) // TODO: support generic type
-            .Where(t => !BuiltInTypeNames.ContainsKey(t.FullName))
+            .Where(t => !builtInTypeNames.ContainsKey(t.FullName))
             .Select(t => new ClrTypeSymbol(t))
             .ToHashSet();
 
@@ -66,9 +66,9 @@ public sealed class ClrTypeCache
 
     public ClrTypeSymbol Resolve(string name)
     {
-        if (BuiltInTypeNames.ContainsKey(name))
+        if (builtInTypeNames.ContainsKey(name))
         {
-            return ResolveSpecialType(BuiltInTypeNames[name]);
+            return ResolveSpecialType(builtInTypeNames[name]);
         }
 
         // TODO: obviously we need to optimize this
@@ -91,7 +91,7 @@ public sealed class ClrTypeCache
             SpecialType.ClrUInt64 => CoreAssembly.GetType(typeof(ulong).FullName),
             SpecialType.ClrDouble => CoreAssembly.GetType(typeof(double).FullName),
             SpecialType.ClrFloat => CoreAssembly.GetType(typeof(float).FullName),
-            _ => null
+            _ => throw new NotSupportedException($"Special type {specialType} is not supported")
         };
 
         return new(type, specialType);
