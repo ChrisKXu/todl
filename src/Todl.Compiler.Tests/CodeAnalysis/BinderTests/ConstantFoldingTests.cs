@@ -10,6 +10,41 @@ namespace Todl.Compiler.Tests.CodeAnalysis;
 public sealed class ConstantFoldingTests
 {
     [Theory]
+    [InlineData("const a = +10;", 10)]
+    [InlineData("const a = +10U;", 10U)]
+    [InlineData("const a = +10L;", 10L)]
+    [InlineData("const a = +10UL;", 10UL)]
+    [InlineData("const a = +1.0F;", 1.0F)]
+    [InlineData("const a = +1.0;", 1.0)]
+    [InlineData("const a = -10;", -10)]
+    [InlineData("const a = -10U;", -10U)]
+    [InlineData("const a = -10L;", -10L)]
+    [InlineData("const a = -1.0F;", -1.0F)]
+    [InlineData("const a = -1.0;", -1.0)]
+    [InlineData("const a = !true;", false)]
+    [InlineData("const a = !false;", true)]
+    [InlineData("const a = ~10;", ~10)]
+    [InlineData("const a = ~10U;", ~10U)]
+    [InlineData("const a = ~10L;", ~10L)]
+    [InlineData("const a = ~10UL;", ~10UL)]
+    public void ConstantFoldingUnaryOperatorTest(string inputText, object expectedValue)
+    {
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
+        module.GetDiagnostics().Should().BeEmpty();
+
+        var variableMember = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>();
+        variableMember.BoundVariableDeclarationStatement.Variable.Constant.Should().Be(true);
+        var value = variableMember
+            .BoundVariableDeclarationStatement
+            .InitializerExpression
+            .As<BoundConstant>()
+            .Value;
+
+        value.Should().Be(expectedValue);
+    }
+
+    [Theory]
     [InlineData("const a = 10 + 10;", 20)]
     [InlineData("const a = 10; const b = a + 10;", 20)]
     [InlineData("const a = 10; const b = a * 2;", 20)]

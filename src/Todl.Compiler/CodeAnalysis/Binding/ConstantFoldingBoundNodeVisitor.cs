@@ -120,17 +120,28 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
             {
                 BoundUnaryOperatorKind.UnaryPlus => constant.Value,
                 BoundUnaryOperatorKind.UnaryMinus
-                    => constant.Value switch
+                    => constant.ResultType.SpecialType switch
                     {
-                        ConstantInt32Value intValue => constantValueFactory.Create(-intValue.Int32Value),
-                        ConstantInt64Value longValue => constantValueFactory.Create(-longValue.Int64Value),
-                        ConstantDoubleValue doubleValue => constantValueFactory.Create(-doubleValue.DoubleValue),
+                        SpecialType.ClrInt32 => constantValueFactory.Create(-constant.Value.Int32Value),
+                        SpecialType.ClrUInt32 => constantValueFactory.Create(-constant.Value.UInt32Value),
+                        SpecialType.ClrInt64 => constantValueFactory.Create(-constant.Value.Int64Value),
+                        SpecialType.ClrFloat => constantValueFactory.Create(-constant.Value.FloatValue),
+                        SpecialType.ClrDouble => constantValueFactory.Create(-constant.Value.DoubleValue),
                         _ => null
                     },
                 BoundUnaryOperatorKind.LogicalNegation
-                    => constant.Value switch
+                    => constant.ResultType.SpecialType switch
                     {
-                        ConstantBooleanValue booleanValue => constantValueFactory.Create(!booleanValue.BooleanValue),
+                        SpecialType.ClrBoolean => constantValueFactory.Create(!constant.Value.BooleanValue),
+                        _ => null
+                    },
+                BoundUnaryOperatorKind.BitwiseComplement
+                    => constant.ResultType.SpecialType switch
+                    {
+                        SpecialType.ClrInt32 => constantValueFactory.Create(~constant.Value.Int32Value),
+                        SpecialType.ClrUInt32 => constantValueFactory.Create(~constant.Value.UInt32Value),
+                        SpecialType.ClrInt64 => constantValueFactory.Create(~constant.Value.Int64Value),
+                        SpecialType.ClrUInt64 => constantValueFactory.Create(~constant.Value.UInt64Value),
                         _ => null
                     },
                 _ => null

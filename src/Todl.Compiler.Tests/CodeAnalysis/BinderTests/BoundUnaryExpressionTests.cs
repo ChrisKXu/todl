@@ -21,7 +21,6 @@ public sealed partial class BinderTests
     [InlineData("{ let a = 1; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Int, SpecialType.ClrInt32)]
     [InlineData("{ let a = 1U; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.UInt, SpecialType.ClrUInt32)]
     [InlineData("{ let a = 1L; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Long, SpecialType.ClrInt64)]
-    [InlineData("{ let a = 1UL; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.ULong, SpecialType.ClrUInt64)]
     [InlineData("{ let a = 1.0F; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Float, SpecialType.ClrFloat)]
     [InlineData("{ let a = 1.0; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Double, SpecialType.ClrDouble)]
     // LogicalNegation
@@ -73,6 +72,7 @@ public sealed partial class BinderTests
     }
 
     [Theory]
+    [InlineData("{ let a = 1UL; -a; }", "-", typeof(ulong))]
     [InlineData("{ let a = 1; !a; }", "!", typeof(int))]
     [InlineData("{ let a = 1.0F; !a; }", "!", typeof(float))]
     [InlineData("{ let a = 1.0; !a; }", "!", typeof(double))]

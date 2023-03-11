@@ -123,7 +123,6 @@ public sealed record BoundUnaryOperator(
         BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Int,
         BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.UInt,
         BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Long,
-        BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.ULong,
         BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Float,
         BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Double,
 
