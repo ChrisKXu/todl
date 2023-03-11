@@ -149,6 +149,8 @@ public sealed record BoundUnaryOperator(
         BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.UInt,
         BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Long,
         BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.ULong,
+        BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Float,
+        BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Double,
 
         // PostfixDecrement
         BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.SByte,
@@ -159,6 +161,8 @@ public sealed record BoundUnaryOperator(
         BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.UInt,
         BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Long,
         BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.ULong,
+        BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Float,
+        BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Double,
 
         // PrefixIncrement
         BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.SByte,
@@ -169,6 +173,8 @@ public sealed record BoundUnaryOperator(
         BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.UInt,
         BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Long,
         BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.ULong,
+        BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Float,
+        BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Double,
 
         // PrefixDecrement
         BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.SByte,
@@ -178,7 +184,9 @@ public sealed record BoundUnaryOperator(
         BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Int,
         BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.UInt,
         BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Long,
-        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.ULong
+        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.ULong,
+        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Float,
+        BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Double
     }.ToImmutableHashSet();
 }
 
