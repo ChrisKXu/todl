@@ -1,15 +1,16 @@
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-public partial class BinderTests
+public sealed class BoundBinaryExpressionTests
 {
     [Fact]
     public void TestBindBinaryExpression()
     {
-        var boundBinaryExpression = BindExpression<BoundBinaryExpression>("1 + 2 + 3");
+        var boundBinaryExpression = TestUtils.BindExpression<BoundBinaryExpression>("1 + 2 + 3");
 
         boundBinaryExpression.Should().NotBeNull();
         boundBinaryExpression.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryOperatorKind.NumericAddition);
@@ -25,11 +26,11 @@ public partial class BinderTests
     [Fact]
     public void TestBindBinaryExpression2()
     {
-        var boundBinaryExpression = BindExpression<BoundBinaryExpression>("1 + 2 * 3 >= 4");
+        var boundBinaryExpression = TestUtils.BindExpression<BoundBinaryExpression>("1 + 2 * 3 >= 4");
 
         boundBinaryExpression.Should().NotBeNull();
         boundBinaryExpression.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryOperatorKind.Comparison);
-        boundBinaryExpression.ResultType.Should().Be(builtInTypes.Boolean);
+        boundBinaryExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrBoolean);
         boundBinaryExpression.Right.As<BoundConstant>().Value.Should().Be(4);
 
         var left = boundBinaryExpression.Left.As<BoundBinaryExpression>();

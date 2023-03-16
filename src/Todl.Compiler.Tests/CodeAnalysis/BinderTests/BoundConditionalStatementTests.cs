@@ -6,14 +6,14 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-public sealed partial class BinderTests
+public sealed class BoundConditionalStatementTests
 {
     [Theory]
     [InlineData("if true { 0.ToString(); }", false)]
     [InlineData("unless true { 0.ToString(); }", true)]
     public void TestBindIfUnlessStatementWithoutElseClauses(string inputText, bool inverted)
     {
-        var boundConditionalStatement = BindStatement<BoundConditionalStatement>(inputText);
+        var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
         boundConditionalStatement.Should().NotBeNull();
         boundConditionalStatement.GetDiagnostics().Should().BeEmpty();
 
@@ -27,7 +27,7 @@ public sealed partial class BinderTests
     public void TestBindIfUnlessStatementWithSimpleElseClause()
     {
         var inputText = "if true { 0.ToString(); } else { 1.ToString(); }";
-        var boundConditionalStatement = BindStatement<BoundConditionalStatement>(inputText);
+        var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
         boundConditionalStatement.Should().NotBeNull();
         boundConditionalStatement.GetDiagnostics().Should().BeEmpty();
 
@@ -44,7 +44,7 @@ public sealed partial class BinderTests
     public void TestBindIfUnlessStatementWithMultipleElseClauses()
     {
         var inputText = "unless 0 == 1 { 0.ToString(); } else unless 1 == 2 { 1.ToString(); } else { 2.ToString(); }";
-        var boundConditionalStatement = BindStatement<BoundConditionalStatement>(inputText);
+        var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
         boundConditionalStatement.Should().NotBeNull();
         boundConditionalStatement.GetDiagnostics().Should().BeEmpty();
 
@@ -95,7 +95,7 @@ public sealed partial class BinderTests
     [InlineData("if 0 { 0.ToString(); }")]
     public void BoundConditionalStatementShouldHaveBooleanConditions(string inputText)
     {
-        var boundConditionalStatement = BindStatement<BoundConditionalStatement>(inputText);
+        var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
         boundConditionalStatement.Should().NotBeNull();
 
         var diagnostics = boundConditionalStatement.GetDiagnostics().ToList();
@@ -116,7 +116,7 @@ public sealed partial class BinderTests
                 }
                 b = a + 5;
             }";
-        var syntaxTree = ParseSyntaxTree(inputText);
+        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
         var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         boundModule.GetDiagnostics().Should().BeEmpty();
 
