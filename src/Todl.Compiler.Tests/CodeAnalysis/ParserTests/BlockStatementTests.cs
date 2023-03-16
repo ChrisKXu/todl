@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-public sealed partial class ParserTests
+public sealed class BlockStatementTests
 {
     [Fact]
     public void TestParseBlockStatementBasic()
@@ -16,7 +16,7 @@ public sealed partial class ParserTests
                 b = a;
             }
             ";
-        var blockStatement = ParseStatement<BlockStatement>(inputText);
+        var blockStatement = TestUtils.ParseStatement<BlockStatement>(inputText);
 
         blockStatement.OpenBraceToken.Text.Should().Be("{");
         blockStatement.OpenBraceToken.Kind.Should().Be(SyntaxKind.OpenBraceToken);
@@ -39,7 +39,7 @@ public sealed partial class ParserTests
                 ++a;
                 b = a;
             ";
-        var blockStatement = ParseStatement<BlockStatement>(inputText);
+        var blockStatement = TestUtils.ParseStatement<BlockStatement>(inputText);
 
         blockStatement.OpenBraceToken.Text.Should().Be("{");
         blockStatement.OpenBraceToken.Kind.Should().Be(SyntaxKind.OpenBraceToken);

@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-public sealed partial class ParserTests
+public sealed class NewExpressionTests
 {
     private void PerformBasicValidationForNewExpression(NewExpression newExpression)
     {
@@ -21,7 +21,7 @@ public sealed partial class ParserTests
     public void TestParseNewExpressionBasicWithNoArguments()
     {
         var inputText = "new System.Exception()";
-        var newExpression = ParseExpression<NewExpression>(inputText);
+        var newExpression = TestUtils.ParseExpression<NewExpression>(inputText);
 
         PerformBasicValidationForNewExpression(newExpression);
         newExpression.TypeNameExpression.Text.Should().Be("System.Exception");
@@ -32,7 +32,7 @@ public sealed partial class ParserTests
     public void TestParseNewExpressionBasicWithOnePositionalArgument()
     {
         var inputText = "new System.Uri(\"https://google.com\")";
-        var newExpression = ParseExpression<NewExpression>(inputText);
+        var newExpression = TestUtils.ParseExpression<NewExpression>(inputText);
 
         PerformBasicValidationForNewExpression(newExpression);
         newExpression.TypeNameExpression.Text.Should().Be("System.Uri");
@@ -47,7 +47,7 @@ public sealed partial class ParserTests
     public void TestParseNewExpressionBasicWithOneNamedArgument()
     {
         var inputText = "new System.Uri(uriString: \"https://google.com\")";
-        var newExpression = ParseExpression<NewExpression>(inputText);
+        var newExpression = TestUtils.ParseExpression<NewExpression>(inputText);
 
         PerformBasicValidationForNewExpression(newExpression);
         newExpression.TypeNameExpression.Text.Should().Be("System.Uri");
@@ -63,7 +63,7 @@ public sealed partial class ParserTests
     public void TestParseNewExpressionBasicWithMultiplePositionalArguments()
     {
         var inputText = "new System.Uri(\"https://google.com\", false)";
-        var newExpression = ParseExpression<NewExpression>(inputText);
+        var newExpression = TestUtils.ParseExpression<NewExpression>(inputText);
 
         PerformBasicValidationForNewExpression(newExpression);
         newExpression.TypeNameExpression.Text.Should().Be("System.Uri");
@@ -85,7 +85,7 @@ public sealed partial class ParserTests
     public void TestParseNewExpressionBasicWithMultipleNamedArguments()
     {
         var inputText = "new System.Uri(uriString: \"https://google.com\", dontEscape: false)";
-        var newExpression = ParseExpression<NewExpression>(inputText);
+        var newExpression = TestUtils.ParseExpression<NewExpression>(inputText);
 
         PerformBasicValidationForNewExpression(newExpression);
         newExpression.TypeNameExpression.Text.Should().Be("System.Uri");

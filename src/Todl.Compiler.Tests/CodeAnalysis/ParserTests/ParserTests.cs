@@ -6,34 +6,8 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
-    public sealed partial class ParserTests
+    public sealed class ParserTests
     {
-        private static TExpression ParseExpression<TExpression>(string sourceText)
-            where TExpression : Expression
-        {
-            return SyntaxTree.ParseExpression(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache).As<TExpression>();
-        }
-
-        private static TStatement ParseStatement<TStatement>(string sourceText)
-            where TStatement : Statement
-        {
-            return SyntaxTree.ParseStatement(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache).As<TStatement>();
-        }
-
-        private static TDirective ParseDirective<TDirective>(string sourceText)
-            where TDirective : Directive
-        {
-            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache);
-            return syntaxTree.Directives[0].As<TDirective>();
-        }
-
-        private static TMember ParseMember<TMember>(string sourceText)
-            where TMember : Member
-        {
-            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache);
-            return syntaxTree.Members[0].As<TMember>();
-        }
-
         [Theory]
         [InlineData("=", SyntaxKind.EqualsToken)]
         [InlineData("+=", SyntaxKind.PlusEqualsToken)]
@@ -42,7 +16,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("/=", SyntaxKind.SlashEqualsToken)]
         public void TestAssignmentOperators(string expectedOperatorToken, SyntaxKind expectedTokenKind)
         {
-            var assignmentExpression = ParseExpression<AssignmentExpression>($"a {expectedOperatorToken} (b + 3) * 2");
+            var assignmentExpression = TestUtils.ParseExpression<AssignmentExpression>($"a {expectedOperatorToken} (b + 3) * 2");
 
             assignmentExpression.Left.As<NameExpression>().Text.Should().Be("a");
             assignmentExpression.AssignmentOperator.Text.Should().Be(expectedOperatorToken);
@@ -70,7 +44,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("\"abc\".Length")]
         public void TestMemberAccessExpressionBasic(string inputText)
         {
-            var memberAccessExpression = ParseExpression<MemberAccessExpression>(inputText);
+            var memberAccessExpression = TestUtils.ParseExpression<MemberAccessExpression>(inputText);
             memberAccessExpression.Should().NotBeNull();
 
             var memberName = inputText[(inputText.LastIndexOf('.') + 1)..^0];
@@ -86,7 +60,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 let b = a;
             }
             ";
-            var blockStatement = ParseStatement<BlockStatement>(inputText);
+            var blockStatement = TestUtils.ParseStatement<BlockStatement>(inputText);
 
             blockStatement.InnerStatements.Should().SatisfyRespectively(
                 _0 =>
@@ -110,7 +84,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("import { ConcurrentBag, ConcurrentDictionary, ConcurrentQueue } from System.Collections.Concurrent;")]
         public void TestParseImportDirective(string inputText)
         {
-            var directive = ParseDirective<ImportDirective>(inputText);
+            var directive = TestUtils.ParseDirective<ImportDirective>(inputText);
 
             // calculate namespace by directly parsing the text to see
             // if match with the parser results
