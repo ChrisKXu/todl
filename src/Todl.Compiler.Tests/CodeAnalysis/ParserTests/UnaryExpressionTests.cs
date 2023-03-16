@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-public sealed partial class ParserTests
+public sealed class UnaryExpressionTests
 {
     [Theory]
     [InlineData("+1", SyntaxKind.PlusToken, false)]
@@ -17,9 +17,9 @@ public sealed partial class ParserTests
     [InlineData("a--", SyntaxKind.MinusMinusToken, true)]
     [InlineData("!a", SyntaxKind.BangToken, false)]
     [InlineData("~a", SyntaxKind.TildeToken, false)]
-    public void UnaryExpressionTests(string input, SyntaxKind expectedOperatorKind, bool trailing)
+    public void TestParsingUnaryExpression(string input, SyntaxKind expectedOperatorKind, bool trailing)
     {
-        var unaryExpression = ParseExpression<UnaryExpression>(input);
+        var unaryExpression = TestUtils.ParseExpression<UnaryExpression>(input);
 
         unaryExpression.Should().NotBeNull();
         unaryExpression.Operator.Kind.Should().Be(expectedOperatorKind);

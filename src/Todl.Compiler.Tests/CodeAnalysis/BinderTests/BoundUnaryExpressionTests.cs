@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-public sealed partial class BinderTests
+public sealed class BoundUnaryExpressionTests
 {
     [Theory]
     // UnaryPlus
@@ -60,7 +60,7 @@ public sealed partial class BinderTests
     [InlineData("{ let a = 1.0; a--; }", BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Double, SpecialType.ClrDouble)]
     public void TestBindUnaryExpressionWithSupportedSpecialTypes(string input, BoundUnaryOperatorKind expectedOperatorKind, SpecialType expectedSpecialType)
     {
-        var boundBlockStatement = BindStatement<BoundBlockStatement>(input);
+        var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
         var boundExpressionStatement = boundBlockStatement.Statements[^1].As<BoundExpressionStatement>();
         var boundUnaryExpression = boundExpressionStatement.Expression.As<BoundUnaryExpression>();
 
@@ -84,7 +84,7 @@ public sealed partial class BinderTests
     [InlineData("{ let a = \"abc\"; ++a; }", "++", typeof(string))]
     public void TestBindUnaryExpressionWithMismatchedSpecialTypes(string input, string operatorText, Type operandType)
     {
-        var boundBlockStatement = BindStatement<BoundBlockStatement>(input);
+        var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
         var boundExpressionStatement = boundBlockStatement.Statements[^1].As<BoundExpressionStatement>();
         var boundUnaryExpression = boundExpressionStatement.Expression.As<BoundUnaryExpression>();
 
