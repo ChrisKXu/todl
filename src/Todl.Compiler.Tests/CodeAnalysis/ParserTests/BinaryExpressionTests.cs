@@ -4,12 +4,12 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-public sealed partial class ParserTests
+public sealed class BinaryExpressionTests
 {
     [Fact]
     public void TestParseBinaryExpressionBasic()
     {
-        var binaryExpression = ParseExpression<BinaryExpression>("1 + 2 + 3");
+        var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("1 + 2 + 3");
 
         binaryExpression.Left.As<BinaryExpression>().Invoking(left =>
         {
@@ -27,7 +27,7 @@ public sealed partial class ParserTests
     [Fact]
     public void TestParseBinaryExpressionWithPrecedence()
     {
-        var binaryExpression = ParseExpression<BinaryExpression>("1 + 2 * 3 - 4");
+        var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("1 + 2 * 3 - 4");
 
         var left = binaryExpression.Left.As<BinaryExpression>();
         left.Left.As<LiteralExpression>().Text.Should().Be("1");
@@ -50,7 +50,7 @@ public sealed partial class ParserTests
     [Fact]
     public void TestParseBinaryExpressionWithPrecedence2()
     {
-        var binaryExpression = ParseExpression<BinaryExpression>("1 + 2 * 3 <= 4");
+        var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("1 + 2 * 3 <= 4");
 
         var left = binaryExpression.Left.As<BinaryExpression>();
         left.Left.As<LiteralExpression>().Text.Should().Be("1");
@@ -73,7 +73,7 @@ public sealed partial class ParserTests
     [Fact]
     public void TestParseBinaryExpressionWithParenthesis()
     {
-        var binaryExpression = ParseExpression<BinaryExpression>("(1 + 2) * 3 - 4");
+        var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("(1 + 2) * 3 - 4");
 
         binaryExpression.Left.As<BinaryExpression>().Invoking(multiplication =>
         {
@@ -98,7 +98,7 @@ public sealed partial class ParserTests
     [Fact]
     public void TestParseBinaryExpressionWithEquality()
     {
-        var binaryExpression = ParseExpression<BinaryExpression>("3 == 1 + 2");
+        var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("3 == 1 + 2");
 
         binaryExpression.Left.Text.Should().Be("3");
         binaryExpression.Operator.Text.Should().Be("==");
@@ -116,7 +116,7 @@ public sealed partial class ParserTests
     [Fact]
     public void TestParseBinaryExpressionWithInequality()
     {
-        var binaryExpression = ParseExpression<BinaryExpression>("5 != 1 + 2");
+        var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("5 != 1 + 2");
 
         binaryExpression.Left.As<LiteralExpression>().Text.Should().Be("5");
         binaryExpression.Operator.Text.Should().Be("!=");
@@ -134,7 +134,7 @@ public sealed partial class ParserTests
     [Fact]
     public void TestParseBinaryExpressionWithNameAndUnaryExpression()
     {
-        var binaryExpression = ParseExpression<BinaryExpression>("(++a + 2) * 3 + 4");
+        var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("(++a + 2) * 3 + 4");
 
         binaryExpression.Left.As<BinaryExpression>().Invoking(multiplication =>
         {
@@ -166,7 +166,7 @@ public sealed partial class ParserTests
     [Fact]
     public void TestParseBinaryExpressionWithNameAndTrailingUnaryExpression()
     {
-        var binaryExpression = ParseExpression<BinaryExpression>("(a++ + 2) * 3");
+        var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("(a++ + 2) * 3");
 
         binaryExpression.Left.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>().Invoking(inner =>
         {

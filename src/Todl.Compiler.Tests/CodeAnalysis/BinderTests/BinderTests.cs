@@ -15,45 +15,6 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
     public sealed partial class BinderTests
     {
-        private static readonly BuiltInTypes builtInTypes = TestDefaults.DefaultClrTypeCache.BuiltInTypes;
-
-        private static TBoundExpression BindExpression<TBoundExpression>(
-            string inputText)
-            where TBoundExpression : BoundExpression
-        {
-            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
-            return binder.BindExpression(expression).As<TBoundExpression>();
-        }
-
-        private static TBoundStatement BindStatement<TBoundStatement>(
-            string inputText)
-            where TBoundStatement : BoundStatement
-        {
-            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
-            return binder.BindStatement(statement) as TBoundStatement;
-        }
-
-        private static TBoundMember BindMember<TBoundMember>(
-            string inputText)
-            where TBoundMember : BoundMember
-        {
-            var syntaxTree = ParseSyntaxTree(inputText);
-            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
-            var member = syntaxTree.Members[0];
-
-            if (member is FunctionDeclarationMember functionDeclarationMember)
-            {
-                binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember));
-            }
-
-            return binder.BindMember(member).As<TBoundMember>();
-        }
-
-        public static SyntaxTree ParseSyntaxTree(string inputText)
-            => SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-
         [Theory]
         [MemberData(nameof(GetTestBindAssignmentExpressionDataWithEqualsToken))]
         public void TestBindAssignmentExpressionEqualsToken(string input, string variableName, TypeSymbol expectedResultType)
@@ -76,8 +37,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
         public static IEnumerable<object[]> GetTestBindAssignmentExpressionDataWithEqualsToken()
         {
-            yield return new object[] { "n = 0", "n", builtInTypes.Int32 };
-            yield return new object[] { "abcd = \"abcde\"", "abcd", builtInTypes.String };
+            yield return new object[] { "n = 0", "n", TestDefaults.DefaultClrTypeCache.BuiltInTypes.Int32 };
+            yield return new object[] { "abcd = \"abcde\"", "abcd", TestDefaults.DefaultClrTypeCache.BuiltInTypes.String };
         }
 
         [Fact]
@@ -90,12 +51,12 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             }
             ";
 
-            var boundBlockStatement = BindStatement<BoundBlockStatement>(input);
+            var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
             boundBlockStatement.Statements.Count.Should().Be(2);
-            boundBlockStatement.Scope.LookupVariable("a").Type.Should().Be(builtInTypes.Int32);
-            boundBlockStatement.Scope.LookupVariable("b").Type.Should().Be(builtInTypes.Int32);
+            boundBlockStatement.Scope.LookupVariable("a").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
+            boundBlockStatement.Scope.LookupVariable("b").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
 
             boundBlockStatement.Statements[0].Should().BeOfType<BoundVariableDeclarationStatement>();
             boundBlockStatement.Statements[1].Should().BeOfType<BoundVariableDeclarationStatement>();
@@ -114,12 +75,12 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 let b = a + 4;
             }
             ";
-            var boundBlockStatement = BindStatement<BoundBlockStatement>(input);
+            var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
             boundBlockStatement.Statements.Count.Should().Be(2);
-            boundBlockStatement.Scope.LookupVariable("a").Type.Should().Be(builtInTypes.Int32);
-            boundBlockStatement.Scope.LookupVariable("b").Type.Should().Be(builtInTypes.Int32);
+            boundBlockStatement.Scope.LookupVariable("a").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
+            boundBlockStatement.Scope.LookupVariable("b").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
         }
 
         [Fact]
@@ -137,7 +98,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             }
             ";
 
-            var boundBlockStatement = BindStatement<BoundBlockStatement>(input);
+            var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
             boundBlockStatement.Statements.Count.Should().Be(4);
@@ -146,39 +107,39 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var childScope = (boundBlockStatement.Statements[2] as BoundBlockStatement).Scope;
             childScope.Parent.Should().Be(scope);
 
-            scope.LookupVariable("a").Type.Should().Be(builtInTypes.Int32);
-            scope.LookupVariable("b").Type.Should().Be(builtInTypes.Int32);
+            scope.LookupVariable("a").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
+            scope.LookupVariable("b").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
 
-            childScope.LookupVariable("a").Type.Should().Be(builtInTypes.Boolean);
-            childScope.LookupVariable("b").Type.Should().Be(builtInTypes.Int32);
+            childScope.LookupVariable("a").Type.SpecialType.Should().Be(SpecialType.ClrBoolean);
+            childScope.LookupVariable("b").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
         }
 
         [Fact]
         public void TestBindMemberAccessExpressionInstanceProperty()
         {
-            var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>("\"abc\".Length");
+            var boundMemberAccessExpression = TestUtils.BindExpression<BoundMemberAccessExpression>("\"abc\".Length");
 
             boundMemberAccessExpression.MemberInfo.MemberType.Should().Be(MemberTypes.Property);
             boundMemberAccessExpression.MemberName.Should().Be("Length");
-            boundMemberAccessExpression.ResultType.Should().Be(builtInTypes.Int32);
+            boundMemberAccessExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
             boundMemberAccessExpression.IsStatic.Should().Be(false);
         }
 
         [Fact]
         public void TestBindMemberAccessExpressionStaticField()
         {
-            var boundMemberAccessExpression = BindExpression<BoundMemberAccessExpression>("System.Int32.MaxValue");
+            var boundMemberAccessExpression = TestUtils.BindExpression<BoundMemberAccessExpression>("System.Int32.MaxValue");
 
             boundMemberAccessExpression.MemberInfo.MemberType.Should().Be(MemberTypes.Field);
             boundMemberAccessExpression.MemberName.Should().Be("MaxValue");
-            boundMemberAccessExpression.ResultType.Should().Be(builtInTypes.Int32);
+            boundMemberAccessExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
             boundMemberAccessExpression.IsStatic.Should().Be(true);
         }
 
         [Fact]
         public void TestBoundObjectCreationExpressionWithNoArguments()
         {
-            var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>("new System.Exception()");
+            var boundObjectCreationExpression = TestUtils.BindExpression<BoundObjectCreationExpression>("new System.Exception()");
 
             var exceptionType = TestDefaults.DefaultClrTypeCache.Resolve(typeof(Exception).FullName);
             boundObjectCreationExpression.ResultType.Should().Be(exceptionType);
@@ -191,7 +152,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [InlineData("new System.Exception(message: \"exception message\")")]
         public void TestBoundObjectCreationExpressionWithOneArgument(string inputText)
         {
-            var boundObjectCreationExpression = BindExpression<BoundObjectCreationExpression>(inputText);
+            var boundObjectCreationExpression = TestUtils.BindExpression<BoundObjectCreationExpression>(inputText);
 
             var exceptionType = TestDefaults.DefaultClrTypeCache.Resolve(typeof(Exception).FullName);
             boundObjectCreationExpression.ResultType.Should().Be(exceptionType);

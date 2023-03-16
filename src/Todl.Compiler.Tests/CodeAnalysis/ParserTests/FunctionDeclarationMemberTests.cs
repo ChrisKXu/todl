@@ -4,12 +4,12 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
-    public sealed partial class ParserTests
+    public sealed class FunctionDeclarationMemberTests
     {
         [Fact]
         public void ParseFunctionDeclarationMemberWithSimpleReturnType()
         {
-            var function = ParseMember<FunctionDeclarationMember>("int Function() {}");
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("int Function() {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("int");
@@ -20,7 +20,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithQualifiedReturnType()
         {
-            var function = ParseMember<FunctionDeclarationMember>("System.Uri Function() {}");
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("System.Uri Function() {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("System.Uri");
@@ -31,7 +31,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithArrayReturnType()
         {
-            var function = ParseMember<FunctionDeclarationMember>("int[] Function() {}");
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("int[] Function() {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("int[]");
@@ -43,7 +43,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithSingleParameter()
         {
-            var function = ParseMember<FunctionDeclarationMember>("void Function(int a) {}");
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("void Function(int a) {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("void");
@@ -58,7 +58,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithMultipleParameters()
         {
-            var function = ParseMember<FunctionDeclarationMember>("void Function(int a, System.Uri b) {}");
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("void Function(int a, System.Uri b) {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("void");
@@ -77,7 +77,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithArrayParameters()
         {
-            var function = ParseMember<FunctionDeclarationMember>("void Function(string[] a, System.Uri[] b) {}");
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("void Function(string[] a, System.Uri[] b) {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("void");
@@ -98,7 +98,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithMultiDimensionalArrayParameters()
         {
-            var function = ParseMember<FunctionDeclarationMember>("void Function(int intParameter, string[] stringArrayParameter, System.Uri[][] twoDimensionalArraysParameter) {}");
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("void Function(int intParameter, string[] stringArrayParameter, System.Uri[][] twoDimensionalArraysParameter) {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("void");
@@ -124,7 +124,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseEmptyReturnStatement()
         {
-            var emptyReturnStatement = ParseStatement<ReturnStatement>("return;");
+            var emptyReturnStatement = TestUtils.ParseStatement<ReturnStatement>("return;");
             emptyReturnStatement.Should().NotBeNull();
             emptyReturnStatement.ReturnKeywordToken.Text.Should().Be("return");
             emptyReturnStatement.ReturnKeywordToken.Kind.Should().Be(SyntaxKind.ReturnKeywordToken);
@@ -136,7 +136,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseReturnStatementWithExpression()
         {
-            var returnStatement = ParseStatement<ReturnStatement>("return (1 + 2) * 4;");
+            var returnStatement = TestUtils.ParseStatement<ReturnStatement>("return (1 + 2) * 4;");
             returnStatement.Should().NotBeNull();
             returnStatement.ReturnKeywordToken.Text.Should().Be("return");
             returnStatement.ReturnKeywordToken.Kind.Should().Be(SyntaxKind.ReturnKeywordToken);
