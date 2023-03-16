@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-public partial class BinderTests
+public sealed class BoundConstantTests
 {
     [Theory]
     [InlineData("\"\"", "")]
@@ -15,10 +15,10 @@ public partial class BinderTests
     [InlineData("@\"ab\\\"cd\"", "ab\\\"cd")]
     public void TestBindStringConstant(string input, string expectedOutput)
     {
-        var boundConstant = BindExpression<BoundConstant>(input);
+        var boundConstant = TestUtils.BindExpression<BoundConstant>(input);
 
         boundConstant.Should().NotBeNull();
-        boundConstant.ResultType.Should().Be(builtInTypes.String);
+        boundConstant.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
         boundConstant.Value.Should().Be(expectedOutput);
     }
 
@@ -59,7 +59,7 @@ public partial class BinderTests
     [InlineData("0x123456789ABCDEF", 0x123456789ABCDEF)]
     public void TestBindIntegerConstant(string input, object expectedValue)
     {
-        var boundConstant = BindExpression<BoundConstant>(input);
+        var boundConstant = TestUtils.BindExpression<BoundConstant>(input);
 
         boundConstant.Should().NotBeNull();
         boundConstant.ResultType.As<ClrTypeSymbol>().ClrType.FullName.Should().Be(expectedValue.GetType().FullName);
@@ -83,7 +83,7 @@ public partial class BinderTests
     [InlineData("123.456D", 123.456D)]
     public void TestBindFloatingPointConstant(string input, object expectedValue)
     {
-        var boundConstant = BindExpression<BoundConstant>(input);
+        var boundConstant = TestUtils.BindExpression<BoundConstant>(input);
 
         boundConstant.Should().NotBeNull();
         boundConstant.ResultType.As<ClrTypeSymbol>().ClrType.FullName.Should().Be(expectedValue.GetType().FullName);

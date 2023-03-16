@@ -6,14 +6,14 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-public sealed partial class ParserTests
+public sealed class IfUnlessStatementTests
 {
     [Theory]
     [InlineData("if n == 0 { }", SyntaxKind.IfKeywordToken)]
     [InlineData("unless n == 0 { }", SyntaxKind.UnlessKeywordToken)]
     public void IfUnlessStatementsCanHaveSimpleConditionAndNoInnerStatements(string inputText, SyntaxKind expectedSyntaxKind)
     {
-        var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>(inputText);
 
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.IfOrUnlessToken.Kind.Should().Be(expectedSyntaxKind);
@@ -33,7 +33,7 @@ public sealed partial class ParserTests
     [InlineData("if n == 0 { n = n + 1; return n; }", 2)]
     public void IfUnlessStatementsCanHaveOneOrMoreInnerStatements(string inputText, int expectedInnerStatements)
     {
-        var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>(inputText);
 
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.IfOrUnlessToken.Kind.Should().Be(SyntaxKind.IfKeywordToken);
@@ -46,7 +46,7 @@ public sealed partial class ParserTests
     [InlineData("unless (n == 0) { }", SyntaxKind.UnlessKeywordToken)]
     public void IfUnlessStatementsCanHaveParenthesisAroundConditions(string inputText, SyntaxKind expectedSyntaxKind)
     {
-        var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>(inputText);
 
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.IfOrUnlessToken.Kind.Should().Be(expectedSyntaxKind);
@@ -65,7 +65,7 @@ public sealed partial class ParserTests
     [InlineData("unless n == 0 { return n; } else { return 0; }")]
     public void IfUnlessStatementsCanHaveSimpleElseClauses(string inputText)
     {
-        var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>(inputText);
         ifUnlessStatement.Should().NotBeNull();
 
         ifUnlessStatement.ElseClauses.Should().HaveCount(1);
@@ -79,7 +79,7 @@ public sealed partial class ParserTests
     [InlineData("unless a == b { return 0; } else unless a + b == 0 { return 1; } else unless a == 0 { return 2; } else { return 3; }", 3)]
     public void IfUnlessStatementsCanHaveMultipleElseClauses(string inputText, int expectedCount)
     {
-        var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>(inputText);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(expectedCount);
         ifUnlessStatement.GetDiagnostics().Should().BeEmpty();
@@ -90,7 +90,7 @@ public sealed partial class ParserTests
     [InlineData("unless a == 0 { return int.MaxValue; } else { if a == 1 { return 1; } }")]
     public void IfUnlessStatementsCanBeNested(string inputText)
     {
-        var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>(inputText);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(1);
         ifUnlessStatement.GetDiagnostics().Should().BeEmpty();
@@ -99,7 +99,7 @@ public sealed partial class ParserTests
     [Fact]
     public void IfUnlessStatementsCannotHaveMoreThanOneBareElseClauses()
     {
-        var ifUnlessStatement = ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else { }");
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else { }");
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(2);
 
@@ -116,7 +116,7 @@ public sealed partial class ParserTests
     [Fact]
     public void IfUnlessStatementsCannotHaveMisplacedElseClause()
     {
-        var ifUnlessStatement = ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else if b == 0 { }");
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else if b == 0 { }");
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(2);
 
@@ -133,7 +133,7 @@ public sealed partial class ParserTests
     [Fact]
     public void IfUnlessStatementsCannotHaveMismatchedIfOrUnlessKeywords()
     {
-        var ifUnlessStatement = ParseStatement<IfUnlessStatement>("if a == 0 { } else unless b == 0 { }");
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else unless b == 0 { }");
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(1);
 
@@ -151,7 +151,7 @@ public sealed partial class ParserTests
     public void IfUnlessStatementsCanHaveComplexConditions()
     {
         var inputText = "if a == 0 && (b.IsUpper() || string.IsNullOrEmpty(c)) { }";
-        var ifUnlessStatement = ParseStatement<IfUnlessStatement>(inputText);
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>(inputText);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.IfOrUnlessToken.Kind.Should().Be(SyntaxKind.IfKeywordToken);
 

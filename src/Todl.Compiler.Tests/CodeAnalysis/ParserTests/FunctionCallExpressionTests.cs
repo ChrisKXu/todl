@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-public sealed partial class ParserTests
+public sealed class FunctionCallExpressionTests
 {
     private void PerformBasicValidationForFunctionCallExpression(FunctionCallExpression functionCallExpression)
     {
@@ -22,7 +22,7 @@ public sealed partial class ParserTests
     public void TestParseFunctionCallExpressionWithoutArguments()
     {
         var inputText = "a.ToString()";
-        var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
+        var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
@@ -35,7 +35,7 @@ public sealed partial class ParserTests
     public void TestParseFunctionCallExpressionWithOnePositionalArgument()
     {
         var inputText = "System.Int32.Parse(\"123\")";
-        var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
+        var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
@@ -54,7 +54,7 @@ public sealed partial class ParserTests
     public void TestParseFunctionCallExpressionWithOneNamedArgument()
     {
         var inputText = "System.Int32.Parse(s: \"123\")";
-        var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
+        var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
@@ -77,7 +77,7 @@ public sealed partial class ParserTests
     public void TestParseFunctionCallExpressionWithoutClosingBracket()
     {
         var inputText = "System.Int32.Parse(s: \"123\"";
-        var functionCallExpression = ParseExpression<FunctionCallExpression>(inputText);
+        var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         functionCallExpression.Arguments.CloseParenthesisToken.Missing.Should().BeTrue();
         //functionCallExpression.GetDiagnostics().Should().NotBeEmpty();

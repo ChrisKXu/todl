@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeGeneration;
 
-public sealed partial class EmitterTests
+public sealed class BoundConstantTests
 {
     [Fact]
     public void TestEmitInt32Constant()
@@ -118,7 +118,7 @@ public sealed partial class EmitterTests
 
     private void TestEmitConstantCore(string input, params Instruction[] expectedInstructions)
     {
-        var boundConstant = BindExpression<BoundConstant>(input);
+        var boundConstant = TestUtils.BindExpression<BoundConstant>(input);
         var emitter = new TestEmitter();
         emitter.EmitExpression(boundConstant);
 
