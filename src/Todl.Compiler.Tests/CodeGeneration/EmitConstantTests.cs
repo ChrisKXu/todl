@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeGeneration;
 
-public sealed class BoundConstantTests
+public sealed class EmitConstantTests
 {
     [Fact]
     public void TestEmitInt32Constant()

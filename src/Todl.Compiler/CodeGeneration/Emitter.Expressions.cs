@@ -33,6 +33,9 @@ internal partial class Emitter
                 case BoundTodlFunctionCallExpression boundTodlFunctionCallExpression:
                     EmitTodlFunctionCallExpression(boundTodlFunctionCallExpression);
                     return;
+                case BoundUnaryExpression boundUnaryExpression:
+                    EmitUnaryExpression(boundUnaryExpression);
+                    return;
                 case BoundBinaryExpression boundBinaryExpression:
                     EmitBinaryExpression(boundBinaryExpression);
                     return;
@@ -204,5 +207,26 @@ internal partial class Emitter
             ILProcessor.Emit(OpCodes.Call, methodReference);
         }
 
+        public void EmitUnaryExpression(BoundUnaryExpression boundUnaryExpression)
+        {
+            EmitExpression(boundUnaryExpression.Operand);
+
+            switch (boundUnaryExpression.Operator.BoundUnaryOperatorKind.GetOperationKind())
+            {
+                case BoundUnaryOperatorKind.UnaryMinus:
+                    ILProcessor.Emit(OpCodes.Neg);
+                    return;
+                case BoundUnaryOperatorKind.BitwiseComplement:
+                    ILProcessor.Emit(OpCodes.Not);
+                    return;
+                case BoundUnaryOperatorKind.LogicalNegation:
+                    // !a is emitted as (a == 0)
+                    ILProcessor.Emit(OpCodes.Ldc_I4_0);
+                    ILProcessor.Emit(OpCodes.Ceq);
+                    return;
+                default:
+                    return;
+            }
+        }
     }
 }
