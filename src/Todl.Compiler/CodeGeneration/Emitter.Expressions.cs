@@ -193,6 +193,16 @@ internal partial class Emitter
             }
         }
 
+        private void EmitLocalLoad(LocalVariableSymbol localVariable)
+        {
+
+        }
+
+        private void EmitLoadAddress(LocalVariableSymbol localVariableSymbol)
+        {
+            
+        }
+
         private void EmitTodlFunctionCallExpression(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
         {
             foreach (var argument in boundTodlFunctionCallExpression.BoundArguments.Values)
@@ -203,6 +213,5 @@ internal partial class Emitter
             var methodReference = ResolveMethodReference(boundTodlFunctionCallExpression);
             ILProcessor.Emit(OpCodes.Call, methodReference);
         }
-
     }
 }
