@@ -1,4 +1,9 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions;
+using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -9,8 +14,8 @@ namespace Todl.Compiler.Tests;
 internal static class TestUtils
 {
     internal static TBoundExpression BindExpression<TBoundExpression>(
-            string inputText)
-            where TBoundExpression : BoundExpression
+        string inputText)
+        where TBoundExpression : BoundExpression
     {
         var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
         var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
@@ -69,5 +74,16 @@ internal static class TestUtils
     {
         var syntaxTree = SyntaxTree.Parse(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache);
         return syntaxTree.Members[0].As<TMember>();
+    }
+
+    internal static void ShouldHaveExactInstructionSequence(
+        this Collection<Instruction> actualInstructions,
+        params ValueTuple<OpCode, object>[] expectedInstructions)
+    {
+        actualInstructions.Select(i => i.Operand switch
+        {
+            VariableDefinition variableDefinition => (i.OpCode, variableDefinition.Index),
+            _ => (i.OpCode, i.Operand)
+        }).Should().Equal(expectedInstructions);
     }
 }
