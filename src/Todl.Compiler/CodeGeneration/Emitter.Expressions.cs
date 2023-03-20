@@ -196,6 +196,52 @@ internal partial class Emitter
             }
         }
 
+        private void EmitLocalLoad(LocalVariableSymbol localVariableSymbol)
+        {
+            var slot = variables[localVariableSymbol].Index;
+
+            switch (slot)
+            {
+                case 0:
+                    ILProcessor.Emit(OpCodes.Ldloc_0);
+                    return;
+                case 1:
+                    ILProcessor.Emit(OpCodes.Ldloc_1);
+                    return;
+                case 2:
+                    ILProcessor.Emit(OpCodes.Ldloc_2);
+                    return;
+                case 3:
+                    ILProcessor.Emit(OpCodes.Ldloc_3);
+                    return;
+                case < 0xFF:
+                    ILProcessor.Emit(OpCodes.Ldloc_S, (sbyte)slot);
+                    return;
+                default:
+                    ILProcessor.Emit(OpCodes.Ldloc, slot);
+                    return;
+            }
+        }
+
+        private void EmitLocalAddress(LocalVariableSymbol localVariableSymbol)
+        {
+            if (localVariableSymbol.Type.IsReferenceType)
+            {
+                EmitLocalLoad(localVariableSymbol);
+                return;
+            }
+
+            var slot = variables[localVariableSymbol].Index;
+            if (slot < 0xFF)
+            {
+                ILProcessor.Emit(OpCodes.Ldloca_S, (sbyte)slot);
+            }
+            else
+            {
+                ILProcessor.Emit(OpCodes.Ldloca, slot);
+            }
+        }
+
         private void EmitTodlFunctionCallExpression(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
         {
             foreach (var argument in boundTodlFunctionCallExpression.BoundArguments.Values)

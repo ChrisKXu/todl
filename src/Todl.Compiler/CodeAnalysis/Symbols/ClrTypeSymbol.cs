@@ -7,6 +7,7 @@ public sealed class ClrTypeSymbol : TypeSymbol
     public override bool IsNative => true;
     public override bool IsArray => ClrType.IsArray;
     public override string Name => ClrType.FullName;
+    public override bool IsReferenceType => ClrType.IsByRef || ClrType.IsByRefLike;
     public string Namespace => ClrType.Namespace;
 
     public Type ClrType { get; }

@@ -82,8 +82,34 @@ internal partial class Emitter
             if (boundVariableDeclarationStatement.InitializerExpression is not null)
             {
                 EmitExpression(boundVariableDeclarationStatement.InitializerExpression);
-                ILProcessor.Emit(OpCodes.Stloc, variableDefinition);
+                EmitLocalStore(variableDefinition);
             }
+        }
+
+        // Logic from https://github.com/dotnet/roslyn/blob/80b5e0207776a6dc911def62a6f7bcc3d3f7b33b/src/Compilers/Core/Portable/CodeGen/ILBuilderEmit.cs
+        private void EmitLocalStore(VariableDefinition variableDefinition)
+        {
+            switch (variableDefinition.Index)
+            {
+                case 0:
+                    ILProcessor.Emit(OpCodes.Stloc_0);
+                    return;
+                case 1:
+                    ILProcessor.Emit(OpCodes.Stloc_1);
+                    return;
+                case 2:
+                    ILProcessor.Emit(OpCodes.Stloc_2);
+                    return;
+                case 3:
+                    ILProcessor.Emit(OpCodes.Stloc_3);
+                    return;
+                case < 0xFF:
+                    ILProcessor.Emit(OpCodes.Stloc_S, variableDefinition);
+                    return;
+                default:
+                    ILProcessor.Emit(OpCodes.Stloc, variableDefinition);
+                    return;
+            };
         }
     }
 }
