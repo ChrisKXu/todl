@@ -13,6 +13,8 @@ public abstract class TypeSymbol : Symbol
     public virtual bool IsArray => false;
 
     public abstract SpecialType SpecialType { get; }
+
+    public abstract bool IsReferenceType { get; }
 }
 
 public enum SpecialType

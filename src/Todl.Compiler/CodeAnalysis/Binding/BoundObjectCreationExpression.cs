@@ -22,25 +22,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private BoundObjectCreationExpression BindNewExpression(NewExpression newExpression)
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
-            var boundTypeExpression = BindNameExpression(newExpression.TypeNameExpression);
+            var boundTypeExpression = BindTypeExpression(newExpression.TypeNameExpression);
             diagnosticBuilder.Add(boundTypeExpression);
-
-            if (boundTypeExpression is not BoundTypeExpression)
-            {
-                diagnosticBuilder.Add(new Diagnostic()
-                {
-                    Message = $"Type '{newExpression.TypeNameExpression.Text}' is invalid",
-                    Level = DiagnosticLevel.Error,
-                    ErrorCode = ErrorCode.TypeNotFound,
-                    TextLocation = newExpression.TypeNameExpression.Text.GetTextLocation()
-                });
-
-                return new()
-                {
-                    SyntaxNode = newExpression,
-                    DiagnosticBuilder = diagnosticBuilder
-                };
-            }
 
             // Treating no arguments as the same way of positional arguments
             if (!newExpression.Arguments.Items.Any() || !newExpression.Arguments.Items[0].IsNamedArgument)
