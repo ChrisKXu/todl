@@ -192,7 +192,7 @@ internal partial class Emitter
                     ILProcessor.Emit(OpCodes.Ldloca_S, variables[localVariable]);
                     break;
                 default:
-                    throw new NotSupportedException();
+                    throw new NotSupportedException($"{boundVariableExpression.Variable} is not supported");
             }
         }
 
@@ -255,7 +255,25 @@ internal partial class Emitter
 
         public void EmitUnaryExpression(BoundUnaryExpression boundUnaryExpression)
         {
-            EmitExpression(boundUnaryExpression.Operand);
+            switch (boundUnaryExpression.Operand)
+            {
+                case BoundVariableExpression boundVariableExpression:
+                    switch (boundVariableExpression.Variable)
+                    {
+                        case LocalVariableSymbol localVariableSymbol:
+                            EmitLocalLoad(localVariableSymbol);
+                            break;
+                        case ParameterSymbol:
+                            EmitExpression(boundUnaryExpression.Operand);
+                            break;
+                        default:
+                            throw new NotSupportedException($"{boundVariableExpression.Variable} is not supported");
+                    }
+                    break;
+                default:
+                    EmitExpression(boundUnaryExpression.Operand);
+                    break;
+            }
 
             switch (boundUnaryExpression.Operator.BoundUnaryOperatorKind.GetOperationKind())
             {

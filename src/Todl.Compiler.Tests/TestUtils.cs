@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using FluentAssertions;
 using Mono.Cecil.Cil;
@@ -78,12 +78,42 @@ internal static class TestUtils
 
     internal static void ShouldHaveExactInstructionSequence(
         this Collection<Instruction> actualInstructions,
-        params ValueTuple<OpCode, object>[] expectedInstructions)
+        params TestInstruction[] expectedInstructions)
     {
-        actualInstructions.Select(i => i.Operand switch
-        {
-            VariableDefinition variableDefinition => (i.OpCode, variableDefinition.Index),
-            _ => (i.OpCode, i.Operand)
-        }).Should().Equal(expectedInstructions);
+        actualInstructions.Select(TestInstruction.FromInstruction).Should().Equal(expectedInstructions);
     }
+}
+
+internal readonly struct TestInstruction : IEquatable<TestInstruction>
+{
+    public OpCode OpCode { get; private init; }
+
+    public object Operand { get; private init; }
+
+    public static TestInstruction Create(OpCode opCode)
+        => new() { OpCode = opCode };
+
+    public static TestInstruction Create(OpCode opCode, object operand)
+        => new() { OpCode = opCode, Operand = operand };
+
+    public static TestInstruction FromInstruction(Instruction instruction)
+        => new()
+        {
+            OpCode = instruction.OpCode,
+            Operand = instruction.Operand switch
+            {
+                VariableDefinition variableDefinition => variableDefinition.Index,
+                _ => instruction.Operand
+            }
+        };
+
+    public bool Equals(TestInstruction other)
+        => OpCode.Equals(other.OpCode)
+        && (Operand is null || Operand.Equals(other.Operand));
+
+    public override int GetHashCode()
+        => HashCode.Combine(OpCode, Operand);
+
+    public override bool Equals([NotNullWhen(true)] object obj)
+        => obj is TestInstruction other && Equals(other);
 }
