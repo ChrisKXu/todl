@@ -275,9 +275,15 @@ internal partial class Emitter
                     break;
             }
 
-            switch (boundUnaryExpression.Operator.BoundUnaryOperatorKind.GetOperationKind())
+            var boundUnaryOperatorKind = boundUnaryExpression.Operator.BoundUnaryOperatorKind;
+
+            switch (boundUnaryOperatorKind.GetOperationKind())
             {
                 case BoundUnaryOperatorKind.UnaryMinus:
+                    if (boundUnaryOperatorKind.GetOperandKind() == BoundUnaryOperatorKind.UInt)
+                    {
+                        ILProcessor.Emit(OpCodes.Conv_U8);
+                    }
                     ILProcessor.Emit(OpCodes.Neg);
                     return;
                 case BoundUnaryOperatorKind.BitwiseComplement:

@@ -59,12 +59,14 @@ public sealed class EmitUnaryExpressionTests
             TestInstruction.Create(OpCodes.Ldloc_0),
             TestInstruction.Create(OpCodes.Neg),
             TestInstruction.Create(OpCodes.Stloc_1));
-        //TestEmitUnaryExpressionCore(
-        //    "{ let a = 1U; let b = -a; }",
-        //    TestInstruction.Create(OpCodes.Ldc_I4_1),
-        //    TestInstruction.Create(OpCodes.Stloc_0),
-        //    TestInstruction.Create(OpCodes.Ldloc_0),
-        //    TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1U; let b = -a; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Conv_U8),
+            TestInstruction.Create(OpCodes.Neg),
+            TestInstruction.Create(OpCodes.Stloc_1));
         TestEmitUnaryExpressionCore(
             "{ let a = 1L; let b = -a; }",
             TestInstruction.Create(OpCodes.Ldc_I4_1),

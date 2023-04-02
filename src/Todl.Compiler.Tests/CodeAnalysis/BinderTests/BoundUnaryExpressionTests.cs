@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
@@ -19,7 +19,7 @@ public sealed class BoundUnaryExpressionTests
     [InlineData("{ let a = 1.0; +a; }", BoundUnaryOperatorKind.UnaryPlus | BoundUnaryOperatorKind.Double, SpecialType.ClrDouble)]
     // UnaryMinus
     [InlineData("{ let a = 1; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Int, SpecialType.ClrInt32)]
-    [InlineData("{ let a = 1U; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.UInt, SpecialType.ClrUInt32)]
+    [InlineData("{ let a = 1U; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.UInt, SpecialType.ClrInt64)]
     [InlineData("{ let a = 1L; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Long, SpecialType.ClrInt64)]
     [InlineData("{ let a = 1.0F; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Float, SpecialType.ClrFloat)]
     [InlineData("{ let a = 1.0; -a; }", BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Double, SpecialType.ClrDouble)]
