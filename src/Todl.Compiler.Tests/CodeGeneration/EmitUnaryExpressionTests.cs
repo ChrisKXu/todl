@@ -139,6 +139,282 @@ public sealed class EmitUnaryExpressionTests
             TestInstruction.Create(OpCodes.Stloc_1));
     }
 
+    [Fact]
+    public void TestEmitPrefixIncrementExpression()
+    {
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1; let b = ++a; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1U; let b = ++a; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1L; let b = ++a; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1UL; let b = ++a; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1.0F; let b = ++a; }",
+            TestInstruction.Create(OpCodes.Ldc_R4, 1F),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_R4, 1F),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1.0; let b = ++a; }",
+            TestInstruction.Create(OpCodes.Ldc_R8, 1.0),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_R8, 1.0),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+    }
+
+    [Fact]
+    public void TestEmitPrefixDecrementExpression()
+    {
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1; let b = --a; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1U; let b = --a; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1L; let b = --a; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1UL; let b = --a; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1.0F; let b = --a; }",
+            TestInstruction.Create(OpCodes.Ldc_R4, 1F),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_R4, 1F),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1.0; let b = --a; }",
+            TestInstruction.Create(OpCodes.Ldc_R8, 1.0),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldc_R8, 1.0),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+    }
+
+    [Fact]
+    public void TestEmitPostfixIncrementExpression()
+    {
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1; let b = a++; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1U; let b = a++; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1L; let b = a++; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1UL; let b = a++; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1.0F; let b = a++; }",
+            TestInstruction.Create(OpCodes.Ldc_R4, 1F),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_R4, 1F),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1.0; let b = a++; }",
+            TestInstruction.Create(OpCodes.Ldc_R8, 1.0),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_R8, 1.0),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+    }
+
+    [Fact]
+    public void TestEmitPostfixDecrementExpression()
+    {
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1; let b = a--; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1U; let b = a--; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1L; let b = a--; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1UL; let b = a--; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Conv_I8),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1.0F; let b = a--; }",
+            TestInstruction.Create(OpCodes.Ldc_R4, 1F),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_R4, 1F),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+        TestEmitUnaryExpressionCore(
+            "{ let a = 1.0; let b = a--; }",
+            TestInstruction.Create(OpCodes.Ldc_R8, 1.0),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Dup),
+            TestInstruction.Create(OpCodes.Ldc_R8, 1.0),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Stloc_1));
+    }
+
     private void TestEmitUnaryExpressionCore(string input, params TestInstruction[] expectedInstructions)
     {
         var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
