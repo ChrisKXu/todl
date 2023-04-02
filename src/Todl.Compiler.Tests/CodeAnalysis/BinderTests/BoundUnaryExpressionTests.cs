@@ -3,6 +3,7 @@ using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -93,5 +94,25 @@ public sealed class BoundUnaryExpressionTests
 
         var diagnostic = boundUnaryExpression.GetDiagnostics().First();
         diagnostic.Message.Should().Be($"Unary operator \"{operatorText}\" is not supported on type \"{operandType.FullName}\"");
+        diagnostic.ErrorCode.Should().Be(ErrorCode.UnsupportedOperator);
+    }
+
+    [Theory]
+    [InlineData("{ const a = 1; ++a; }")]
+    [InlineData("{ const a = 1; --a; }")]
+    [InlineData("{ const a = 1; a++; }")]
+    [InlineData("{ const a = 1; a--; }")]
+    public void TestBindUnaryExpressionWithReadOnlyVariables(string input)
+    {
+        var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
+        var boundExpressionStatement = boundBlockStatement.Statements[^1].As<BoundExpressionStatement>();
+        var boundUnaryExpression = boundExpressionStatement.Expression.As<BoundUnaryExpression>();
+
+        boundUnaryExpression.Should().NotBeNull();
+        boundUnaryExpression.GetDiagnostics().Should().NotBeEmpty();
+
+        var diagnostic = boundUnaryExpression.GetDiagnostics().First();
+        diagnostic.Message.Should().Be($"Expression \"a\" is read only.");
+        diagnostic.ErrorCode.Should().Be(ErrorCode.ReadOnlyVariable);
     }
 }

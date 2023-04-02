@@ -16,8 +16,6 @@ public sealed class BoundUnaryExpression : BoundExpression
         => Operand.SyntaxNode.SyntaxTree.ClrTypeCache.ResolveSpecialType(Operator.ResultType);
 
     public override bool Constant => Operand.Constant;
-
-    public bool NeedConversion => ResultType.Equals(Operand.ResultType);
 }
 
 // Values are copied from https://github.com/dotnet/roslyn/blob/main/src/Compilers/CSharp/Portable/Binder/Semantics/Operators/OperatorKind.cs
@@ -64,6 +62,16 @@ public static class BoundUnaryOperatorKindExtensions
 
     public static BoundUnaryOperatorKind GetOperandKind(this BoundUnaryOperatorKind boundUnaryOperatorKind)
         => boundUnaryOperatorKind & BoundUnaryOperatorKind.TypeMask;
+
+    public static bool HasSideEffect(this BoundUnaryOperatorKind boundUnaryOperatorKind)
+        => boundUnaryOperatorKind.GetOperationKind() switch
+        {
+            BoundUnaryOperatorKind.PrefixIncrement => true,
+            BoundUnaryOperatorKind.PrefixDecrement => true,
+            BoundUnaryOperatorKind.PostfixIncrement => true,
+            BoundUnaryOperatorKind.PostfixDecrement => true,
+            _ => false
+        };
 }
 
 public sealed record BoundUnaryOperator(
@@ -219,6 +227,29 @@ public partial class Binder
                     Level = DiagnosticLevel.Error,
                     TextLocation = unaryExpression.Operator.GetTextLocation(),
                     ErrorCode = ErrorCode.UnsupportedOperator
+                });
+        }
+
+        if (!boundOperand.LValue && boundUnaryOperator.BoundUnaryOperatorKind.HasSideEffect())
+        {
+            diagnosticBuilder.Add(
+                new Diagnostic()
+                {
+                    Message = $"Unary operator \"{unaryExpression.Operator.Text}\" requires an lvalue.",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = unaryExpression.Operator.GetTextLocation(),
+                    ErrorCode = ErrorCode.NotAnLValue
+                });
+        }
+        else if (boundOperand.ReadOnly && boundUnaryOperator.BoundUnaryOperatorKind.HasSideEffect())
+        {
+            diagnosticBuilder.Add(
+                new Diagnostic()
+                {
+                    Message = $"Expression \"{unaryExpression.Operand.Text}\" is read only.",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = unaryExpression.Operand.Text.GetTextLocation(),
+                    ErrorCode = ErrorCode.ReadOnlyVariable
                 });
         }
 
