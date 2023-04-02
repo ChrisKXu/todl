@@ -9,6 +9,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public virtual TypeSymbol ResultType { get; }
         public virtual bool LValue => false;
         public virtual bool Constant => false;
+        public virtual bool ReadOnly => true;
     }
 
     public partial class Binder

@@ -33,6 +33,9 @@ internal partial class Emitter
                 case BoundTodlFunctionCallExpression boundTodlFunctionCallExpression:
                     EmitTodlFunctionCallExpression(boundTodlFunctionCallExpression);
                     return;
+                case BoundUnaryExpression boundUnaryExpression:
+                    EmitUnaryExpression(boundUnaryExpression);
+                    return;
                 case BoundBinaryExpression boundBinaryExpression:
                     EmitBinaryExpression(boundBinaryExpression);
                     return;
@@ -58,10 +61,10 @@ internal partial class Emitter
                     EmitIntValue(constantBooleanValue.Int32Value);
                     return;
                 case ConstantFloatValue constantFloatValue:
-                    ILProcessor.Emit(OpCodes.Ldc_R4, constantFloatValue.FloatValue);
+                    EmitFloatValue(constantFloatValue.FloatValue);
                     return;
                 case ConstantDoubleValue constantDoubleValue:
-                    ILProcessor.Emit(OpCodes.Ldc_R8, constantDoubleValue.DoubleValue);
+                    EmitDoubleValue(constantDoubleValue.DoubleValue);
                     return;
                 case ConstantInt32Value:
                 case ConstantUInt32Value:
@@ -69,7 +72,7 @@ internal partial class Emitter
                     return;
                 case ConstantInt64Value:
                 case ConstantUInt64Value:
-                    EmitInt64ConstantValue(boundConstant.Value);
+                    EmitInt64Value(boundConstant.Value.Int64Value);
                     return;
             }
         }
@@ -107,10 +110,8 @@ internal partial class Emitter
             }
         }
 
-        private void EmitInt64ConstantValue(ConstantValue constantValue)
+        private void EmitInt64Value(long longValue)
         {
-            var longValue = constantValue.Int64Value;
-
             if (longValue >= int.MinValue && longValue <= int.MaxValue)
             {
                 EmitIntValue(unchecked((int)longValue));
@@ -125,6 +126,16 @@ internal partial class Emitter
             {
                 ILProcessor.Emit(OpCodes.Ldc_I8, longValue);
             }
+        }
+
+        private void EmitFloatValue(float floatValue)
+        {
+            ILProcessor.Emit(OpCodes.Ldc_R4, floatValue);
+        }
+
+        private void EmitDoubleValue(double doubleValue)
+        {
+            ILProcessor.Emit(OpCodes.Ldc_R8, doubleValue);
         }
 
         private void EmitClrFunctionCallExpression(BoundClrFunctionCallExpression boundClrFunctionCallExpression)
@@ -189,7 +200,7 @@ internal partial class Emitter
                     ILProcessor.Emit(OpCodes.Ldloca_S, variables[localVariable]);
                     break;
                 default:
-                    throw new NotSupportedException();
+                    throw new NotSupportedException($"{boundVariableExpression.Variable} is not supported");
             }
         }
 
@@ -248,6 +259,105 @@ internal partial class Emitter
 
             var methodReference = ResolveMethodReference(boundTodlFunctionCallExpression);
             ILProcessor.Emit(OpCodes.Call, methodReference);
+        }
+
+        public void EmitUnaryExpression(BoundUnaryExpression boundUnaryExpression)
+        {
+            switch (boundUnaryExpression.Operand)
+            {
+                case BoundVariableExpression boundVariableExpression:
+                    switch (boundVariableExpression.Variable)
+                    {
+                        case LocalVariableSymbol localVariableSymbol:
+                            EmitLocalLoad(localVariableSymbol);
+                            break;
+                        case ParameterSymbol:
+                            EmitVariableExpression(boundVariableExpression);
+                            break;
+                        default:
+                            throw new NotSupportedException($"{boundVariableExpression.Variable} is not supported");
+                    }
+                    break;
+                default:
+                    EmitExpression(boundUnaryExpression.Operand);
+                    break;
+            }
+
+            var boundUnaryOperatorKind = boundUnaryExpression.Operator.BoundUnaryOperatorKind;
+
+            switch (boundUnaryOperatorKind.GetOperationKind())
+            {
+                case BoundUnaryOperatorKind.UnaryMinus:
+                    if (boundUnaryOperatorKind.GetOperandKind() == BoundUnaryOperatorKind.UInt)
+                    {
+                        ILProcessor.Emit(OpCodes.Conv_U8);
+                    }
+                    ILProcessor.Emit(OpCodes.Neg);
+                    return;
+                case BoundUnaryOperatorKind.BitwiseComplement:
+                    ILProcessor.Emit(OpCodes.Not);
+                    return;
+                case BoundUnaryOperatorKind.LogicalNegation:
+                    // !a is emitted as (a == 0)
+                    ILProcessor.Emit(OpCodes.Ldc_I4_0);
+                    ILProcessor.Emit(OpCodes.Ceq);
+                    return;
+                default:
+                    break;
+            }
+
+            if (boundUnaryOperatorKind.HasSideEffect())
+            {
+                EmitUnaryOperatorWithSideEffect(boundUnaryOperatorKind);
+
+                if (boundUnaryExpression.Operand is BoundVariableExpression boundVariableExpression
+                    && boundVariableExpression.Variable is LocalVariableSymbol localVariableSymbol)
+                {
+                    EmitLocalStore(variables[localVariableSymbol]);
+                }
+            }
+        }
+
+        public void EmitUnaryOperatorWithSideEffect(BoundUnaryOperatorKind boundUnaryOperatorKind)
+        {
+            var operationKind = boundUnaryOperatorKind.GetOperationKind();
+
+            var opCode =
+                operationKind == BoundUnaryOperatorKind.PrefixIncrement
+                || operationKind == BoundUnaryOperatorKind.PostfixIncrement
+                ? OpCodes.Add
+                : OpCodes.Sub;
+
+            var prefix = operationKind == BoundUnaryOperatorKind.PrefixIncrement || operationKind == BoundUnaryOperatorKind.PrefixDecrement;
+
+            if (!prefix)
+            {
+                ILProcessor.Emit(OpCodes.Dup);
+            }
+
+            switch (boundUnaryOperatorKind.GetOperandKind())
+            {
+                case BoundUnaryOperatorKind.Long:
+                case BoundUnaryOperatorKind.ULong:
+                    EmitInt64Value(1L);
+                    break;
+                case BoundUnaryOperatorKind.Float:
+                    EmitFloatValue(1.0F);
+                    break;
+                case BoundUnaryOperatorKind.Double:
+                    EmitDoubleValue(1.0);
+                    break;
+                default:
+                    EmitIntValue(1);
+                    break;
+            }
+
+            ILProcessor.Emit(opCode);
+
+            if (prefix)
+            {
+                ILProcessor.Emit(OpCodes.Dup);
+            }
         }
     }
 }

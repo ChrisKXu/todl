@@ -37,6 +37,7 @@
         AmpersandAmpersandToken,
         PipeToken,
         PipePipeToken,
+        TildeToken,
         DotToken,
         CommaToken,
         IdentifierToken,

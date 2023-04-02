@@ -444,6 +444,10 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                         ++this.position;
                     }
                     break;
+                case '~':
+                    kind = SyntaxKind.TildeToken;
+                    ++this.position;
+                    break;
                 case '.':
                     if (char.IsDigit(Peak))
                     {

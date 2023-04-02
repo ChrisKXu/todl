@@ -10,6 +10,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public override TypeSymbol ResultType => Variable.Type;
         public override bool LValue => true;
         public override bool Constant => Variable.Constant;
+        public override bool ReadOnly => Variable.ReadOnly;
     }
 
     public partial class Binder

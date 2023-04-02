@@ -17,17 +17,17 @@ public sealed class EmitVariableDeclarationStatementTests
         emitter.EmitStatement(boundBlockStatement);
 
         emitter.ILProcessor.Body.Instructions.ShouldHaveExactInstructionSequence(
-            (OpCodes.Ldc_I4_0, null),
-            (OpCodes.Stloc_0, null),
-            (OpCodes.Ldc_I4_1, null),
-            (OpCodes.Stloc_1, null),
-            (OpCodes.Ldc_I4_2, null),
-            (OpCodes.Stloc_2, null),
-            (OpCodes.Ldc_I4_3, null),
-            (OpCodes.Stloc_3, null),
-            (OpCodes.Ldc_I4_4, null),
-            (OpCodes.Stloc_S, 4),
-            (OpCodes.Ldc_I4_5, null),
-            (OpCodes.Stloc_S, 5));
+            TestInstruction.Create(OpCodes.Ldc_I4_0),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_1),
+            TestInstruction.Create(OpCodes.Ldc_I4_2),
+            TestInstruction.Create(OpCodes.Stloc_2),
+            TestInstruction.Create(OpCodes.Ldc_I4_3),
+            TestInstruction.Create(OpCodes.Stloc_3),
+            TestInstruction.Create(OpCodes.Ldc_I4_4),
+            TestInstruction.Create(OpCodes.Stloc_S, 4),
+            TestInstruction.Create(OpCodes.Ldc_I4_5),
+            TestInstruction.Create(OpCodes.Stloc_S, 5));
     }
 }

@@ -13,9 +13,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public BoundScope Scope { get; private init; }
         public Binder Parent { get; private init; }
 
-        public virtual BoundUnaryOperatorFactory BoundUnaryOperatorFactory
-            => Parent?.BoundUnaryOperatorFactory;
-
         public virtual BoundBinaryOperatorFactory BoundBinaryOperatorFactory
             => Parent?.BoundBinaryOperatorFactory;
 
@@ -71,14 +68,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             public ScriptBinder(ClrTypeCache clrTypeCache)
             {
                 ClrTypeCache = clrTypeCache;
-                BoundUnaryOperatorFactory = new(clrTypeCache);
                 BoundBinaryOperatorFactory = new(clrTypeCache);
                 ConstantValueFactory = new(clrTypeCache.BuiltInTypes);
             }
 
             public override bool AllowVariableDeclarationInAssignment => true;
             public override ClrTypeCache ClrTypeCache { get; }
-            public override BoundUnaryOperatorFactory BoundUnaryOperatorFactory { get; }
             public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
             public override ConstantValueFactory ConstantValueFactory { get; }
         }
@@ -88,14 +83,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             public ModuleBinder(ClrTypeCache clrTypeCache)
             {
                 ClrTypeCache = clrTypeCache;
-                BoundUnaryOperatorFactory = new(clrTypeCache);
                 BoundBinaryOperatorFactory = new(clrTypeCache);
                 ConstantValueFactory = new(clrTypeCache.BuiltInTypes);
             }
 
             public override bool AllowVariableDeclarationInAssignment => false;
             public override ClrTypeCache ClrTypeCache { get; }
-            public override BoundUnaryOperatorFactory BoundUnaryOperatorFactory { get; }
             public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
             public override ConstantValueFactory ConstantValueFactory { get; }
         }

@@ -82,8 +82,8 @@ namespace Todl.Compiler.Evaluation
 
             return boundUnaryExpression.Operator.BoundUnaryOperatorKind switch
             {
-                BoundUnaryOperatorKind.Identity => operandValue,
-                BoundUnaryOperatorKind.Negation => -(int)operandValue,
+                BoundUnaryOperatorKind.UnaryPlus => operandValue,
+                BoundUnaryOperatorKind.UnaryMinus => -(int)operandValue,
                 BoundUnaryOperatorKind.LogicalNegation => !(bool)operandValue,
                 _ => this.EvaluateBoundUnaryExpressionWithSideEffects(boundUnaryExpression)
             };
@@ -98,14 +98,14 @@ namespace Todl.Compiler.Evaluation
 
                 switch (boundUnaryExpression.Operator.BoundUnaryOperatorKind)
                 {
-                    case BoundUnaryOperatorKind.PreIncrement:
+                    case BoundUnaryOperatorKind.PrefixIncrement:
                         return SetVariableValue(variable, (int)oldValue + 1);
-                    case BoundUnaryOperatorKind.PostIncrement:
+                    case BoundUnaryOperatorKind.PostfixIncrement:
                         SetVariableValue(variable, (int)oldValue + 1);
                         return oldValue;
-                    case BoundUnaryOperatorKind.PreDecrement:
+                    case BoundUnaryOperatorKind.PrefixDecrement:
                         return SetVariableValue(variable, (int)oldValue - 1);
-                    case BoundUnaryOperatorKind.PostDecrement:
+                    case BoundUnaryOperatorKind.PostfixDecrement:
                         SetVariableValue(variable, (int)oldValue - 1);
                         return oldValue;
                 }
