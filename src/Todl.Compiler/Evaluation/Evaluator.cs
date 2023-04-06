@@ -165,10 +165,10 @@ namespace Todl.Compiler.Evaluation
             var baseObject = EvaluateBoundExpression(boundMemberAccessExpression.BoundBaseExpression);
             var invokingObject = boundMemberAccessExpression.IsStatic ? null : baseObject;
 
-            return boundMemberAccessExpression.MemberInfo switch
+            return boundMemberAccessExpression switch
             {
-                PropertyInfo property => property.GetValue(invokingObject),
-                FieldInfo field => field.GetValue(invokingObject),
+                BoundClrPropertyAccessExpression property => property.PropertyInfo.GetValue(invokingObject),
+                BoundClrFieldAccessExpression field => field.FieldInfo.GetValue(invokingObject),
                 _ => baseObject
             };
         }
