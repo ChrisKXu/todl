@@ -1,9 +1,14 @@
-﻿using System.Text.Json.Serialization;
+﻿using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Todl.Playground.Compilation;
-using Todl.Playground.Controllers;
 using Todl.Playground.Decompilation;
+using Todl.Playground.Handlers;
 
 namespace Todl.Playground;
 
@@ -16,21 +21,37 @@ sealed class Program
         var services = builder.Services;
         services.AddTransient<AssemblyResolver>();
         services.AddTransient<CompilationProvider>();
+        services.AddTransient<WebSocketRequestHandler>();
+        services.AddTransient<ErrorRequestMessageHandler>();
+        services.AddTransient<InfoRequestMessageHandler>();
+        services.AddTransient<CompileRequestMessageHandler>();
         services.AddSingleton<DecompilerProviderResolver>();
 
-        services
-            .AddControllers(options =>
-            {
-                options.Filters.Add(new ExceptionFilter());
-            })
-            .AddJsonOptions(json =>
-            {
-                json.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                json.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-            });
+        services.Configure<JsonSerializerOptions>(json =>
+        {
+            json.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, false));
+            json.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            json.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        });
 
         var app = builder.Build();
-        app.MapControllers();
+        app.UseWebSockets(new WebSocketOptions()
+        {
+            KeepAliveInterval = TimeSpan.FromMinutes(2)
+        });
+
+        app.MapMethods("/api/connect", new[] { "GET", "CONNECT" }, (context) =>
+        {
+            if (context.WebSockets.IsWebSocketRequest)
+            {
+                var compilationRequestHandler = context.RequestServices.GetService<WebSocketRequestHandler>();
+                return compilationRequestHandler.HandleRequestAsync(context, CancellationToken.None);
+            }
+
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            return Task.FromResult(context.Response);
+        });
+
         app.Run();
     }
 }

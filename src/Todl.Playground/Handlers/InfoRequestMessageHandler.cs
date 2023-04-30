@@ -1,13 +1,16 @@
-﻿using System.Reflection;
-using System;
+﻿using System;
+using System.Diagnostics;
+using System.Net.WebSockets;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 
-namespace Todl.Playground.Controllers;
+namespace Todl.Playground.Handlers;
 
-[Route("api/info")]
-[ApiController]
-public class InfoController : Controller
+public sealed class InfoRequestMessageHandler : RequestMessageHandlerBase
 {
     private static readonly Assembly assembly = Assembly.GetExecutingAssembly();
     private static readonly string gitBranch = Environment.GetEnvironmentVariable("GIT_BRANCH");
@@ -19,9 +22,15 @@ public class InfoController : Controller
     private const bool Debug = false;
 #endif
 
-    public IActionResult Get()
-        => Ok(new
+    public InfoRequestMessageHandler(IOptions<JsonSerializerOptions> jsonSerializerOptions) : base(jsonSerializerOptions.Value) { }
+
+    public override void Dispose() { }
+
+    public override ValueTask HandlerRequestMessageAsync(WebSocket webSocket, RequestMessage requestMessage, CancellationToken cancellationToken)
+    {
+        var response = new
         {
+            Type = "info",
             RuntimeInfo = new
             {
                 OSEnvironment = Environment.OSVersion,
@@ -35,5 +44,8 @@ public class InfoController : Controller
                 GitBranch = gitBranch,
                 GitCommit = gitCommit
             }
-        });
+        };
+
+        return SendResponseAsync(webSocket, response, cancellationToken);
+    }
 }
