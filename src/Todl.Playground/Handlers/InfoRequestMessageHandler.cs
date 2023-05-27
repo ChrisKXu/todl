@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Net.WebSockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
 
 namespace Todl.Playground.Handlers;
 
-public sealed class InfoRequestMessageHandler : RequestMessageHandlerBase
+public sealed class InfoRequestMessageHandler
 {
     private static readonly Assembly assembly = Assembly.GetExecutingAssembly();
     private static readonly string gitBranch = Environment.GetEnvironmentVariable("GIT_BRANCH");
@@ -22,15 +16,10 @@ public sealed class InfoRequestMessageHandler : RequestMessageHandlerBase
     private const bool Debug = false;
 #endif
 
-    public InfoRequestMessageHandler(IOptions<JsonSerializerOptions> jsonSerializerOptions) : base(jsonSerializerOptions.Value) { }
-
-    public override void Dispose() { }
-
-    public override ValueTask HandlerRequestMessageAsync(WebSocket webSocket, RequestMessage requestMessage, CancellationToken cancellationToken)
+    public object HandleRequest()
     {
-        var response = new
+        return new
         {
-            Type = "info",
             RuntimeInfo = new
             {
                 OSEnvironment = Environment.OSVersion,
@@ -45,7 +34,5 @@ public sealed class InfoRequestMessageHandler : RequestMessageHandlerBase
                 GitCommit = gitCommit
             }
         };
-
-        return SendResponseAsync(webSocket, response, cancellationToken);
     }
 }
