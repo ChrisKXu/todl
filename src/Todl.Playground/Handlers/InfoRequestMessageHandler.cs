@@ -1,13 +1,10 @@
-﻿using System.Reflection;
-using System;
+﻿using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using Microsoft.AspNetCore.Mvc;
 
-namespace Todl.Playground.Controllers;
+namespace Todl.Playground.Handlers;
 
-[Route("api/info")]
-[ApiController]
-public class InfoController : Controller
+public sealed class InfoRequestMessageHandler
 {
     private static readonly Assembly assembly = Assembly.GetExecutingAssembly();
     private static readonly string gitBranch = Environment.GetEnvironmentVariable("GIT_BRANCH");
@@ -19,8 +16,9 @@ public class InfoController : Controller
     private const bool Debug = false;
 #endif
 
-    public IActionResult Get()
-        => Ok(new
+    public object HandleRequest()
+    {
+        return new
         {
             RuntimeInfo = new
             {
@@ -35,5 +33,6 @@ public class InfoController : Controller
                 GitBranch = gitBranch,
                 GitCommit = gitCommit
             }
-        });
+        };
+    }
 }

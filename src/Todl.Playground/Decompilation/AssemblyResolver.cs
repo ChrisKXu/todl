@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -32,6 +31,12 @@ public class AssemblyResolver : IAssemblyResolver
     {
         var assemblyName = new AssemblyName(reference.FullName);
         var assembly = pathAssemblyResolver.Resolve(MetadataLoadContext, assemblyName);
+
+        // for whatever reason the decompiler tries to find mscorlib which we don't actually need
+        if (assembly is null)
+        {
+            return null;
+        }
 
         return new PEFile(assembly.Location);
     }

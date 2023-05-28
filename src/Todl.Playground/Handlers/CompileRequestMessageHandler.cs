@@ -1,26 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
 using Todl.Playground.Compilation;
 using Todl.Playground.Decompilation;
-using Todl.Playground.Models;
 
-namespace Todl.Playground.Controllers;
+namespace Todl.Playground.Handlers;
 
-[Route("api/compile")]
-[ApiController]
-public class CompileController : ControllerBase
+public class CompileRequestMessageHandler
 {
     private readonly DecompilerProviderResolver decompilerProviderResolver;
     private readonly AssemblyResolver assemblyResolver;
     private readonly CompilationProvider compilationProvider;
 
-    public CompileController(
+    public CompileRequestMessageHandler(
         DecompilerProviderResolver decompilerProviderResolver,
         AssemblyResolver assemblyResolver,
         CompilationProvider compilationProvider)
@@ -30,9 +26,14 @@ public class CompileController : ControllerBase
         this.compilationProvider = compilationProvider;
     }
 
-    public ActionResult<CompileResponse> Post(CompileRequest compileRequest)
+    public CompileResponseMessage HandleRequest(CompileRequest request)
     {
-        var sourceTexts = compileRequest.SourceFiles.Select(s => new SourceText
+        if (request.SourceFiles.IsDefaultOrEmpty)
+        {
+            throw new ArgumentException("Please provide at least 1 source file.");
+        }
+
+        var sourceTexts = request.SourceFiles.Select(s => new SourceText
         {
             FilePath = s.Name,
             Text = s.Content
@@ -43,7 +44,7 @@ public class CompileController : ControllerBase
 
         if (diagnostics.HasError())
         {
-            return Ok(new CompileResponse(diagnostics, string.Empty));
+            return new CompileResponseMessage(request.Type, string.Empty, diagnostics);
         }
 
         var assemblyDefinition = compilation.Emit();
@@ -53,9 +54,25 @@ public class CompileController : ControllerBase
         // move stream to the beginning for decompiling
         stream.Position = 0;
 
-        using var decompilationProvider = decompilerProviderResolver.Resolve(compileRequest.Type, assemblyResolver, stream);
+        using var decompilationProvider = decompilerProviderResolver.Resolve(request.Type, assemblyResolver, stream);
         var decompiledString = decompilationProvider.Decompile();
-
-        return Ok(new CompileResponse(diagnostics, decompiledString));
+        return new CompileResponseMessage(request.Type, decompiledString, diagnostics);
     }
 }
+
+public enum CompileRequestType
+{
+    IL,
+    CSharp
+}
+
+public record SourceFile(string Name, string Content);
+
+public record CompileRequest(CompileRequestType Type, ImmutableArray<SourceFile> SourceFiles);
+
+public record CompileResponseMessage
+(
+    CompileRequestType Type,
+    string DecompiledText,
+    IEnumerable<Diagnostic> Diagnostics
+);
