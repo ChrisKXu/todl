@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
@@ -41,6 +41,12 @@ internal partial class Emitter
                     return;
                 case BoundVariableExpression boundVariableExpression:
                     EmitVariableExpression(boundVariableExpression);
+                    return;
+                case BoundClrFieldAccessExpression boundClrFieldAccessExpression:
+                    EmitClrFieldAccessExpression(boundClrFieldAccessExpression);
+                    return;
+                case BoundClrPropertyAccessExpression boundClrPropertyAccessExpression:
+                    EmitClrPropertyAccessExpression(boundClrPropertyAccessExpression);
                     return;
                 default:
                     throw new NotSupportedException($"Expression type {boundExpression.GetType().Name} is not supported.");
@@ -358,6 +364,23 @@ internal partial class Emitter
             {
                 ILProcessor.Emit(OpCodes.Dup);
             }
+        }
+
+        public void EmitClrFieldAccessExpression(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
+        {
+            var baseType = ResolveTypeReference(boundClrFieldAccessExpression.BoundBaseExpression.ResultType as ClrTypeSymbol);
+            ILProcessor.Emit(OpCodes.Ldsfld, new FieldReference(boundClrFieldAccessExpression.MemberName, baseType));
+        }
+
+        public void EmitClrPropertyAccessExpression(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
+        {
+            if (!boundClrPropertyAccessExpression.IsStatic)
+            {
+                EmitExpression(boundClrPropertyAccessExpression.BoundBaseExpression);
+            }
+
+            var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.GetMethod);
+            ILProcessor.Emit(OpCodes.Call, methodReference);
         }
     }
 }

@@ -43,6 +43,9 @@ public sealed class BoundClrPropertyAccessExpression : BoundMemberAccessExpressi
 
     public override bool ReadOnly => PropertyInfo.GetSetMethod() is null;
     public override bool IsPublic => PropertyInfo.GetAccessors().Any(a => a.IsPublic);
+
+    public MethodInfo GetMethod => PropertyInfo.GetMethod;
+    public MethodInfo SetMethod => PropertyInfo.SetMethod;
 }
 
 // This is not emittable, just to place a node in the bound tree to indicate this is an error
@@ -103,7 +106,7 @@ public partial class Binder
         diagnosticBuilder.Add(
             new Diagnostic()
             {
-                Message = $"Member {memberAccessExpression.MemberIdentifierToken.Text} does not exist in type {clrTypeSymbol.ClrType.FullName}",
+                Message = $"Member '{memberAccessExpression.MemberIdentifierToken.Text}' does not exist in type '{clrTypeSymbol.ClrType.FullName}'",
                 Level = DiagnosticLevel.Error,
                 TextLocation = memberAccessExpression.MemberIdentifierToken.GetTextLocation(),
                 ErrorCode = ErrorCode.MemberNotFound
