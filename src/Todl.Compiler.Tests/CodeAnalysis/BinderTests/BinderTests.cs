@@ -115,28 +115,6 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Fact]
-        public void TestBindMemberAccessExpressionInstanceProperty()
-        {
-            var boundMemberAccessExpression = TestUtils.BindExpression<BoundMemberAccessExpression>("\"abc\".Length");
-
-            boundMemberAccessExpression.MemberInfo.MemberType.Should().Be(MemberTypes.Property);
-            boundMemberAccessExpression.MemberName.Should().Be("Length");
-            boundMemberAccessExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
-            boundMemberAccessExpression.IsStatic.Should().Be(false);
-        }
-
-        [Fact]
-        public void TestBindMemberAccessExpressionStaticField()
-        {
-            var boundMemberAccessExpression = TestUtils.BindExpression<BoundMemberAccessExpression>("System.Int32.MaxValue");
-
-            boundMemberAccessExpression.MemberInfo.MemberType.Should().Be(MemberTypes.Field);
-            boundMemberAccessExpression.MemberName.Should().Be("MaxValue");
-            boundMemberAccessExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
-            boundMemberAccessExpression.IsStatic.Should().Be(true);
-        }
-
-        [Fact]
         public void TestBoundObjectCreationExpressionWithNoArguments()
         {
             var boundObjectCreationExpression = TestUtils.BindExpression<BoundObjectCreationExpression>("new System.Exception()");

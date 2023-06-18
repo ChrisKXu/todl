@@ -1,4 +1,4 @@
-namespace Todl.Compiler.Diagnostics
+﻿namespace Todl.Compiler.Diagnostics
 {
     public enum ErrorCode
     {
@@ -24,6 +24,7 @@ namespace Todl.Compiler.Diagnostics
         UnsupportedLiteral,
         NoMatchingCandidate,
         MemberNotFound,
+        MemberNotAccessible,
         TypeNotFound,
         UnexpectedStatement,
         AmbiguousFunctionDeclaration,

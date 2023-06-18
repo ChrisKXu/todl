@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Symbols;
 
@@ -34,6 +37,11 @@ public sealed class ClrTypeSymbol : TypeSymbol
         }
 
         return false;
+    }
+
+    public MemberInfo ResolveMember(TextSpan name)
+    {
+        return ClrType.GetMember(name.ToString()).FirstOrDefault();
     }
 
     public override int GetHashCode()

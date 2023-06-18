@@ -34,7 +34,7 @@ public sealed class BoundNodeTests
     public void AllBoundNodeVariantsAreCovered()
     {
         var types = GetAllSyntaxNodesForTest().Select(pair => pair[1].GetType());
-        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition), typeof(BoundNoOpStatement) };
+        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition), typeof(BoundNoOpStatement), typeof(BoundInvalidMemberAccessExpression) };
 
         var allBoundNodeTypes = typeof(BoundNode)
             .Assembly
@@ -56,7 +56,8 @@ public sealed class BoundNodeTests
         "100.ToString()", // BoundClrFunctionCallExpression
         "func()", // BoundTodlFunctionCallExpression
         "\"Hello World!\"", // BoundConstant
-        "\"abc\".Length", // BoundMemberAccessExpression
+        "\"abc\".Length", // BoundClrPropertyAccessExpression
+        "int.MaxValue", // BoundClrFieldAccessExpression
         "new System.Exception()" // BoundNewExpression
     };
 
