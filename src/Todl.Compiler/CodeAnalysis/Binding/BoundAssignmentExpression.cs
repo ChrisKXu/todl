@@ -71,17 +71,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                         };
                         Scope.DeclareVariable(variable);
                     }
-                    else
-                    {
-                        diagnosticBuilder.Add(
-                            new Diagnostic()
-                            {
-                                Message = $"Undeclared variable {variableName}",
-                                Level = DiagnosticLevel.Error,
-                                TextLocation = nameExpression.SyntaxTokens[0].GetTextLocation(),
-                                ErrorCode = ErrorCode.UndeclaredVariable
-                            });
-                    }
                 }
                 else if (variable.ReadOnly)
                 {

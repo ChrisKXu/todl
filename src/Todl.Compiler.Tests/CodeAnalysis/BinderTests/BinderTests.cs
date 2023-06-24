@@ -1,46 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
 using FluentAssertions;
-using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
-using Todl.Compiler.CodeAnalysis.Syntax;
-using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
 {
-    using Binder = Todl.Compiler.CodeAnalysis.Binding.Binder;
-
     public sealed partial class BinderTests
     {
-        [Theory]
-        [MemberData(nameof(GetTestBindAssignmentExpressionDataWithEqualsToken))]
-        public void TestBindAssignmentExpressionEqualsToken(string input, string variableName, TypeSymbol expectedResultType)
-        {
-            var expression = SyntaxTree.ParseExpression(SourceText.FromString(input), TestDefaults.DefaultClrTypeCache);
-            var boundAssignmentExpression =
-                Binder.CreateScriptBinder(TestDefaults.DefaultClrTypeCache).BindExpression(expression)
-                .As<BoundAssignmentExpression>();
-
-            boundAssignmentExpression.Should().NotBeNull();
-
-            var variable = boundAssignmentExpression.Left.As<BoundVariableExpression>().Variable;
-
-            variable.Name.Should().Be(variableName);
-            variable.ReadOnly.Should().BeFalse();
-            boundAssignmentExpression.Operator.SyntaxKind.Should().Be(SyntaxKind.EqualsToken);
-            variable.Type.Should().Be(expectedResultType);
-            boundAssignmentExpression.ResultType.Should().Be(expectedResultType);
-        }
-
-        public static IEnumerable<object[]> GetTestBindAssignmentExpressionDataWithEqualsToken()
-        {
-            yield return new object[] { "n = 0", "n", TestDefaults.DefaultClrTypeCache.BuiltInTypes.Int32 };
-            yield return new object[] { "abcd = \"abcde\"", "abcd", TestDefaults.DefaultClrTypeCache.BuiltInTypes.String };
-        }
-
         [Fact]
         public void TestBindBlockStatement()
         {
