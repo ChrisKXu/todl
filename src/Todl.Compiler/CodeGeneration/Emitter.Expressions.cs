@@ -27,6 +27,9 @@ internal partial class Emitter
                 case BoundConstant boundConstant:
                     EmitConstant(boundConstant);
                     return;
+                case BoundAssignmentExpression boundAssignmentExpression:
+                    EmitAssignmentExpression(boundAssignmentExpression);
+                    return;
                 case BoundClrFunctionCallExpression boundClrFunctionCallExpression:
                     EmitClrFunctionCallExpression(boundClrFunctionCallExpression);
                     return;
@@ -381,6 +384,25 @@ internal partial class Emitter
 
             var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.GetMethod);
             ILProcessor.Emit(OpCodes.Call, methodReference);
+        }
+
+        public void EmitAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
+        {
+            EmitExpression(boundAssignmentExpression.Right);
+
+            switch(boundAssignmentExpression.Left)
+            {
+                case BoundVariableExpression boundVariableExpression:
+                    switch (boundVariableExpression.Variable)
+                    {
+                        case LocalVariableSymbol localVariableSymbol:
+                            EmitLocalStore(variables[localVariableSymbol]);
+                            break;
+                        default:
+                            throw new NotSupportedException($"{boundVariableExpression.Variable} is not supported");
+                    }
+                    break;
+            }
         }
     }
 }

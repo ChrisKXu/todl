@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using FluentAssertions;
@@ -84,6 +85,7 @@ internal static class TestUtils
     }
 }
 
+[DebuggerDisplay("{ToString()}")]
 internal readonly struct TestInstruction : IEquatable<TestInstruction>
 {
     public OpCode OpCode { get; private init; }
@@ -116,4 +118,14 @@ internal readonly struct TestInstruction : IEquatable<TestInstruction>
 
     public override bool Equals([NotNullWhen(true)] object obj)
         => obj is TestInstruction other && Equals(other);
+
+    public override string ToString()
+    {
+        if (Operand is null)
+        {
+            return $"({OpCode.Name})";
+        }
+
+        return $"({OpCode.Name}, {Operand})";
+    }
 }
