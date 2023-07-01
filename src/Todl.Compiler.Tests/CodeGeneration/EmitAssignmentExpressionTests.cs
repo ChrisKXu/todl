@@ -15,6 +15,38 @@ public sealed class EmitAssignmentExpressionTests
             TestInstruction.Create(OpCodes.Stloc_0),
             TestInstruction.Create(OpCodes.Ldc_I4_S, (sbyte)10),
             TestInstruction.Create(OpCodes.Stloc_0));
+
+        TestEmitAssignmentExpressionCore(
+            "{ let a = 1; a += 10; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_S, (sbyte)10),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Stloc_0));
+
+        TestEmitAssignmentExpressionCore(
+            "{ let a = 1; a -= 10; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_S, (sbyte)10),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Stloc_0));
+
+        TestEmitAssignmentExpressionCore(
+            "{ let a = 1; a *= 10; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_S, (sbyte)10),
+            TestInstruction.Create(OpCodes.Mul),
+            TestInstruction.Create(OpCodes.Stloc_0));
+
+        TestEmitAssignmentExpressionCore(
+            "{ let a = 1; a /= 10; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldc_I4_S, (sbyte)10),
+            TestInstruction.Create(OpCodes.Div),
+            TestInstruction.Create(OpCodes.Stloc_0));
     }
 
     private void TestEmitAssignmentExpressionCore(string input, params TestInstruction[] expectedInstructions)

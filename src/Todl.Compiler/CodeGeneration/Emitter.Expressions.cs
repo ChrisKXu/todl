@@ -390,6 +390,22 @@ internal partial class Emitter
         {
             EmitExpression(boundAssignmentExpression.Right);
 
+            switch (boundAssignmentExpression.Operator.BoundAssignmentOperatorKind)
+            {
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.AdditionInline:
+                    ILProcessor.Emit(OpCodes.Add);
+                    break;
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.SubstractionInline:
+                    ILProcessor.Emit(OpCodes.Sub);
+                    break;
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.MultiplicationInline:
+                    ILProcessor.Emit(OpCodes.Mul);
+                    break;
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.DivisionInline:
+                    ILProcessor.Emit(OpCodes.Div);
+                    break;
+            }
+
             switch(boundAssignmentExpression.Left)
             {
                 case BoundVariableExpression boundVariableExpression:
