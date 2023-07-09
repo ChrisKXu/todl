@@ -21,7 +21,7 @@ public sealed class EmitMemberAccessExpressionTests
 
         var operand = instructions[0].Operand.As<FieldReference>();
         operand.Name.Should().Be(nameof(bool.FalseString));
-        operand.FieldType.FullName.Should().Be(typeof(bool).FullName);
+        operand.FieldType.FullName.Should().Be(typeof(string).FullName);
     }
 
     [Fact]

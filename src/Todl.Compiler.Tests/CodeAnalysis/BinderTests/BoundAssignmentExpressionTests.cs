@@ -12,12 +12,12 @@ namespace Todl.Compiler.Tests.CodeAnalysis;
 public sealed class BoundAssignmentExpressionTests
 {
     [Theory]
-    [InlineData("{ let n = 0; n = 0 }", "n", BoundAssignmentOperatorKind.Assignment, SpecialType.ClrInt32)]
-    [InlineData("{ let abcd = string.Empty; abcd = \"abcde\" }", "abcd", BoundAssignmentOperatorKind.Assignment, SpecialType.ClrString)]
-    [InlineData("{ let n = 0; n += 10 }", "n", BoundAssignmentOperatorKind.AdditionInline, SpecialType.ClrInt32)]
-    [InlineData("{ let n = 0; n -= 10 }", "n", BoundAssignmentOperatorKind.SubstractionInline, SpecialType.ClrInt32)]
-    [InlineData("{ let n = 0; n *= 10 }", "n", BoundAssignmentOperatorKind.MultiplicationInline, SpecialType.ClrInt32)]
-    [InlineData("{ let n = 0; n /= 10 }", "n", BoundAssignmentOperatorKind.DivisionInline, SpecialType.ClrInt32)]
+    [InlineData("{ let n = 0; n = 0; }", "n", BoundAssignmentOperatorKind.Assignment, SpecialType.ClrInt32)]
+    [InlineData("{ let abcd = string.Empty; abcd = \"abcde\"; }", "abcd", BoundAssignmentOperatorKind.Assignment, SpecialType.ClrString)]
+    [InlineData("{ let n = 0; n += 10; }", "n", BoundAssignmentOperatorKind.AdditionInline, SpecialType.ClrInt32)]
+    [InlineData("{ let n = 0; n -= 10; }", "n", BoundAssignmentOperatorKind.SubstractionInline, SpecialType.ClrInt32)]
+    [InlineData("{ let n = 0; n *= 10; }", "n", BoundAssignmentOperatorKind.MultiplicationInline, SpecialType.ClrInt32)]
+    [InlineData("{ let n = 0; n /= 10; }", "n", BoundAssignmentOperatorKind.DivisionInline, SpecialType.ClrInt32)]
     public void TestBindAssignmentExpressionBasic(
         string input,
         string variableName,
@@ -40,11 +40,11 @@ public sealed class BoundAssignmentExpressionTests
     }
 
     [Theory]
-    [InlineData("{ const n = 0; n = 0 }")]
-    [InlineData("{ const n = 0; n += 10 }")]
-    [InlineData("{ const n = 0; n -= 10 }")]
-    [InlineData("{ const n = 0; n *= 10 }")]
-    [InlineData("{ const n = 0; n /= 10 }")]
+    [InlineData("{ const n = 0; n = 0; }")]
+    [InlineData("{ const n = 0; n += 10; }")]
+    [InlineData("{ const n = 0; n -= 10; }")]
+    [InlineData("{ const n = 0; n *= 10; }")]
+    [InlineData("{ const n = 0; n /= 10; }")]
     public void TestBindAssignmentExpressionWithReadonlyVariables(string input)
     {
         var block = TestUtils.BindStatement<BoundBlockStatement>(input);

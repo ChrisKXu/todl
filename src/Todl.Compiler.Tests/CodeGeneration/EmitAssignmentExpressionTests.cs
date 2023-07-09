@@ -1,4 +1,6 @@
-﻿using Mono.Cecil.Cil;
+﻿using System.Net.Http.Headers;
+using FluentAssertions;
+using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Xunit;
 
@@ -49,9 +51,35 @@ public sealed class EmitAssignmentExpressionTests
             TestInstruction.Create(OpCodes.Stloc_0));
     }
 
+    [Fact]
+    public void TestEmitAssignmentExpressionWithClassFields()
+    {
+        TestEmitAssignmentExpressionCore(
+            "{ Todl.Compiler.Tests.TestClass.PublicStaticIntField = 10; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_S, (sbyte)10),
+            TestInstruction.Create(OpCodes.Stsfld, (typeof(int).FullName, nameof(TestClass.PublicStaticIntField))));
+
+        TestEmitAssignmentExpressionCore(
+            "{ Todl.Compiler.Tests.TestClass.PublicStaticStringField = \"abc\"; }",
+            TestInstruction.Create(OpCodes.Ldstr, "abc"),
+            TestInstruction.Create(OpCodes.Stsfld, (typeof(string).FullName, nameof(TestClass.PublicStaticStringField))));
+
+        TestEmitAssignmentExpressionCore(
+            "{ Todl.Compiler.Tests.TestClass.Instance.PublicIntField = 10; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_S, (sbyte)10),
+            TestInstruction.Create(OpCodes.Stfld, (typeof(int).FullName, nameof(TestClass.PublicIntField))));
+
+        TestEmitAssignmentExpressionCore(
+            "{ Todl.Compiler.Tests.TestClass.Instance.PublicStringField = \"abc\"; }",
+            TestInstruction.Create(OpCodes.Ldstr, "abc"),
+            TestInstruction.Create(OpCodes.Stfld, (typeof(string).FullName, nameof(TestClass.PublicStringField))));
+    }
+
     private void TestEmitAssignmentExpressionCore(string input, params TestInstruction[] expectedInstructions)
     {
         var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
+        boundBlockStatement.GetDiagnostics().Should().BeEmpty();
+
         var emitter = new TestEmitter();
         emitter.EmitStatement(boundBlockStatement);
 

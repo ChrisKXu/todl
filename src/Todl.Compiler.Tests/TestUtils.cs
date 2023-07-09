@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using FluentAssertions;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Binding;
@@ -105,6 +106,7 @@ internal readonly struct TestInstruction : IEquatable<TestInstruction>
             Operand = instruction.Operand switch
             {
                 VariableDefinition variableDefinition => variableDefinition.Index,
+                FieldReference fieldReference => (fieldReference.FieldType.FullName, fieldReference.Name),
                 _ => instruction.Operand
             }
         };

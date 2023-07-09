@@ -371,8 +371,16 @@ internal partial class Emitter
 
         public void EmitClrFieldAccessExpression(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
         {
-            var baseType = ResolveTypeReference(boundClrFieldAccessExpression.BoundBaseExpression.ResultType as ClrTypeSymbol);
-            ILProcessor.Emit(OpCodes.Ldsfld, new FieldReference(boundClrFieldAccessExpression.MemberName, baseType));
+            var baseType = ResolveTypeReference(boundClrFieldAccessExpression.ResultType as ClrTypeSymbol);
+            var opCode = boundClrFieldAccessExpression.IsStatic ? OpCodes.Ldsfld : OpCodes.Ldfld;
+            ILProcessor.Emit(opCode, new FieldReference(boundClrFieldAccessExpression.MemberName, baseType));
+        }
+
+        public void EmitClrFieldStore(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
+        {
+            var baseType = ResolveTypeReference(boundClrFieldAccessExpression.ResultType as ClrTypeSymbol);
+            var opCode = boundClrFieldAccessExpression.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld;
+            ILProcessor.Emit(opCode, new FieldReference(boundClrFieldAccessExpression.MemberName, baseType));
         }
 
         public void EmitClrPropertyAccessExpression(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
@@ -406,7 +414,7 @@ internal partial class Emitter
                     break;
             }
 
-            switch(boundAssignmentExpression.Left)
+            switch (boundAssignmentExpression.Left)
             {
                 case BoundVariableExpression boundVariableExpression:
                     switch (boundVariableExpression.Variable)
@@ -417,6 +425,9 @@ internal partial class Emitter
                         default:
                             throw new NotSupportedException($"{boundVariableExpression.Variable} is not supported");
                     }
+                    break;
+                case BoundClrFieldAccessExpression boundClrFieldAccessExpression:
+                    EmitClrFieldStore(boundClrFieldAccessExpression);
                     break;
             }
         }
