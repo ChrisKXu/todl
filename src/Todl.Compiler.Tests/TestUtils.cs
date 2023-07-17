@@ -106,7 +106,8 @@ internal readonly struct TestInstruction : IEquatable<TestInstruction>
             Operand = instruction.Operand switch
             {
                 VariableDefinition variableDefinition => variableDefinition.Index,
-                FieldReference fieldReference => (fieldReference.FieldType.FullName, fieldReference.Name),
+                FieldReference fieldReference => fieldReference.FullName,
+                MethodReference methodReference => methodReference.FullName,
                 _ => instruction.Operand
             }
         };

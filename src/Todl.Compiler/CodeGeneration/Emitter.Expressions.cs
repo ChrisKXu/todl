@@ -45,11 +45,8 @@ internal partial class Emitter
                 case BoundVariableExpression boundVariableExpression:
                     EmitVariableExpression(boundVariableExpression);
                     return;
-                case BoundClrFieldAccessExpression boundClrFieldAccessExpression:
-                    EmitClrFieldAccessExpression(boundClrFieldAccessExpression);
-                    return;
-                case BoundClrPropertyAccessExpression boundClrPropertyAccessExpression:
-                    EmitClrPropertyAccessExpression(boundClrPropertyAccessExpression);
+                case BoundMemberAccessExpression boundMemberAccessExpression:
+                    EmitMemberAccessExpression(boundMemberAccessExpression);
                     return;
                 default:
                     throw new NotSupportedException($"Expression type {boundExpression.GetType().Name} is not supported.");
@@ -369,7 +366,20 @@ internal partial class Emitter
             }
         }
 
-        public void EmitClrFieldAccessExpression(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
+        public void EmitMemberAccessExpression(BoundMemberAccessExpression boundMemberAccessExpression)
+        {
+            switch (boundMemberAccessExpression)
+            {
+                case BoundClrFieldAccessExpression boundClrFieldAccessExpression:
+                    EmitClrFieldLoad(boundClrFieldAccessExpression);
+                    return;
+                case BoundClrPropertyAccessExpression boundClrPropertyAccessExpression:
+                    EmitClrPropertyLoad(boundClrPropertyAccessExpression);
+                    return;
+            }
+        }
+
+        public void EmitClrFieldLoad(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
         {
             var baseType = ResolveTypeReference(boundClrFieldAccessExpression.ResultType as ClrTypeSymbol);
             var opCode = boundClrFieldAccessExpression.IsStatic ? OpCodes.Ldsfld : OpCodes.Ldfld;
@@ -383,7 +393,7 @@ internal partial class Emitter
             ILProcessor.Emit(opCode, new FieldReference(boundClrFieldAccessExpression.MemberName, baseType));
         }
 
-        public void EmitClrPropertyAccessExpression(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
+        public void EmitClrPropertyLoad(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
         {
             if (!boundClrPropertyAccessExpression.IsStatic)
             {
@@ -394,8 +404,21 @@ internal partial class Emitter
             ILProcessor.Emit(OpCodes.Call, methodReference);
         }
 
+        public void EmitClrPropertyStore(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
+        {
+            var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.SetMethod);
+            var opCode = boundClrPropertyAccessExpression.IsStatic ? OpCodes.Call : OpCodes.Callvirt;
+            ILProcessor.Emit(opCode, methodReference);
+        }
+
         public void EmitAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
         {
+            if (boundAssignmentExpression.Left is BoundMemberAccessExpression boundMemberAccessExpression
+                && !boundMemberAccessExpression.IsStatic)
+            {
+                EmitExpression(boundMemberAccessExpression.BoundBaseExpression);
+            }
+
             EmitExpression(boundAssignmentExpression.Right);
 
             switch (boundAssignmentExpression.Operator.BoundAssignmentOperatorKind)
@@ -428,6 +451,9 @@ internal partial class Emitter
                     break;
                 case BoundClrFieldAccessExpression boundClrFieldAccessExpression:
                     EmitClrFieldStore(boundClrFieldAccessExpression);
+                    break;
+                case BoundClrPropertyAccessExpression boundClrPropertyAccessExpression:
+                    EmitClrPropertyStore(boundClrPropertyAccessExpression);
                     break;
             }
         }
