@@ -56,6 +56,7 @@ public sealed class BoundAssignmentExpressionTests
 
         var readonlyVariable = diagnostics.First();
         readonlyVariable.Level.Should().Be(DiagnosticLevel.Error);
+        readonlyVariable.ErrorCode.Should().Be(ErrorCode.ReadOnlyVariable);
         readonlyVariable.Message.Should().Be("Variable n is read-only");
     }
 
@@ -75,6 +76,28 @@ public sealed class BoundAssignmentExpressionTests
 
         var undeclaredVariable = diagnostics.First();
         undeclaredVariable.Level.Should().Be(DiagnosticLevel.Error);
+        undeclaredVariable.ErrorCode.Should().Be(ErrorCode.UndeclaredVariable);
         undeclaredVariable.Message.Should().Be("Undeclared variable n");
+    }
+
+    [Theory]
+    [InlineData("{ let n = 0; n = \"abc\"; }")]
+    [InlineData("{ let n = 0; n += \"abc\"; }")]
+    [InlineData("{ let n = 0; n -= \"abc\"; }")]
+    [InlineData("{ let n = 0; n *= \"abc\"; }")]
+    [InlineData("{ let n = 0; n /= \"abc\"; }")]
+    public void TestBindAssignmentExpressionWithMismatchedTypes(string input)
+    {
+        var block = TestUtils.BindStatement<BoundBlockStatement>(input);
+        var boundAssignmentExpression = block.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundAssignmentExpression>();
+        boundAssignmentExpression.Should().NotBeNull();
+
+        var diagnostics = boundAssignmentExpression.GetDiagnostics();
+        diagnostics.Should().HaveCount(1);
+
+        var typeMismatch = diagnostics.First();
+        typeMismatch.Level.Should().Be(DiagnosticLevel.Error);
+        typeMismatch.ErrorCode.Should().Be(ErrorCode.TypeMismatch);
+        typeMismatch.Message.Should().Be("Variable n cannot be assigned to type System.String");
     }
 }
