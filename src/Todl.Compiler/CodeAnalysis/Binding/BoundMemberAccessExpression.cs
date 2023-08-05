@@ -13,6 +13,8 @@ public abstract class BoundMemberAccessExpression : BoundExpression
     public abstract string MemberName { get; }
     public abstract bool IsStatic { get; }
     public abstract bool IsPublic { get; }
+
+    public override bool LValue => true;
 }
 
 public sealed class BoundClrFieldAccessExpression : BoundMemberAccessExpression
@@ -26,7 +28,6 @@ public sealed class BoundClrFieldAccessExpression : BoundMemberAccessExpression
         => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(FieldInfo.FieldType);
 
     public override bool Constant => FieldInfo.IsLiteral;
-    public override bool LValue => true;
     public override bool ReadOnly => Constant || FieldInfo.IsInitOnly;
     public override bool IsPublic => FieldInfo.IsPublic;
 }

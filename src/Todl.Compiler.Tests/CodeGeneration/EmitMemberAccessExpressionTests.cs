@@ -1,7 +1,4 @@
-﻿using FluentAssertions;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Todl.Compiler.CodeAnalysis.Binding;
+﻿using Mono.Cecil.Cil;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeGeneration;
@@ -9,42 +6,46 @@ namespace Todl.Compiler.Tests.CodeGeneration;
 public sealed class EmitMemberAccessExpressionTests
 {
     [Fact]
-    public void TestEmitClrFieldExpression()
+    public void TestEmitClrFieldLoad()
     {
-        var boundClrFieldAccessExpression = TestUtils.BindExpression<BoundClrFieldAccessExpression>("bool.FalseString");
-        var emitter = new TestEmitter();
-        emitter.EmitExpression(boundClrFieldAccessExpression);
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.PublicStaticIntField",
+            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 PublicStaticIntField"));
 
-        var instructions = emitter.ILProcessor.Body.Instructions;
-        instructions.Count.Should().Be(1);
-        instructions[0].OpCode.Should().Be(OpCodes.Ldsfld);
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.PublicStaticStringField",
+            TestInstruction.Create(OpCodes.Ldsfld, "System.String PublicStaticStringField"));
 
-        var operand = instructions[0].Operand.As<FieldReference>();
-        operand.Name.Should().Be(nameof(bool.FalseString));
-        operand.FieldType.FullName.Should().Be(typeof(bool).FullName);
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.Instance.PublicIntField",
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 PublicIntField"));
+
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.Instance.PublicStringField",
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldfld, "System.String PublicStringField"));
     }
 
     [Fact]
-    public void TestEmitClrPropertyExpression()
+    public void TestEmitClrPropertyLoad()
     {
-        var boundClrPropertyAccessExpression = TestUtils.BindExpression<BoundClrPropertyAccessExpression>("\"abc\".Length");
-        var emitter = new TestEmitter();
-        emitter.EmitExpression(boundClrPropertyAccessExpression);
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.PublicStaticIntProperty",
+            TestInstruction.Create(OpCodes.Call, "System.Int32 Todl.Compiler.Tests.TestClass::get_PublicStaticIntProperty()"));
 
-        var instructions = emitter.ILProcessor.Body.Instructions;
-        instructions.Count.Should().Be(2);
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.PublicStaticStringProperty",
+            TestInstruction.Create(OpCodes.Call, "System.String Todl.Compiler.Tests.TestClass::get_PublicStaticStringProperty()"));
 
-        var ldstr = instructions[0];
-        ldstr.OpCode.Should().Be(OpCodes.Ldstr);
-        ldstr.Operand.Should().Be("abc");
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.Instance.PublicIntProperty",
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Callvirt, "System.Int32 Todl.Compiler.Tests.TestClass::get_PublicIntProperty()"));
 
-        var call = instructions[1];
-        call.OpCode.Should().Be(OpCodes.Call);
-
-        var operand = call.Operand.As<MethodReference>();
-        operand.Name.Should().Be("get_Length");
-        operand.ReturnType.FullName.Should().Be(typeof(int).FullName);
-        operand.Parameters.Should().BeEmpty();
-        operand.DeclaringType.FullName.Should().Be(typeof(string).FullName);
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.Instance.PublicStringProperty",
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Callvirt, "System.String Todl.Compiler.Tests.TestClass::get_PublicStringProperty()"));
     }
 }

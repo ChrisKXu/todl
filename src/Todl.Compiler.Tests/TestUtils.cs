@@ -1,13 +1,16 @@
-using System;
+﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using FluentAssertions;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Tests.CodeGeneration;
 
 namespace Todl.Compiler.Tests;
 
@@ -47,6 +50,28 @@ internal static class TestUtils
         return binder.BindMember(member).As<TBoundMember>();
     }
 
+    internal static void EmitExpressionAndVerify(string input, params TestInstruction[] expectedInstructions)
+    {
+        var boundExpression = BindExpression<BoundExpression>(input);
+        boundExpression.GetDiagnostics().Should().BeEmpty();
+
+        var emitter = new TestEmitter();
+        emitter.EmitExpression(boundExpression);
+
+        emitter.ILProcessor.Body.Instructions.ShouldHaveExactInstructionSequence(expectedInstructions);
+    }
+
+    internal static void EmitStatementAndVerify(string input, params TestInstruction[] expectedInstructions)
+    {
+        var boundStatement = BindStatement<BoundStatement>(input);
+        boundStatement.GetDiagnostics().Should().BeEmpty();
+
+        var emitter = new TestEmitter();
+        emitter.EmitStatement(boundStatement);
+
+        emitter.ILProcessor.Body.Instructions.ShouldHaveExactInstructionSequence(expectedInstructions);
+    }
+
     internal static SyntaxTree ParseSyntaxTree(string inputText)
         => SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
 
@@ -84,6 +109,7 @@ internal static class TestUtils
     }
 }
 
+[DebuggerDisplay("{ToString()}")]
 internal readonly struct TestInstruction : IEquatable<TestInstruction>
 {
     public OpCode OpCode { get; private init; }
@@ -103,6 +129,8 @@ internal readonly struct TestInstruction : IEquatable<TestInstruction>
             Operand = instruction.Operand switch
             {
                 VariableDefinition variableDefinition => variableDefinition.Index,
+                FieldReference fieldReference => fieldReference.FullName,
+                MethodReference methodReference => methodReference.FullName,
                 _ => instruction.Operand
             }
         };
@@ -116,4 +144,14 @@ internal readonly struct TestInstruction : IEquatable<TestInstruction>
 
     public override bool Equals([NotNullWhen(true)] object obj)
         => obj is TestInstruction other && Equals(other);
+
+    public override string ToString()
+    {
+        if (Operand is null)
+        {
+            return $"({OpCode.Name})";
+        }
+
+        return $"({OpCode.Name}, {Operand})";
+    }
 }
