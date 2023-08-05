@@ -368,6 +368,11 @@ internal partial class Emitter
 
         public void EmitMemberAccessExpression(BoundMemberAccessExpression boundMemberAccessExpression)
         {
+            if (!boundMemberAccessExpression.IsStatic)
+            {
+                EmitExpression(boundMemberAccessExpression.BoundBaseExpression);
+            }
+
             switch (boundMemberAccessExpression)
             {
                 case BoundClrFieldAccessExpression boundClrFieldAccessExpression:
@@ -395,13 +400,9 @@ internal partial class Emitter
 
         public void EmitClrPropertyLoad(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
         {
-            if (!boundClrPropertyAccessExpression.IsStatic)
-            {
-                EmitExpression(boundClrPropertyAccessExpression.BoundBaseExpression);
-            }
-
             var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.GetMethod);
-            ILProcessor.Emit(OpCodes.Call, methodReference);
+            var opCode = boundClrPropertyAccessExpression.IsStatic ? OpCodes.Call : OpCodes.Callvirt;
+            ILProcessor.Emit(opCode, methodReference);
         }
 
         public void EmitClrPropertyStore(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
