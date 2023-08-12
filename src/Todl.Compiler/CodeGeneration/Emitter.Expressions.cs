@@ -20,7 +20,7 @@ internal partial class Emitter
                 && m.GetParameters().Length == 2
                 && m.GetParameters()[0].ParameterType.Equals(typeof(string)));
 
-        public void EmitExpression(BoundExpression boundExpression)
+        public void EmitExpression(BoundExpression boundExpression, bool emitSideEffect = false)
         {
             switch (boundExpression)
             {
@@ -37,7 +37,7 @@ internal partial class Emitter
                     EmitTodlFunctionCallExpression(boundTodlFunctionCallExpression);
                     return;
                 case BoundUnaryExpression boundUnaryExpression:
-                    EmitUnaryExpression(boundUnaryExpression);
+                    EmitUnaryExpression(boundUnaryExpression, emitSideEffect);
                     return;
                 case BoundBinaryExpression boundBinaryExpression:
                     EmitBinaryExpression(boundBinaryExpression);
@@ -203,7 +203,7 @@ internal partial class Emitter
                     ILProcessor.Emit(OpCodes.Ldarg, parameterDefinition);
                     break;
                 case LocalVariableSymbol localVariable:
-                    ILProcessor.Emit(OpCodes.Ldloca_S, variables[localVariable]);
+                    EmitLocalLoad(localVariable);
                     break;
                 default:
                     throw new NotSupportedException($"{boundVariableExpression.Variable} is not supported");
@@ -260,36 +260,34 @@ internal partial class Emitter
         {
             foreach (var argument in boundTodlFunctionCallExpression.BoundArguments.Values)
             {
-                EmitExpression(argument);
+                EmitExpression(argument, true);
             }
 
             var methodReference = ResolveMethodReference(boundTodlFunctionCallExpression);
             ILProcessor.Emit(OpCodes.Call, methodReference);
         }
 
-        public void EmitUnaryExpression(BoundUnaryExpression boundUnaryExpression)
+        private void EmitUnaryExpression(BoundUnaryExpression boundUnaryExpression, bool emitSideEffect)
         {
-            switch (boundUnaryExpression.Operand)
-            {
-                case BoundVariableExpression boundVariableExpression:
-                    switch (boundVariableExpression.Variable)
-                    {
-                        case LocalVariableSymbol localVariableSymbol:
-                            EmitLocalLoad(localVariableSymbol);
-                            break;
-                        case ParameterSymbol:
-                            EmitVariableExpression(boundVariableExpression);
-                            break;
-                        default:
-                            throw new NotSupportedException($"{boundVariableExpression.Variable} is not supported");
-                    }
-                    break;
-                default:
-                    EmitExpression(boundUnaryExpression.Operand);
-                    break;
-            }
-
             var boundUnaryOperatorKind = boundUnaryExpression.Operator.BoundUnaryOperatorKind;
+
+            if (!boundUnaryOperatorKind.HasSideEffect())
+            {
+                EmitUnaryExpressionWithoutSideEffect(boundUnaryExpression.Operand, boundUnaryOperatorKind);
+            }
+            else
+            {
+                EmitStore(boundUnaryExpression.Operand, () =>
+                {
+                    EmitUnaryExpressionWithoutSideEffect(boundUnaryExpression.Operand, boundUnaryOperatorKind);
+                    EmitUnaryOperatorWithSideEffect(boundUnaryOperatorKind, emitSideEffect);
+                });
+            }
+        }
+
+        private void EmitUnaryExpressionWithoutSideEffect(BoundExpression operand, BoundUnaryOperatorKind boundUnaryOperatorKind)
+        {
+            EmitExpression(operand);
 
             switch (boundUnaryOperatorKind.GetOperationKind())
             {
@@ -311,20 +309,9 @@ internal partial class Emitter
                 default:
                     break;
             }
-
-            if (boundUnaryOperatorKind.HasSideEffect())
-            {
-                EmitUnaryOperatorWithSideEffect(boundUnaryOperatorKind);
-
-                if (boundUnaryExpression.Operand is BoundVariableExpression boundVariableExpression
-                    && boundVariableExpression.Variable is LocalVariableSymbol localVariableSymbol)
-                {
-                    EmitLocalStore(variables[localVariableSymbol]);
-                }
-            }
         }
 
-        public void EmitUnaryOperatorWithSideEffect(BoundUnaryOperatorKind boundUnaryOperatorKind)
+        private void EmitUnaryOperatorWithSideEffect(BoundUnaryOperatorKind boundUnaryOperatorKind, bool emitSideEffect)
         {
             var operationKind = boundUnaryOperatorKind.GetOperationKind();
 
@@ -336,7 +323,7 @@ internal partial class Emitter
 
             var prefix = operationKind == BoundUnaryOperatorKind.PrefixIncrement || operationKind == BoundUnaryOperatorKind.PrefixDecrement;
 
-            if (!prefix)
+            if (!prefix && emitSideEffect)
             {
                 ILProcessor.Emit(OpCodes.Dup);
             }
@@ -360,13 +347,13 @@ internal partial class Emitter
 
             ILProcessor.Emit(opCode);
 
-            if (prefix)
+            if (prefix && emitSideEffect)
             {
                 ILProcessor.Emit(OpCodes.Dup);
             }
         }
 
-        public void EmitMemberAccessExpression(BoundMemberAccessExpression boundMemberAccessExpression)
+        private void EmitMemberAccessExpression(BoundMemberAccessExpression boundMemberAccessExpression)
         {
             if (!boundMemberAccessExpression.IsStatic)
             {
@@ -384,61 +371,45 @@ internal partial class Emitter
             }
         }
 
-        public void EmitClrFieldLoad(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
+        private void EmitClrFieldLoad(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
         {
             var baseType = ResolveTypeReference(boundClrFieldAccessExpression.ResultType as ClrTypeSymbol);
             var opCode = boundClrFieldAccessExpression.IsStatic ? OpCodes.Ldsfld : OpCodes.Ldfld;
             ILProcessor.Emit(opCode, new FieldReference(boundClrFieldAccessExpression.MemberName, baseType));
         }
 
-        public void EmitClrFieldStore(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
+        private void EmitClrFieldStore(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
         {
             var baseType = ResolveTypeReference(boundClrFieldAccessExpression.ResultType as ClrTypeSymbol);
             var opCode = boundClrFieldAccessExpression.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld;
             ILProcessor.Emit(opCode, new FieldReference(boundClrFieldAccessExpression.MemberName, baseType));
         }
 
-        public void EmitClrPropertyLoad(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
+        private void EmitClrPropertyLoad(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
         {
             var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.GetMethod);
             var opCode = boundClrPropertyAccessExpression.IsStatic ? OpCodes.Call : OpCodes.Callvirt;
             ILProcessor.Emit(opCode, methodReference);
         }
 
-        public void EmitClrPropertyStore(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
+        private void EmitClrPropertyStore(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
         {
             var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.SetMethod);
             var opCode = boundClrPropertyAccessExpression.IsStatic ? OpCodes.Call : OpCodes.Callvirt;
             ILProcessor.Emit(opCode, methodReference);
         }
 
-        public void EmitAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
+        private void EmitStore(BoundExpression left, Action assignmentAction)
         {
-            if (boundAssignmentExpression.Left is BoundMemberAccessExpression boundMemberAccessExpression
+            if (left is BoundMemberAccessExpression boundMemberAccessExpression
                 && !boundMemberAccessExpression.IsStatic)
             {
-                EmitExpression(boundMemberAccessExpression.BoundBaseExpression);
+                EmitExpression(boundMemberAccessExpression.BoundBaseExpression, true);
             }
 
-            EmitExpression(boundAssignmentExpression.Right);
+            assignmentAction();
 
-            switch (boundAssignmentExpression.Operator.BoundAssignmentOperatorKind)
-            {
-                case BoundAssignmentExpression.BoundAssignmentOperatorKind.AdditionInline:
-                    ILProcessor.Emit(OpCodes.Add);
-                    break;
-                case BoundAssignmentExpression.BoundAssignmentOperatorKind.SubstractionInline:
-                    ILProcessor.Emit(OpCodes.Sub);
-                    break;
-                case BoundAssignmentExpression.BoundAssignmentOperatorKind.MultiplicationInline:
-                    ILProcessor.Emit(OpCodes.Mul);
-                    break;
-                case BoundAssignmentExpression.BoundAssignmentOperatorKind.DivisionInline:
-                    ILProcessor.Emit(OpCodes.Div);
-                    break;
-            }
-
-            switch (boundAssignmentExpression.Left)
+            switch (left)
             {
                 case BoundVariableExpression boundVariableExpression:
                     switch (boundVariableExpression.Variable)
@@ -457,6 +428,30 @@ internal partial class Emitter
                     EmitClrPropertyStore(boundClrPropertyAccessExpression);
                     break;
             }
+        }
+
+        private void EmitAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
+        {
+            EmitStore(boundAssignmentExpression.Left, () =>
+            {
+                EmitExpression(boundAssignmentExpression.Right, true);
+
+                switch (boundAssignmentExpression.Operator.BoundAssignmentOperatorKind)
+                {
+                    case BoundAssignmentExpression.BoundAssignmentOperatorKind.AdditionInline:
+                        ILProcessor.Emit(OpCodes.Add);
+                        break;
+                    case BoundAssignmentExpression.BoundAssignmentOperatorKind.SubstractionInline:
+                        ILProcessor.Emit(OpCodes.Sub);
+                        break;
+                    case BoundAssignmentExpression.BoundAssignmentOperatorKind.MultiplicationInline:
+                        ILProcessor.Emit(OpCodes.Mul);
+                        break;
+                    case BoundAssignmentExpression.BoundAssignmentOperatorKind.DivisionInline:
+                        ILProcessor.Emit(OpCodes.Div);
+                        break;
+                }
+            });
         }
     }
 }

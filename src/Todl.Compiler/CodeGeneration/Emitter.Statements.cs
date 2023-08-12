@@ -81,7 +81,7 @@ internal partial class Emitter
 
             if (boundVariableDeclarationStatement.InitializerExpression is not null)
             {
-                EmitExpression(boundVariableDeclarationStatement.InitializerExpression);
+                EmitExpression(boundVariableDeclarationStatement.InitializerExpression, true);
                 EmitLocalStore(variableDefinition);
             }
         }
