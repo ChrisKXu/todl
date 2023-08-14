@@ -443,23 +443,23 @@ public sealed class EmitUnaryExpressionTests
             TestInstruction.Create(OpCodes.Sub),
             TestInstruction.Create(OpCodes.Stfld, "System.Int32 PublicIntField"));
 
-        //TestUtils.EmitExpressionAndVerify(
-        //    "Todl.Compiler.Tests.TestClass.Instance.PublicIntField++",
-        //    TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
-        //    TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
-        //    TestInstruction.Create(OpCodes.Ldfld, "System.Int32 PublicIntField"),
-        //    TestInstruction.Create(OpCodes.Ldc_I4_1),
-        //    TestInstruction.Create(OpCodes.Add),
-        //    TestInstruction.Create(OpCodes.Stfld, "System.Int32 PublicIntField"));
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.Instance.PublicIntField++",
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 PublicIntField"),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Stfld, "System.Int32 PublicIntField"));
 
-        //TestUtils.EmitExpressionAndVerify(
-        //    "Todl.Compiler.Tests.TestClass.Instance.PublicIntField--",
-        //    TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
-        //    TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
-        //    TestInstruction.Create(OpCodes.Ldfld, "System.Int32 PublicIntField"),
-        //    TestInstruction.Create(OpCodes.Ldc_I4_1),
-        //    TestInstruction.Create(OpCodes.Sub),
-        //    TestInstruction.Create(OpCodes.Stfld, "System.Int32 PublicIntField"));
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.Instance.PublicIntField--",
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 PublicIntField"),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Stfld, "System.Int32 PublicIntField"));
     }
 
     [Fact]
@@ -499,7 +499,19 @@ public sealed class EmitUnaryExpressionTests
             TestInstruction.Create(OpCodes.Sub),
             TestInstruction.Create(OpCodes.Stsfld, "System.Int32 PublicStaticIntField"));
 
-        // TODO: Add postfix operator tests
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.PublicStaticIntField++",
+            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 PublicStaticIntField"),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Stsfld, "System.Int32 PublicStaticIntField"));
+
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.PublicStaticIntField--",
+            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 PublicStaticIntField"),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Stsfld, "System.Int32 PublicStaticIntField"));
     }
 
     [Fact]
@@ -547,7 +559,23 @@ public sealed class EmitUnaryExpressionTests
             TestInstruction.Create(OpCodes.Sub),
             TestInstruction.Create(OpCodes.Callvirt, "System.Void Todl.Compiler.Tests.TestClass::set_PublicIntProperty(System.Int32)"));
 
-        // TODO: Add postfix operator tests
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.Instance.PublicIntProperty++",
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Callvirt, "System.Int32 Todl.Compiler.Tests.TestClass::get_PublicIntProperty()"),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Callvirt, "System.Void Todl.Compiler.Tests.TestClass::set_PublicIntProperty(System.Int32)"));
+
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.Instance.PublicIntProperty--",
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Callvirt, "System.Int32 Todl.Compiler.Tests.TestClass::get_PublicIntProperty()"),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Callvirt, "System.Void Todl.Compiler.Tests.TestClass::set_PublicIntProperty(System.Int32)"));
     }
 
     [Fact]
@@ -587,6 +615,18 @@ public sealed class EmitUnaryExpressionTests
             TestInstruction.Create(OpCodes.Sub),
             TestInstruction.Create(OpCodes.Call, "System.Void Todl.Compiler.Tests.TestClass::set_PublicStaticIntProperty(System.Int32)"));
 
-        // TODO: Add postfix operator tests
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.PublicStaticIntProperty++",
+            TestInstruction.Create(OpCodes.Call, "System.Int32 Todl.Compiler.Tests.TestClass::get_PublicStaticIntProperty()"),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Call, "System.Void Todl.Compiler.Tests.TestClass::set_PublicStaticIntProperty(System.Int32)"));
+
+        TestUtils.EmitExpressionAndVerify(
+            "Todl.Compiler.Tests.TestClass.PublicStaticIntProperty--",
+            TestInstruction.Create(OpCodes.Call, "System.Int32 Todl.Compiler.Tests.TestClass::get_PublicStaticIntProperty()"),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Sub),
+            TestInstruction.Create(OpCodes.Call, "System.Void Todl.Compiler.Tests.TestClass::set_PublicStaticIntProperty(System.Int32)"));
     }
 }

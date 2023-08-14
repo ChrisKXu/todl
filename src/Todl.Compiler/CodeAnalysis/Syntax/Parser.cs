@@ -129,13 +129,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
                 }
                 else if (Current.Kind == SyntaxKind.DotToken && Peak.Kind == SyntaxKind.IdentifierToken)
                 {
-                    baseExpression = new MemberAccessExpression()
+                    baseExpression = ParseTrailingUnaryExpression(new MemberAccessExpression()
                     {
                         SyntaxTree = syntaxTree,
                         BaseExpression = baseExpression,
                         DotToken = ExpectToken(SyntaxKind.DotToken),
                         MemberIdentifierToken = ExpectToken(SyntaxKind.IdentifierToken)
-                    };
+                    });
                 }
                 else if (Current.Kind == SyntaxKind.OpenParenthesisToken)
                 {
