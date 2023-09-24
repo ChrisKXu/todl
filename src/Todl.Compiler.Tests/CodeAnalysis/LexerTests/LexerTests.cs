@@ -118,7 +118,11 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             { SyntaxKind.ReturnKeywordToken, "return" },
             { SyntaxKind.IfKeywordToken, "if" },
             { SyntaxKind.UnlessKeywordToken, "unless" },
-            { SyntaxKind.ElseKeywordToken, "else" }
+            { SyntaxKind.ElseKeywordToken, "else" },
+            { SyntaxKind.WhileKeywordToken, "while" },
+            { SyntaxKind.UntilKeywordToken, "until" },
+            { SyntaxKind.BreakKeywordToken, "break" },
+            { SyntaxKind.ContinueKeywordToken, "continue" }
         };
 
         [Theory]
