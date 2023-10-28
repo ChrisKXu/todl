@@ -14,6 +14,7 @@ public abstract class BoundNode : IDiagnosable
         if (DiagnosticBuilder == null)
         {
             return DiagnosticBag.Empty;
+
         }
 
         return DiagnosticBuilder.Build();
