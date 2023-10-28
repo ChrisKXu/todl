@@ -1,24 +1,63 @@
-using System;
+﻿using System;
 using System.CodeDom.Compiler;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Todl.Compiler.SourceGenerators;
 
 [Generator]
-public sealed class BoundNodeFactorySourceGenerator : ISourceGenerator
+public sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
 {
     private const string BoundNodeFactoryClassName = "BoundNodeFactory";
     private const string BoundNodeNamespace = "Todl.Compiler.CodeAnalysis.Binding";
     private const string BoundNodeTypeName = $"{BoundNodeNamespace}.BoundNode";
+    private const string BoundNodeFactoryGeneratedSourceFileName = $"{BoundNodeFactoryClassName}_generated.cs";
 
-    public void Initialize(GeneratorInitializationContext context)
+    private static readonly IReadOnlyList<string> defaultNamespaces = new List<string>()
     {
-        // do nothing
+        "System",
+        "System.CodeDom.Compiler",
+        "System.Collections.Generic",
+        "System.Reflection",
+        "Todl.Compiler.CodeAnalysis.Symbols",
+        "Todl.Compiler.CodeAnalysis.Syntax",
+        "Todl.Compiler.Diagnostics"
+    };
+
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+        var boundNodeClasses = context.SyntaxProvider.CreateSyntaxProvider(
+            static (syntaxNode, _) => syntaxNode is ClassDeclarationSyntax classDeclarationSyntax,
+            Transform)
+            .Where(m => m is not null);
+
+        context.RegisterSourceOutput(
+            context.CompilationProvider.Combine(boundNodeClasses.Collect()),
+            static (context, values) => Generate(context, values.Left, values.Right));
     }
 
-    public void Execute(GeneratorExecutionContext context)
+    static ClassDeclarationSyntax Transform(GeneratorSyntaxContext context, CancellationToken cancellationToken)
+    {
+        var semanticModel = context.SemanticModel;
+        var symbolInfo = semanticModel.GetDeclaredSymbol(context.Node) as INamedTypeSymbol;
+
+        if (symbolInfo.Name.Contains("Bound") && !symbolInfo.IsAbstract)
+        {
+            return context.Node as ClassDeclarationSyntax;
+        }
+
+        return null;
+    }
+
+    static void Generate(
+        SourceProductionContext context,
+        Compilation compilation,
+        IReadOnlyList<ClassDeclarationSyntax> boundNodeClasses)
     {
         try
         {
@@ -26,30 +65,21 @@ public sealed class BoundNodeFactorySourceGenerator : ISourceGenerator
             using var indentedTextWriter = new IndentedTextWriter(stringWriter);
 
             // write usings
-            var usings = new[]
+            foreach (var ns in defaultNamespaces)
             {
-                "System",
-                "System.Collections.Generic",
-                "System.Reflection",
-                "Todl.Compiler.CodeAnalysis.Symbols",
-                "Todl.Compiler.CodeAnalysis.Syntax",
-                "Todl.Compiler.Diagnostics"
-            };
-
-            foreach (var u in usings)
-            {
-                indentedTextWriter.WriteLine($"using {u};");
+                indentedTextWriter.WriteLine($"using {ns};");
             }
             indentedTextWriter.WriteLine();
 
             indentedTextWriter.WriteLine($"namespace {BoundNodeNamespace};");
             indentedTextWriter.WriteLine();
+            indentedTextWriter.WriteLine("[" + nameof(GeneratedCodeAttribute) + "(\"Todl.Compiler.SourceGenerators.BoundNodeFactorySourceGenerator\", \"1.0.0.0\")" + "]");
             indentedTextWriter.WriteLine($"public static class {BoundNodeFactoryClassName}");
             indentedTextWriter.BeginCurlyBrace();
-            WriteAllCreateMethods(context, indentedTextWriter);
+            WriteAllCreateMethods(compilation, boundNodeClasses, indentedTextWriter);
             indentedTextWriter.EndCurlyBrace();
 
-            context.AddSource($"{BoundNodeFactoryClassName}_generated.cs", stringWriter.ToString());
+            context.AddSource(BoundNodeFactoryGeneratedSourceFileName, stringWriter.ToString());
         }
         catch (Exception ex)
         {
@@ -67,15 +97,16 @@ public sealed class BoundNodeFactorySourceGenerator : ISourceGenerator
         }
     }
 
-    private void WriteAllCreateMethods(GeneratorExecutionContext context, IndentedTextWriter writer)
+    static void WriteAllCreateMethods(
+        Compilation compilation,
+        IReadOnlyList<ClassDeclarationSyntax> boundNodeClasses,
+        IndentedTextWriter writer)
     {
-        var compilation = context.Compilation;
         var boundNodeType = compilation.GetTypeByMetadataName(BoundNodeTypeName);
-        var boundNodeNamespace = boundNodeType.ContainingNamespace;
-        var allBoundNodeTypes = boundNodeNamespace
-            .GetTypeMembers()
-            .Where(t => !t.IsAbstract && t.IsDerivedFrom(boundNodeType))
-            .ToList();
+
+        var allBoundNodeTypes = boundNodeClasses
+            .Select(s => compilation.GetSemanticModel(s.SyntaxTree).GetDeclaredSymbol(s))
+            .Where(t => t.IsDerivedFrom(boundNodeType));
 
         foreach (var typeSymbol in allBoundNodeTypes)
         {
@@ -83,7 +114,7 @@ public sealed class BoundNodeFactorySourceGenerator : ISourceGenerator
         }
     }
 
-    private void WriteCreateMethod(INamedTypeSymbol typeSymbol, INamedTypeSymbol boundNodeType, IndentedTextWriter writer)
+    static void WriteCreateMethod(INamedTypeSymbol typeSymbol, INamedTypeSymbol boundNodeType, IndentedTextWriter writer)
     {
         var properties = typeSymbol
             .GetMembers()
