@@ -153,7 +153,15 @@ internal partial class Emitter
 
             if (!boundClrFunctionCallExpression.IsStatic)
             {
-                EmitExpression(boundClrFunctionCallExpression.BoundBaseExpression);
+                if (boundClrFunctionCallExpression.BoundBaseExpression is BoundVariableExpression boundVariableExpression
+                    && boundVariableExpression.Variable is LocalVariableSymbol localVariableSymbol)
+                {
+                    EmitLocalAddress(localVariableSymbol);
+                }
+                else
+                {
+                    EmitExpression(boundClrFunctionCallExpression.BoundBaseExpression);
+                }
             }
 
             var methodReference = ResolveMethodReference(boundClrFunctionCallExpression);
@@ -248,7 +256,7 @@ internal partial class Emitter
             var slot = variables[localVariableSymbol].Index;
             if (slot < 0xFF)
             {
-                ILProcessor.Emit(OpCodes.Ldloca_S, (sbyte)slot);
+                ILProcessor.Emit(OpCodes.Ldloca_S, (byte)slot);
             }
             else
             {
