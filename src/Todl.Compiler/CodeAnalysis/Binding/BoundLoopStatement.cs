@@ -14,8 +14,9 @@ public partial class Binder
 {
     private BoundLoopStatement BindWhileUntilStatement(WhileUntilStatement whileUntilStatement)
     {
-        var condition = BindExpression(whileUntilStatement.ConditionExpression);
-        var body = BindBlockStatement(whileUntilStatement.BlockStatement);
+        var loopBinder = CreateLoopBinder();
+        var condition = loopBinder.BindExpression(whileUntilStatement.ConditionExpression);
+        var body = loopBinder.BindBlockStatementInScope(whileUntilStatement.BlockStatement);
         var negated = whileUntilStatement.WhileOrUntilToken.Kind == SyntaxKind.UntilKeywordToken;
         var diagnosticBuilder = new DiagnosticBag.Builder();
 

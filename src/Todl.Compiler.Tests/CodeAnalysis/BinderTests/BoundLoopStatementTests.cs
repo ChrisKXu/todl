@@ -32,4 +32,29 @@ public sealed class BoundLoopStatementTests
         diagnostic.ErrorCode.Should().Be(ErrorCode.TypeMismatch);
         diagnostic.Message.Should().Be("Condition must be of boolean type.");
     }
+
+    [Theory]
+    [InlineData("while true { break; }")]
+    [InlineData("while true { continue; }")]
+    //[InlineData("while 0 < 1 { if 1 < 2 { break; } else { continue; } }")]
+    public void BoundLoopStatementCanHaveBreakOrContinueStatements(string inputText)
+    {
+        var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>(inputText);
+        boundLoopStatement.GetDiagnostics().Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("break;")]
+    [InlineData("continue;")]
+    public void BreakOrContinueStatementsCanOnlyAppearInLoops(string inputText)
+    {
+        var boundStatement = TestUtils.BindStatement<BoundStatement>(inputText);
+        var diagnostics = boundStatement.GetDiagnostics();
+        diagnostics.Should().NotBeEmpty();
+
+        var noEnclosingLoop = diagnostics.First();
+        noEnclosingLoop.Level.Should().Be(DiagnosticLevel.Error);
+        noEnclosingLoop.ErrorCode.Should().Be(ErrorCode.NoEnclosingLoop);
+        noEnclosingLoop.Message.Should().Be("No enclosing loop out of which to break or continue.");
+    }
 }

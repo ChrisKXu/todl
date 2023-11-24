@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using Todl.Compiler.CodeAnalysis.Symbols;
-using Todl.Compiler.Diagnostics;
+﻿using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -63,6 +61,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 Scope = Scope.CreateChildScope(BoundScopeKind.Type)
             };
 
+        public Binder CreateLoopBinder()
+            => new LoopBinder()
+            {
+                Parent = this,
+                Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
+            };
+
         internal sealed class ScriptBinder : Binder
         {
             public ScriptBinder(ClrTypeCache clrTypeCache)
@@ -105,6 +110,10 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             }
 
             public override FunctionSymbol FunctionSymbol { get; }
+        }
+
+        internal sealed partial class LoopBinder : Binder
+        {
         }
     }
 }
