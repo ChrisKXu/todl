@@ -36,7 +36,7 @@ public sealed class BoundLoopStatementTests
     [Theory]
     [InlineData("while true { break; }")]
     [InlineData("while true { continue; }")]
-    //[InlineData("while 0 < 1 { if 1 < 2 { break; } else { continue; } }")]
+    [InlineData("while 0 < 1 { if 1 < 2 { break; } else { continue; } }")]
     public void BoundLoopStatementCanHaveBreakOrContinueStatements(string inputText)
     {
         var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>(inputText);

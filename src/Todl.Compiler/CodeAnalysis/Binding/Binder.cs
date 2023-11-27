@@ -26,6 +26,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         public virtual FunctionSymbol FunctionSymbol
             => Parent?.FunctionSymbol;
 
+        public virtual BoundLoopContext BoundLoopContext
+            => Parent?.BoundLoopContext;
+
         public bool IsInFunction => FunctionSymbol is not null;
 
         public Binder CreateBlockStatementBinder()
@@ -62,7 +65,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             };
 
         public Binder CreateLoopBinder()
-            => new LoopBinder()
+            => new LoopBinder(BoundLoopContext?.CreateChildContext() ?? new BoundLoopContext())
             {
                 Parent = this,
                 Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
@@ -114,6 +117,12 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         internal sealed partial class LoopBinder : Binder
         {
+            internal LoopBinder(BoundLoopContext boundLoopContext)
+            {
+                BoundLoopContext = boundLoopContext;
+            }
+
+            public override BoundLoopContext BoundLoopContext { get; }
         }
     }
 }
