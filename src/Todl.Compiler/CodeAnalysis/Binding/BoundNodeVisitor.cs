@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -57,7 +57,8 @@ internal abstract partial class BoundNodeVisitor
             BoundReturnStatement boundReturnStatement => VisitBoundReturnStatement(boundReturnStatement),
             BoundVariableDeclarationStatement boundVariableDeclarationStatement => VisitBoundVariableDeclarationStatement(boundVariableDeclarationStatement),
             BoundConditionalStatement boundConditionalStatement => VisitBoundConditionalStatement(boundConditionalStatement),
-            BoundNoOpStatement => boundStatement,
+            BoundLoopStatement boundLoopStatement => VisitBoundLoopStatement(boundLoopStatement),
+            BoundNoOpStatement or BoundBreakStatement or BoundContinueStatement => boundStatement,
             _ => throw new NotSupportedException($"Statement type {boundStatement.GetType()} is not supported")
         };
 
@@ -254,5 +255,25 @@ internal abstract partial class BoundNodeVisitor
             consequence: consequence,
             alternative: alternative,
             diagnosticBuilder: boundConditionalStatement.DiagnosticBuilder);
+    }
+
+    protected virtual BoundStatement VisitBoundLoopStatement(BoundLoopStatement boundLoopStatement)
+    {
+        var condition = VisitBoundExpression(boundLoopStatement.Condition);
+        var body = VisitBoundStatement(boundLoopStatement.Body);
+
+        if (condition == boundLoopStatement.Condition
+            && body == boundLoopStatement.Body)
+        {
+            return boundLoopStatement;
+        }
+
+        return BoundNodeFactory.CreateBoundLoopStatement(
+            syntaxNode: boundLoopStatement.SyntaxNode,
+            condition: condition,
+            conditionNegated: boundLoopStatement.ConditionNegated,
+            body: body,
+            boundLoopContext: boundLoopStatement.BoundLoopContext,
+            diagnosticBuilder: boundLoopStatement.DiagnosticBuilder);
     }
 }

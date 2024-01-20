@@ -8,6 +8,7 @@ public sealed class BoundLoopStatement : BoundStatement
     public BoundExpression Condition { get; internal init; }
     public bool ConditionNegated { get; internal init; }
     public BoundStatement Body { get; internal init; }
+    public BoundLoopContext BoundLoopContext { get; internal init; }
 }
 
 public partial class Binder
@@ -36,6 +37,7 @@ public partial class Binder
             condition,
             negated,
             body,
+            loopBinder.BoundLoopContext,
             diagnosticBuilder);
     }
 }

@@ -13,16 +13,17 @@ public sealed class BoundLoopStatementTests
     [InlineData("until true { }", true, 0)]
     [InlineData("while true { 0.ToString(); }", false, 1)]
     [InlineData("while true { 0.ToString(); const a = 1; }", false, 2)]
-    public void BoundLoopStatementCanHaveBody(string inputText, bool negated, int expectedBodyStatementsCount)
+    public void BoundLoopStatementsCanHaveBody(string inputText, bool negated, int expectedBodyStatementsCount)
     {
         var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>(inputText);
         boundLoopStatement.GetDiagnostics().Should().BeEmpty();
         boundLoopStatement.ConditionNegated.Should().Be(negated);
         boundLoopStatement.Body.As<BoundBlockStatement>().Statements.Count.Should().Be(expectedBodyStatementsCount);
+        boundLoopStatement.BoundLoopContext.Should().NotBeNull();
     }
 
     [Fact]
-    public void BoundLoopStatementShouldHaveBooleanConditions()
+    public void BoundLoopStatementsShouldHaveBooleanConditions()
     {
         var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>("while 1 { }");
         boundLoopStatement.GetDiagnostics().Count().Should().Be(1);
@@ -37,7 +38,7 @@ public sealed class BoundLoopStatementTests
     [InlineData("while true { break; }")]
     [InlineData("while true { continue; }")]
     [InlineData("while 0 < 1 { if 1 < 2 { break; } else { continue; } }")]
-    public void BoundLoopStatementCanHaveBreakOrContinueStatements(string inputText)
+    public void BoundLoopStatementsCanHaveBreakOrContinueStatements(string inputText)
     {
         var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>(inputText);
         boundLoopStatement.GetDiagnostics().Should().BeEmpty();
