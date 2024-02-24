@@ -226,7 +226,7 @@ internal partial class Emitter
 
         private void EmitLocalLoad(LocalVariableSymbol localVariableSymbol)
         {
-            var slot = variables[localVariableSymbol].Index;
+            var slot = Variables[localVariableSymbol].Index;
 
             switch (slot)
             {
@@ -259,7 +259,7 @@ internal partial class Emitter
                 return;
             }
 
-            var slot = variables[localVariableSymbol].Index;
+            var slot = Variables[localVariableSymbol].Index;
             if (slot < 0xFF)
             {
                 ILProcessor.Emit(OpCodes.Ldloca_S, (byte)slot);
@@ -429,7 +429,10 @@ internal partial class Emitter
                     switch (boundVariableExpression.Variable)
                     {
                         case LocalVariableSymbol localVariableSymbol:
-                            EmitLocalStore(variables[localVariableSymbol]);
+                            EmitLocalStore(Variables[localVariableSymbol]);
+                            break;
+                        case ParameterSymbol parameterSymbol:
+                            EmitArgStore(Parameters[parameterSymbol]);
                             break;
                         default:
                             throw new NotSupportedException($"{boundVariableExpression.Variable} is not supported");
@@ -441,6 +444,44 @@ internal partial class Emitter
                 case BoundClrPropertyAccessExpression boundClrPropertyAccessExpression:
                     EmitClrPropertyStore(boundClrPropertyAccessExpression);
                     break;
+            }
+        }
+
+        // Logic from https://github.com/dotnet/roslyn/blob/80b5e0207776a6dc911def62a6f7bcc3d3f7b33b/src/Compilers/Core/Portable/CodeGen/ILBuilderEmit.cs
+        private void EmitLocalStore(VariableDefinition variableDefinition)
+        {
+            switch (variableDefinition.Index)
+            {
+                case 0:
+                    ILProcessor.Emit(OpCodes.Stloc_0);
+                    return;
+                case 1:
+                    ILProcessor.Emit(OpCodes.Stloc_1);
+                    return;
+                case 2:
+                    ILProcessor.Emit(OpCodes.Stloc_2);
+                    return;
+                case 3:
+                    ILProcessor.Emit(OpCodes.Stloc_3);
+                    return;
+                case < 0xFF:
+                    ILProcessor.Emit(OpCodes.Stloc_S, variableDefinition);
+                    return;
+                default:
+                    ILProcessor.Emit(OpCodes.Stloc, variableDefinition);
+                    return;
+            };
+        }
+
+        private void EmitArgStore(ParameterDefinition parameterDefinition)
+        {
+            if (parameterDefinition.Index < 0xFF)
+            {
+                ILProcessor.Emit(OpCodes.Starg_S, parameterDefinition);
+            }
+            else
+            {
+                ILProcessor.Emit(OpCodes.Starg, parameterDefinition);
             }
         }
 
