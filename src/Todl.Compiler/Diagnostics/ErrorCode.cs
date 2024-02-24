@@ -31,6 +31,7 @@
         NotAllPathsReturn,
         UnreachableCode,
         DuplicateParameterName,
-        MissingEntryPoint
+        MissingEntryPoint,
+        NoEnclosingLoop
     }
 }

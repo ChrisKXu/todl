@@ -26,8 +26,12 @@ internal sealed class ControlFlowGraph
     {
         private readonly List<BasicBlock> blocks = new();
         private readonly List<BasicBlockBranch> branches = new();
-        private readonly BasicBlock start = new();
-        private readonly BasicBlock end = new();
+        private readonly BasicBlock startBlock = new();
+        private readonly BasicBlock endBlock = new();
+
+        // this helps to keep track of begin and end blocks for a given loop
+        private readonly Dictionary<BoundLoopContext, (BasicBlock, BasicBlock)> loopBlocks = new();
+
         private BasicBlock current = new();
 
         public void AddStatement(BoundStatement boundStatement)
@@ -36,7 +40,7 @@ internal sealed class ControlFlowGraph
             {
                 case BoundReturnStatement:
                     current.Statements.Add(boundStatement);
-                    StartNewBlock();
+                    StartNewBlock(endBlock);
                     break;
                 case BoundBlockStatement boundBlockStatement:
                     if (!boundBlockStatement.Statements.Any())
@@ -52,27 +56,68 @@ internal sealed class ControlFlowGraph
                     }
                     break;
                 case BoundConditionalStatement boundConditionalStatement:
-                    var begin = current;
-
-                    StartNewBlock();
-                    Connect(begin, current);
-                    AddStatement(boundConditionalStatement.Consequence);
-                    var consequence = current;
-
-                    StartNewBlock();
-                    Connect(begin, current);
-                    AddStatement(boundConditionalStatement.Alternative);
-                    var alternative = current;
-
-                    StartNewBlock();
-                    Connect(consequence, current);
-                    Connect(alternative, current);
-
-                    if (boundConditionalStatement.Consequence is BoundNoOpStatement || boundConditionalStatement.Alternative is BoundNoOpStatement)
                     {
-                        AddStatement(new BoundNoOpStatement());
+                        var begin = current;
+
+                        StartNewBlock(endBlock);
+                        Connect(begin, current);
+                        AddStatement(boundConditionalStatement.Consequence);
+                        var consequence = current;
+
+                        StartNewBlock(endBlock);
+                        Connect(begin, current);
+                        AddStatement(boundConditionalStatement.Alternative);
+                        var alternative = current;
+
+                        StartNewBlock(endBlock);
+                        Connect(consequence, current);
+                        Connect(alternative, current);
+
+                        if (boundConditionalStatement.Consequence is BoundNoOpStatement || boundConditionalStatement.Alternative is BoundNoOpStatement)
+                        {
+                            AddStatement(new BoundNoOpStatement());
+                        }
+                        break;
                     }
-                    break;
+                case BoundLoopStatement boundLoopStatement:
+                    {
+                        var begin = current;
+
+                        StartNewBlock(endBlock);
+                        Connect(begin, current);
+
+                        var end = new BasicBlock();
+                        Connect(begin, end);
+                        loopBlocks[boundLoopStatement.BoundLoopContext] = (begin, end);
+
+                        AddStatement(boundLoopStatement.Body);
+                        var body = current;
+
+                        StartNewBlock(end);
+                        Connect(body, current);
+                        Connect(begin, current);
+
+                        current = end;
+
+                        break;
+                    }
+                case BoundBreakStatement boundBreakStatement:
+                    {
+                        current.Statements.Add(boundStatement);
+                        var (_, end) = loopBlocks[boundBreakStatement.BoundLoopContext];
+
+                        StartNewBlock(end);
+                        break;
+                    }
+                case BoundContinueStatement boundContinueStatement:
+                    {
+                        current.Statements.Add(boundStatement);
+                        var (begin, end) = loopBlocks[boundContinueStatement.BoundLoopContext];
+
+                        Connect(current, begin);
+                        StartNewBlock(end);
+                        break;
+                    }
                 default:
                     current.Statements.Add(boundStatement);
                     break;
@@ -92,7 +137,7 @@ internal sealed class ControlFlowGraph
             to.Incoming.Add(branch);
         }
 
-        private void StartNewBlock()
+        private void StartNewBlock(BasicBlock end)
         {
             if (!current.Statements.Any())
             {
@@ -118,17 +163,17 @@ internal sealed class ControlFlowGraph
         {
             if (blocks.LastOrDefault() != current)
             {
-                StartNewBlock();
+                StartNewBlock(endBlock);
             }
 
-            blocks.Insert(0, start);
-            blocks.Add(end);
+            blocks.Insert(0, startBlock);
+            blocks.Add(endBlock);
 
-            Connect(start, blocks[1]);
+            Connect(startBlock, blocks[1]);
 
             if (blocks.Count > 2)
             {
-                Connect(blocks[^2], end);
+                Connect(blocks[^2], endBlock);
             }
 
             return new()
@@ -152,7 +197,22 @@ internal sealed class ControlFlowGraph
                 if (!Statements.Any())
                     return false;
 
-                return Statements[^1] is BoundReturnStatement;
+                var last = Statements[^1];
+                return last is BoundReturnStatement
+                    || last is BoundBreakStatement
+                    || last is BoundContinueStatement;
+            }
+        }
+
+        public bool IsReturn
+        {
+            get
+            {
+                if (!Statements.Any())
+                    return false;
+
+                var last = Statements[^1];
+                return last is BoundReturnStatement;
             }
         }
 

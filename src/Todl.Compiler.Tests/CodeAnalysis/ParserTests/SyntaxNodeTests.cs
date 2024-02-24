@@ -80,7 +80,10 @@ public sealed class SyntaxNodeTests
         "a = 5;", // ExpressionStatement
         "const a = 5;", // VariableDeclarationStatement
         "return;", // ReturnStatement
-        "if a == 0 { return; }" // IfOrUnlessStatement
+        "if a == 0 { return; }", // IfOrUnlessStatement
+        "break;", // BreakStatement
+        "continue;", // ContinueStatement
+        "while a == 0 { break; }" // WhileUntilStatement
     };
 
     private static readonly string[] testDirectives = new[]

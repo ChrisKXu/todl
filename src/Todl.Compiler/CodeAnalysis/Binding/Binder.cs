@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using Todl.Compiler.CodeAnalysis.Symbols;
-using Todl.Compiler.Diagnostics;
+﻿using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
@@ -27,6 +25,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 
         public virtual FunctionSymbol FunctionSymbol
             => Parent?.FunctionSymbol;
+
+        public virtual BoundLoopContext BoundLoopContext
+            => Parent?.BoundLoopContext;
 
         public bool IsInFunction => FunctionSymbol is not null;
 
@@ -61,6 +62,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             {
                 Parent = this,
                 Scope = Scope.CreateChildScope(BoundScopeKind.Type)
+            };
+
+        public Binder CreateLoopBinder()
+            => new LoopBinder(BoundLoopContext?.CreateChildContext() ?? new BoundLoopContext())
+            {
+                Parent = this,
+                Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
             };
 
         internal sealed class ScriptBinder : Binder
@@ -105,6 +113,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             }
 
             public override FunctionSymbol FunctionSymbol { get; }
+        }
+
+        internal sealed partial class LoopBinder : Binder
+        {
+            internal LoopBinder(BoundLoopContext boundLoopContext)
+            {
+                BoundLoopContext = boundLoopContext;
+            }
+
+            public override BoundLoopContext BoundLoopContext { get; }
         }
     }
 }

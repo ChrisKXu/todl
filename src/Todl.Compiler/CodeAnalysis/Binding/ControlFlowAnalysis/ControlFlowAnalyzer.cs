@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
@@ -24,7 +24,7 @@ internal class ControlFlowAnalyzer : BoundNodeVisitor
 
         var endIsReachable = end.Incoming.Any(i => i.From != start);
 
-        if (!endIsReachable || end.Incoming.Any(i => i.From.Reachable && !i.From.IsTeminal))
+        if (!endIsReachable || end.Incoming.Any(i => i.From.Reachable && !i.From.IsReturn))
         {
             boundFunctionMember.DiagnosticBuilder.Add(new Diagnostic()
             {
