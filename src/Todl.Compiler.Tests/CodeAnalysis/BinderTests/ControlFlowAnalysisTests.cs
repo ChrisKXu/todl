@@ -24,6 +24,8 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else if a == 1 { return 1; } else { return 0; } }")]
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else { if a == 1 { return 1; } return 0; } }")]
     [InlineData("System.Uri func(string a) { return new System.Uri(a); }")]
+    [InlineData("int func() { while true { return 1; } }")]
+    [InlineData("int func() { let i = 0; while i < 10 { ++i; } return i; }")]
     public void TestControlFlowAnalysisBasic(string inputText)
     {
         var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
@@ -70,5 +72,19 @@ public sealed class ControlFlowAnalysisTests
 
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.NotAllPathsReturn);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Error);
+    }
+
+    [Theory]
+    [InlineData("int func() { while true { break; return 1; } }")]
+    [InlineData("int func() { while true { continue; return 1; } }")]
+    public void TestControlFlowAnalysisWithLoopStatements(string inputText)
+    {
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
+        var diagnostics = module.GetDiagnostics().ToList();
+        diagnostics.Should().NotBeEmpty();
+
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
     }
 }

@@ -25,11 +25,11 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
     - name: Test
       run: dotnet test src --no-build --verbosity normal --blame-hang --blame-hang-timeout 30s
     - name: Samples
-      run: dotnet publish src && dotnet build samples
+      run: dotnet publish src --configuration Debug && dotnet build samples
 
   deploy:
     needs: validate
@@ -39,7 +39,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
     - name: Publish
       run: dotnet publish src --configuration Release
     - name: Log in to the Container registry

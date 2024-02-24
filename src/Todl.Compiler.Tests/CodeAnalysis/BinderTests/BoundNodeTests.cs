@@ -67,7 +67,10 @@ public sealed class BoundNodeTests
         "a = 10;", // BoundExpressionStatement
         "{ const a = 5; a.ToString(); }", // BoundBlockStatement
         "return 10;", // ReturnStatement,
-        "if true { }" // IfUnlessStatement
+        "if true { }", // IfUnlessStatement
+        "break;", // BreakStatement
+        "continue;", // ContinueStatement
+        "while true { }" // WhileUntilStatement
     };
 
     private static readonly string[] testMembers = new[]

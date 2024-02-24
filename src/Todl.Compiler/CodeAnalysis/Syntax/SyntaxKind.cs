@@ -61,6 +61,10 @@
         IfKeywordToken,
         UnlessKeywordToken,
         ElseKeywordToken,
+        WhileKeywordToken,
+        UntilKeywordToken,
+        BreakKeywordToken,
+        ContinueKeywordToken,
 
         // Trivia
         WhitespaceTrivia,

@@ -39,11 +39,7 @@ app.MapPost("/api/compile", (CompileRequestMessageHandler handler, CompileReques
     }
     catch (ArgumentException argumentException)
     {
-        return Results.Json(new { Error = argumentException.Message }, null, null, 400);
-    }
-    catch (Exception exception)
-    {
-        return Results.Json(new { Error = exception.Message }, null, null, 500);
+        return Results.BadRequest(new { Error = argumentException.Message });
     }
 });
 

@@ -27,6 +27,9 @@ internal partial class Emitter
                 case BoundVariableDeclarationStatement boundVariableDeclarationStatement:
                     EmitVariableDeclarationStatement(boundVariableDeclarationStatement);
                     return;
+                case BoundLoopStatement boundLoopStatement:
+                    EmitLoopStatement(boundLoopStatement);
+                    return;
                 default:
                     return;
             }
@@ -110,6 +113,24 @@ internal partial class Emitter
                     ILProcessor.Emit(OpCodes.Stloc, variableDefinition);
                     return;
             };
+        }
+
+        private void EmitLoopStatement(BoundLoopStatement boundLoopStatement)
+        {
+            var startLabel = ILProcessor.Create(OpCodes.Nop);
+            var conditionLabel = ILProcessor.Create(OpCodes.Nop);
+
+            ILProcessor.Append(startLabel);
+            EmitStatement(boundLoopStatement.Body);
+
+            ILProcessor.Append(conditionLabel);
+            EmitExpression(boundLoopStatement.Condition);
+
+            var opCode = boundLoopStatement.ConditionNegated
+                ? OpCodes.Brfalse_S
+                : OpCodes.Brtrue_S;
+
+            ILProcessor.Emit(opCode, startLabel);
         }
     }
 }

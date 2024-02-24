@@ -1,19 +1,19 @@
-﻿namespace Todl.Compiler.CodeAnalysis.Syntax
-{
-    public abstract class Statement : SyntaxNode { }
+﻿namespace Todl.Compiler.CodeAnalysis.Syntax;
 
-    public sealed partial class Parser
-    {
-        internal Statement ParseStatement()
+public abstract class Statement : SyntaxNode { }
+
+public sealed partial class Parser
+{
+    internal Statement ParseStatement()
+        => Current.Kind switch
         {
-            return Current.Kind switch
-            {
-                SyntaxKind.OpenBraceToken => ParseBlockStatement(),
-                SyntaxKind.ConstKeywordToken or SyntaxKind.LetKeywordToken => ParseVariableDeclarationStatement(),
-                SyntaxKind.ReturnKeywordToken => ParseReturnStatement(),
-                SyntaxKind.IfKeywordToken or SyntaxKind.UnlessKeywordToken => ParseIfUnlessStatement(),
-                _ => ParseExpressionStatement()
-            };
-        }
-    }
+            SyntaxKind.OpenBraceToken => ParseBlockStatement(),
+            SyntaxKind.ConstKeywordToken or SyntaxKind.LetKeywordToken => ParseVariableDeclarationStatement(),
+            SyntaxKind.ReturnKeywordToken => ParseReturnStatement(),
+            SyntaxKind.IfKeywordToken or SyntaxKind.UnlessKeywordToken => ParseIfUnlessStatement(),
+            SyntaxKind.BreakKeywordToken => ParseBreakStatement(),
+            SyntaxKind.ContinueKeywordToken => ParseContinueStatement(),
+            SyntaxKind.WhileKeywordToken or SyntaxKind.UntilKeywordToken => ParseWhileUntilStatement(),
+            _ => ParseExpressionStatement()
+        };
 }

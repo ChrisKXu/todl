@@ -15,6 +15,9 @@ namespace Todl.Compiler.CodeAnalysis.Binding
                 VariableDeclarationStatement variableDeclarationStatement => BindVariableDeclarationStatement(variableDeclarationStatement),
                 ReturnStatement returnStatement => BindReturnStatement(returnStatement),
                 IfUnlessStatement ifUnlessStatement => BindIfUnlessStatement(ifUnlessStatement),
+                BreakStatement breakStatement => BindBreakStatement(breakStatement),
+                ContinueStatement continueStatement => BindContinueStatement(continueStatement),
+                WhileUntilStatement whileUntilStatement => BindWhileUntilStatement(whileUntilStatement),
                 _ => throw new NotSupportedException() // keep compiler happy, this shouldn't happen as guarded by test cases
             };
     }

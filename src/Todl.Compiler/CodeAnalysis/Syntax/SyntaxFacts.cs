@@ -58,7 +58,11 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             { "return", SyntaxKind.ReturnKeywordToken },
             { "if", SyntaxKind.IfKeywordToken },
             { "unless", SyntaxKind.UnlessKeywordToken },
-            { "else", SyntaxKind.ElseKeywordToken }
+            { "else", SyntaxKind.ElseKeywordToken },
+            { "while", SyntaxKind.WhileKeywordToken },
+            { "until", SyntaxKind.UntilKeywordToken },
+            { "break", SyntaxKind.BreakKeywordToken },
+            { "continue", SyntaxKind.ContinueKeywordToken }
         };
 
         public static readonly IReadOnlySet<SyntaxKind> BuiltInTypes = new HashSet<SyntaxKind>()
