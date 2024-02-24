@@ -178,6 +178,12 @@ internal partial class Emitter
                 case BoundBinaryOperatorKind.Equality:
                     ILProcessor.Emit(OpCodes.Ceq);
                     return;
+                case BoundBinaryOperatorKind.Inequality:
+                    // left != right ==> (left == right) == 0
+                    ILProcessor.Emit(OpCodes.Ceq);
+                    ILProcessor.Emit(OpCodes.Ldc_I4_0);
+                    ILProcessor.Emit(OpCodes.Ceq);
+                    return;
                 case BoundBinaryOperatorKind.Comparison:
                     ILProcessor.Emit(OpCodes.Cgt);
                     return;
