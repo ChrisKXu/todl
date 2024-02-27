@@ -1,7 +1,7 @@
 ﻿using System;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Todl.Compiler.CodeAnalysis;
+using Mono.Cecil.Rocks;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeGeneration;
 
@@ -15,6 +15,8 @@ internal sealed class TestEmitter : Emitter.InstructionEmitter
     public override TypeDefinition TypeDefinition { get; }
     public override ILProcessor ILProcessor { get; }
 
+    public MethodDefinition MethodDefinition { get; }
+
     public TestEmitter()
         : base(null)
     {
@@ -24,11 +26,18 @@ internal sealed class TestEmitter : Emitter.InstructionEmitter
         var attributes = MethodAttributes.Static;
         attributes |= MethodAttributes.Public;
 
-        var methodDefinition = new MethodDefinition(
+        MethodDefinition = new MethodDefinition(
             name: "test",
             attributes: attributes,
             returnType: AssemblyDefinition.MainModule.TypeSystem.Void);
 
-        ILProcessor = methodDefinition.Body.GetILProcessor();
+        ILProcessor = MethodDefinition.Body.GetILProcessor();
+
+        MethodDefinition.Body.SimplifyMacros();
+    }
+
+    public void Emit()
+    {
+        MethodDefinition.Body.OptimizeMacros();
     }
 }

@@ -94,6 +94,7 @@ internal partial class Emitter
             var startLabel = ILProcessor.Create(OpCodes.Nop);
             var conditionLabel = ILProcessor.Create(OpCodes.Nop);
 
+            ILProcessor.Emit(OpCodes.Br, conditionLabel);
             ILProcessor.Append(startLabel);
             EmitStatement(boundLoopStatement.Body);
 
