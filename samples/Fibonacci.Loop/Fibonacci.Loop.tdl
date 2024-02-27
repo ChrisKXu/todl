@@ -1,0 +1,24 @@
+import { Console } from System;
+
+void Main() {
+    const result = fibonacci(20);
+    Console.WriteLine("The result of fibonacci(20) is " + result.ToString());
+}
+
+int fibonacci(int i) {
+    unless i > 0 {
+        return -1;
+    }
+
+    let a = 1;
+    let b = 1;
+
+    while i > 2 {
+        --i
+        const c = a + b;
+        a = b;
+        b = c;
+    }
+
+    return b;
+}

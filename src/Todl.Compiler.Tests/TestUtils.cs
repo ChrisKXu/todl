@@ -57,6 +57,7 @@ internal static class TestUtils
 
         var emitter = new TestEmitter();
         emitter.EmitExpression(boundExpression);
+        emitter.Emit();
 
         emitter.ILProcessor.Body.Instructions.ShouldHaveExactInstructionSequence(expectedInstructions);
     }
@@ -68,6 +69,7 @@ internal static class TestUtils
 
         var emitter = new TestEmitter();
         emitter.EmitStatement(boundStatement);
+        emitter.Emit();
 
         emitter.ILProcessor.Body.Instructions.ShouldHaveExactInstructionSequence(expectedInstructions);
     }

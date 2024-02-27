@@ -9,8 +9,6 @@ namespace Todl.Compiler.CodeGeneration;
 
 internal partial class Emitter
 {
-    private readonly Dictionary<LocalVariableSymbol, VariableDefinition> variables = new();
-
     public Emitter Parent { get; protected init; }
 
     public virtual Compilation Compilation
@@ -24,6 +22,12 @@ internal partial class Emitter
 
     public virtual TypeDefinition TypeDefinition
         => Parent?.TypeDefinition;
+
+    public virtual IDictionary<VariableSymbol, VariableDefinition> Variables
+        => Parent?.Variables;
+
+    public virtual IDictionary<ParameterSymbol, ParameterDefinition> Parameters
+        => Parent?.Parameters;
 
     private TypeReference ResolveTypeReference(ClrTypeSymbol clrTypeSymbol)
     {
@@ -156,6 +160,9 @@ internal partial class Emitter
     {
         public abstract ILProcessor ILProcessor { get; }
 
+        public override IDictionary<VariableSymbol, VariableDefinition> Variables { get; }
+            = new Dictionary<VariableSymbol, VariableDefinition>();
+
         internal InstructionEmitter(Emitter parent)
         {
             Parent = parent;
@@ -177,17 +184,20 @@ internal partial class Emitter
             var attributes = MethodAttributes.Static;
             attributes |= boundFunctionMember.IsPublic ? MethodAttributes.Public : MethodAttributes.Private;
 
-            this.methodDefinition = new MethodDefinition(
+            methodDefinition = new MethodDefinition(
                 name: boundFunctionMember.FunctionSymbol.Name,
                 attributes: attributes,
                 returnType: ResolveTypeReference(boundFunctionMember.ReturnType as ClrTypeSymbol));
 
             foreach (var parameter in boundFunctionMember.FunctionSymbol.Parameters)
             {
-                methodDefinition.Parameters.Add(new(
+                var paremeterDefinition = new ParameterDefinition(
                     name: parameter.Name,
                     attributes: ParameterAttributes.None,
-                    parameterType: ResolveTypeReference(parameter.Type as ClrTypeSymbol)));
+                    parameterType: ResolveTypeReference(parameter.Type as ClrTypeSymbol));
+
+                methodDefinition.Parameters.Add(paremeterDefinition);
+                Parameters[parameter] = paremeterDefinition;
             }
 
             ilProcessor = methodDefinition.Body.GetILProcessor();
@@ -195,6 +205,8 @@ internal partial class Emitter
 
         public MethodDefinition MethodDefinition => methodDefinition;
         public override ILProcessor ILProcessor => ilProcessor;
+        public override IDictionary<ParameterSymbol, ParameterDefinition> Parameters { get; }
+            = new Dictionary<ParameterSymbol, ParameterDefinition>();
 
         public MethodDefinition Emit()
         {
