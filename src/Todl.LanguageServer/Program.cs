@@ -1,11 +1,14 @@
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Server;
+using System;
 using System.Threading.Tasks;
 
-namespace Todl.LanguageServer;
-
-internal class Program
+var server = await LanguageServer.From(options =>
 {
-    public static Task Main(string[] args)
-    {
-        return Task.Delay(100);
-    }
-}
+    options
+        .WithInput(Console.OpenStandardInput())
+        .WithOutput(Console.OpenStandardOutput())
+        .ConfigureLogging(logging => logging.AddLanguageProtocolLogging());
+});
+
+await server.WaitForExit;
