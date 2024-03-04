@@ -20,9 +20,10 @@ to run all the tests.
 ## Running the samples
 A great way to play with Todl is by running the samples. To do so, please make sure that the latest .NET 8 is installed and then run the following
 ```bash
-$ dotnet publish src
+$ dotnet publish src --configuration Debug
 $ dotnet run --project samples/hello/hello.tdlproj
 ```
 
 ## Special thanks
-This project is inspired by the [Minsk](https://github.com/terrajobst/minsk) project. I would like to give a big shout-out to @terrajobst for his [videos](https://www.youtube.com/playlist?list%253DPLRAdsfhKI4OWNOSfS7EUu5GRAVmze1t2y) that taught me how to build a compiler from sratch!
+* [Minsk](https://github.com/terrajobst/minsk), from which this project is inspired.
+* [SharpLab.io](https://sharplab.io/), where I learned the MSIL stuff.
