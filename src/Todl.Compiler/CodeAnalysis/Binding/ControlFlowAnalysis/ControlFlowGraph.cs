@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
@@ -184,6 +185,7 @@ internal sealed class ControlFlowGraph
         }
     }
 
+    [DebuggerDisplay("{GetDebuggerDisplay()}")]
     internal sealed class BasicBlock
     {
         public List<BoundStatement> Statements { get; } = new();
@@ -217,7 +219,18 @@ internal sealed class ControlFlowGraph
         }
 
         public bool Reachable => Incoming.Any();
+
+        public string GetDebuggerDisplay()
+        {
+            if (!Statements.Any())
+            {
+                return "[Empty]";
+            }
+
+            return Statements[0].SyntaxNode.Text.ToString();
+        }
     }
 
+    [DebuggerDisplay("{From} ==> {To}")]
     internal sealed record BasicBlockBranch(BasicBlock From, BasicBlock To);
 }

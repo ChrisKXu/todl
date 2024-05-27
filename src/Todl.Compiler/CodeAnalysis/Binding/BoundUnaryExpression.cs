@@ -209,7 +209,7 @@ public sealed record BoundUnaryOperator(
 
 public partial class Binder
 {
-    private BoundExpression BindUnaryExpression(UnaryExpression unaryExpression)
+    private BoundUnaryExpression BindUnaryExpression(UnaryExpression unaryExpression)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundOperand = BindExpression(unaryExpression.Operand);

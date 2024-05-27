@@ -33,11 +33,11 @@ public partial class Binder
         }
 
         return BoundNodeFactory.CreateBoundLoopStatement(
-            whileUntilStatement,
-            condition,
-            negated,
-            body,
-            loopBinder.BoundLoopContext,
-            diagnosticBuilder);
+            syntaxNode: whileUntilStatement,
+            condition: condition,
+            conditionNegated: negated,
+            body: body,
+            boundLoopContext: loopBinder.BoundLoopContext,
+            diagnosticBuilder: diagnosticBuilder);
     }
 }

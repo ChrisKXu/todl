@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -54,7 +54,6 @@ public sealed class DiagnosticBag : IEnumerable<Diagnostic>
     private DiagnosticBag(IEnumerable<Diagnostic> unsortedDiagnostics)
     {
         diagnostics = unsortedDiagnostics
-            .Where(d => d != null)
             .OrderBy(d => d.Level)
             .ThenBy(d => d.TextLocation.TextSpan.Start)
             .ToImmutableList();
