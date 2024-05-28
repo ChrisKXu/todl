@@ -20,7 +20,7 @@ internal partial class Emitter
                 && m.GetParameters().Length == 2
                 && m.GetParameters()[0].ParameterType.Equals(typeof(string)));
 
-        public void EmitExpression(BoundExpression boundExpression, bool emitSideEffect = false)
+        public void EmitExpression(BoundExpression boundExpression)
         {
             switch (boundExpression)
             {
@@ -37,7 +37,7 @@ internal partial class Emitter
                     EmitTodlFunctionCallExpression(boundTodlFunctionCallExpression);
                     return;
                 case BoundUnaryExpression boundUnaryExpression:
-                    EmitUnaryExpression(boundUnaryExpression, emitSideEffect);
+                    EmitUnaryExpression(boundUnaryExpression, true);
                     return;
                 case BoundBinaryExpression boundBinaryExpression:
                     EmitBinaryExpression(boundBinaryExpression);
@@ -274,7 +274,7 @@ internal partial class Emitter
         {
             foreach (var argument in boundTodlFunctionCallExpression.BoundArguments.Values)
             {
-                EmitExpression(argument, true);
+                EmitExpression(argument);
             }
 
             var methodReference = ResolveMethodReference(boundTodlFunctionCallExpression);
@@ -418,7 +418,7 @@ internal partial class Emitter
             if (left is BoundMemberAccessExpression boundMemberAccessExpression
                 && !boundMemberAccessExpression.IsStatic)
             {
-                EmitExpression(boundMemberAccessExpression.BoundBaseExpression, true);
+                EmitExpression(boundMemberAccessExpression.BoundBaseExpression);
             }
 
             assignmentAction();
@@ -489,7 +489,7 @@ internal partial class Emitter
         {
             EmitStore(boundAssignmentExpression.Left, () =>
             {
-                EmitExpression(boundAssignmentExpression.Right, true);
+                EmitExpression(boundAssignmentExpression.Right);
 
                 switch (boundAssignmentExpression.Operator.BoundAssignmentOperatorKind)
                 {
