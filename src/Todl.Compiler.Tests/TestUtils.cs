@@ -52,11 +52,11 @@ internal static class TestUtils
 
     internal static void EmitExpressionAndVerify(string input, params TestInstruction[] expectedInstructions)
     {
-        var boundExpression = BindExpression<BoundExpression>(input);
-        boundExpression.GetDiagnostics().Should().BeEmpty();
+        var boundExpressionStatement = BindStatement<BoundExpressionStatement>(input);
+        boundExpressionStatement.GetDiagnostics().Should().BeEmpty();
 
         var emitter = new TestEmitter();
-        emitter.EmitExpression(boundExpression);
+        emitter.EmitStatement(boundExpressionStatement);
         emitter.Emit();
 
         emitter.ILProcessor.Body.Instructions.ShouldHaveExactInstructionSequence(expectedInstructions);
