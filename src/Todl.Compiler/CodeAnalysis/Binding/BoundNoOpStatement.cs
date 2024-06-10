@@ -1,3 +1,6 @@
+﻿using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
+
 namespace Todl.Compiler.CodeAnalysis.Binding;
 
-public class BoundNoOpStatement : BoundStatement { }
+[BoundNode]
+public sealed class BoundNoOpStatement : BoundStatement { }

@@ -2,12 +2,16 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
+
+using Binder = Todl.Compiler.CodeAnalysis.Binding.Binder;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
@@ -45,6 +49,39 @@ public sealed class BoundNodeTests
         var uncoveredTypes = allBoundNodeTypes.Where(t => !types.Contains(t) && !exceptions.Contains(t));
 
         uncoveredTypes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AllLeafBoundNodeTypesAreDecorated()
+    {
+        var allBoundNodeTypes = typeof(BoundNode)
+            .Assembly
+            .GetTypes()
+            .Where(t => t.IsSubclassOf(typeof(BoundNode))
+                && !t.IsAbstract)
+            .ToHashSet();
+        var exceptions = new[] { typeof(BoundModule), typeof(BoundEntryPointTypeDefinition) };
+
+        allBoundNodeTypes
+            .Except(exceptions)
+            .Should()
+            .NotContain(t => t.GetCustomAttribute<BoundNodeAttribute>() == null);
+
+        allBoundNodeTypes
+            .Should()
+            .OnlyContain(t => t.IsSealed);
+    }
+
+    // Taken from https://github.com/dotnet/roslyn/blob/main/docs/compilers/Design/Bound%20Node%20Design.md
+    [Fact]
+    public void AllBoundNodeTypesAreEitherAbstractOrSealed()
+    {
+        typeof(BoundNode)
+            .Assembly
+            .GetTypes()
+            .Where(t => t.IsSubclassOf(typeof(BoundNode)))
+            .Should()
+            .NotContain(t => !t.IsAbstract && !t.IsSealed);
     }
 
     private static readonly string[] testExpressions = new[]

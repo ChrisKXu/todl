@@ -1,8 +1,10 @@
-﻿using Todl.Compiler.CodeAnalysis.Syntax;
+﻿using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
+using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
 
+[BoundNode]
 public sealed class BoundLoopStatement : BoundStatement
 {
     public BoundExpression Condition { get; internal init; }

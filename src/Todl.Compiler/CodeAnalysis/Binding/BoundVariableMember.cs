@@ -1,7 +1,9 @@
+﻿using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
 
+[BoundNode]
 public sealed class BoundVariableMember : BoundMember
 {
     public BoundVariableDeclarationStatement BoundVariableDeclarationStatement { get; internal init; }

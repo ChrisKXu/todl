@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
+    [BoundNode]
     public sealed class BoundAssignmentExpression : BoundExpression
     {
         public sealed class BoundAssignmentOperator

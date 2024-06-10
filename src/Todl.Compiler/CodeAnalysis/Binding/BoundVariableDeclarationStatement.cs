@@ -1,8 +1,10 @@
+﻿using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
+    [BoundNode]
     public sealed class BoundVariableDeclarationStatement : BoundStatement
     {
         public LocalVariableSymbol Variable { get; internal init; }

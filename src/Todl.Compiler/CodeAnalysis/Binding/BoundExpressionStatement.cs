@@ -1,9 +1,9 @@
-using System.Collections.Generic;
+﻿using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Syntax;
-using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding
 {
+    [BoundNode]
     public sealed class BoundExpressionStatement : BoundStatement
     {
         public BoundExpression Expression { get; internal init; }

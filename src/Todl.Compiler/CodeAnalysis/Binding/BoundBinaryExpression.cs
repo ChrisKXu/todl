@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -8,6 +9,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding
 {
     using BinaryOperatorIndex = ValueTuple<TypeSymbol, TypeSymbol, SyntaxKind>;
 
+    [BoundNode]
     public sealed class BoundBinaryExpression : BoundExpression
     {
         public BoundBinaryOperator Operator { get; internal init; }
