@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace Todl.Compiler.SourceGenerators;
 
 [Generator]
-internal class BoundTreeVisitorSourceGenerator : IIncrementalGenerator
+internal sealed class BoundTreeVisitorSourceGenerator : IIncrementalGenerator
 {
     private const string BoundTreeVisitorNamespace = "Todl.Compiler.CodeAnalysis.Binding.BoundTree";
     private const string BoundTreeVisitorClassName = "BoundTreeVisitor";
@@ -29,9 +29,9 @@ internal class BoundTreeVisitorSourceGenerator : IIncrementalGenerator
         var sourceText = SourceText.From($$"""
             namespace {{BoundTreeVisitorNamespace}};
 
+            [System.CodeDom.Compiler.GeneratedCode("{{nameof(BoundTreeVisitorSourceGenerator)}}", "1.0.0.0")]
             internal abstract partial class {{BoundTreeVisitorClassName}}<TArg, TRet>
             {
-                public virtual TRet DefaultVisit(BoundNode node) => default;
                 public virtual TRet DefaultVisit(BoundNode node, TArg arg) => default;
             }
             """, Encoding.UTF8);
@@ -50,7 +50,6 @@ internal class BoundTreeVisitorSourceGenerator : IIncrementalGenerator
 
                 internal abstract partial class {{BoundTreeVisitorClassName}}<TArg, TRet>
                 {
-                    public virtual TRet Visit{{className}}({{className}} node) => DefaultVisit(node);
                     public virtual TRet Visit{{className}}({{className}} node, TArg arg) => DefaultVisit(node, arg);
                 }
                 """, Encoding.UTF8);
