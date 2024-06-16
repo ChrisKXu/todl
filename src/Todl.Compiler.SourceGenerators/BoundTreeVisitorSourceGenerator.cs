@@ -1,34 +1,75 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Todl.Compiler.SourceGenerators;
 
 [Generator]
 internal class BoundTreeVisitorSourceGenerator : IIncrementalGenerator
 {
-    private const string BoundNodeFactoryClassName = "BoundTreeVisitor";
+    private const string BoundTreeVisitorNamespace = "Todl.Compiler.CodeAnalysis.Binding.BoundTree";
+    private const string BoundTreeVisitorClassName = "BoundTreeVisitor";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var boundNodeClasses = context.SyntaxProvider.CreateSyntaxProvider(
-            static (syntaxNode, _) => syntaxNode is ClassDeclarationSyntax classDeclarationSyntax,
-            Transform)
-            .Where(m => m is not null);
+        context.RegisterPostInitializationOutput(GenerateBoundTreeVisitorDefaultMethods);
+
+        var pipeline = context.SyntaxProvider.ForAttributeWithMetadataName(
+            fullyQualifiedMetadataName: $"{BoundTreeVisitorNamespace}.BoundNodeAttribute",
+            predicate: static (syntaxNode, _) => syntaxNode is ClassDeclarationSyntax,
+            transform: static (context, _) => context.TargetSymbol);
+
+        context.RegisterSourceOutput(pipeline, GenerateBoundTreeVisitorMethods);
     }
-    static ClassDeclarationSyntax Transform(GeneratorSyntaxContext context, CancellationToken cancellationToken)
+
+    static void GenerateBoundTreeVisitorDefaultMethods(IncrementalGeneratorPostInitializationContext context)
     {
-        var semanticModel = context.SemanticModel;
-        var symbolInfo = semanticModel.GetDeclaredSymbol(context.Node) as INamedTypeSymbol;
+        var sourceText = SourceText.From($$"""
+            namespace {{BoundTreeVisitorNamespace}};
 
-        if (symbolInfo.Name.Contains("Bound") && !symbolInfo.IsAbstract)
+            internal abstract partial class {{BoundTreeVisitorClassName}}<TArg, TRet>
+            {
+                public virtual TRet DefaultVisit(BoundNode node) => default;
+                public virtual TRet DefaultVisit(BoundNode node, TArg arg) => default;
+            }
+            """, Encoding.UTF8);
+
+        context.AddSource($"{BoundTreeVisitorClassName}.g.cs", sourceText);
+    }
+
+    static void GenerateBoundTreeVisitorMethods(SourceProductionContext context, ISymbol symbol)
+    {
+        try
         {
-            return context.Node as ClassDeclarationSyntax;
-        }
+            var className = symbol.Name;
 
-        return null;
+            var sourceText = SourceText.From($$"""
+                namespace {{BoundTreeVisitorNamespace}};
+
+                internal abstract partial class {{BoundTreeVisitorClassName}}<TArg, TRet>
+                {
+                    public virtual TRet Visit{{className}}({{className}} node) => DefaultVisit(node);
+                    public virtual TRet Visit{{className}}({{className}} node, TArg arg) => DefaultVisit(node, arg);
+                }
+                """, Encoding.UTF8);
+
+            context.AddSource($"{BoundTreeVisitorClassName}.{className}.g.cs", sourceText);
+        }
+        catch (Exception ex)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    descriptor: new DiagnosticDescriptor(
+                        id: "TODL000",
+                        title: "Error occurred while generating BoundTreeVisitor",
+                        messageFormat: ex.Message + ex.StackTrace,
+                        category: typeof(BoundTreeVisitorSourceGenerator).FullName,
+                        defaultSeverity: DiagnosticSeverity.Error,
+                        isEnabledByDefault: true,
+                        description: ex.Message + ex.StackTrace),
+                    location: null));
+        }
     }
 }
