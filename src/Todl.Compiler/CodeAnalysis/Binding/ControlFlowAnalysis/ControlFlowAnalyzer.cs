@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Todl.Compiler.Diagnostics;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
 
