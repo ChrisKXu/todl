@@ -81,9 +81,9 @@ internal sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
         }
     }
 
-    private class BoundNodeMetadata
+    private sealed class BoundNodeMetadata
     {
-        private const string BoundNodeTypeName = $"Todl.Compiler.CodeAnalysis.Binding.BoundNode";
+        private const string BoundNodeTypeName = $"{BoundNodeFactoryNamespace}.BoundNode";
 
         private readonly GeneratorAttributeSyntaxContext context;
 

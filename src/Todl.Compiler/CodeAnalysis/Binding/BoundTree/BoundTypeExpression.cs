@@ -1,9 +1,8 @@
-﻿using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
-using Todl.Compiler.CodeAnalysis.Symbols;
+﻿using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
 public sealed class BoundTypeExpression : BoundExpression

@@ -11,7 +11,7 @@ using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
 
-using Binder = Todl.Compiler.CodeAnalysis.Binding.Binder;
+using Binder = Todl.Compiler.CodeAnalysis.Binding.BoundTree.Binder;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
