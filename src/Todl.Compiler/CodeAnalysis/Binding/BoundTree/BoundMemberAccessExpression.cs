@@ -5,7 +5,7 @@ using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 public abstract class BoundMemberAccessExpression : BoundExpression
 {
@@ -17,6 +17,7 @@ public abstract class BoundMemberAccessExpression : BoundExpression
     public override bool LValue => true;
 }
 
+[BoundNode]
 public sealed class BoundClrFieldAccessExpression : BoundMemberAccessExpression
 {
     public override BoundExpression BoundBaseExpression { get; internal init; }
@@ -32,6 +33,7 @@ public sealed class BoundClrFieldAccessExpression : BoundMemberAccessExpression
     public override bool IsPublic => FieldInfo.IsPublic;
 }
 
+[BoundNode]
 public sealed class BoundClrPropertyAccessExpression : BoundMemberAccessExpression
 {
     public override BoundExpression BoundBaseExpression { get; internal init; }
@@ -50,6 +52,7 @@ public sealed class BoundClrPropertyAccessExpression : BoundMemberAccessExpressi
 }
 
 // This is not emittable, just to place a node in the bound tree to indicate this is an error
+[BoundNode]
 public sealed class BoundInvalidMemberAccessExpression : BoundMemberAccessExpression
 {
     public override BoundExpression BoundBaseExpression { get; internal init; }

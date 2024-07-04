@@ -6,7 +6,7 @@ using FluentAssertions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
-using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
@@ -52,11 +52,11 @@ internal static class TestUtils
 
     internal static void EmitExpressionAndVerify(string input, params TestInstruction[] expectedInstructions)
     {
-        var boundExpression = BindExpression<BoundExpression>(input);
-        boundExpression.GetDiagnostics().Should().BeEmpty();
+        var boundExpressionStatement = BindStatement<BoundExpressionStatement>(input);
+        boundExpressionStatement.GetDiagnostics().Should().BeEmpty();
 
         var emitter = new TestEmitter();
-        emitter.EmitExpression(boundExpression);
+        emitter.EmitStatement(boundExpressionStatement);
         emitter.Emit();
 
         emitter.ILProcessor.Body.Instructions.ShouldHaveExactInstructionSequence(expectedInstructions);

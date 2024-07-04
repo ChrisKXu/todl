@@ -1,85 +1,69 @@
 ﻿using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Threading;
+using System.Text;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Todl.Compiler.SourceGenerators;
 
 [Generator]
-public sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
+internal sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
 {
+    private const string BoundNodeFactoryNamespace = "Todl.Compiler.CodeAnalysis.Binding.BoundTree";
     private const string BoundNodeFactoryClassName = "BoundNodeFactory";
-    private const string BoundNodeNamespace = "Todl.Compiler.CodeAnalysis.Binding";
-    private const string BoundNodeTypeName = $"{BoundNodeNamespace}.BoundNode";
-    private const string BoundNodeFactoryGeneratedSourceFileName = $"{BoundNodeFactoryClassName}_generated.cs";
-
-    private static readonly IReadOnlyList<string> defaultNamespaces = new List<string>()
-    {
-        "System",
-        "System.CodeDom.Compiler",
-        "System.Collections.Generic",
-        "System.Reflection",
-        "Todl.Compiler.CodeAnalysis.Symbols",
-        "Todl.Compiler.CodeAnalysis.Syntax",
-        "Todl.Compiler.Diagnostics"
-    };
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var boundNodeClasses = context.SyntaxProvider.CreateSyntaxProvider(
-            static (syntaxNode, _) => syntaxNode is ClassDeclarationSyntax classDeclarationSyntax,
-            Transform)
-            .Where(m => m is not null);
+        var pipeline = context.SyntaxProvider.ForAttributeWithMetadataName(
+            fullyQualifiedMetadataName: $"{BoundNodeFactoryNamespace}.BoundNodeAttribute",
+            predicate: static (syntaxNode, _) => syntaxNode is ClassDeclarationSyntax,
+            transform: static (context, _) => new BoundNodeMetadata(context));
 
-        context.RegisterSourceOutput(
-            context.CompilationProvider.Combine(boundNodeClasses.Collect()),
-            static (context, values) => Generate(context, values.Left, values.Right));
+        context.RegisterSourceOutput(pipeline, GenerateBoundNodeFactoryMethods);
     }
 
-    static ClassDeclarationSyntax Transform(GeneratorSyntaxContext context, CancellationToken cancellationToken)
-    {
-        var semanticModel = context.SemanticModel;
-        var symbolInfo = semanticModel.GetDeclaredSymbol(context.Node) as INamedTypeSymbol;
-
-        if (symbolInfo.Name.Contains("Bound") && !symbolInfo.IsAbstract)
-        {
-            return context.Node as ClassDeclarationSyntax;
-        }
-
-        return null;
-    }
-
-    static void Generate(
-        SourceProductionContext context,
-        Compilation compilation,
-        IReadOnlyList<ClassDeclarationSyntax> boundNodeClasses)
+    static void GenerateBoundNodeFactoryMethods(SourceProductionContext context, BoundNodeMetadata boundNodeMetadata)
     {
         try
         {
-            using var stringWriter = new StringWriter();
-            using var indentedTextWriter = new IndentedTextWriter(stringWriter);
+            var className = boundNodeMetadata.ClassName;
 
-            // write usings
-            foreach (var ns in defaultNamespaces)
-            {
-                indentedTextWriter.WriteLine($"using {ns};");
-            }
-            indentedTextWriter.WriteLine();
+            var sourceText = SourceText.From($$"""
+                using System;
+                using System.CodeDom.Compiler;
+                using System.Collections.Generic;
+                using System.Reflection;
+                using Todl.Compiler.CodeAnalysis.Symbols;
+                using Todl.Compiler.CodeAnalysis.Syntax;
+                using Todl.Compiler.Diagnostics;
 
-            indentedTextWriter.WriteLine($"namespace {BoundNodeNamespace};");
-            indentedTextWriter.WriteLine();
-            indentedTextWriter.WriteLine("[" + nameof(GeneratedCodeAttribute) + "(\"Todl.Compiler.SourceGenerators.BoundNodeFactorySourceGenerator\", \"1.0.0.0\")" + "]");
-            indentedTextWriter.WriteLine($"public static class {BoundNodeFactoryClassName}");
-            indentedTextWriter.BeginCurlyBrace();
-            WriteAllCreateMethods(compilation, boundNodeClasses, indentedTextWriter);
-            indentedTextWriter.EndCurlyBrace();
+                namespace {{BoundNodeFactoryNamespace}};
 
-            context.AddSource(BoundNodeFactoryGeneratedSourceFileName, stringWriter.ToString());
+                internal sealed partial class {{BoundNodeFactoryClassName}}
+                {
+                    [GeneratedCode("{{nameof(BoundNodeFactorySourceGenerator)}}", "1.0.0.0")]
+                    internal static {{className}} Create{{className}}(
+                        SyntaxNode syntaxNode,
+                        {{boundNodeMetadata.WriteParameters()}}
+                        DiagnosticBag.Builder diagnosticBuilder = null)
+                    {
+                        diagnosticBuilder ??= new();
+
+                        {{boundNodeMetadata.WriteDiagnostics()}}
+
+                        return new {{className}}()
+                        {
+                            SyntaxNode = syntaxNode,
+                            {{boundNodeMetadata.WriteInitializers()}}
+                            DiagnosticBuilder = diagnosticBuilder
+                        };
+                    }
+                }
+                """, Encoding.UTF8);
+
+            context.AddSource($"{BoundNodeFactoryClassName}.{boundNodeMetadata.ClassName}.g.cs", sourceText);
         }
         catch (Exception ex)
         {
@@ -87,9 +71,9 @@ public sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
                 Diagnostic.Create(
                     descriptor: new DiagnosticDescriptor(
                         id: "TODL000",
-                        title: "ABCD",
+                        title: "Error occurred while generating BoundNodeFactory",
                         messageFormat: ex.Message + ex.StackTrace,
-                        category: "Todl.Compiler.SourceGenerators",
+                        category: typeof(BoundNodeFactorySourceGenerator).FullName,
                         defaultSeverity: DiagnosticSeverity.Error,
                         isEnabledByDefault: true,
                         description: ex.ToString()),
@@ -97,71 +81,53 @@ public sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
         }
     }
 
-    static void WriteAllCreateMethods(
-        Compilation compilation,
-        IReadOnlyList<ClassDeclarationSyntax> boundNodeClasses,
-        IndentedTextWriter writer)
+    private sealed class BoundNodeMetadata
     {
-        var boundNodeType = compilation.GetTypeByMetadataName(BoundNodeTypeName);
+        private const string BoundNodeTypeName = $"{BoundNodeFactoryNamespace}.BoundNode";
 
-        var allBoundNodeTypes = boundNodeClasses
-            .Select(s => compilation.GetSemanticModel(s.SyntaxTree).GetDeclaredSymbol(s))
-            .Where(t => t.IsDerivedFrom(boundNodeType));
+        private readonly GeneratorAttributeSyntaxContext context;
 
-        foreach (var typeSymbol in allBoundNodeTypes)
+        public string ClassName => context.TargetSymbol.Name;
+
+        public IEnumerable<(string Name, IPropertySymbol Property)> Properties { get; }
+
+        public BoundNodeMetadata(GeneratorAttributeSyntaxContext context)
         {
-            WriteCreateMethod(typeSymbol, boundNodeType, writer);
-        }
-    }
+            this.context = context;
 
-    static void WriteCreateMethod(INamedTypeSymbol typeSymbol, INamedTypeSymbol boundNodeType, IndentedTextWriter writer)
-    {
-        var properties = typeSymbol
-            .GetMembers()
-            .OfType<IPropertySymbol>()
-            .Where(p => !p.IsReadOnly);
+            var boundNodeClass = context.TargetSymbol as INamedTypeSymbol;
 
-        writer.WriteLine($"public static {typeSymbol.Name} Create{typeSymbol.Name}(");
-        ++writer.Indent;
-        writer.WriteLine("SyntaxNode syntaxNode,");
-
-        foreach (var p in properties)
-        {
-            writer.WriteLine($"{p.GetPropertyTypeName()} {p.CamelCasedName()},");
+            Properties = boundNodeClass
+                .GetMembers()
+                .OfType<IPropertySymbol>()
+                .Where(p => !p.IsReadOnly)
+                .Select(p => (p.GetPropertyTypeName(), p));
         }
 
-        writer.WriteLine("DiagnosticBag.Builder diagnosticBuilder = null)");
-        --writer.Indent;
-        writer.BeginCurlyBrace();
-        writer.WriteLine("diagnosticBuilder ??= new();");
+        public string WriteParameters()
+            => string.Join("\n", Properties.Select(p => $"{p.Name} {p.Property.CamelCasedName()},"));
 
-        foreach (var p in properties)
+        public string WriteDiagnostics()
         {
-            if (p.Type.IsDerivedFrom(boundNodeType))
-            {
-                writer.WriteLine($"diagnosticBuilder.Add({p.CamelCasedName()});");
-            }
-            else if (p.Type is INamedTypeSymbol t
-                && t.IsGenericType
-                && t.TypeArguments.Any(t => t.IsDerivedFrom(boundNodeType)))
-            {
-                writer.WriteLine($"diagnosticBuilder.AddRange({p.CamelCasedName()});");
-            }
+            var statements = new List<string>();
+            var boundNodeType = context.SemanticModel.Compilation.GetTypeByMetadataName(BoundNodeTypeName);
+
+            statements.AddRange(
+                Properties
+                    .Where(p => p.Property.Type.IsDerivedFrom(boundNodeType))
+                    .Select(p => $"diagnosticBuilder.Add({p.Property.CamelCasedName()});"));
+
+            statements.AddRange(
+                Properties
+                    .Where(p => p.Property.Type is INamedTypeSymbol t
+                        && t.IsGenericType
+                        && t.TypeArguments.Any(t => t.IsDerivedFrom(boundNodeType)))
+                    .Select(p => $"diagnosticBuilder.AddRange({p.Property.CamelCasedName()});"));
+
+            return string.Join("\n", statements);
         }
 
-        writer.WriteLine();
-        writer.WriteLine("return new()");
-        writer.BeginCurlyBrace();
-        writer.WriteLine("SyntaxNode = syntaxNode,");
-
-        foreach (var p in properties)
-        {
-            writer.WriteLine($"{p.Name} = {p.CamelCasedName()},");
-        }
-
-        writer.WriteLine("DiagnosticBuilder = diagnosticBuilder");
-        writer.EndCurlyBrace(appendEndingSemilcolon: true);
-        writer.EndCurlyBrace();
-        writer.WriteLine();
+        public string WriteInitializers()
+            => string.Join("\n", Properties.Select(p => $"{p.Property.Name} = {p.Property.CamelCasedName()},"));
     }
 }

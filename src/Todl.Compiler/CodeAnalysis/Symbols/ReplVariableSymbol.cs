@@ -1,5 +1,5 @@
-using System;
-using Todl.Compiler.CodeAnalysis.Binding;
+﻿using System;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Symbols;
