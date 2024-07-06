@@ -6,7 +6,7 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundAssignmentExpression : BoundExpression
+internal sealed class BoundAssignmentExpression : BoundExpression
 {
     public sealed class BoundAssignmentOperator
     {
@@ -45,6 +45,8 @@ public sealed class BoundAssignmentExpression : BoundExpression
     public BoundAssignmentOperator Operator { get; internal init; }
     public BoundExpression Right { get; internal init; }
     public override TypeSymbol ResultType => Right.ResultType;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundAssignmentExpression(this);
 }
 
 public partial class Binder

@@ -5,11 +5,13 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundTypeExpression : BoundExpression
+internal sealed class BoundTypeExpression : BoundExpression
 {
     internal TypeSymbol TargetType { get; init; }
 
     public override TypeSymbol ResultType => TargetType;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundTypeExpression(this);
 }
 
 public partial class Binder

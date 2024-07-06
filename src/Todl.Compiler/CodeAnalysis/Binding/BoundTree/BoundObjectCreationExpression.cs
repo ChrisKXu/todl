@@ -10,12 +10,14 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundObjectCreationExpression : BoundExpression
+internal sealed class BoundObjectCreationExpression : BoundExpression
 {
     public ConstructorInfo ConstructorInfo { get; internal init; }
     public IReadOnlyList<BoundExpression> BoundArguments { get; internal init; }
     public override TypeSymbol ResultType
         => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(ConstructorInfo.DeclaringType);
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundObjectCreationExpression(this);
 }
 
 public partial class Binder

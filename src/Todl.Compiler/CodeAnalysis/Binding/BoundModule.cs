@@ -7,7 +7,7 @@ using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
 
-public sealed class BoundModule : IDiagnosable
+internal sealed class BoundModule : IDiagnosable
 {
     public IReadOnlyCollection<SyntaxTree> SyntaxTrees { get; private init; }
     public BoundEntryPointTypeDefinition EntryPointType { get; private init; }

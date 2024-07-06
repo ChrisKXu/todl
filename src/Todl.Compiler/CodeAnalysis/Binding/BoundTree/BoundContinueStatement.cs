@@ -4,9 +4,11 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundContinueStatement : BoundStatement
+internal sealed class BoundContinueStatement : BoundStatement
 {
     public BoundLoopContext BoundLoopContext { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundContinueStatement(this);
 }
 
 public partial class Binder

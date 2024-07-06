@@ -7,13 +7,15 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundTodlFunctionCallExpression : BoundExpression
+internal sealed class BoundTodlFunctionCallExpression : BoundExpression
 {
     public FunctionSymbol FunctionSymbol { get; internal set; }
     public IReadOnlyDictionary<string, BoundExpression> BoundArguments { get; internal init; }
 
     public override TypeSymbol ResultType
         => FunctionSymbol?.ReturnType ?? default; // TODO: we may need something like TypeSymbol.InvalidType for this
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundTodlFunctionCallExpression(this);
 }
 
 public partial class Binder

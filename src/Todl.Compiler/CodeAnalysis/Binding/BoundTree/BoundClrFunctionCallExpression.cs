@@ -10,13 +10,15 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundClrFunctionCallExpression : BoundExpression
+internal sealed class BoundClrFunctionCallExpression : BoundExpression
 {
     public BoundExpression BoundBaseExpression { get; internal init; }
     public MethodInfo MethodInfo { get; internal init; }
     public IReadOnlyList<BoundExpression> BoundArguments { get; internal init; }
     public override TypeSymbol ResultType => BoundBaseExpression.SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(MethodInfo.ReturnType);
     public bool IsStatic => MethodInfo.IsStatic;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundClrFunctionCallExpression(this);
 }
 
 public partial class Binder

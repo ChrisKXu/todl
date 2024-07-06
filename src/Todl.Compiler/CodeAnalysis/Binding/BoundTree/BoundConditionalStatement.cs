@@ -7,7 +7,7 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundConditionalStatement : BoundStatement
+internal sealed class BoundConditionalStatement : BoundStatement
 {
     public BoundExpression Condition { get; internal init; }
     public BoundStatement Consequence { get; internal init; }
@@ -35,6 +35,8 @@ public sealed class BoundConditionalStatement : BoundStatement
 
         return this;
     }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundConditionalStatement(this);
 }
 
 public partial class Binder

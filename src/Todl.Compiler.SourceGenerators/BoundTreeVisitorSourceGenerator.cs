@@ -30,9 +30,9 @@ internal sealed class BoundTreeVisitorSourceGenerator : IIncrementalGenerator
             namespace {{BoundTreeVisitorNamespace}};
 
             [System.CodeDom.Compiler.GeneratedCode("{{nameof(BoundTreeVisitorSourceGenerator)}}", "1.0.0.0")]
-            internal abstract partial class {{BoundTreeVisitorClassName}}<TArg, TRet>
+            internal abstract partial class {{BoundTreeVisitorClassName}}
             {
-                public virtual TRet DefaultVisit(BoundNode node, TArg arg) => default;
+                public virtual BoundNode DefaultVisit(BoundNode node) => default;
             }
             """, Encoding.UTF8);
 
@@ -48,9 +48,9 @@ internal sealed class BoundTreeVisitorSourceGenerator : IIncrementalGenerator
             var sourceText = SourceText.From($$"""
                 namespace {{BoundTreeVisitorNamespace}};
 
-                internal abstract partial class {{BoundTreeVisitorClassName}}<TArg, TRet>
+                internal abstract partial class {{BoundTreeVisitorClassName}}
                 {
-                    public virtual TRet Visit{{className}}({{className}} node, TArg arg) => DefaultVisit(node, arg);
+                    public virtual BoundNode Visit{{className}}({{className}} node) => DefaultVisit(node);
                 }
                 """, Encoding.UTF8);
 

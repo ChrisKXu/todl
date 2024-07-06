@@ -5,13 +5,15 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundVariableExpression : BoundExpression
+internal sealed class BoundVariableExpression : BoundExpression
 {
     public VariableSymbol Variable { get; internal init; }
     public override TypeSymbol ResultType => Variable.Type;
     public override bool LValue => true;
     public override bool Constant => Variable.Constant;
     public override bool ReadOnly => Variable.ReadOnly;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundVariableExpression(this);
 }
 
 public partial class Binder
