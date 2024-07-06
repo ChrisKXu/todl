@@ -14,8 +14,6 @@ internal sealed class BoundTreeVisitorSourceGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        context.RegisterPostInitializationOutput(GenerateBoundTreeVisitorDefaultMethods);
-
         var pipeline = context.SyntaxProvider.ForAttributeWithMetadataName(
             fullyQualifiedMetadataName: $"{BoundTreeVisitorNamespace}.BoundNodeAttribute",
             predicate: static (syntaxNode, _) => syntaxNode is ClassDeclarationSyntax,
@@ -24,33 +22,20 @@ internal sealed class BoundTreeVisitorSourceGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(pipeline, GenerateBoundTreeVisitorMethods);
     }
 
-    static void GenerateBoundTreeVisitorDefaultMethods(IncrementalGeneratorPostInitializationContext context)
-    {
-        var sourceText = SourceText.From($$"""
-            namespace {{BoundTreeVisitorNamespace}};
-
-            [System.CodeDom.Compiler.GeneratedCode("{{nameof(BoundTreeVisitorSourceGenerator)}}", "1.0.0.0")]
-            internal abstract partial class {{BoundTreeVisitorClassName}}
-            {
-                public virtual BoundNode DefaultVisit(BoundNode node) => default;
-            }
-            """, Encoding.UTF8);
-
-        context.AddSource($"{BoundTreeVisitorClassName}.g.cs", sourceText);
-    }
-
     static void GenerateBoundTreeVisitorMethods(SourceProductionContext context, ISymbol symbol)
     {
         try
         {
             var className = symbol.Name;
+            var camelCaseClassName = symbol.CamelCasedName();
 
             var sourceText = SourceText.From($$"""
                 namespace {{BoundTreeVisitorNamespace}};
 
                 internal abstract partial class {{BoundTreeVisitorClassName}}
                 {
-                    public virtual BoundNode Visit{{className}}({{className}} node) => DefaultVisit(node);
+                    [System.CodeDom.Compiler.GeneratedCode("{{nameof(BoundTreeVisitorSourceGenerator)}}", "1.0.0.0")]
+                    public virtual BoundNode Visit{{className}}({{className}} {{camelCaseClassName}}) => DefaultVisit({{camelCaseClassName}});
                 }
                 """, Encoding.UTF8);
 
