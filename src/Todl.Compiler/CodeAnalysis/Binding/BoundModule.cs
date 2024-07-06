@@ -21,9 +21,11 @@ internal sealed class BoundModule : IDiagnosable
         var binder = Binder.CreateModuleBinder(clrTypeCache);
         var entryPointType = binder.BindEntryPointTypeDefinition(syntaxTrees);
 
+        var controlFlowAnalyzer = new ControlFlowAnalyzer();
+        entryPointType.Accept(controlFlowAnalyzer);
+
         var boundNodeVisitors = new BoundNodeVisitor[]
         {
-            new ControlFlowAnalyzer(),
             new ConstantFoldingBoundNodeVisitor(binder.ConstantValueFactory)
         };
 

@@ -4,9 +4,9 @@ using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
 
-internal class ControlFlowAnalyzer : BoundNodeVisitor
+internal sealed class ControlFlowAnalyzer : BoundTreeWalker
 {
-    protected override BoundMember VisitBoundFunctionMember(BoundFunctionMember boundFunctionMember)
+    public override BoundNode VisitBoundFunctionMember(BoundFunctionMember boundFunctionMember)
     {
         var controlFlowGraph = ControlFlowGraph.Create(boundFunctionMember);
 
