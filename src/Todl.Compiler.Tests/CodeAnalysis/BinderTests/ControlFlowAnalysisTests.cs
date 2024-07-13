@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using FluentAssertions;
-using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
 using Todl.Compiler.Diagnostics;
 using Xunit;
@@ -86,7 +86,7 @@ public sealed class ControlFlowAnalysisTests
     private static TBoundMember BindMemberAndAnalyze<TBoundMember>(string inputText) where TBoundMember : BoundMember
     {
         var boundMember = TestUtils.BindMember<TBoundMember>(inputText);
-        new ControlFlowAnalyzer().VisitBoundMember(boundMember);
+        new ControlFlowAnalyzer().Visit(boundMember);
         return boundMember;
     }
 }
