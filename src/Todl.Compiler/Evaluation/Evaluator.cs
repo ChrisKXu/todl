@@ -4,14 +4,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Todl.Compiler.CodeAnalysis;
-using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.Evaluation
 {
-    using Binder = Todl.Compiler.CodeAnalysis.Binding.Binder;
+    using Binder = CodeAnalysis.Binding.BoundTree.Binder;
 
     /// <summary>
     /// An evaluator evaluates expressions and statements and give out results as output

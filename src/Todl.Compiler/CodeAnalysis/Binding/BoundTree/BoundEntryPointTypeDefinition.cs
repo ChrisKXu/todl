@@ -4,9 +4,10 @@ using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
+[BoundNode]
+internal sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
 {
     public const string EntryPointFunctionName = "Main";
     public const string GeneratedTypeName = "_Todl_Generated_EntryPoint_";
@@ -53,11 +54,13 @@ public sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
 
         return true;
     }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundEntryPointTypeDefinition(this);
 }
 
 public partial class Binder
 {
-    public BoundEntryPointTypeDefinition BindEntryPointTypeDefinition(IEnumerable<SyntaxTree> syntaxTrees)
+    internal BoundEntryPointTypeDefinition BindEntryPointTypeDefinition(IEnumerable<SyntaxTree> syntaxTrees)
     {
         var typeBinder = CreateTypeBinder();
         var diagnosticBuilder = new DiagnosticBag.Builder();

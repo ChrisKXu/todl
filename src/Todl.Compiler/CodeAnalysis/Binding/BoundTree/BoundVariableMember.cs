@@ -1,10 +1,13 @@
-using Todl.Compiler.CodeAnalysis.Syntax;
+﻿using Todl.Compiler.CodeAnalysis.Syntax;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public sealed class BoundVariableMember : BoundMember
+[BoundNode]
+internal sealed class BoundVariableMember : BoundMember
 {
     public BoundVariableDeclarationStatement BoundVariableDeclarationStatement { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundVariableMember(this);
 }
 
 public partial class Binder

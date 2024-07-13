@@ -1,16 +1,19 @@
 ﻿using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public sealed class BoundBreakStatement : BoundStatement
+[BoundNode]
+internal sealed class BoundContinueStatement : BoundStatement
 {
     public BoundLoopContext BoundLoopContext { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundContinueStatement(this);
 }
 
 public partial class Binder
 {
-    private BoundBreakStatement BindBreakStatement(BreakStatement breakStatement)
+    private BoundContinueStatement BindContinueStatement(ContinueStatement continueStatement)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
 
@@ -21,10 +24,10 @@ public partial class Binder
                 Level = DiagnosticLevel.Error,
                 ErrorCode = ErrorCode.NoEnclosingLoop,
                 Message = "No enclosing loop out of which to break or continue.",
-                TextLocation = breakStatement.Text.GetTextLocation()
+                TextLocation = continueStatement.Text.GetTextLocation()
             });
         }
 
-        return BoundNodeFactory.CreateBoundBreakStatement(breakStatement, BoundLoopContext, diagnosticBuilder);
+        return BoundNodeFactory.CreateBoundContinueStatement(continueStatement, BoundLoopContext, diagnosticBuilder);
     }
 }

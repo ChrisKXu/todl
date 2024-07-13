@@ -2,6 +2,7 @@
 using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.Diagnostics;
 using Xunit;

@@ -1,14 +1,17 @@
-using Todl.Compiler.CodeAnalysis.Symbols;
+﻿using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public sealed class BoundTypeExpression : BoundExpression
+[BoundNode]
+internal sealed class BoundTypeExpression : BoundExpression
 {
     internal TypeSymbol TargetType { get; init; }
 
     public override TypeSymbol ResultType => TargetType;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundTypeExpression(this);
 }
 
 public partial class Binder

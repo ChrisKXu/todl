@@ -41,7 +41,7 @@ public sealed class CoreTodlCompileTask : Task
                 sourceTexts: SourceFiles.Select(SourceText.FromFile),
                 metadataLoadContext: metadataLoadContext);
 
-            var diagnostics = compilation.MainModule.GetDiagnostics();
+            var diagnostics = compilation.GetDiagnostics();
 
             foreach (var d in diagnostics)
             {

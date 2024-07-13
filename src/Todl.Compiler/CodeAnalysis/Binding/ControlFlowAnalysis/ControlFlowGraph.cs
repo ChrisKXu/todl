@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
 

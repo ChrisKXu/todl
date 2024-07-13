@@ -1,17 +1,19 @@
-using System.Diagnostics;
-using Todl.Compiler.CodeAnalysis.Symbols;
+﻿using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public sealed class BoundReturnStatement : BoundStatement
+[BoundNode]
+internal sealed class BoundReturnStatement : BoundStatement
 {
     public BoundExpression BoundReturnValueExpression { get; internal init; }
 
     public TypeSymbol ReturnType
         => BoundReturnValueExpression?.ResultType
         ?? SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Void;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundReturnStatement(this);
 }
 
 public partial class Binder

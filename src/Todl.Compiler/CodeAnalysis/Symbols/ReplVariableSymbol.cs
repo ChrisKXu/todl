@@ -1,11 +1,11 @@
-using System;
-using Todl.Compiler.CodeAnalysis.Binding;
+﻿using System;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Symbols;
 
 // only used in repl to create on-the-fly variables
-public sealed class ReplVariableSymbol : VariableSymbol
+internal sealed class ReplVariableSymbol : VariableSymbol
 {
     public AssignmentExpression AssignmentExpression { get; internal init; }
     public BoundExpression BoundInitializer { get; internal init; }

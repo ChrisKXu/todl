@@ -5,9 +5,9 @@ using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public abstract class BoundMemberAccessExpression : BoundExpression
+internal abstract class BoundMemberAccessExpression : BoundExpression
 {
     public abstract BoundExpression BoundBaseExpression { get; internal init; }
     public abstract string MemberName { get; }
@@ -17,7 +17,8 @@ public abstract class BoundMemberAccessExpression : BoundExpression
     public override bool LValue => true;
 }
 
-public sealed class BoundClrFieldAccessExpression : BoundMemberAccessExpression
+[BoundNode]
+internal sealed class BoundClrFieldAccessExpression : BoundMemberAccessExpression
 {
     public override BoundExpression BoundBaseExpression { get; internal init; }
     public FieldInfo FieldInfo { get; internal init; }
@@ -30,9 +31,12 @@ public sealed class BoundClrFieldAccessExpression : BoundMemberAccessExpression
     public override bool Constant => FieldInfo.IsLiteral;
     public override bool ReadOnly => Constant || FieldInfo.IsInitOnly;
     public override bool IsPublic => FieldInfo.IsPublic;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundClrFieldAccessExpression(this);
 }
 
-public sealed class BoundClrPropertyAccessExpression : BoundMemberAccessExpression
+[BoundNode]
+internal sealed class BoundClrPropertyAccessExpression : BoundMemberAccessExpression
 {
     public override BoundExpression BoundBaseExpression { get; internal init; }
     public PropertyInfo PropertyInfo { get; internal init; }
@@ -47,16 +51,21 @@ public sealed class BoundClrPropertyAccessExpression : BoundMemberAccessExpressi
 
     public MethodInfo GetMethod => PropertyInfo.GetMethod;
     public MethodInfo SetMethod => PropertyInfo.SetMethod;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundClrPropertyAccessExpression(this);
 }
 
 // This is not emittable, just to place a node in the bound tree to indicate this is an error
-public sealed class BoundInvalidMemberAccessExpression : BoundMemberAccessExpression
+[BoundNode]
+internal sealed class BoundInvalidMemberAccessExpression : BoundMemberAccessExpression
 {
     public override BoundExpression BoundBaseExpression { get; internal init; }
 
     public override string MemberName => string.Empty;
     public override bool IsStatic => false;
     public override bool IsPublic => true;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundInvalidMemberAccessExpression(this);
 }
 
 public partial class Binder

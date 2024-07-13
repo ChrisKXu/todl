@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public abstract class BoundTodlTypeDefinition : BoundNode
+internal abstract class BoundTodlTypeDefinition : BoundNode
 {
     public string Name { get; internal init; }
     public IReadOnlyList<BoundMember> BoundMembers { get; internal init; }

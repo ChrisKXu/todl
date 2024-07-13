@@ -1,14 +1,17 @@
 ﻿using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public sealed class BoundLoopStatement : BoundStatement
+[BoundNode]
+internal sealed class BoundLoopStatement : BoundStatement
 {
     public BoundExpression Condition { get; internal init; }
     public bool ConditionNegated { get; internal init; }
     public BoundStatement Body { get; internal init; }
     public BoundLoopContext BoundLoopContext { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundLoopStatement(this);
 }
 
 public partial class Binder

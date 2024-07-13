@@ -1,11 +1,11 @@
 ﻿using System.Linq;
 using FluentAssertions;
-using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.Diagnostics;
 using Xunit;
 
-using static Todl.Compiler.CodeAnalysis.Binding.BoundAssignmentExpression;
+using static Todl.Compiler.CodeAnalysis.Binding.BoundTree.BoundAssignmentExpression;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
@@ -18,7 +18,7 @@ public sealed class BoundAssignmentExpressionTests
     [InlineData("{ let n = 0; n -= 10; }", "n", BoundAssignmentOperatorKind.SubstractionInline, SpecialType.ClrInt32)]
     [InlineData("{ let n = 0; n *= 10; }", "n", BoundAssignmentOperatorKind.MultiplicationInline, SpecialType.ClrInt32)]
     [InlineData("{ let n = 0; n /= 10; }", "n", BoundAssignmentOperatorKind.DivisionInline, SpecialType.ClrInt32)]
-    public void TestBindAssignmentExpressionBasic(
+    void TestBindAssignmentExpressionBasic(
         string input,
         string variableName,
         BoundAssignmentOperatorKind expectedBoundAssignmentOperatorKind,

@@ -5,9 +5,10 @@ using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public sealed class BoundUnaryExpression : BoundExpression
+[BoundNode]
+internal sealed class BoundUnaryExpression : BoundExpression
 {
     public BoundUnaryOperator Operator { get; internal init; }
     public BoundExpression Operand { get; internal init; }
@@ -16,6 +17,8 @@ public sealed class BoundUnaryExpression : BoundExpression
         => Operand.SyntaxNode.SyntaxTree.ClrTypeCache.ResolveSpecialType(Operator.ResultType);
 
     public override bool Constant => Operand.Constant;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundUnaryExpression(this);
 }
 
 // Values are copied from https://github.com/dotnet/roslyn/blob/main/src/Compilers/CSharp/Portable/Binder/Semantics/Operators/OperatorKind.cs

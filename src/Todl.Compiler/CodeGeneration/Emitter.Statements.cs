@@ -1,5 +1,5 @@
 ﻿using Mono.Cecil.Cil;
-using Todl.Compiler.CodeAnalysis.Binding;
+using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeGeneration;
@@ -19,7 +19,7 @@ internal partial class Emitter
                     EmitReturnStatement(boundReturnStatement);
                     return;
                 case BoundExpressionStatement boundExpressionStatement:
-                    EmitExpression(boundExpressionStatement.Expression);
+                    EmitExpressionStatement(boundExpressionStatement);
                     return;
                 case BoundConditionalStatement boundConditionalStatement:
                     EmitConditionalStatement(boundConditionalStatement);
@@ -33,6 +33,18 @@ internal partial class Emitter
                 default:
                     return;
             }
+        }
+
+        private void EmitExpressionStatement(BoundExpressionStatement boundExpressionStatement)
+        {
+            // standalone a++ shouldn't trigger side effect
+            if (boundExpressionStatement.Expression is BoundUnaryExpression boundUnaryExpression)
+            {
+                EmitUnaryExpression(boundUnaryExpression, false);
+                return;
+            }
+
+            EmitExpression(boundExpressionStatement.Expression);
         }
 
         private void EmitBlockStatement(BoundBlockStatement boundBlockStatement)
@@ -84,7 +96,7 @@ internal partial class Emitter
 
             if (boundVariableDeclarationStatement.InitializerExpression is not null)
             {
-                EmitExpression(boundVariableDeclarationStatement.InitializerExpression, true);
+                EmitExpression(boundVariableDeclarationStatement.InitializerExpression);
                 EmitLocalStore(variableDefinition);
             }
         }

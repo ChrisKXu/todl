@@ -4,9 +4,10 @@ using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public sealed class BoundConditionalStatement : BoundStatement
+[BoundNode]
+internal sealed class BoundConditionalStatement : BoundStatement
 {
     public BoundExpression Condition { get; internal init; }
     public BoundStatement Consequence { get; internal init; }
@@ -34,6 +35,8 @@ public sealed class BoundConditionalStatement : BoundStatement
 
         return this;
     }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundConditionalStatement(this);
 }
 
 public partial class Binder
