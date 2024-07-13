@@ -4,10 +4,12 @@ using Todl.Compiler.CodeAnalysis.Syntax;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundVariableDeclarationStatement : BoundStatement
+internal sealed class BoundVariableDeclarationStatement : BoundStatement
 {
     public LocalVariableSymbol Variable { get; internal init; }
     public BoundExpression InitializerExpression { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundVariableDeclarationStatement(this);
 }
 
 public partial class Binder

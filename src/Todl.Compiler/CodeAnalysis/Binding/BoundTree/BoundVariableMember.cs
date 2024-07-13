@@ -3,9 +3,11 @@
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundVariableMember : BoundMember
+internal sealed class BoundVariableMember : BoundMember
 {
     public BoundVariableDeclarationStatement BoundVariableDeclarationStatement { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundVariableMember(this);
 }
 
 public partial class Binder

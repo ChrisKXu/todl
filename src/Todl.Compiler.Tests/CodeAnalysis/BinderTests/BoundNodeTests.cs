@@ -19,7 +19,7 @@ public sealed class BoundNodeTests
 {
     [Theory]
     [MemberData(nameof(GetAllSyntaxNodesForTest))]
-    public void BoundNodeShouldHaveCorrectSyntaxNode(SyntaxNode syntaxNode, BoundNode boundNode)
+    void BoundNodeShouldHaveCorrectSyntaxNode(SyntaxNode syntaxNode, BoundNode boundNode)
     {
         boundNode.SyntaxNode.Should().NotBeNull();
         boundNode.SyntaxNode.Should().Be(syntaxNode);
@@ -28,7 +28,7 @@ public sealed class BoundNodeTests
     [Theory]
     [MemberData(nameof(GetAllSyntaxNodesForTest))]
     [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
-    public void DiagnosticBagShouldNotBeNull(SyntaxNode unused, BoundNode boundNode)
+    void DiagnosticBagShouldNotBeNull(SyntaxNode unused, BoundNode boundNode)
     {
         boundNode.DiagnosticBuilder.Should().NotBeNull();
         boundNode.GetDiagnostics().Should().NotBeNull();

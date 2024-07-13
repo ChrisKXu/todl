@@ -4,7 +4,7 @@ using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Symbols;
 
-public sealed class LocalVariableSymbol : VariableSymbol
+internal sealed class LocalVariableSymbol : VariableSymbol
 {
     public VariableDeclarationStatement VariableDeclarationStatement { get; internal init; }
     public BoundExpression BoundInitializer { get; internal init; }

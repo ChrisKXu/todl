@@ -5,10 +5,12 @@ using Todl.Compiler.CodeAnalysis.Syntax;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundBlockStatement : BoundStatement
+internal sealed class BoundBlockStatement : BoundStatement
 {
     public BoundScope Scope { get; internal init; }
     public IReadOnlyList<BoundStatement> Statements { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundBlockStatement(this);
 }
 
 public partial class Binder

@@ -9,7 +9,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using BinaryOperatorIndex = ValueTuple<TypeSymbol, TypeSymbol, SyntaxKind>;
 
 [BoundNode]
-public sealed class BoundBinaryExpression : BoundExpression
+internal sealed class BoundBinaryExpression : BoundExpression
 {
     public BoundBinaryOperator Operator { get; internal init; }
     public BoundExpression Left { get; internal init; }
@@ -17,6 +17,8 @@ public sealed class BoundBinaryExpression : BoundExpression
 
     public override TypeSymbol ResultType => Operator.ResultType;
     public override bool Constant => Left.Constant && Right.Constant;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundBinaryExpression(this);
 }
 
 public sealed record BoundBinaryOperator(

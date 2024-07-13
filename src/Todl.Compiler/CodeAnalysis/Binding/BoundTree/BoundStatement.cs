@@ -3,11 +3,11 @@ using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public abstract class BoundStatement : BoundNode { }
+internal abstract class BoundStatement : BoundNode { }
 
 public partial class Binder
 {
-    public BoundStatement BindStatement(Statement statement)
+    internal BoundStatement BindStatement(Statement statement)
         => statement switch
         {
             ExpressionStatement expressionStatement => BindExpressionStatement(expressionStatement),
