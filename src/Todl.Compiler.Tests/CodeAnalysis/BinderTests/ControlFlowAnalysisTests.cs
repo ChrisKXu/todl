@@ -72,12 +72,13 @@ public sealed class ControlFlowAnalysisTests
 
     [Theory]
     [InlineData("int func() { while true { break; return 1; } }")]
-    //[InlineData("int func() { while true { continue; return 1; } }")]
+    [InlineData("int func() { while true { continue; return 1; } }")]
     public void TestControlFlowAnalysisWithLoopStatements(string inputText)
     {
         var function = BindMemberAndAnalyze<BoundFunctionMember>(inputText);
         var diagnostics = function.GetDiagnostics().ToList();
         diagnostics.Should().NotBeEmpty();
+        diagnostics.Count.Should().Be(1);
 
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);

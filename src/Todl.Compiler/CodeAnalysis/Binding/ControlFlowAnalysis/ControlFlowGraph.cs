@@ -16,15 +16,12 @@ internal sealed class ControlFlowGraph
     internal static ControlFlowGraph Create(BoundFunctionMember boundFunctionMember)
     {
         var builder = new Builder();
-        foreach (var statement in boundFunctionMember.Body.Statements)
-        {
-            builder.AddStatement(statement);
-        }
+        boundFunctionMember.Accept(builder);
 
         return builder.Build();
     }
 
-    private sealed class Builder
+    private sealed class Builder : BoundTreeWalker
     {
         private readonly List<BasicBlock> blocks = new();
         private readonly List<BasicBlockBranch> branches = new();
@@ -36,94 +33,109 @@ internal sealed class ControlFlowGraph
 
         private BasicBlock current = new();
 
-        public void AddStatement(BoundStatement boundStatement)
+        public override BoundNode DefaultVisit(BoundNode node)
         {
-            switch (boundStatement)
+            if (node is BoundStatement boundStatement)
             {
-                case BoundReturnStatement:
-                    current.Statements.Add(boundStatement);
-                    StartNewBlock(endBlock);
-                    break;
-                case BoundBlockStatement boundBlockStatement:
-                    if (!boundBlockStatement.Statements.Any())
-                    {
-                        AddStatement(new BoundNoOpStatement());
-                    }
-                    else
-                    {
-                        foreach (var innerStatement in boundBlockStatement.Statements)
-                        {
-                            AddStatement(innerStatement);
-                        }
-                    }
-                    break;
-                case BoundConditionalStatement boundConditionalStatement:
-                    {
-                        var begin = current;
-
-                        StartNewBlock(endBlock);
-                        Connect(begin, current);
-                        AddStatement(boundConditionalStatement.Consequence);
-                        var consequence = current;
-
-                        StartNewBlock(endBlock);
-                        Connect(begin, current);
-                        AddStatement(boundConditionalStatement.Alternative);
-                        var alternative = current;
-
-                        StartNewBlock(endBlock);
-                        Connect(consequence, current);
-                        Connect(alternative, current);
-
-                        if (boundConditionalStatement.Consequence is BoundNoOpStatement || boundConditionalStatement.Alternative is BoundNoOpStatement)
-                        {
-                            AddStatement(new BoundNoOpStatement());
-                        }
-                        break;
-                    }
-                case BoundLoopStatement boundLoopStatement:
-                    {
-                        var begin = current;
-
-                        StartNewBlock(endBlock);
-                        Connect(begin, current);
-
-                        var end = new BasicBlock();
-                        Connect(begin, end);
-                        loopBlocks[boundLoopStatement.BoundLoopContext] = (begin, end);
-
-                        AddStatement(boundLoopStatement.Body);
-                        var body = current;
-
-                        StartNewBlock(end);
-                        Connect(body, current);
-                        Connect(begin, current);
-
-                        current = end;
-
-                        break;
-                    }
-                case BoundBreakStatement boundBreakStatement:
-                    {
-                        current.Statements.Add(boundStatement);
-                        var (_, end) = loopBlocks[boundBreakStatement.BoundLoopContext];
-
-                        StartNewBlock(end);
-                        break;
-                    }
-                case BoundContinueStatement boundContinueStatement:
-                    {
-                        current.Statements.Add(boundStatement);
-                        var (begin, end) = loopBlocks[boundContinueStatement.BoundLoopContext];
-
-                        Connect(current, begin);
-                        StartNewBlock(end);
-                        break;
-                    }
-                default:
-                    current.Statements.Add(boundStatement);
-                    break;
+                current.Statements.Add(boundStatement);
             }
+
+            return base.DefaultVisit(node);
+        }
+
+        public override BoundNode VisitBoundReturnStatement(BoundReturnStatement boundReturnStatement)
+        {
+            current.Statements.Add(boundReturnStatement);
+            StartNewBlock(endBlock);
+
+            return boundReturnStatement;
+        }
+
+        public override BoundNode VisitBoundBlockStatement(BoundBlockStatement boundBlockStatement)
+        {
+            if (!boundBlockStatement.Statements.Any())
+            {
+                current.Statements.Add(new BoundNoOpStatement());
+                return boundBlockStatement;
+            }
+
+            return base.VisitBoundBlockStatement(boundBlockStatement);
+        }
+
+        public override BoundNode VisitBoundConditionalStatement(BoundConditionalStatement boundConditionalStatement)
+        {
+            var begin = current;
+
+            StartNewBlock(endBlock);
+            Connect(begin, current);
+            Visit(boundConditionalStatement.Consequence);
+            var consequence = current;
+
+            StartNewBlock(endBlock);
+            Connect(begin, current);
+            Visit(boundConditionalStatement.Alternative);
+            var alternative = current;
+
+            StartNewBlock(endBlock);
+            Connect(consequence, current);
+            Connect(alternative, current);
+
+            if (boundConditionalStatement.Consequence is BoundNoOpStatement || boundConditionalStatement.Alternative is BoundNoOpStatement)
+            {
+                current.Statements.Add(new BoundNoOpStatement());
+            }
+
+            return boundConditionalStatement;
+        }
+
+        public override BoundNode VisitBoundLoopStatement(BoundLoopStatement boundLoopStatement)
+        {
+            var begin = current;
+
+            StartNewBlock(endBlock);
+            Connect(begin, current);
+
+            var end = new BasicBlock();
+            Connect(begin, end);
+            loopBlocks[boundLoopStatement.BoundLoopContext] = (begin, end);
+
+            Visit(boundLoopStatement.Body);
+            var body = current;
+
+            StartNewBlock(end);
+            Connect(body, current);
+            Connect(begin, current);
+
+            current = end;
+
+            return boundLoopStatement;
+        }
+
+        public override BoundNode VisitBoundBreakStatement(BoundBreakStatement boundBreakStatement)
+        {
+            current.Statements.Add(boundBreakStatement);
+            var (_, end) = loopBlocks[boundBreakStatement.BoundLoopContext];
+
+            StartNewBlock(end);
+
+            return boundBreakStatement;
+        }
+
+        public override BoundNode VisitBoundContinueStatement(BoundContinueStatement boundContinueStatement)
+        {
+            current.Statements.Add(boundContinueStatement);
+            var (begin, end) = loopBlocks[boundContinueStatement.BoundLoopContext];
+
+            Connect(current, begin);
+            StartNewBlock(end);
+
+            return boundContinueStatement;
+        }
+
+        public override BoundNode VisitBoundExpressionStatement(BoundExpressionStatement boundExpressionStatement)
+        {
+            current.Statements.Add(boundExpressionStatement);
+            return boundExpressionStatement;
         }
 
         private void Connect(BasicBlock from, BasicBlock to)
