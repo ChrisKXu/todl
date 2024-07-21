@@ -32,7 +32,7 @@ internal sealed class Lexer
         return this.SourceText.Text[index];
     }
 
-    private IReadOnlyCollection<SyntaxTrivia> ReadSyntaxTrivia(bool leading)
+    private IReadOnlyList<SyntaxTrivia> ReadSyntaxTrivia(bool leading)
     {
         var triviaList = new List<SyntaxTrivia>();
 
@@ -74,14 +74,15 @@ internal sealed class Lexer
                     break;
             }
 
-            var length = this.position - start;
+            var length = position - start;
 
             if (length > 0)
             {
-                triviaList.Add(new SyntaxTrivia(
-                    kind: kind,
-                    text: this.SourceText.GetTextSpan(start, length)));
+                triviaList.Add(
+                    new SyntaxTrivia(kind, SourceText.GetTextSpan(start, length)));
             }
+
+            start = position;
         }
 
         return triviaList;
@@ -250,8 +251,8 @@ internal sealed class Lexer
         return SyntaxFacts.KeywordMap.GetValueOrDefault(token, SyntaxKind.IdentifierToken);
     }
 
-    private IReadOnlyCollection<SyntaxTrivia> ReadLeadingSyntaxTrivia() => this.ReadSyntaxTrivia(true);
-    private IReadOnlyCollection<SyntaxTrivia> ReadTrailingSyntaxTrivia() => this.ReadSyntaxTrivia(false);
+    private IReadOnlyList<SyntaxTrivia> ReadLeadingSyntaxTrivia() => ReadSyntaxTrivia(true);
+    private IReadOnlyList<SyntaxTrivia> ReadTrailingSyntaxTrivia() => ReadSyntaxTrivia(false);
 
     private SyntaxToken GetNextToken()
     {

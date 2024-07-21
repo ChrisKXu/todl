@@ -1,16 +1,5 @@
-using Todl.Compiler.CodeAnalysis.Text;
+﻿using Todl.Compiler.CodeAnalysis.Text;
 
-namespace Todl.Compiler.CodeAnalysis.Syntax
-{
-    public sealed class SyntaxTrivia
-    {
-        public SyntaxKind Kind { get; }
-        public TextSpan Text { get; }
+namespace Todl.Compiler.CodeAnalysis.Syntax;
 
-        public SyntaxTrivia(SyntaxKind kind, TextSpan text)
-        {
-            Kind = kind;
-            Text = text;
-        }
-    }
-}
+public sealed record SyntaxTrivia(SyntaxKind Kind, TextSpan Text) { }
