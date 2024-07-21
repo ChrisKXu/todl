@@ -56,7 +56,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 SyntaxKind.NumberToken,
                 SyntaxKind.IdentifierToken,
                 SyntaxKind.WhitespaceTrivia,
-                SyntaxKind.LineBreakTrivia
+                SyntaxKind.LineBreakTrivia,
+                SyntaxKind.SingleLineCommentTrivia
             }.ToHashSet();
 
             var uncoveredKinds = Enum.GetValues<SyntaxKind>().Except(actualTokenKinds.Union(exemptions));

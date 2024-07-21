@@ -68,6 +68,7 @@
 
         // Trivia
         WhitespaceTrivia,
-        LineBreakTrivia
+        LineBreakTrivia,
+        SingleLineCommentTrivia
     }
 }
