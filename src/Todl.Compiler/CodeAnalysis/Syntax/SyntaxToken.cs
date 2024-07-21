@@ -9,8 +9,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         public SyntaxKind Kind { get; internal init; }
         public TextSpan Text { get; internal init; }
-        public IReadOnlyCollection<SyntaxTrivia> LeadingTrivia { get; internal init; }
-        public IReadOnlyCollection<SyntaxTrivia> TrailingTrivia { get; internal init; }
+        public IReadOnlyList<SyntaxTrivia> LeadingTrivia { get; internal init; }
+        public IReadOnlyList<SyntaxTrivia> TrailingTrivia { get; internal init; }
         public bool Missing { get; internal init; }
         public ErrorCode ErrorCode { get; internal init; }
 

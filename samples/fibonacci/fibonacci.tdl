@@ -14,5 +14,6 @@ int fibonacci(int i) {
         return 1;
     }
 
+    // recursively call fibonacci until it reaches 1 or 2
     return fibonacci(i - 1) + fibonacci(i - 2);
 }
