@@ -8,7 +8,7 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundUnaryExpression : BoundExpression
+internal sealed class BoundUnaryExpression : BoundExpression
 {
     public BoundUnaryOperator Operator { get; internal init; }
     public BoundExpression Operand { get; internal init; }
@@ -17,6 +17,8 @@ public sealed class BoundUnaryExpression : BoundExpression
         => Operand.SyntaxNode.SyntaxTree.ClrTypeCache.ResolveSpecialType(Operator.ResultType);
 
     public override bool Constant => Operand.Constant;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundUnaryExpression(this);
 }
 
 // Values are copied from https://github.com/dotnet/roslyn/blob/main/src/Compilers/CSharp/Portable/Binder/Semantics/Operators/OperatorKind.cs
@@ -210,7 +212,7 @@ public sealed record BoundUnaryOperator(
 
 public partial class Binder
 {
-    private BoundExpression BindUnaryExpression(UnaryExpression unaryExpression)
+    private BoundUnaryExpression BindUnaryExpression(UnaryExpression unaryExpression)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundOperand = BindExpression(unaryExpression.Operand);

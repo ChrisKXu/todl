@@ -1,18 +1,19 @@
 ﻿using Todl.Compiler.CodeAnalysis.Syntax;
 
-namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree
-{
-    [BoundNode]
-    public sealed class BoundExpressionStatement : BoundStatement
-    {
-        public BoundExpression Expression { get; internal init; }
-    }
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-    public partial class Binder
-    {
-        private BoundExpressionStatement BindExpressionStatement(ExpressionStatement expressionStatement)
-            => BoundNodeFactory.CreateBoundExpressionStatement(
-                syntaxNode: expressionStatement,
-                expression: BindExpression(expressionStatement.Expression));
-    }
+[BoundNode]
+internal sealed class BoundExpressionStatement : BoundStatement
+{
+    public BoundExpression Expression { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundExpressionStatement(this);
+}
+
+public partial class Binder
+{
+    private BoundExpressionStatement BindExpressionStatement(ExpressionStatement expressionStatement)
+        => BoundNodeFactory.CreateBoundExpressionStatement(
+            syntaxNode: expressionStatement,
+            expression: BindExpression(expressionStatement.Expression));
 }

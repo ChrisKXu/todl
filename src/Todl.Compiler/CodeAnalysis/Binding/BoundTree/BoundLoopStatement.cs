@@ -4,12 +4,14 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundLoopStatement : BoundStatement
+internal sealed class BoundLoopStatement : BoundStatement
 {
     public BoundExpression Condition { get; internal init; }
     public bool ConditionNegated { get; internal init; }
     public BoundStatement Body { get; internal init; }
     public BoundLoopContext BoundLoopContext { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundLoopStatement(this);
 }
 
 public partial class Binder
@@ -34,11 +36,11 @@ public partial class Binder
         }
 
         return BoundNodeFactory.CreateBoundLoopStatement(
-            whileUntilStatement,
-            condition,
-            negated,
-            body,
-            loopBinder.BoundLoopContext,
-            diagnosticBuilder);
+            syntaxNode: whileUntilStatement,
+            condition: condition,
+            conditionNegated: negated,
+            body: body,
+            boundLoopContext: loopBinder.BoundLoopContext,
+            diagnosticBuilder: diagnosticBuilder);
     }
 }

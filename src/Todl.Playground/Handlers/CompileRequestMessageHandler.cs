@@ -40,7 +40,7 @@ public class CompileRequestMessageHandler
         });
 
         using var compilation = compilationProvider.Compile(sourceTexts);
-        var diagnostics = compilation.MainModule.GetDiagnostics();
+        var diagnostics = compilation.GetDiagnostics();
 
         if (diagnostics.HasError())
         {

@@ -4,7 +4,7 @@ using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-public abstract class BoundExpression : BoundNode
+internal abstract class BoundExpression : BoundNode
 {
     public virtual TypeSymbol ResultType { get; }
     public virtual bool LValue => false;

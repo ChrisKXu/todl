@@ -7,13 +7,15 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-public sealed class BoundConstant : BoundExpression
+internal sealed class BoundConstant : BoundExpression
 {
     public ConstantValue Value { get; internal init; }
 
     public override TypeSymbol ResultType => Value.ResultType;
 
     public override bool Constant => true;
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundConstant(this);
 }
 
 public partial class Binder

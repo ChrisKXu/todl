@@ -16,7 +16,7 @@ public sealed class Compilation : IDisposable, IDiagnosable
 {
     public string AssemblyName { get; }
     public Version Version { get; }
-    public BoundModule MainModule { get; }
+    internal BoundModule MainModule { get; }
     public ClrTypeCache ClrTypeCache { get; }
 
     private readonly MetadataLoadContext metadataLoadContext;

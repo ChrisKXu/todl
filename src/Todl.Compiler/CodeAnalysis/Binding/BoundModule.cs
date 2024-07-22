@@ -7,7 +7,7 @@ using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
 
-public sealed class BoundModule : IDiagnosable
+internal sealed class BoundModule : IDiagnosable
 {
     public IReadOnlyCollection<SyntaxTree> SyntaxTrees { get; private init; }
     public BoundEntryPointTypeDefinition EntryPointType { get; private init; }
@@ -21,9 +21,11 @@ public sealed class BoundModule : IDiagnosable
         var binder = Binder.CreateModuleBinder(clrTypeCache);
         var entryPointType = binder.BindEntryPointTypeDefinition(syntaxTrees);
 
+        var controlFlowAnalyzer = new ControlFlowAnalyzer();
+        entryPointType.Accept(controlFlowAnalyzer);
+
         var boundNodeVisitors = new BoundNodeVisitor[]
         {
-            new ControlFlowAnalyzer(),
             new ConstantFoldingBoundNodeVisitor(binder.ConstantValueFactory)
         };
 
