@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -13,13 +14,13 @@ public sealed partial class LexerTests
     private SyntaxToken LexSingle(string text)
     {
         var tokens = Lex(text);
-        tokens.Count.Should().Be(2);
+        tokens.Length.Should().Be(2);
         tokens[0].GetDiagnostics().Should().BeEmpty();
 
         return tokens.First();
     }
 
-    private IReadOnlyList<SyntaxToken> Lex(string text)
+    private ImmutableArray<SyntaxToken> Lex(string text)
     {
         var lexer = new Lexer() { SourceText = SourceText.FromString(text) };
         lexer.Lex();
@@ -36,7 +37,7 @@ public sealed partial class LexerTests
         lexer.Lex();
 
         var tokens = lexer.SyntaxTokens;
-        tokens.Count.Should().Be(6); // '1', '+', '2', '+', '3' and EndOfFileToken
+        tokens.Length.Should().Be(6); // '1', '+', '2', '+', '3' and EndOfFileToken
         tokens.SelectMany(t => t.GetDiagnostics()).Should().BeEmpty();
     }
 
@@ -152,7 +153,7 @@ public sealed partial class LexerTests
     {
         var text = "// comment";
         var tokens = Lex(text);
-        tokens.Count.Should().Be(1); // eof
+        tokens.Length.Should().Be(1); // eof
 
         var eof = tokens[0];
         eof.Kind.Should().Be(SyntaxKind.EndOfFileToken);
@@ -166,7 +167,7 @@ public sealed partial class LexerTests
     {
         var text = "//A\nreturn 0; //B";
         var tokens = Lex(text);
-        tokens.Count.Should().Be(4); // return, 0, ;, eof
+        tokens.Length.Should().Be(4); // return, 0, ;, eof
 
         var returnToken = tokens[0];
         returnToken.Kind.Should().Be(SyntaxKind.ReturnKeywordToken);

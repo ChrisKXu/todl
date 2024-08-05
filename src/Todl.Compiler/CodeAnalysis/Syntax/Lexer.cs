@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
@@ -10,7 +11,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax;
 /// </summary>
 internal sealed class Lexer
 {
-    private readonly List<SyntaxToken> syntaxTokens = new();
+    private readonly ImmutableArray<SyntaxToken>.Builder syntaxTokens
+        = ImmutableArray.CreateBuilder<SyntaxToken>();
+
     private int position = 0;
 
     public SourceText SourceText { get; internal set; }
@@ -18,7 +21,7 @@ internal sealed class Lexer
     private char Current => Seek(0);
     private char Peak => Seek(1);
 
-    public IReadOnlyList<SyntaxToken> SyntaxTokens => syntaxTokens;
+    public ImmutableArray<SyntaxToken> SyntaxTokens { get; internal set; }
 
     private char Seek(int offset)
     {
@@ -540,5 +543,7 @@ internal sealed class Lexer
         }
         while (token.Kind != SyntaxKind.BadToken
             && token.Kind != SyntaxKind.EndOfFileToken);
+
+        SyntaxTokens = syntaxTokens.ToImmutable();
     }
 }
