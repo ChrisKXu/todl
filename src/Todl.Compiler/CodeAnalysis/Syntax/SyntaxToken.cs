@@ -1,48 +1,49 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Syntax
+namespace Todl.Compiler.CodeAnalysis.Syntax;
+
+public record struct SyntaxToken
+(
+    SyntaxKind Kind,
+    TextSpan Text,
+    ImmutableArray<SyntaxTrivia> LeadingTrivia,
+    ImmutableArray<SyntaxTrivia> TrailingTrivia,
+    bool Missing,
+    ErrorCode ErrorCode
+) : IDiagnosable
 {
-    public readonly struct SyntaxToken : IDiagnosable
+    public IEnumerable<Diagnostic> GetDiagnostics()
     {
-        public SyntaxKind Kind { get; internal init; }
-        public TextSpan Text { get; internal init; }
-        public IReadOnlyList<SyntaxTrivia> LeadingTrivia { get; internal init; }
-        public IReadOnlyList<SyntaxTrivia> TrailingTrivia { get; internal init; }
-        public bool Missing { get; internal init; }
-        public ErrorCode ErrorCode { get; internal init; }
-
-        public IEnumerable<Diagnostic> GetDiagnostics()
+        if (Kind != SyntaxKind.BadToken)
         {
-            if (Kind != SyntaxKind.BadToken)
-            {
-                return Enumerable.Empty<Diagnostic>();
-            }
-
-            return DiagnosticBag.FromSingle(GetDiagnosticFromErrorCode());
+            return Enumerable.Empty<Diagnostic>();
         }
 
-        private Diagnostic GetDiagnosticFromErrorCode()
-        {
-            var message = ErrorCode switch
-            {
-                ErrorCode.UnrecognizedToken => $"Token '{Text}' is not recognized",
-                ErrorCode.UnexpectedEndOfFile => "Unexpected EndOfFileToken",
-                ErrorCode.UnexpectedToken => $"Unexpected token found: {Text}. Expecting {Kind}",
-                _ => string.Empty
-            };
-
-            return new()
-            {
-                Message = message,
-                ErrorCode = ErrorCode,
-                TextLocation = GetTextLocation(),
-                Level = DiagnosticLevel.Error
-            };
-        }
-
-        public TextLocation GetTextLocation() => new() { TextSpan = Text };
+        return DiagnosticBag.FromSingle(GetDiagnosticFromErrorCode());
     }
+
+    private Diagnostic GetDiagnosticFromErrorCode()
+    {
+        var message = ErrorCode switch
+        {
+            ErrorCode.UnrecognizedToken => $"Token '{Text}' is not recognized",
+            ErrorCode.UnexpectedEndOfFile => "Unexpected EndOfFileToken",
+            ErrorCode.UnexpectedToken => $"Unexpected token found: {Text}. Expecting {Kind}",
+            _ => string.Empty
+        };
+
+        return new()
+        {
+            Message = message,
+            ErrorCode = ErrorCode,
+            TextLocation = GetTextLocation(),
+            Level = DiagnosticLevel.Error
+        };
+    }
+
+    public TextLocation GetTextLocation() => new() { TextSpan = Text };
 }

@@ -35,9 +35,9 @@ internal sealed class Lexer
         return this.SourceText.Text[index];
     }
 
-    private IReadOnlyList<SyntaxTrivia> ReadSyntaxTrivia(bool leading)
+    private ImmutableArray<SyntaxTrivia> ReadSyntaxTrivia(bool leading)
     {
-        var triviaList = new List<SyntaxTrivia>();
+        var triviaList = ImmutableArray.CreateBuilder<SyntaxTrivia>();
 
         var done = false;
         var start = this.position;
@@ -88,7 +88,7 @@ internal sealed class Lexer
             start = position;
         }
 
-        return triviaList;
+        return triviaList.ToImmutable();
     }
 
     private void ReadLineBreak()
@@ -254,8 +254,8 @@ internal sealed class Lexer
         return SyntaxFacts.KeywordMap.GetValueOrDefault(token, SyntaxKind.IdentifierToken);
     }
 
-    private IReadOnlyList<SyntaxTrivia> ReadLeadingSyntaxTrivia() => ReadSyntaxTrivia(true);
-    private IReadOnlyList<SyntaxTrivia> ReadTrailingSyntaxTrivia() => ReadSyntaxTrivia(false);
+    private ImmutableArray<SyntaxTrivia> ReadLeadingSyntaxTrivia() => ReadSyntaxTrivia(true);
+    private ImmutableArray<SyntaxTrivia> ReadTrailingSyntaxTrivia() => ReadSyntaxTrivia(false);
 
     private SyntaxToken GetNextToken()
     {

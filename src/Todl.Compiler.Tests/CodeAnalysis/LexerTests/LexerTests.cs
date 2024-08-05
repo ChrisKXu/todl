@@ -157,7 +157,7 @@ public sealed partial class LexerTests
 
         var eof = tokens[0];
         eof.Kind.Should().Be(SyntaxKind.EndOfFileToken);
-        eof.LeadingTrivia.Count.Should().Be(1);
+        eof.LeadingTrivia.Length.Should().Be(1);
         eof.LeadingTrivia.Should().Contain(t => t.Kind == SyntaxKind.SingleLineCommentTrivia
             && t.Text.ToString() == text);
     }
@@ -171,14 +171,14 @@ public sealed partial class LexerTests
 
         var returnToken = tokens[0];
         returnToken.Kind.Should().Be(SyntaxKind.ReturnKeywordToken);
-        returnToken.LeadingTrivia.Count.Should().Be(2); // comment, line break
+        returnToken.LeadingTrivia.Length.Should().Be(2); // comment, line break
 
         var a = returnToken.LeadingTrivia[0];
         a.Kind.Should().Be(SyntaxKind.SingleLineCommentTrivia);
         a.Text.ToString().Should().Be("//A");
 
         var commaToken = tokens[2];
-        commaToken.TrailingTrivia.Count.Should().Be(2); // whitespace, comment
+        commaToken.TrailingTrivia.Length.Should().Be(2); // whitespace, comment
 
         var b = commaToken.TrailingTrivia[1];
         b.Kind.Should().Be(SyntaxKind.SingleLineCommentTrivia);
