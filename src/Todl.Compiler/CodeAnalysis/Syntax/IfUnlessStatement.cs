@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
@@ -16,7 +17,7 @@ public sealed class IfUnlessStatement : Statement
     public SyntaxToken IfOrUnlessToken { get; internal init; }
     public Expression ConditionExpression { get; internal init; }
     public BlockStatement BlockStatement { get; internal init; }
-    public IReadOnlyList<ElseClause> ElseClauses { get; internal init; }
+    public ImmutableArray<ElseClause> ElseClauses { get; internal init; }
 
     public override TextSpan Text
         => TextSpan.FromTextSpans(IfOrUnlessToken.Text, BlockStatement.Text);
@@ -45,7 +46,7 @@ public sealed partial class Parser
                 : ExpectToken(SyntaxKind.UnlessKeywordToken);
         var conditionExpression = ParseExpression();
         var blockStatement = ParseBlockStatement();
-        var elseClauses = new List<ElseClause>();
+        var elseClauses = ImmutableArray.CreateBuilder<ElseClause>();
         var diagnosticBuilder = new DiagnosticBag.Builder();
 
         while (Current.Kind == SyntaxKind.ElseKeywordToken)
@@ -104,7 +105,7 @@ public sealed partial class Parser
             IfOrUnlessToken = ifOrUnlessToken,
             ConditionExpression = conditionExpression,
             BlockStatement = blockStatement,
-            ElseClauses = elseClauses,
+            ElseClauses = elseClauses.ToImmutable(),
             DiagnosticBuilder = diagnosticBuilder
         };
     }

@@ -82,7 +82,7 @@ public partial class Binder
         var clrType = (targetType as ClrTypeSymbol).ClrType;
         var arguments = newExpression.Arguments;
         var candidates = clrType.GetConstructors()
-            .Where(c => c.IsPublic && c.GetParameters().Length == arguments.Items.Count);
+            .Where(c => c.IsPublic && c.GetParameters().Length == arguments.Items.Length);
         var argumentsDictionary = arguments.Items.ToDictionary(
             keySelector: a => a.Identifier.Value.Text.ToString(),
             elementSelector: a => BindExpression(a.Expression));

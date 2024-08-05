@@ -1,12 +1,9 @@
-﻿namespace Todl.Compiler.CodeAnalysis.Syntax
-{
-    public abstract class Expression : SyntaxNode { }
+﻿namespace Todl.Compiler.CodeAnalysis.Syntax;
 
-    public sealed partial class Parser
-    {
-        internal Expression ParseExpression()
-        {
-            return ParseBinaryExpression();
-        }
-    }
+public abstract class Expression : SyntaxNode { }
+
+public sealed partial class Parser
+{
+    internal Expression ParseExpression()
+        => ParseBinaryExpression();
 }

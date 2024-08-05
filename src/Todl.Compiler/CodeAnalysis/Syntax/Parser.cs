@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
@@ -12,27 +10,30 @@ namespace Todl.Compiler.CodeAnalysis.Syntax;
 public sealed partial class Parser
 {
     private readonly SyntaxTree syntaxTree;
-    private readonly List<Directive> directives = new();
-    private readonly List<Member> members = new();
+    private readonly ImmutableArray<Directive>.Builder directives
+        = ImmutableArray.CreateBuilder<Directive>();
+    private readonly ImmutableArray<Member>.Builder members
+        = ImmutableArray.CreateBuilder<Member>();
+
     private int position = 0;
 
-    private IReadOnlyList<SyntaxToken> SyntaxTokens => syntaxTree.SyntaxTokens;
+    private ImmutableArray<SyntaxToken> SyntaxTokens => syntaxTree.SyntaxTokens;
 
     private SyntaxToken Current => Seek(0);
     private SyntaxToken Peak => Seek(1);
 
-    public IReadOnlyList<Directive> Directives => directives;
-    public IReadOnlyList<Member> Members => members;
+    public ImmutableArray<Directive> Directives => directives.ToImmutable();
+    public ImmutableArray<Member> Members => members.ToImmutable();
 
     private SyntaxToken Seek(int offset)
     {
-        var index = this.position + offset;
-        if (index >= this.SyntaxTokens.Count)
+        var index = position + offset;
+        if (index >= SyntaxTokens.Length)
         {
-            return this.SyntaxTokens[SyntaxTokens.Count - 1];
+            return SyntaxTokens[^1];
         }
 
-        return this.SyntaxTokens[index];
+        return SyntaxTokens[index];
     }
 
     private SyntaxToken NextToken()

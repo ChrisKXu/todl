@@ -57,6 +57,6 @@ public sealed class WhileUntilStatementTests
         var whileUntilStatement = TestUtils.ParseStatement<WhileUntilStatement>(inputText);
         whileUntilStatement.Should().NotBeNull();
         whileUntilStatement.GetDiagnostics().Should().BeEmpty();
-        whileUntilStatement.BlockStatement.InnerStatements.Count.Should().Be(expectedStatementsCount);
+        whileUntilStatement.BlockStatement.InnerStatements.Should().HaveCount(expectedStatementsCount);
     }
 }

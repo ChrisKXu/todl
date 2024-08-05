@@ -8,7 +8,8 @@ public sealed class ReturnStatement : Statement
     public Expression ReturnValueExpression { get; internal init; }
     public SyntaxToken SemicolonToken { get; internal init; }
 
-    public override TextSpan Text => TextSpan.FromTextSpans(ReturnKeywordToken.Text, SemicolonToken.Text);
+    public override TextSpan Text
+        => TextSpan.FromTextSpans(ReturnKeywordToken.Text, SemicolonToken.Text);
 }
 
 public sealed partial class Parser

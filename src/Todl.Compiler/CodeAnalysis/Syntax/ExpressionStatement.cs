@@ -1,24 +1,23 @@
-﻿using System.Collections.Generic;
-using Todl.Compiler.CodeAnalysis.Text;
+﻿using Todl.Compiler.CodeAnalysis.Text;
 
-namespace Todl.Compiler.CodeAnalysis.Syntax
+namespace Todl.Compiler.CodeAnalysis.Syntax;
+
+public sealed class ExpressionStatement : Statement
 {
-    public sealed class ExpressionStatement : Statement
-    {
-        public Expression Expression { get; internal init; }
-        public SyntaxToken SemicolonToken { get; internal init; }
+    public Expression Expression { get; internal init; }
+    public SyntaxToken SemicolonToken { get; internal init; }
 
-        public override TextSpan Text => TextSpan.FromTextSpans(Expression.Text, SemicolonToken.Text);
-    }
+    public override TextSpan Text
+        => TextSpan.FromTextSpans(Expression.Text, SemicolonToken.Text);
+}
 
-    public sealed partial class Parser
-    {
-        private ExpressionStatement ParseExpressionStatement()
-            => new()
-            {
-                SyntaxTree = syntaxTree,
-                Expression = ParseExpression(),
-                SemicolonToken = ExpectToken(SyntaxKind.SemicolonToken)
-            };
-    }
+public sealed partial class Parser
+{
+    private ExpressionStatement ParseExpressionStatement()
+        => new()
+        {
+            SyntaxTree = syntaxTree,
+            Expression = ParseExpression(),
+            SemicolonToken = ExpectToken(SyntaxKind.SemicolonToken)
+        };
 }
