@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -9,16 +10,17 @@ namespace Todl.Compiler.CodeAnalysis;
 
 public sealed class ClrTypeCache
 {
-    private readonly HashSet<string> loadedNamespaces = new();
+    private readonly ImmutableHashSet<string>.Builder loadedNamespaces
+        = ImmutableHashSet.CreateBuilder<string>();
 
-    public IReadOnlySet<Assembly> Assemblies { get; }
+    public ImmutableHashSet<Assembly> Assemblies { get; }
     public Assembly CoreAssembly { get; } // the assembly that contains object, bool, int, etc...
-    public IReadOnlySet<ClrTypeSymbol> Types { get; }
-    public IReadOnlySet<string> Namespaces => loadedNamespaces;
+    public ImmutableHashSet<ClrTypeSymbol> Types { get; }
+    public ImmutableHashSet<string> Namespaces => loadedNamespaces.ToImmutable();
 
     public BuiltInTypes BuiltInTypes { get; }
 
-    private static readonly IReadOnlyDictionary<string, SpecialType> builtInTypeNames
+    private static readonly ImmutableDictionary<string, SpecialType> builtInTypeNames
         = new Dictionary<string, SpecialType>()
         {
             { "bool", SpecialType.ClrBoolean },
@@ -45,11 +47,11 @@ public sealed class ClrTypeCache
             { typeof(float).FullName, SpecialType.ClrFloat },
             { "double", SpecialType.ClrDouble },
             { typeof(double).FullName, SpecialType.ClrDouble }
-        };
+        }.ToImmutableDictionary();
 
     private ClrTypeCache(IEnumerable<Assembly> assemblies, Assembly coreAssembly)
     {
-        Assemblies = assemblies.ToHashSet();
+        Assemblies = assemblies.ToImmutableHashSet();
         CoreAssembly = coreAssembly;
 
         Types = assemblies
@@ -57,7 +59,7 @@ public sealed class ClrTypeCache
             .Where(t => !t.IsGenericType) // TODO: support generic type
             .Where(t => !builtInTypeNames.ContainsKey(t.FullName))
             .Select(t => new ClrTypeSymbol(t))
-            .ToHashSet();
+            .ToImmutableHashSet();
 
         BuiltInTypes = new BuiltInTypes(this);
 

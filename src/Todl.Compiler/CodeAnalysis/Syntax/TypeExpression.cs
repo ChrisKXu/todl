@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 
@@ -7,7 +7,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax;
 public sealed class TypeExpression : Expression
 {
     public NameExpression BaseTypeExpression { get; internal init; }
-    public IReadOnlyList<ArrayRankSpecifier> ArrayRankSpecifiers { get; internal init; }
+    public ImmutableArray<ArrayRankSpecifier> ArrayRankSpecifiers { get; internal init; }
 
     public bool IsArrayType => ArrayRankSpecifiers.Any();
 
@@ -30,7 +30,7 @@ public sealed partial class Parser
     private TypeExpression ParseTypeExpression()
     {
         var nameExpression = ParseNameExpression();
-        var arrayRankSpecifiers = new List<ArrayRankSpecifier>();
+        var arrayRankSpecifiers = ImmutableArray.CreateBuilder<ArrayRankSpecifier>();
 
         while (Current.Kind == SyntaxKind.OpenBracketToken)
         {
@@ -40,7 +40,7 @@ public sealed partial class Parser
         return new()
         {
             BaseTypeExpression = nameExpression,
-            ArrayRankSpecifiers = arrayRankSpecifiers
+            ArrayRankSpecifiers = arrayRankSpecifiers.ToImmutable()
         };
     }
 

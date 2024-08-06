@@ -1,72 +1,72 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 
-namespace Todl.Compiler.CodeAnalysis.Syntax
+namespace Todl.Compiler.CodeAnalysis.Syntax;
+
+public sealed class SyntaxTree
 {
-    public sealed class SyntaxTree
+    private readonly Lexer lexer;
+    private readonly Parser parser;
+
+    public SourceText SourceText { get; }
+    public ClrTypeCache ClrTypeCache { get; }
+
+    public ImmutableArray<SyntaxToken> SyntaxTokens => lexer.SyntaxTokens;
+    public ImmutableArray<Directive> Directives => parser.Directives;
+    public ImmutableArray<Member> Members => parser.Members;
+    public ClrTypeCacheView ClrTypeCacheView { get; private set; }
+
+    internal SyntaxTree(SourceText sourceText, ClrTypeCache clrTypeCache)
     {
-        private readonly Lexer lexer;
-        private readonly Parser parser;
+        lexer = new Lexer() { SourceText = sourceText };
+        parser = new Parser(this);
 
-        public SourceText SourceText { get; }
-        public ClrTypeCache ClrTypeCache { get; }
+        SourceText = sourceText;
+        ClrTypeCache = clrTypeCache;
+    }
 
-        public IReadOnlyList<SyntaxToken> SyntaxTokens => lexer.SyntaxTokens;
-        public IReadOnlyList<Directive> Directives => parser.Directives;
-        public IReadOnlyList<Member> Members => parser.Members;
-        public ClrTypeCacheView ClrTypeCacheView { get; private set; }
+    private Expression ParseExpression()
+    {
+        lexer.Lex();
+        ClrTypeCacheView = ClrTypeCache.CreateView(Array.Empty<ImportDirective>());
+        return parser.ParseExpression();
+    }
 
-        internal SyntaxTree(SourceText sourceText, ClrTypeCache clrTypeCache)
-        {
-            lexer = new Lexer() { SourceText = sourceText };
-            parser = new Parser(this);
+    private Statement ParseStatement()
+    {
+        lexer.Lex();
+        ClrTypeCacheView = ClrTypeCache.CreateView(Array.Empty<ImportDirective>());
+        return parser.ParseStatement();
+    }
 
-            SourceText = sourceText;
-            ClrTypeCache = clrTypeCache;
-        }
+    private void Parse()
+    {
+        lexer.Lex();
+        parser.Parse();
 
-        private Expression ParseExpression()
-        {
-            lexer.Lex();
-            ClrTypeCacheView = ClrTypeCache.CreateView(Array.Empty<ImportDirective>());
-            return parser.ParseExpression();
-        }
+        ClrTypeCacheView = ClrTypeCache.CreateView(Directives.OfType<ImportDirective>());
+    }
 
-        private Statement ParseStatement()
-        {
-            lexer.Lex();
-            ClrTypeCacheView = ClrTypeCache.CreateView(Array.Empty<ImportDirective>());
-            return parser.ParseStatement();
-        }
+    public static SyntaxTree Parse(SourceText sourceText, ClrTypeCache clrTypeCache)
+    {
+        var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
+        syntaxTree.Parse();
+        return syntaxTree;
+    }
 
-        private void Parse()
-        {
-            lexer.Lex();
-            parser.Parse();
+    // temporarily make available for tests and evaluator
+    internal static Expression ParseExpression(SourceText sourceText, ClrTypeCache clrTypeCache)
+    {
+        var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
+        return syntaxTree.ParseExpression();
+    }
 
-            ClrTypeCacheView = ClrTypeCache.CreateView(Directives.OfType<ImportDirective>());
-        }
-
-        public static SyntaxTree Parse(SourceText sourceText, ClrTypeCache clrTypeCache)
-        {
-            var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
-            syntaxTree.Parse();
-            return syntaxTree;
-        }
-
-        // temporarily make available for tests and evaluator
-        internal static Expression ParseExpression(SourceText sourceText, ClrTypeCache clrTypeCache)
-        {
-            var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
-            return syntaxTree.ParseExpression();
-        }
-
-        internal static Statement ParseStatement(SourceText sourceText, ClrTypeCache clrTypeCache)
-        {
-            var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
-            return syntaxTree.ParseStatement();
-        }
+    internal static Statement ParseStatement(SourceText sourceText, ClrTypeCache clrTypeCache)
+    {
+        var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
+        return syntaxTree.ParseStatement();
     }
 }

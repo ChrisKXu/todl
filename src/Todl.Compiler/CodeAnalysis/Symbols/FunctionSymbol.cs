@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
@@ -8,10 +9,10 @@ namespace Todl.Compiler.CodeAnalysis.Symbols;
 public sealed class FunctionSymbol : Symbol
 {
     public FunctionDeclarationMember FunctionDeclarationMember { get; internal init; }
-    public IEnumerable<ParameterSymbol> Parameters { get; internal init; }
+    public ImmutableArray<ParameterSymbol> Parameters { get; internal init; }
 
-    public IEnumerable<string> OrderedParameterNames
-        => FunctionDeclarationMember.Parameters.Items.Select(p => p.Identifier.Text.ToString());
+    public ImmutableArray<string> OrderedParameterNames
+        => Parameters.Select(p => p.Name).ToImmutableArray();
     public override string Name => FunctionDeclarationMember.Name.Text.ToString();
     public TypeSymbol ReturnType
         => FunctionDeclarationMember.SyntaxTree.ClrTypeCacheView.ResolveType(FunctionDeclarationMember.ReturnType);
@@ -28,7 +29,7 @@ public sealed class FunctionSymbol : Symbol
         return new()
         {
             FunctionDeclarationMember = functionDeclarationMember,
-            Parameters = parameters
+            Parameters = parameters.ToImmutableArray()
         };
     }
 

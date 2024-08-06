@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
@@ -10,7 +11,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax;
 /// </summary>
 internal sealed class Lexer
 {
-    private readonly List<SyntaxToken> syntaxTokens = new();
+    private readonly ImmutableArray<SyntaxToken>.Builder syntaxTokens
+        = ImmutableArray.CreateBuilder<SyntaxToken>();
+
     private int position = 0;
 
     public SourceText SourceText { get; internal set; }
@@ -18,7 +21,7 @@ internal sealed class Lexer
     private char Current => Seek(0);
     private char Peak => Seek(1);
 
-    public IReadOnlyList<SyntaxToken> SyntaxTokens => syntaxTokens;
+    public ImmutableArray<SyntaxToken> SyntaxTokens => syntaxTokens.ToImmutable();
 
     private char Seek(int offset)
     {
@@ -32,9 +35,9 @@ internal sealed class Lexer
         return this.SourceText.Text[index];
     }
 
-    private IReadOnlyList<SyntaxTrivia> ReadSyntaxTrivia(bool leading)
+    private ImmutableArray<SyntaxTrivia> ReadSyntaxTrivia(bool leading)
     {
-        var triviaList = new List<SyntaxTrivia>();
+        var triviaList = ImmutableArray.CreateBuilder<SyntaxTrivia>();
 
         var done = false;
         var start = this.position;
@@ -85,7 +88,7 @@ internal sealed class Lexer
             start = position;
         }
 
-        return triviaList;
+        return triviaList.ToImmutable();
     }
 
     private void ReadLineBreak()
@@ -251,8 +254,8 @@ internal sealed class Lexer
         return SyntaxFacts.KeywordMap.GetValueOrDefault(token, SyntaxKind.IdentifierToken);
     }
 
-    private IReadOnlyList<SyntaxTrivia> ReadLeadingSyntaxTrivia() => ReadSyntaxTrivia(true);
-    private IReadOnlyList<SyntaxTrivia> ReadTrailingSyntaxTrivia() => ReadSyntaxTrivia(false);
+    private ImmutableArray<SyntaxTrivia> ReadLeadingSyntaxTrivia() => ReadSyntaxTrivia(true);
+    private ImmutableArray<SyntaxTrivia> ReadTrailingSyntaxTrivia() => ReadSyntaxTrivia(false);
 
     private SyntaxToken GetNextToken()
     {

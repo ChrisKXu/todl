@@ -47,7 +47,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("void");
-            function.Parameters.Items.Count.Should().Be(1);
+            function.Parameters.Items.Should().HaveCount(1);
             function.Body.InnerStatements.Should().BeEmpty();
 
             var a = function.Parameters.Items[0];
@@ -62,7 +62,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("void");
-            function.Parameters.Items.Count.Should().Be(2);
+            function.Parameters.Items.Should().HaveCount(2);
             function.Body.InnerStatements.Should().BeEmpty();
 
             var a = function.Parameters.Items[0];
@@ -81,7 +81,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("void");
-            function.Parameters.Items.Count.Should().Be(2);
+            function.Parameters.Items.Should().HaveCount(2);
             function.Body.InnerStatements.Should().BeEmpty();
 
             var a = function.Parameters.Items[0];
@@ -102,7 +102,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("void");
-            function.Parameters.Items.Count.Should().Be(3);
+            function.Parameters.Items.Should().HaveCount(3);
             function.Body.InnerStatements.Should().BeEmpty();
 
             var intParameter = function.Parameters.Items[0];

@@ -67,7 +67,7 @@ public partial class Binder
                 && m.IsStatic == isStatic
                 && !m.ContainsGenericParameters
                 && m.IsPublic
-                && m.GetParameters().Length == functionCallExpression.Arguments.Items.Count);
+                && m.GetParameters().Length == functionCallExpression.Arguments.Items.Length);
 
         var arguments = functionCallExpression.Arguments.Items.ToDictionary(
             keySelector: a => a.Identifier.Value.Text.ToString(),

@@ -2,4 +2,4 @@
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
 
-public sealed record SyntaxTrivia(SyntaxKind Kind, TextSpan Text) { }
+public readonly record struct SyntaxTrivia(SyntaxKind Kind, TextSpan Text) { }

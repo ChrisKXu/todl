@@ -1,17 +1,16 @@
-﻿namespace Todl.Compiler.CodeAnalysis.Syntax
+﻿namespace Todl.Compiler.CodeAnalysis.Syntax;
+
+public abstract class Member : SyntaxNode { }
+
+public sealed partial class Parser
 {
-    public abstract class Member : SyntaxNode { }
-
-    public sealed partial class Parser
+    private Member ParseMember()
     {
-        private Member ParseMember()
+        if (Current.Kind == SyntaxKind.ConstKeywordToken || Current.Kind == SyntaxKind.LetKeywordToken)
         {
-            if (Current.Kind == SyntaxKind.ConstKeywordToken || Current.Kind == SyntaxKind.LetKeywordToken)
-            {
-                return ParseVariableDeclarationMember();
-            }
-
-            return ParseFunctionDeclarationMember();
+            return ParseVariableDeclarationMember();
         }
+
+        return ParseFunctionDeclarationMember();
     }
 }
