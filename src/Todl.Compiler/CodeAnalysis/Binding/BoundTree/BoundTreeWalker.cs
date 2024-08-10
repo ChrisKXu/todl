@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
@@ -125,7 +125,7 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
 
     public override BoundNode VisitBoundTodlFunctionCallExpression(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
     {
-        VisitList(boundTodlFunctionCallExpression.BoundArguments.Values);
+        VisitList(boundTodlFunctionCallExpression.BoundArguments);
 
         return boundTodlFunctionCallExpression;
     }
@@ -157,14 +157,27 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         return boundVariableMember;
     }
 
-    private void VisitList<TBoundNode>(IEnumerable<TBoundNode> list) where TBoundNode : BoundNode
+    private void VisitList<TBoundNode>(ImmutableArray<TBoundNode> list) where TBoundNode : BoundNode
     {
-        if (list is null)
+        if (list.IsEmpty)
         {
             return;
         }
 
         foreach (var node in list)
+        {
+            Visit(node);
+        }
+    }
+
+    private void VisitList<TKey, TBoundNode>(ImmutableDictionary<TKey, TBoundNode> list) where TBoundNode : BoundNode
+    {
+        if (list is null || list.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (var node in list.Values)
         {
             Visit(node);
         }

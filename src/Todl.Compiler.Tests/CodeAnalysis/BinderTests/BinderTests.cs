@@ -21,7 +21,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
-            boundBlockStatement.Statements.Count.Should().Be(2);
+            boundBlockStatement.Statements.Should().HaveCount(2);
             boundBlockStatement.Scope.LookupVariable("a").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
             boundBlockStatement.Scope.LookupVariable("b").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
 
@@ -45,7 +45,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
-            boundBlockStatement.Statements.Count.Should().Be(2);
+            boundBlockStatement.Statements.Should().HaveCount(2);
             boundBlockStatement.Scope.LookupVariable("a").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
             boundBlockStatement.Scope.LookupVariable("b").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
         }
@@ -68,7 +68,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
-            boundBlockStatement.Statements.Count.Should().Be(4);
+            boundBlockStatement.Statements.Should().HaveCount(4);
 
             var scope = boundBlockStatement.Scope;
             var childScope = (boundBlockStatement.Statements[2] as BoundBlockStatement).Scope;
@@ -102,7 +102,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var exceptionType = TestDefaults.DefaultClrTypeCache.Resolve(typeof(Exception).FullName);
             boundObjectCreationExpression.ResultType.Should().Be(exceptionType);
             boundObjectCreationExpression.ConstructorInfo.Should().NotBeNull();
-            boundObjectCreationExpression.BoundArguments.Count.Should().Be(1);
+            boundObjectCreationExpression.BoundArguments.Should().HaveCount(1);
 
             var message = boundObjectCreationExpression.BoundArguments[0].As<BoundConstant>();
             message.Value.Should().Be("exception message");

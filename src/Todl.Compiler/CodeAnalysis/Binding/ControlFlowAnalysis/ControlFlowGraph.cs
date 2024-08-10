@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
@@ -10,8 +10,8 @@ internal sealed class ControlFlowGraph
 {
     public BasicBlock StartBlock => Blocks.First();
     public BasicBlock EndBlock => Blocks.Last();
-    public IReadOnlyCollection<BasicBlock> Blocks { get; private init; }
-    public IReadOnlyCollection<BasicBlockBranch> Branches { get; private init; }
+    public ImmutableArray<BasicBlock> Blocks { get; private init; }
+    public ImmutableArray<BasicBlockBranch> Branches { get; private init; }
 
     internal static ControlFlowGraph Create(BoundFunctionMember boundFunctionMember)
     {
@@ -23,8 +23,8 @@ internal sealed class ControlFlowGraph
 
     private sealed class Builder : BoundTreeWalker
     {
-        private readonly List<BasicBlock> blocks = new();
-        private readonly List<BasicBlockBranch> branches = new();
+        private readonly ImmutableArray<BasicBlock>.Builder blocks = ImmutableArray.CreateBuilder<BasicBlock>();
+        private readonly ImmutableArray<BasicBlockBranch>.Builder branches = ImmutableArray.CreateBuilder<BasicBlockBranch>();
         private readonly BasicBlock startBlock = new();
         private readonly BasicBlock endBlock = new();
 
@@ -53,7 +53,7 @@ internal sealed class ControlFlowGraph
 
         public override BoundNode VisitBoundBlockStatement(BoundBlockStatement boundBlockStatement)
         {
-            if (!boundBlockStatement.Statements.Any())
+            if (boundBlockStatement.Statements.IsEmpty)
             {
                 current.Statements.Add(new BoundNoOpStatement());
                 return boundBlockStatement;
@@ -192,8 +192,8 @@ internal sealed class ControlFlowGraph
 
             return new()
             {
-                Blocks = blocks,
-                Branches = branches
+                Blocks = blocks.ToImmutable(),
+                Branches = branches.ToImmutable()
             };
         }
     }

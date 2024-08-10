@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Immutable;
+using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -60,7 +61,7 @@ public partial class Binder
                 body = BoundNodeFactory.CreateBoundBlockStatement(
                     syntaxNode: body.SyntaxNode,
                     scope: body.Scope,
-                    statements: body.Statements.Append(returnStatement).ToList());
+                    statements: body.Statements.Append(returnStatement).ToImmutableArray());
             }
         }
 

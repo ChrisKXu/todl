@@ -34,6 +34,7 @@ internal sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
                 using System;
                 using System.CodeDom.Compiler;
                 using System.Collections.Generic;
+                using System.Collections.Immutable;
                 using System.Reflection;
                 using Todl.Compiler.CodeAnalysis.Symbols;
                 using Todl.Compiler.CodeAnalysis.Syntax;

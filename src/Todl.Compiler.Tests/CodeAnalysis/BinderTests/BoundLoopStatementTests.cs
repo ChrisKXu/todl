@@ -18,7 +18,7 @@ public sealed class BoundLoopStatementTests
         var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>(inputText);
         boundLoopStatement.GetDiagnostics().Should().BeEmpty();
         boundLoopStatement.ConditionNegated.Should().Be(negated);
-        boundLoopStatement.Body.As<BoundBlockStatement>().Statements.Count.Should().Be(expectedBodyStatementsCount);
+        boundLoopStatement.Body.As<BoundBlockStatement>().Statements.Should().HaveCount(expectedBodyStatementsCount);
         boundLoopStatement.BoundLoopContext.Should().NotBeNull();
     }
 
