@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
@@ -18,7 +19,7 @@ internal abstract partial class BoundNodeVisitor
             return new BoundEntryPointTypeDefinition()
             {
                 SyntaxNode = boundTodlTypeDefinition.SyntaxNode,
-                BoundMembers = boundMembers,
+                BoundMembers = boundMembers.ToImmutableArray(),
                 DiagnosticBuilder = boundTodlTypeDefinition.DiagnosticBuilder
             };
         }
@@ -175,7 +176,7 @@ internal abstract partial class BoundNodeVisitor
         }
 
         var hasChange = false;
-        var statements = new List<BoundStatement>();
+        var statements = ImmutableArray.CreateBuilder<BoundStatement>();
 
         foreach (var boundStatement in boundBlockStatement.Statements)
         {
@@ -196,7 +197,7 @@ internal abstract partial class BoundNodeVisitor
         return BoundNodeFactory.CreateBoundBlockStatement(
             syntaxNode: boundBlockStatement.SyntaxNode,
             scope: boundBlockStatement.Scope,
-            statements: statements,
+            statements: statements.ToImmutable(),
             diagnosticBuilder: boundBlockStatement.DiagnosticBuilder);
     }
 

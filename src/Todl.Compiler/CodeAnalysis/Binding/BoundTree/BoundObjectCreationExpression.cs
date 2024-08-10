@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -13,7 +13,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 internal sealed class BoundObjectCreationExpression : BoundExpression
 {
     public ConstructorInfo ConstructorInfo { get; internal init; }
-    public IReadOnlyList<BoundExpression> BoundArguments { get; internal init; }
+    public ImmutableArray<BoundExpression> BoundArguments { get; internal init; }
     public override TypeSymbol ResultType
         => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(ConstructorInfo.DeclaringType);
 
@@ -29,7 +29,7 @@ public partial class Binder
         diagnosticBuilder.Add(boundTypeExpression);
 
         // Treating no arguments as the same way of positional arguments
-        if (!newExpression.Arguments.Items.Any() || !newExpression.Arguments.Items[0].IsNamedArgument)
+        if (newExpression.Arguments.Items.IsEmpty || !newExpression.Arguments.Items[0].IsNamedArgument)
         {
             return BindNewExpressionWithPositionalArgumentsInternal(
                 diagnosticBuilder: diagnosticBuilder,
@@ -67,7 +67,7 @@ public partial class Binder
         {
             SyntaxNode = newExpression,
             ConstructorInfo = constructorInfo,
-            BoundArguments = boundArguments.ToList(),
+            BoundArguments = boundArguments.ToImmutableArray(),
             DiagnosticBuilder = diagnosticBuilder
         };
     }
@@ -112,7 +112,7 @@ public partial class Binder
         {
             SyntaxNode = newExpression,
             ConstructorInfo = constructorInfo,
-            BoundArguments = boundArguments.ToList(),
+            BoundArguments = boundArguments.ToImmutableArray(),
             DiagnosticBuilder = diagnosticBuilder
         };
     }

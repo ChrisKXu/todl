@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -10,7 +10,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 internal sealed class BoundTodlFunctionCallExpression : BoundExpression
 {
     public FunctionSymbol FunctionSymbol { get; internal set; }
-    public IReadOnlyDictionary<string, BoundExpression> BoundArguments { get; internal init; }
+    public ImmutableDictionary<string, BoundExpression> BoundArguments { get; internal init; }
 
     public override TypeSymbol ResultType
         => FunctionSymbol?.ReturnType ?? default; // TODO: we may need something like TypeSymbol.InvalidType for this
@@ -24,13 +24,13 @@ public partial class Binder
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
         FunctionSymbol functionSymbol = null;
-        IReadOnlyDictionary<string, BoundExpression> boundArguments = null;
+        var boundArguments = ImmutableDictionary<string, BoundExpression>.Empty;
 
         var arguments = functionCallExpression.Arguments.Items;
 
         if (arguments.Any(a => a.IsNamedArgument))
         {
-            boundArguments = arguments.ToDictionary(
+            boundArguments = arguments.ToImmutableDictionary(
                 argument => argument.Identifier?.Text.ToString(),
                 argument => BindExpression(argument.Expression));
 
@@ -49,10 +49,10 @@ public partial class Binder
 
             boundArguments = functionSymbol?.OrderedParameterNames
                 .Zip(positionalArguments)
-                .ToDictionary(t => t.First, t => t.Second);
+                .ToImmutableDictionary(t => t.First, t => t.Second);
         }
 
-        if (functionSymbol == null || boundArguments == null)
+        if (functionSymbol == null)
         {
             ReportNoMatchingFunctionCandidate(diagnosticBuilder, functionCallExpression);
         }

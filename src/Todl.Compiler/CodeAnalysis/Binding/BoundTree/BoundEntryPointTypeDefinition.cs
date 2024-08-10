@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -88,7 +89,7 @@ public partial class Binder
         return new()
         {
             SyntaxNode = null,
-            BoundMembers = boundMembers.ToList(),
+            BoundMembers = boundMembers.ToImmutableArray(),
             DiagnosticBuilder = diagnosticBuilder
         };
     }

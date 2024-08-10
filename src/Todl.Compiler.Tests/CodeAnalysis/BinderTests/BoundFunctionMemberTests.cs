@@ -21,7 +21,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var function = TestUtils.BindMember<BoundFunctionMember>(inputText);
 
-            function.Body.Statements.Count.Should().Be(expectedStatementsCount);
+            function.Body.Statements.Should().HaveCount(expectedStatementsCount);
             function.ReturnType.Name.Should().Be(expectedReturnType.FullName);
             function.ReturnType.IsArray.Should().Be(expectedReturnType.IsArray);
             function.FunctionScope.BoundScopeKind.Should().Be(BoundScopeKind.Function);
@@ -33,7 +33,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var function = TestUtils.BindMember<BoundFunctionMember>(
                 inputText: "void Main() { const a = 30; System.Threading.Thread.Sleep(a); }");
 
-            function.Body.Statements.Count.Should().Be(3);
+            function.Body.Statements.Should().HaveCount(3);
 
             var a = function.Body.Statements[0].As<BoundVariableDeclarationStatement>().Variable;
             a.Name.Should().Be("a");
@@ -56,7 +56,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             a.Name.Should().Be("a");
             a.Type.SpecialType.Should().Be(SpecialType.ClrInt32);
 
-            function.Body.Statements.Count.Should().Be(2);
+            function.Body.Statements.Should().HaveCount(2);
             function.Body.Statements[0].As<BoundExpressionStatement>().Expression.As<BoundClrFunctionCallExpression>().Should().NotBeNull();
 
             function.ReturnType.SpecialType.Should().Be(SpecialType.ClrVoid);
@@ -100,7 +100,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var function = TestUtils.BindMember<BoundFunctionMember>(inputText);
 
             var targetType = TestDefaults.DefaultClrTypeCache.Resolve(expectedReturnType.FullName);
-            function.Body.Statements.Count.Should().Be(1);
+            function.Body.Statements.Should().HaveCount(1);
             function.ReturnType.Should().Be(targetType);
             function.GetDiagnostics().Should().BeEmpty();
 
@@ -121,7 +121,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var resolvedExpectedType = TestDefaults.DefaultClrTypeCache.Resolve(expectedReturnType.FullName);
             var resolvedActualType = TestDefaults.DefaultClrTypeCache.Resolve(actualReturnType.FullName);
 
-            function.Body.Statements.Count.Should().Be(1);
+            function.Body.Statements.Should().HaveCount(1);
             function.ReturnType.Should().Be(resolvedExpectedType);
             function.GetDiagnostics().Should().NotBeEmpty();
 

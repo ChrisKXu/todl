@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -14,7 +14,7 @@ internal sealed class BoundClrFunctionCallExpression : BoundExpression
 {
     public BoundExpression BoundBaseExpression { get; internal init; }
     public MethodInfo MethodInfo { get; internal init; }
-    public IReadOnlyList<BoundExpression> BoundArguments { get; internal init; }
+    public ImmutableArray<BoundExpression> BoundArguments { get; internal init; }
     public override TypeSymbol ResultType => BoundBaseExpression.SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(MethodInfo.ReturnType);
     public bool IsStatic => MethodInfo.IsStatic;
 
@@ -86,13 +86,16 @@ public partial class Binder
             ReportNoMatchingFunctionCandidate(diagnosticBuilder, functionCallExpression);
         }
 
-        var boundArguments = candidate?.GetParameters().OrderBy(p => p.Position).Select(p => arguments[p.Name]);
+        var boundArguments = candidate
+            .GetParameters()
+            .OrderBy(p => p.Position)
+            .Select(p => arguments[p.Name]);
 
         return BoundNodeFactory.CreateBoundClrFunctionCallExpression(
             syntaxNode: functionCallExpression,
             boundBaseExpression: boundBaseExpression,
             methodInfo: candidate,
-            boundArguments: boundArguments.ToList(),
+            boundArguments: boundArguments.ToImmutableArray(),
             diagnosticBuilder: diagnosticBuilder);
     }
 
@@ -123,7 +126,7 @@ public partial class Binder
             syntaxNode: functionCallExpression,
             boundBaseExpression: boundBaseExpression,
             methodInfo: candidate,
-            boundArguments: boundArguments.ToList(),
+            boundArguments: boundArguments.ToImmutableArray(),
             diagnosticBuilder: diagnosticBuilder);
     }
 

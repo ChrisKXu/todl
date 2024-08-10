@@ -26,7 +26,7 @@ public sealed class BoundFunctionCallExpressionTests
         boundFunctionCallExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
         boundFunctionCallExpression.MethodInfo.Name.Should().Be("Abs");
         boundFunctionCallExpression.IsStatic.Should().Be(true);
-        boundFunctionCallExpression.BoundArguments.Count.Should().Be(1);
+        boundFunctionCallExpression.BoundArguments.Should().HaveCount(1);
 
         var argument = boundFunctionCallExpression.BoundArguments[0].As<BoundUnaryExpression>();
         argument.Operator.BoundUnaryOperatorKind.Should().Be(BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Int);
@@ -41,7 +41,7 @@ public sealed class BoundFunctionCallExpressionTests
         boundFunctionCallExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
         boundFunctionCallExpression.MethodInfo.Name.Should().Be("ToString");
         boundFunctionCallExpression.IsStatic.Should().Be(false);
-        boundFunctionCallExpression.BoundArguments.Count.Should().Be(1);
+        boundFunctionCallExpression.BoundArguments.Should().HaveCount(1);
 
         var argument = boundFunctionCallExpression.BoundArguments[0].As<BoundConstant>();
         argument.Value.Should().Be("G");
@@ -57,7 +57,7 @@ public sealed class BoundFunctionCallExpressionTests
         boundFunctionCallExpression.IsStatic.Should().Be(false);
 
         var boundArguments = boundFunctionCallExpression.BoundArguments;
-        boundArguments.Count.Should().Be(3);
+        boundArguments.Should().HaveCount(3);
         boundArguments[0].As<BoundConstant>().Value.Should().Be("ab");
         boundArguments[1].As<BoundConstant>().Value.Should().Be(1);
         boundArguments[2].As<BoundConstant>().Value.Should().Be(2);
@@ -75,7 +75,7 @@ public sealed class BoundFunctionCallExpressionTests
         boundFunctionCallExpression.IsStatic.Should().Be(false);
 
         var boundArguments = boundFunctionCallExpression.BoundArguments;
-        boundArguments.Count.Should().Be(2);
+        boundArguments.Should().HaveCount(2);
         boundArguments[0].As<BoundConstant>().Value.Should().Be(1);
         boundArguments[1].As<BoundConstant>().Value.Should().Be(2);
     }
