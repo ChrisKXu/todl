@@ -16,7 +16,6 @@ public sealed class BoundLoopStatementTests
     public void BoundLoopStatementsCanHaveBody(string inputText, bool negated, int expectedBodyStatementsCount)
     {
         var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>(inputText);
-        boundLoopStatement.GetDiagnostics().Should().BeEmpty();
         boundLoopStatement.ConditionNegated.Should().Be(negated);
         boundLoopStatement.Body.As<BoundBlockStatement>().Statements.Should().HaveCount(expectedBodyStatementsCount);
         boundLoopStatement.BoundLoopContext.Should().NotBeNull();
@@ -25,10 +24,13 @@ public sealed class BoundLoopStatementTests
     [Fact]
     public void BoundLoopStatementsShouldHaveBooleanConditions()
     {
-        var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>("while 1 { }");
-        boundLoopStatement.GetDiagnostics().Count().Should().Be(1);
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>("while 1 { }", diagnosticBuilder);
+        boundLoopStatement.Should().NotBeNull();
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Count().Should().Be(1);
 
-        var diagnostic = boundLoopStatement.GetDiagnostics().First();
+        var diagnostic = diagnostics.First();
         diagnostic.Level.Should().Be(DiagnosticLevel.Error);
         diagnostic.ErrorCode.Should().Be(ErrorCode.TypeMismatch);
         diagnostic.Message.Should().Be("Condition must be of boolean type.");
@@ -40,8 +42,7 @@ public sealed class BoundLoopStatementTests
     [InlineData("while 0 < 1 { if 1 < 2 { break; } else { continue; } }")]
     public void BoundLoopStatementsCanHaveBreakOrContinueStatements(string inputText)
     {
-        var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>(inputText);
-        boundLoopStatement.GetDiagnostics().Should().BeEmpty();
+        TestUtils.BindStatement<BoundLoopStatement>(inputText).Should().NotBeNull();
     }
 
     [Theory]
@@ -49,8 +50,10 @@ public sealed class BoundLoopStatementTests
     [InlineData("continue;")]
     public void BreakOrContinueStatementsCanOnlyAppearInLoops(string inputText)
     {
-        var boundStatement = TestUtils.BindStatement<BoundStatement>(inputText);
-        var diagnostics = boundStatement.GetDiagnostics();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundStatement = TestUtils.BindStatement<BoundStatement>(inputText, diagnosticBuilder);
+        boundStatement.Should().NotBeNull();
+        var diagnostics = diagnosticBuilder.Build();
         diagnostics.Should().NotBeEmpty();
 
         var noEnclosingLoop = diagnostics.First();

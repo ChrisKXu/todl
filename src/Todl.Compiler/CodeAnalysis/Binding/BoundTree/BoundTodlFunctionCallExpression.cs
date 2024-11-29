@@ -2,7 +2,6 @@
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
-using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
@@ -22,7 +21,6 @@ public partial class Binder
 {
     private BoundTodlFunctionCallExpression BindTodlFunctionCallExpression(FunctionCallExpression functionCallExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         FunctionSymbol functionSymbol = null;
         var boundArguments = ImmutableDictionary<string, BoundExpression>.Empty;
 
@@ -54,13 +52,12 @@ public partial class Binder
 
         if (functionSymbol == null)
         {
-            ReportNoMatchingFunctionCandidate(diagnosticBuilder, functionCallExpression);
+            ReportNoMatchingFunctionCandidate(functionCallExpression);
         }
 
         return BoundNodeFactory.CreateBoundTodlFunctionCallExpression(
             syntaxNode: functionCallExpression,
             functionSymbol: functionSymbol,
-            boundArguments: boundArguments,
-            diagnosticBuilder: diagnosticBuilder);
+            boundArguments: boundArguments);
     }
 }

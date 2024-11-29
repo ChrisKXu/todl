@@ -36,8 +36,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
             syntaxNode: boundBinaryExpression.SyntaxNode,
             @operator: boundBinaryExpression.Operator,
             left: left,
-            right: right,
-            diagnosticBuilder: boundBinaryExpression.DiagnosticBuilder);
+            right: right);
     }
 
     private BoundExpression FoldBinaryConstant(BoundConstant left, BoundConstant right, BoundBinaryExpression boundBinaryExpression)
@@ -107,8 +106,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
 
         return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: boundBinaryExpression.SyntaxNode,
-            value: value,
-            diagnosticBuilder: boundBinaryExpression.DiagnosticBuilder);
+            value: value);
     }
 
     protected override BoundExpression VisitBoundUnaryExpression(BoundUnaryExpression boundUnaryExpression)
@@ -155,8 +153,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
 
             return BoundNodeFactory.CreateBoundConstant(
                 syntaxNode: boundUnaryExpression.SyntaxNode,
-                value: value,
-                diagnosticBuilder: boundUnaryExpression.DiagnosticBuilder);
+                value: value);
         };
 
         if (visitedOperand == boundUnaryExpression.Operand)
@@ -167,8 +164,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
         return BoundNodeFactory.CreateBoundUnaryExpression(
             syntaxNode: boundUnaryExpression.SyntaxNode,
             @operator: boundUnaryExpression.Operator,
-            operand: visitedOperand,
-            diagnosticBuilder: boundUnaryExpression.DiagnosticBuilder);
+            operand: visitedOperand);
     }
 
     protected override BoundStatement VisitBoundVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)
@@ -187,8 +183,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
             return BoundNodeFactory.CreateBoundVariableDeclarationStatement(
                 syntaxNode: boundVariableDeclarationStatement.SyntaxNode,
                 variable: boundVariableDeclarationStatement.Variable,
-                initializerExpression: constant,
-                diagnosticBuilder: boundVariableDeclarationStatement.DiagnosticBuilder);
+                initializerExpression: constant);
         }
 
         if (visitedExpression == boundVariableDeclarationStatement.InitializerExpression)
@@ -199,8 +194,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
         return BoundNodeFactory.CreateBoundVariableDeclarationStatement(
             syntaxNode: boundVariableDeclarationStatement.SyntaxNode,
             variable: boundVariableDeclarationStatement.Variable,
-            initializerExpression: visitedExpression,
-            diagnosticBuilder: boundVariableDeclarationStatement.DiagnosticBuilder);
+            initializerExpression: visitedExpression);
     }
 
     protected override BoundStatement VisitBoundReturnStatement(BoundReturnStatement boundReturnStatement)
@@ -218,8 +212,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
 
         return BoundNodeFactory.CreateBoundReturnStatement(
             syntaxNode: boundReturnStatement.SyntaxNode,
-            boundReturnValueExpression: boundReturnValueExpression,
-            diagnosticBuilder: boundReturnStatement.DiagnosticBuilder);
+            boundReturnValueExpression: boundReturnValueExpression);
     }
 
     protected override BoundExpression VisitBoundVariableExpression(BoundVariableExpression boundVariableExpression)

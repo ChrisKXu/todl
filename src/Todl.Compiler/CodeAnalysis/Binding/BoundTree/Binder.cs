@@ -1,4 +1,6 @@
-﻿using Todl.Compiler.CodeAnalysis.Symbols;
+﻿using System.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
@@ -29,6 +31,9 @@ public partial class Binder
     public virtual BoundLoopContext BoundLoopContext
         => Parent?.BoundLoopContext;
 
+    public virtual DiagnosticBag.Builder DiagnosticBuilder
+        => Parent?.DiagnosticBuilder;
+
     public bool IsInFunction => FunctionSymbol is not null;
 
     public Binder CreateBlockStatementBinder()
@@ -45,14 +50,14 @@ public partial class Binder
             Scope = Scope.CreateChildScope(BoundScopeKind.Function)
         };
 
-    public static Binder CreateScriptBinder(ClrTypeCache clrTypeCache)
-        => new ScriptBinder(clrTypeCache)
+    public static Binder CreateScriptBinder(ClrTypeCache clrTypeCache, DiagnosticBag.Builder diagnosticBuilder)
+        => new ScriptBinder(clrTypeCache, diagnosticBuilder)
         {
             Scope = BoundScope.GlobalScope
         };
 
-    public static Binder CreateModuleBinder(ClrTypeCache clrTypeCache)
-        => new ModuleBinder(clrTypeCache)
+    public static Binder CreateModuleBinder(ClrTypeCache clrTypeCache, DiagnosticBag.Builder diagnosticBuilder)
+        => new ModuleBinder(clrTypeCache, diagnosticBuilder)
         {
             Scope = BoundScope.GlobalScope.CreateChildScope(BoundScopeKind.Module)
         };
@@ -71,34 +76,41 @@ public partial class Binder
             Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
         };
 
+    protected void ReportDiagnostic(Diagnostic diagnostic)
+        => DiagnosticBuilder.Add(diagnostic);
+
     internal sealed class ScriptBinder : Binder
     {
-        public ScriptBinder(ClrTypeCache clrTypeCache)
+        public ScriptBinder(ClrTypeCache clrTypeCache, DiagnosticBag.Builder diagnosticBuilder)
         {
             ClrTypeCache = clrTypeCache;
             BoundBinaryOperatorFactory = new(clrTypeCache);
             ConstantValueFactory = new(clrTypeCache.BuiltInTypes);
+            DiagnosticBuilder = diagnosticBuilder;
         }
 
         public override bool AllowVariableDeclarationInAssignment => true;
         public override ClrTypeCache ClrTypeCache { get; }
         public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
         public override ConstantValueFactory ConstantValueFactory { get; }
+        public override DiagnosticBag.Builder DiagnosticBuilder { get; }
     }
 
     internal sealed class ModuleBinder : Binder
     {
-        public ModuleBinder(ClrTypeCache clrTypeCache)
+        public ModuleBinder(ClrTypeCache clrTypeCache, DiagnosticBag.Builder diagnosticBuilder)
         {
             ClrTypeCache = clrTypeCache;
             BoundBinaryOperatorFactory = new(clrTypeCache);
             ConstantValueFactory = new(clrTypeCache.BuiltInTypes);
+            DiagnosticBuilder = diagnosticBuilder;
         }
 
         public override bool AllowVariableDeclarationInAssignment => false;
         public override ClrTypeCache ClrTypeCache { get; }
         public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
         public override ConstantValueFactory ConstantValueFactory { get; }
+        public override DiagnosticBag.Builder DiagnosticBuilder { get; }
     }
 
     internal sealed class TypeBinder : Binder

@@ -6,12 +6,19 @@ namespace Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
 
 internal sealed class ControlFlowAnalyzer : BoundTreeWalker
 {
+    private readonly DiagnosticBag.Builder diagnosticBuilder;
+
+    public ControlFlowAnalyzer(DiagnosticBag.Builder diagnosticBuilder)
+    {
+        this.diagnosticBuilder = diagnosticBuilder;
+    }
+
     public override BoundNode VisitBoundFunctionMember(BoundFunctionMember boundFunctionMember)
     {
         var controlFlowGraph = ControlFlowGraph.Create(boundFunctionMember);
 
         AllPathsShouldReturn(controlFlowGraph, boundFunctionMember);
-        AllBlocksShouldBeReachable(controlFlowGraph, boundFunctionMember.DiagnosticBuilder);
+        AllBlocksShouldBeReachable(controlFlowGraph);
 
         return boundFunctionMember;
     }
@@ -27,7 +34,7 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
 
         if (!endIsReachable || end.Incoming.Any(i => i.From.Reachable && !i.From.IsReturn))
         {
-            boundFunctionMember.DiagnosticBuilder.Add(new Diagnostic()
+            diagnosticBuilder.Add(new Diagnostic()
             {
                 Message = "Not all paths return a value",
                 ErrorCode = ErrorCode.NotAllPathsReturn,
@@ -38,8 +45,7 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
     }
 
     private void AllBlocksShouldBeReachable(
-        ControlFlowGraph controlFlowGraph,
-        DiagnosticBag.Builder diagnosticBuilder)
+        ControlFlowGraph controlFlowGraph)
     {
         var unreachableBlock = controlFlowGraph
             .Blocks

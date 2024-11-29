@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -12,29 +13,6 @@ internal sealed class BoundConditionalStatement : BoundStatement
     public BoundExpression Condition { get; internal init; }
     public BoundStatement Consequence { get; internal init; }
     public BoundStatement Alternative { get; internal init; }
-
-    public BoundConditionalStatement Validate()
-    {
-        if (Condition.ResultType.SpecialType != SpecialType.ClrBoolean)
-        {
-            var text = SyntaxNode switch
-            {
-                IfUnlessStatement ifUnlessStatement => ifUnlessStatement.ConditionExpression.Text,
-                ElseClause elseClause => elseClause.ConditionExpression.Text,
-                _ => SyntaxNode.Text
-            };
-
-            DiagnosticBuilder.Add(new Diagnostic()
-            {
-                Message = "Condition expressions need to be of boolean type",
-                ErrorCode = ErrorCode.TypeMismatch,
-                TextLocation = text.GetTextLocation(),
-                Level = DiagnosticLevel.Error
-            });
-        }
-
-        return this;
-    }
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundConditionalStatement(this);
 }
@@ -64,11 +42,14 @@ public partial class Binder
             next = new BoundNoOpStatement();
         }
 
-        return BoundNodeFactory.CreateBoundConditionalStatement(
+        var result = BoundNodeFactory.CreateBoundConditionalStatement(
             syntaxNode: elseClause,
             condition: condition,
             consequence: inverted ? next : current,
-            alternative: inverted ? current : next).Validate();
+            alternative: inverted ? current : next);
+
+        ValidateResultType(result);
+        return result;
     }
 
     private BoundConditionalStatement BindIfUnlessStatement(IfUnlessStatement ifUnlessStatement)
@@ -82,7 +63,7 @@ public partial class Binder
 
         if (ifUnlessStatement.ElseClauses.Any())
         {
-            var elseClauses = new ReadOnlySpan<ElseClause>(ifUnlessStatement.ElseClauses.ToArray());
+            var elseClauses = ifUnlessStatement.ElseClauses.AsSpan();
             boundElseClause = BindElseClause(elseClauses[0], elseClauses.Slice(1));
         }
         else
@@ -90,10 +71,34 @@ public partial class Binder
             boundElseClause = new BoundNoOpStatement();
         }
 
-        return BoundNodeFactory.CreateBoundConditionalStatement(
+        var result = BoundNodeFactory.CreateBoundConditionalStatement(
             syntaxNode: ifUnlessStatement,
             condition: condition,
             consequence: inverted ? boundElseClause : current,
-            alternative: inverted ? current : boundElseClause).Validate();
+            alternative: inverted ? current : boundElseClause);
+
+        ValidateResultType(result);
+        return result;
+    }
+
+    private void ValidateResultType(BoundConditionalStatement boundConditionalStatement)
+    {
+        if (boundConditionalStatement.Condition.ResultType.SpecialType != SpecialType.ClrBoolean)
+        {
+            var text = boundConditionalStatement.SyntaxNode switch
+            {
+                IfUnlessStatement ifUnlessStatement => ifUnlessStatement.ConditionExpression.Text,
+                ElseClause elseClause => elseClause.ConditionExpression.Text,
+                _ => boundConditionalStatement.SyntaxNode.Text
+            };
+
+            ReportDiagnostic(new Diagnostic()
+            {
+                Message = "Condition expressions need to be of boolean type",
+                ErrorCode = ErrorCode.TypeMismatch,
+                TextLocation = text.GetTextLocation(),
+                Level = DiagnosticLevel.Error
+            });
+        }
     }
 }

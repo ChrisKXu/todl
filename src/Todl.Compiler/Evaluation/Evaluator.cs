@@ -8,6 +8,7 @@ using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.Evaluation
 {
@@ -46,12 +47,13 @@ namespace Todl.Compiler.Evaluation
                 };
             }
 
-            var binder = Binder.CreateScriptBinder(clrTypeCache);
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            var binder = Binder.CreateScriptBinder(clrTypeCache, diagnosticBuilder);
             var boundExpression = binder.BindExpression(expression);
 
             return new()
             {
-                DiagnosticsOutput = boundExpression.GetDiagnostics().Select(d => d.Message).ToList(),
+                DiagnosticsOutput = diagnosticBuilder.Build().Select(d => d.Message).ToList(),
                 EvaluationOutput = EvaluateBoundExpression(boundExpression),
                 ResultType = boundExpression.ResultType
             };

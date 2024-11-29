@@ -46,19 +46,11 @@ internal sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
                 {
                     [GeneratedCode("{{nameof(BoundNodeFactorySourceGenerator)}}", "1.0.0.0")]
                     internal static {{className}} Create{{className}}(
-                        SyntaxNode syntaxNode,
-                        {{boundNodeMetadata.WriteParameters()}}
-                        DiagnosticBag.Builder diagnosticBuilder = null)
+                        {{boundNodeMetadata.WriteParameters()}})
                     {
-                        diagnosticBuilder ??= new();
-
-                        {{boundNodeMetadata.WriteDiagnostics()}}
-
                         return new {{className}}()
                         {
-                            SyntaxNode = syntaxNode,
                             {{boundNodeMetadata.WriteInitializers()}}
-                            DiagnosticBuilder = diagnosticBuilder
                         };
                     }
                 }
@@ -106,29 +98,17 @@ internal sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
         }
 
         public string WriteParameters()
-            => string.Join("\n", Properties.Select(p => $"{p.Name} {p.Property.CamelCasedName()},"));
-
-        public string WriteDiagnostics()
         {
-            var statements = new List<string>();
-            var boundNodeType = context.SemanticModel.Compilation.GetTypeByMetadataName(BoundNodeTypeName);
-
-            statements.AddRange(
-                Properties
-                    .Where(p => p.Property.Type.IsDerivedFrom(boundNodeType))
-                    .Select(p => $"diagnosticBuilder.Add({p.Property.CamelCasedName()});"));
-
-            statements.AddRange(
-                Properties
-                    .Where(p => p.Property.Type is INamedTypeSymbol t
-                        && t.IsGenericType
-                        && t.TypeArguments.Any(t => t.IsDerivedFrom(boundNodeType)))
-                    .Select(p => $"diagnosticBuilder.AddRange({p.Property.CamelCasedName()});"));
-
-            return string.Join("\n", statements);
+            var properties = Properties.Select(p => $"{p.Name} {p.Property.CamelCasedName()}").ToList();
+            properties.Insert(0, "SyntaxNode syntaxNode");
+            return string.Join(",\n", properties);
         }
 
         public string WriteInitializers()
-            => string.Join("\n", Properties.Select(p => $"{p.Property.Name} = {p.Property.CamelCasedName()},"));
+        {
+            var properties = Properties.Select(p => $"{p.Property.Name} = {p.Property.CamelCasedName()}").ToList();
+            properties.Insert(0, "SyntaxNode = syntaxNode");
+            return string.Join(",\n", properties);
+        }
     }
 }

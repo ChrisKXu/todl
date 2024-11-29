@@ -15,11 +15,9 @@ public partial class Binder
 {
     private BoundContinueStatement BindContinueStatement(ContinueStatement continueStatement)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
-
         if (BoundLoopContext is null)
         {
-            diagnosticBuilder.Add(new Diagnostic()
+            ReportDiagnostic(new Diagnostic()
             {
                 Level = DiagnosticLevel.Error,
                 ErrorCode = ErrorCode.NoEnclosingLoop,
@@ -28,6 +26,6 @@ public partial class Binder
             });
         }
 
-        return BoundNodeFactory.CreateBoundContinueStatement(continueStatement, BoundLoopContext, diagnosticBuilder);
+        return BoundNodeFactory.CreateBoundContinueStatement(continueStatement, BoundLoopContext);
     }
 }

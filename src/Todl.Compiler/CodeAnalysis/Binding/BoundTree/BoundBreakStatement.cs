@@ -15,11 +15,9 @@ public partial class Binder
 {
     private BoundBreakStatement BindBreakStatement(BreakStatement breakStatement)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
-
         if (BoundLoopContext is null)
         {
-            diagnosticBuilder.Add(new Diagnostic()
+            ReportDiagnostic(new Diagnostic()
             {
                 Level = DiagnosticLevel.Error,
                 ErrorCode = ErrorCode.NoEnclosingLoop,
@@ -28,6 +26,6 @@ public partial class Binder
             });
         }
 
-        return BoundNodeFactory.CreateBoundBreakStatement(breakStatement, BoundLoopContext, diagnosticBuilder);
+        return BoundNodeFactory.CreateBoundBreakStatement(breakStatement, BoundLoopContext);
     }
 }

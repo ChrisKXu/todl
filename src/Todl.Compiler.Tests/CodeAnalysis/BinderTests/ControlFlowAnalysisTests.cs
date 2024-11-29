@@ -27,8 +27,9 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { let i = 0; while i < 10 { ++i; } return i; }")]
     public void TestControlFlowAnalysisBasic(string inputText)
     {
-        var function = BindMemberAndAnalyze<BoundFunctionMember>(inputText);
-        function.GetDiagnostics().Should().BeEmpty();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
     }
 
     [Theory]
@@ -36,8 +37,9 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { int.MaxValue.ToString(); }")]
     public void TestControlFlowAnalysisWithNoReturnStatement(string inputText)
     {
-        var function = BindMemberAndAnalyze<BoundFunctionMember>(inputText);
-        var diagnostics = function.GetDiagnostics().ToList();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
 
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.NotAllPathsReturn);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Error);
@@ -50,8 +52,9 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("System.Uri func(string a) { const r = new System.Uri(a); return r; r.ToString(); }")]
     public void TestControlFlowAnalysisWithUnreachableCode(string inputText)
     {
-        var function = BindMemberAndAnalyze<BoundFunctionMember>(inputText);
-        var diagnostics = function.GetDiagnostics().ToList();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
 
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
@@ -63,8 +66,9 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else { if a == 1 { return 1; } } }")]
     public void TestControlFlowAnalysisWithConditionalStatements(string inputText)
     {
-        var function = BindMemberAndAnalyze<BoundFunctionMember>(inputText);
-        var diagnostics = function.GetDiagnostics().ToList();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
 
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.NotAllPathsReturn);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Error);
@@ -75,8 +79,9 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { while true { continue; return 1; } }")]
     public void TestControlFlowAnalysisWithLoopStatements(string inputText)
     {
-        var function = BindMemberAndAnalyze<BoundFunctionMember>(inputText);
-        var diagnostics = function.GetDiagnostics().ToList();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
         diagnostics.Should().NotBeEmpty();
         diagnostics.Count.Should().Be(1);
 
@@ -84,10 +89,10 @@ public sealed class ControlFlowAnalysisTests
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
     }
 
-    private static TBoundMember BindMemberAndAnalyze<TBoundMember>(string inputText) where TBoundMember : BoundMember
+    private static TBoundMember BindMemberAndAnalyze<TBoundMember>(string inputText, DiagnosticBag.Builder diagnosticBuilder) where TBoundMember : BoundMember
     {
-        var boundMember = TestUtils.BindMember<TBoundMember>(inputText);
-        new ControlFlowAnalyzer().Visit(boundMember);
+        var boundMember = TestUtils.BindMember<TBoundMember>(inputText, diagnosticBuilder);
+        new ControlFlowAnalyzer(diagnosticBuilder).Visit(boundMember);
         return boundMember;
     }
 }

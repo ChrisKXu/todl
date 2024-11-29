@@ -14,7 +14,6 @@ public sealed class BoundMemberAccessExpressionTests
     {
         var boundClrPropertyAccessExpression = TestUtils.BindExpression<BoundClrPropertyAccessExpression>("\"abc\".Length");
 
-        boundClrPropertyAccessExpression.GetDiagnostics().Should().BeEmpty();
         boundClrPropertyAccessExpression.MemberName.Should().Be("Length");
         boundClrPropertyAccessExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
         boundClrPropertyAccessExpression.IsStatic.Should().Be(false);
@@ -27,7 +26,6 @@ public sealed class BoundMemberAccessExpressionTests
     {
         var boundClrFieldAccessExpression = TestUtils.BindExpression<BoundClrFieldAccessExpression>("System.Int32.MaxValue");
 
-        boundClrFieldAccessExpression.GetDiagnostics().Should().BeEmpty();
         boundClrFieldAccessExpression.MemberName.Should().Be("MaxValue");
         boundClrFieldAccessExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
         boundClrFieldAccessExpression.IsStatic.Should().Be(true);
@@ -38,9 +36,10 @@ public sealed class BoundMemberAccessExpressionTests
     [Fact]
     public void TestBoundInvalidMemberAccessExpression()
     {
-        var boundExpression = TestUtils.BindExpression<BoundMemberAccessExpression>("System.Int32.Maxvalue");
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundExpression = TestUtils.BindExpression<BoundMemberAccessExpression>("System.Int32.Maxvalue", diagnosticBuilder);
 
-        var diagnostic = boundExpression.GetDiagnostics().First();
+        var diagnostic = diagnosticBuilder.Build().First();
         diagnostic.Level.Should().Be(DiagnosticLevel.Error);
         diagnostic.Message.Should().Be("Member 'Maxvalue' does not exist in type 'System.Int32'");
     }

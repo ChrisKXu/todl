@@ -64,7 +64,6 @@ public partial class Binder
     internal BoundEntryPointTypeDefinition BindEntryPointTypeDefinition(IEnumerable<SyntaxTree> syntaxTrees)
     {
         var typeBinder = CreateTypeBinder();
-        var diagnosticBuilder = new DiagnosticBag.Builder();
 
         var members = syntaxTrees.SelectMany(tree => tree.Members);
         foreach (var functionDeclarationMember in members.OfType<FunctionDeclarationMember>())
@@ -72,7 +71,7 @@ public partial class Binder
             var function = FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember);
             if (typeBinder.Scope.DeclareFunction(function) != function)
             {
-                diagnosticBuilder.Add(new Diagnostic()
+                ReportDiagnostic(new Diagnostic()
                 {
                     Message = "Ambiguous function declaration. Multiple functions with the same name and parameters set are declared within the same scope.",
                     ErrorCode = ErrorCode.AmbiguousFunctionDeclaration,
@@ -83,14 +82,12 @@ public partial class Binder
         }
 
         var boundMembers = members.Select(m => typeBinder.BindMember(m));
-        diagnosticBuilder.AddRange(boundMembers);
 
         // TODO: Use BoundNodeFactory to create BoundEntryPointTypeDefinition
         return new()
         {
             SyntaxNode = null,
-            BoundMembers = boundMembers.ToImmutableArray(),
-            DiagnosticBuilder = diagnosticBuilder
+            BoundMembers = boundMembers.ToImmutableArray()
         };
     }
 }

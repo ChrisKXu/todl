@@ -13,14 +13,12 @@ internal abstract partial class BoundNodeVisitor
         if (boundTodlTypeDefinition is BoundEntryPointTypeDefinition)
         {
             var boundMembers = VisitBoundMembers(boundTodlTypeDefinition.BoundMembers).ToList();
-            boundTodlTypeDefinition.DiagnosticBuilder.AddRange(boundMembers);
 
             // TODO: Use BoundNodeFactory to initialize BoundEntryPointTypeDefinition
             return new BoundEntryPointTypeDefinition()
             {
                 SyntaxNode = boundTodlTypeDefinition.SyntaxNode,
-                BoundMembers = boundMembers.ToImmutableArray(),
-                DiagnosticBuilder = boundTodlTypeDefinition.DiagnosticBuilder
+                BoundMembers = boundMembers.ToImmutableArray()
             };
         }
 
@@ -80,8 +78,7 @@ internal abstract partial class BoundNodeVisitor
             syntaxNode: boundAssignmentExpression.SyntaxNode,
             left: newLeft,
             @operator: boundAssignmentExpression.Operator,
-            right: newRight,
-            diagnosticBuilder: boundAssignmentExpression.DiagnosticBuilder);
+            right: newRight);
     }
 
     protected virtual BoundExpression VisitBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
@@ -98,8 +95,7 @@ internal abstract partial class BoundNodeVisitor
             syntaxNode: boundBinaryExpression.SyntaxNode,
             @operator: boundBinaryExpression.Operator,
             left: newLeft,
-            right: newRight,
-            diagnosticBuilder: boundBinaryExpression.DiagnosticBuilder);
+            right: newRight);
     }
 
     protected virtual BoundExpression VisitBoundConstant(BoundConstant boundConstant)
@@ -131,8 +127,7 @@ internal abstract partial class BoundNodeVisitor
         return BoundNodeFactory.CreateBoundUnaryExpression(
             syntaxNode: boundUnaryExpression.SyntaxNode,
             @operator: boundUnaryExpression.Operator,
-            operand: newOperand,
-            diagnosticBuilder: boundUnaryExpression.DiagnosticBuilder);
+            operand: newOperand);
     }
 
     protected virtual BoundExpression VisitBoundVariableExpression(BoundVariableExpression boundVariableExpression)
@@ -150,8 +145,7 @@ internal abstract partial class BoundNodeVisitor
             syntaxNode: boundFunctionMember.SyntaxNode,
             functionScope: boundFunctionMember.FunctionScope,
             body: (BoundBlockStatement)newBody,
-            functionSymbol: boundFunctionMember.FunctionSymbol,
-            diagnosticBuilder: boundFunctionMember.DiagnosticBuilder);
+            functionSymbol: boundFunctionMember.FunctionSymbol);
     }
 
     protected virtual BoundVariableMember VisitBoundVariableMember(BoundVariableMember boundVariableMember)
@@ -164,8 +158,7 @@ internal abstract partial class BoundNodeVisitor
 
         return BoundNodeFactory.CreateBoundVariableMember(
             syntaxNode: boundVariableMember.SyntaxNode,
-            boundVariableDeclarationStatement: (BoundVariableDeclarationStatement)newStatement,
-            diagnosticBuilder: boundVariableMember.DiagnosticBuilder);
+            boundVariableDeclarationStatement: (BoundVariableDeclarationStatement)newStatement);
     }
 
     protected virtual BoundStatement VisitBoundBlockStatement(BoundBlockStatement boundBlockStatement)
@@ -197,8 +190,7 @@ internal abstract partial class BoundNodeVisitor
         return BoundNodeFactory.CreateBoundBlockStatement(
             syntaxNode: boundBlockStatement.SyntaxNode,
             scope: boundBlockStatement.Scope,
-            statements: statements.ToImmutable(),
-            diagnosticBuilder: boundBlockStatement.DiagnosticBuilder);
+            statements: statements.ToImmutable());
     }
 
     protected virtual BoundStatement VisitBoundExpressionStatement(BoundExpressionStatement boundExpressionStatement)
@@ -211,8 +203,7 @@ internal abstract partial class BoundNodeVisitor
 
         return BoundNodeFactory.CreateBoundExpressionStatement(
             syntaxNode: boundExpressionStatement.SyntaxNode,
-            expression: newExpression,
-            diagnosticBuilder: boundExpressionStatement.DiagnosticBuilder);
+            expression: newExpression);
     }
 
     protected virtual BoundStatement VisitBoundReturnStatement(BoundReturnStatement boundReturnStatement)
@@ -230,8 +221,7 @@ internal abstract partial class BoundNodeVisitor
 
         return BoundNodeFactory.CreateBoundReturnStatement(
             syntaxNode: boundReturnStatement.SyntaxNode,
-            boundReturnValueExpression: newExpression,
-            diagnosticBuilder: boundReturnStatement.DiagnosticBuilder);
+            boundReturnValueExpression: newExpression);
     }
 
     protected virtual BoundStatement VisitBoundVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)
@@ -255,8 +245,7 @@ internal abstract partial class BoundNodeVisitor
             syntaxNode: boundConditionalStatement.SyntaxNode,
             condition: condition,
             consequence: consequence,
-            alternative: alternative,
-            diagnosticBuilder: boundConditionalStatement.DiagnosticBuilder);
+            alternative: alternative);
     }
 
     protected virtual BoundStatement VisitBoundLoopStatement(BoundLoopStatement boundLoopStatement)
@@ -275,7 +264,6 @@ internal abstract partial class BoundNodeVisitor
             condition: condition,
             conditionNegated: boundLoopStatement.ConditionNegated,
             body: body,
-            boundLoopContext: boundLoopStatement.BoundLoopContext,
-            diagnosticBuilder: boundLoopStatement.DiagnosticBuilder);
+            boundLoopContext: boundLoopStatement.BoundLoopContext);
     }
 }

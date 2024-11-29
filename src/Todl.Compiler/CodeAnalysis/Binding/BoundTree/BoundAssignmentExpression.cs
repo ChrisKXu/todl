@@ -53,7 +53,6 @@ public partial class Binder
 {
     private BoundAssignmentExpression BindAssignmentExpression(AssignmentExpression assignmentExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
         var right = BindExpression(assignmentExpression.Right);
 
@@ -77,7 +76,7 @@ public partial class Binder
             }
             else if (variable.ReadOnly)
             {
-                diagnosticBuilder.Add(
+                ReportDiagnostic(
                     new Diagnostic()
                     {
                         Message = $"Variable {variableName} is read-only",
@@ -88,7 +87,7 @@ public partial class Binder
             }
             else if (!variable.Type.Equals(right.ResultType))
             {
-                diagnosticBuilder.Add(
+                ReportDiagnostic(
                     new Diagnostic()
                     {
                         Message = $"Variable {variableName} cannot be assigned to type {right.ResultType}",
@@ -102,7 +101,7 @@ public partial class Binder
         var left = BindExpression(assignmentExpression.Left);
         if (!left.LValue)
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
                     Message = $"The left-hand side of an assignment must be a variable, property or indexer",
@@ -116,7 +115,6 @@ public partial class Binder
             syntaxNode: assignmentExpression,
             left: left,
             right: right,
-            @operator: boundAssignmentOperator,
-            diagnosticBuilder: diagnosticBuilder);
+            @operator: boundAssignmentOperator);
     }
 }

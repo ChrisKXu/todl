@@ -22,11 +22,10 @@ public partial class Binder
         var condition = loopBinder.BindExpression(whileUntilStatement.ConditionExpression);
         var body = loopBinder.BindBlockStatementInScope(whileUntilStatement.BlockStatement);
         var negated = whileUntilStatement.WhileOrUntilToken.Kind == SyntaxKind.UntilKeywordToken;
-        var diagnosticBuilder = new DiagnosticBag.Builder();
 
         if (condition.ResultType.SpecialType != Symbols.SpecialType.ClrBoolean)
         {
-            diagnosticBuilder.Add(new Diagnostic()
+            ReportDiagnostic(new Diagnostic()
             {
                 ErrorCode = ErrorCode.TypeMismatch,
                 Level = DiagnosticLevel.Error,
@@ -40,7 +39,6 @@ public partial class Binder
             condition: condition,
             conditionNegated: negated,
             body: body,
-            boundLoopContext: loopBinder.BoundLoopContext,
-            diagnosticBuilder: diagnosticBuilder);
+            boundLoopContext: loopBinder.BoundLoopContext);
     }
 }

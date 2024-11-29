@@ -30,11 +30,10 @@ public partial class Binder
                 targetType: type);
         }
 
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var variable = Scope.LookupVariable(name);
         if (variable == null)
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
                     Message = $"Undeclared variable {nameExpression.Text}",
@@ -46,7 +45,6 @@ public partial class Binder
 
         return BoundNodeFactory.CreateBoundVariableExpression(
             syntaxNode: nameExpression,
-            variable: variable,
-            diagnosticBuilder: diagnosticBuilder);
+            variable: variable);
     }
 }
