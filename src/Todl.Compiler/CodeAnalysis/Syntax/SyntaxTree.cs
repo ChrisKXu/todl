@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
 
@@ -19,10 +20,13 @@ public sealed class SyntaxTree
     public ImmutableArray<Member> Members => parser.Members;
     public ClrTypeCacheView ClrTypeCacheView { get; private set; }
 
-    internal SyntaxTree(SourceText sourceText, ClrTypeCache clrTypeCache)
+    internal SyntaxTree(
+        SourceText sourceText,
+        ClrTypeCache clrTypeCache,
+        DiagnosticBag.Builder diagnosticBuilder)
     {
         lexer = new Lexer() { SourceText = sourceText };
-        parser = new Parser(this);
+        parser = new Parser(this, diagnosticBuilder);
 
         SourceText = sourceText;
         ClrTypeCache = clrTypeCache;
@@ -50,23 +54,32 @@ public sealed class SyntaxTree
         ClrTypeCacheView = ClrTypeCache.CreateView(Directives.OfType<ImportDirective>());
     }
 
-    public static SyntaxTree Parse(SourceText sourceText, ClrTypeCache clrTypeCache)
+    public static SyntaxTree Parse(
+        SourceText sourceText,
+        ClrTypeCache clrTypeCache,
+        DiagnosticBag.Builder diagnosticBuilder)
     {
-        var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
+        var syntaxTree = new SyntaxTree(sourceText, clrTypeCache, diagnosticBuilder);
         syntaxTree.Parse();
         return syntaxTree;
     }
 
     // temporarily make available for tests and evaluator
-    internal static Expression ParseExpression(SourceText sourceText, ClrTypeCache clrTypeCache)
+    internal static Expression ParseExpression(
+        SourceText sourceText,
+        ClrTypeCache clrTypeCache,
+        DiagnosticBag.Builder diagnosticBuilder)
     {
-        var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
+        var syntaxTree = new SyntaxTree(sourceText, clrTypeCache, diagnosticBuilder);
         return syntaxTree.ParseExpression();
     }
 
-    internal static Statement ParseStatement(SourceText sourceText, ClrTypeCache clrTypeCache)
+    internal static Statement ParseStatement(
+        SourceText sourceText,
+        ClrTypeCache clrTypeCache,
+        DiagnosticBag.Builder diagnosticBuilder)
     {
-        var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
+        var syntaxTree = new SyntaxTree(sourceText, clrTypeCache, diagnosticBuilder);
         return syntaxTree.ParseStatement();
     }
 }

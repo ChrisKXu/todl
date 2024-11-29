@@ -10,6 +10,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax;
 public sealed partial class Parser
 {
     private readonly SyntaxTree syntaxTree;
+    private readonly DiagnosticBag.Builder diagnosticBuilder;
     private readonly ImmutableArray<Directive>.Builder directives
         = ImmutableArray.CreateBuilder<Directive>();
     private readonly ImmutableArray<Member>.Builder members
@@ -74,9 +75,10 @@ public sealed partial class Parser
         return ExpectToken(syntaxKind);
     }
 
-    internal Parser(SyntaxTree syntaxTree)
+    internal Parser(SyntaxTree syntaxTree, DiagnosticBag.Builder diagnosticBuilder)
     {
         this.syntaxTree = syntaxTree;
+        this.diagnosticBuilder = diagnosticBuilder;
     }
 
     public void Parse()
@@ -166,4 +168,7 @@ public sealed partial class Parser
             ErrorCode = ErrorCode.UnexpectedToken
         };
     }
+
+    private void ReportDiagnostic(Diagnostic diagnostic)
+        => diagnosticBuilder.Add(diagnostic);
 }

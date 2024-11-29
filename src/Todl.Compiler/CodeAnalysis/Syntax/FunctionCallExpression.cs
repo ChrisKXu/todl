@@ -72,13 +72,12 @@ public sealed partial class Parser
 
     private FunctionCallExpression ParseFunctionCallExpression(Expression baseExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var arguments = ParseCommaSeparatedSyntaxList(ParseArgument);
 
         var namedArguments = arguments.Items.Where(p => p.IsNamedArgument);
         if (namedArguments.Any() && namedArguments.Count() != arguments.Items.Length)
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
                     Message = "Either all or none of the arguments should be named arguments",
@@ -96,8 +95,7 @@ public sealed partial class Parser
                 BaseExpression = memberAccessExpression.BaseExpression,
                 DotToken = memberAccessExpression.DotToken,
                 NameToken = memberAccessExpression.MemberIdentifierToken,
-                Arguments = arguments,
-                DiagnosticBuilder = diagnosticBuilder
+                Arguments = arguments
             };
         }
 
@@ -107,8 +105,7 @@ public sealed partial class Parser
         {
             SyntaxTree = syntaxTree,
             NameToken = (baseExpression as NameExpression).SyntaxTokens[0],
-            Arguments = arguments,
-            DiagnosticBuilder = diagnosticBuilder
+            Arguments = arguments
         };
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
+using System.Runtime.InteropServices;
 using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -12,8 +12,6 @@ using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.Evaluation
 {
-    using Binder = CodeAnalysis.Binding.BoundTree.Binder;
-
     /// <summary>
     /// An evaluator evaluates expressions and statements and give out results as output
     /// </summary>
@@ -34,8 +32,9 @@ namespace Todl.Compiler.Evaluation
 
         public EvaluatorResult Evaluate(SourceText sourceText)
         {
-            var expression = SyntaxTree.ParseExpression(sourceText, clrTypeCache);
-            var diagnostics = expression.GetDiagnostics();
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            var expression = SyntaxTree.ParseExpression(sourceText, clrTypeCache, diagnosticBuilder);
+            var diagnostics = diagnosticBuilder.Build();
 
             if (diagnostics.Any())
             {
@@ -47,7 +46,6 @@ namespace Todl.Compiler.Evaluation
                 };
             }
 
-            var diagnosticBuilder = new DiagnosticBag.Builder();
             var binder = Binder.CreateScriptBinder(clrTypeCache, diagnosticBuilder);
             var boundExpression = binder.BindExpression(expression);
 

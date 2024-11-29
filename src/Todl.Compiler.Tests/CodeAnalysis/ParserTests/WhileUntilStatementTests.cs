@@ -11,7 +11,6 @@ public sealed class WhileUntilStatementTests
     {
         var breakStatement = TestUtils.ParseStatement<BreakStatement>("break;");
         breakStatement.Should().NotBeNull();
-        breakStatement.GetDiagnostics().Should().BeEmpty();
 
         breakStatement.BreakKeywordToken.Kind.Should().Be(SyntaxKind.BreakKeywordToken);
         breakStatement.SemicolonToken.Kind.Should().Be(SyntaxKind.SemicolonToken);
@@ -23,7 +22,6 @@ public sealed class WhileUntilStatementTests
     {
         var continueStatement = TestUtils.ParseStatement<ContinueStatement>("continue;");
         continueStatement.Should().NotBeNull();
-        continueStatement.GetDiagnostics().Should().BeEmpty();
 
         continueStatement.ContinueKeywordToken.Kind.Should().Be(SyntaxKind.ContinueKeywordToken);
         continueStatement.SemicolonToken.Kind.Should().Be(SyntaxKind.SemicolonToken);
@@ -37,7 +35,6 @@ public sealed class WhileUntilStatementTests
     {
         var whileUntilStatement = TestUtils.ParseStatement<WhileUntilStatement>(inputText);
         whileUntilStatement.Should().NotBeNull();
-        whileUntilStatement.GetDiagnostics().Should().BeEmpty();
 
         whileUntilStatement.WhileOrUntilToken.Kind.Should().Be(expectedSyntaxKind);
         whileUntilStatement.BlockStatement.InnerStatements.Should().BeEmpty();
@@ -56,7 +53,6 @@ public sealed class WhileUntilStatementTests
     {
         var whileUntilStatement = TestUtils.ParseStatement<WhileUntilStatement>(inputText);
         whileUntilStatement.Should().NotBeNull();
-        whileUntilStatement.GetDiagnostics().Should().BeEmpty();
         whileUntilStatement.BlockStatement.InnerStatements.Should().HaveCount(expectedStatementsCount);
     }
 }

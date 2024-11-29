@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
@@ -47,14 +46,13 @@ public sealed partial class Parser
         var conditionExpression = ParseExpression();
         var blockStatement = ParseBlockStatement();
         var elseClauses = ImmutableArray.CreateBuilder<ElseClause>();
-        var diagnosticBuilder = new DiagnosticBag.Builder();
 
         while (Current.Kind == SyntaxKind.ElseKeywordToken)
         {
             var elseClause = ParseElseClause();
             if (elseClause.IfOrUnlessToken.HasValue && elseClause.IfOrUnlessToken.Value.Kind != ifOrUnlessToken.Kind)
             {
-                diagnosticBuilder.Add(new Diagnostic()
+                ReportDiagnostic(new Diagnostic()
                 {
                     Message = "if/unless qualifier mismatch",
                     ErrorCode = ErrorCode.IfUnlessKeywordMismatch,
@@ -74,7 +72,7 @@ public sealed partial class Parser
             {
                 foreach (var b in bareElseClauses)
                 {
-                    diagnosticBuilder.Add(new Diagnostic()
+                    ReportDiagnostic(new Diagnostic()
                     {
                         Message = "bare else clauses must be after all other else clauses",
                         ErrorCode = ErrorCode.MisplacedBareElseClauses,
@@ -88,7 +86,7 @@ public sealed partial class Parser
             {
                 foreach (var b in bareElseClauses)
                 {
-                    diagnosticBuilder.Add(new Diagnostic()
+                    ReportDiagnostic(new Diagnostic()
                     {
                         Message = "duplicate bare else clauses",
                         ErrorCode = ErrorCode.DuplicateBareElseClauses,
@@ -105,8 +103,7 @@ public sealed partial class Parser
             IfOrUnlessToken = ifOrUnlessToken,
             ConditionExpression = conditionExpression,
             BlockStatement = blockStatement,
-            ElseClauses = elseClauses.ToImmutable(),
-            DiagnosticBuilder = diagnosticBuilder
+            ElseClauses = elseClauses.ToImmutable()
         };
     }
 

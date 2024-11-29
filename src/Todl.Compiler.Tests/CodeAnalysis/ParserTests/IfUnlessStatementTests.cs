@@ -82,7 +82,6 @@ public sealed class IfUnlessStatementTests
         var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>(inputText);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(expectedCount);
-        ifUnlessStatement.GetDiagnostics().Should().BeEmpty();
     }
 
     [Theory]
@@ -93,17 +92,17 @@ public sealed class IfUnlessStatementTests
         var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>(inputText);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(1);
-        ifUnlessStatement.GetDiagnostics().Should().BeEmpty();
     }
 
     [Fact]
     public void IfUnlessStatementsCannotHaveMoreThanOneBareElseClauses()
     {
-        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else { }");
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else { }", diagnosticBuilder);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(2);
 
-        var diagnostics = ifUnlessStatement.GetDiagnostics();
+        var diagnostics = diagnosticBuilder.Build();
         diagnostics.Should().NotBeEmpty();
         diagnostics.Count(d => d.ErrorCode == ErrorCode.DuplicateBareElseClauses).Should().Be(2);
 
@@ -116,11 +115,12 @@ public sealed class IfUnlessStatementTests
     [Fact]
     public void IfUnlessStatementsCannotHaveMisplacedElseClause()
     {
-        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else if b == 0 { }");
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else if b == 0 { }", diagnosticBuilder);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(2);
 
-        var diagnostics = ifUnlessStatement.GetDiagnostics();
+        var diagnostics = diagnosticBuilder.Build();
         diagnostics.Should().NotBeEmpty();
         diagnostics.Count(d => d.ErrorCode == ErrorCode.MisplacedBareElseClauses).Should().Be(1);
 
@@ -133,11 +133,12 @@ public sealed class IfUnlessStatementTests
     [Fact]
     public void IfUnlessStatementsCannotHaveMismatchedIfOrUnlessKeywords()
     {
-        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else unless b == 0 { }");
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else unless b == 0 { }", diagnosticBuilder);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(1);
 
-        var diagnostics = ifUnlessStatement.GetDiagnostics();
+        var diagnostics = diagnosticBuilder.Build();
         diagnostics.Should().NotBeEmpty();
         diagnostics.Count(d => d.ErrorCode == ErrorCode.IfUnlessKeywordMismatch).Should().Be(1);
 

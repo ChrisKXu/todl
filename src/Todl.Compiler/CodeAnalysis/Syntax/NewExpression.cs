@@ -17,7 +17,6 @@ public sealed partial class Parser
 {
     private NewExpression ParseNewExpression()
     {
-        var diagnosticsBuilder = new DiagnosticBag.Builder();
         var newKeywordToken = ExpectToken(SyntaxKind.NewKeywordToken);
         var typeNameExpression = ParseNameExpression();
         var arguments = ParseCommaSeparatedSyntaxList(ParseArgument);
@@ -25,7 +24,7 @@ public sealed partial class Parser
         var namedArguments = arguments.Items.Where(p => p.IsNamedArgument);
         if (namedArguments.Any() && namedArguments.Count() != arguments.Items.Length)
         {
-            diagnosticsBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
                     Message = "Either all or none of the arguments should be named arguments",
@@ -40,8 +39,7 @@ public sealed partial class Parser
             SyntaxTree = syntaxTree,
             NewKeywordToken = newKeywordToken,
             TypeNameExpression = typeNameExpression,
-            Arguments = arguments,
-            DiagnosticBuilder = diagnosticsBuilder
+            Arguments = arguments
         };
     }
 }

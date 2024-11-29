@@ -30,7 +30,7 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = ~10UL;", ~10UL)]
     public void ConstantFoldingUnaryOperatorTest(string inputText, object expectedValue)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, new());
         var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         module.GetDiagnostics().Should().BeEmpty();
 
@@ -54,7 +54,7 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = -20;", -20)]
     public void BasicConstantFoldingTests(string inputText, object expectedValue)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, new());
         var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         module.GetDiagnostics().Should().BeEmpty();
 
@@ -76,7 +76,7 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = 10; let b = a + 10; const c = a + b;")]
     public void BasicConstantFoldingNegativeTests(string inputText)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, new());
         var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         module.GetDiagnostics().Should().BeEmpty();
 
@@ -88,7 +88,7 @@ public sealed class ConstantFoldingTests
     [Fact]
     public void PartiallyFoldedConstantTests()
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString("let a = 10 + 10;"), TestDefaults.DefaultClrTypeCache);
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString("let a = 10 + 10;"), TestDefaults.DefaultClrTypeCache, new());
         var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
         module.GetDiagnostics().Should().BeEmpty();
 

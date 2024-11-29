@@ -21,7 +21,7 @@ internal static class TestUtils
         string inputText, DiagnosticBag.Builder diagnosticBuilder)
         where TBoundExpression : BoundExpression
     {
-        var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
         var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
         return binder.BindExpression(expression).As<TBoundExpression>();
     }
@@ -39,7 +39,7 @@ internal static class TestUtils
         string inputText, DiagnosticBag.Builder diagnosticBuilder)
         where TBoundStatement : BoundStatement
     {
-        var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+        var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
         var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
         return binder.BindStatement(statement).As<TBoundStatement>();
     }
@@ -104,33 +104,79 @@ internal static class TestUtils
         emitter.ILProcessor.Body.Instructions.ShouldHaveExactInstructionSequence(expectedInstructions);
     }
 
+    internal static SyntaxTree ParseSyntaxTree(string inputText, DiagnosticBag.Builder diagnosticBuilder)
+        => SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+
     internal static SyntaxTree ParseSyntaxTree(string inputText)
-        => SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var syntaxTree = ParseSyntaxTree(inputText, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+        return syntaxTree;
+    }
+
+    internal static TExpression ParseExpression<TExpression>(string sourceText, DiagnosticBag.Builder diagnosticBuilder)
+        where TExpression : Expression
+        => SyntaxTree.ParseExpression(
+            SourceText.FromString(sourceText),
+            TestDefaults.DefaultClrTypeCache,
+            diagnosticBuilder).As<TExpression>();
 
     internal static TExpression ParseExpression<TExpression>(string sourceText)
-            where TExpression : Expression
+        where TExpression : Expression
     {
-        return SyntaxTree.ParseExpression(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache).As<TExpression>();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var expression = ParseExpression<TExpression>(sourceText, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+        return expression;
     }
+
+    internal static TStatement ParseStatement<TStatement>(string sourceText, DiagnosticBag.Builder diagnosticBuilder)
+        where TStatement : Statement
+        => SyntaxTree.ParseStatement(
+            SourceText.FromString(sourceText),
+            TestDefaults.DefaultClrTypeCache,
+            diagnosticBuilder).As<TStatement>();
 
     internal static TStatement ParseStatement<TStatement>(string sourceText)
         where TStatement : Statement
     {
-        return SyntaxTree.ParseStatement(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache).As<TStatement>();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var statement = ParseStatement<TStatement>(sourceText, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+        return statement;
     }
+
+    internal static TDirective ParseDirective<TDirective>(string sourceText, DiagnosticBag.Builder diagnosticBuilder)
+        where TDirective : Directive
+        => SyntaxTree.Parse(
+            SourceText.FromString(sourceText),
+            TestDefaults.DefaultClrTypeCache,
+            diagnosticBuilder).Directives[0].As<TDirective>();
 
     internal static TDirective ParseDirective<TDirective>(string sourceText)
         where TDirective : Directive
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache);
-        return syntaxTree.Directives[0].As<TDirective>();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var directive = ParseDirective<TDirective>(sourceText, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+        return directive;
     }
+
+    internal static TMember ParseMember<TMember>(string sourceText, DiagnosticBag.Builder diagnosticBuilder)
+        where TMember : Member
+        => SyntaxTree.Parse(
+            SourceText.FromString(sourceText),
+            TestDefaults.DefaultClrTypeCache,
+            diagnosticBuilder).Members[0].As<TMember>();
 
     internal static TMember ParseMember<TMember>(string sourceText)
         where TMember : Member
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(sourceText), TestDefaults.DefaultClrTypeCache);
-        return syntaxTree.Members[0].As<TMember>();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var member = ParseMember<TMember>(sourceText, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+        return member;
     }
 
     internal static void ShouldHaveExactInstructionSequence(

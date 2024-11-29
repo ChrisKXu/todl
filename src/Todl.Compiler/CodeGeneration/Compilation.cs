@@ -50,7 +50,7 @@ public sealed class Compilation : IDisposable, IDiagnosable
 
         ClrTypeCache = ClrTypeCache.FromAssemblies(metadataLoadContext.GetAssemblies(), metadataLoadContext.CoreAssembly);
 
-        var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, ClrTypeCache));
+        var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, ClrTypeCache, diagnosticBuilder));
         MainModule = BoundModule.Create(ClrTypeCache, syntaxTrees.ToImmutableList());
 
         if (MainModule.EntryPoint is null)
