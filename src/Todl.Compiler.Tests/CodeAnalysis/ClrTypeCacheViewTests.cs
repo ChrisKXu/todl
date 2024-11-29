@@ -52,7 +52,7 @@ public sealed class ClrTypeCacheViewTests
     [InlineData("System.Uri", "import { Console, Uri } from System;", typeof(Uri))]
     public void TestResolveImportedTypes(string typeName, string importDirective, Type targetType)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(importDirective), TestDefaults.DefaultClrTypeCache);
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(importDirective), TestDefaults.DefaultClrTypeCache, new());
         var resolvedType = syntaxTree.ClrTypeCacheView.ResolveBaseType(typeName);
         resolvedType.ClrType.AssemblyQualifiedName.Should().Be(targetType.AssemblyQualifiedName);
         resolvedType.SpecialType.Should().Be(SpecialType.None);

@@ -17,9 +17,14 @@ internal sealed class BoundModule : IDiagnosable
     public static BoundModule Create(
         ClrTypeCache clrTypeCache,
         IReadOnlyList<SyntaxTree> syntaxTrees)
+        => Create(clrTypeCache, syntaxTrees, new());
+
+    public static BoundModule Create(
+        ClrTypeCache clrTypeCache,
+        IReadOnlyList<SyntaxTree> syntaxTrees,
+        DiagnosticBag.Builder diagnosticBuilder)
     {
         syntaxTrees ??= Array.Empty<SyntaxTree>();
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var binder = Binder.CreateModuleBinder(clrTypeCache, diagnosticBuilder);
         var entryPointType = binder.BindEntryPointTypeDefinition(syntaxTrees);
 

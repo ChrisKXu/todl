@@ -5,6 +5,7 @@ using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -24,14 +25,6 @@ public sealed class SyntaxNodeTests
     public void SyntaxTreePropertyShouldNotBeNull(string inputTextIgnored, SyntaxNode syntaxNode)
     {
         syntaxNode.SyntaxTree.Should().NotBeNull();
-    }
-
-    [Theory]
-    [MemberData(nameof(GetAllSyntaxNodesForTest))]
-    [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
-    public void DiagnosticBagShouldNotBeNull(string inputTextIgnored, SyntaxNode syntaxNode)
-    {
-        syntaxNode.GetDiagnostics().Should().NotBeNull();
     }
 
     [Fact]
@@ -99,27 +92,29 @@ public sealed class SyntaxNodeTests
 
     public static IEnumerable<object[]> GetAllSyntaxNodesForTest()
     {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+
         foreach (var inputText in testExpressions)
         {
-            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
             yield return new object[] { inputText, expression };
         }
 
         foreach (var inputText in testStatements)
         {
-            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
             yield return new object[] { inputText, statement };
         }
 
         foreach (var inputText in testDirectives)
         {
-            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
             yield return new object[] { inputText, syntaxTree.Directives[0] };
         }
 
         foreach (var inputText in testMembers)
         {
-            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
             yield return new object[] { inputText, syntaxTree.Members[0] };
         }
     }
