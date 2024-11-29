@@ -73,7 +73,6 @@ public partial class Binder
     private BoundMemberAccessExpression BindMemberAccessExpression(
         MemberAccessExpression memberAccessExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundBaseExpression = BindExpression(memberAccessExpression.BaseExpression);
 
         if (boundBaseExpression.ResultType is not ClrTypeSymbol clrTypeSymbol)
@@ -89,12 +88,11 @@ public partial class Binder
                 var boundFieldAccessExpression = BoundNodeFactory.CreateBoundClrFieldAccessExpression(
                     syntaxNode: memberAccessExpression,
                     boundBaseExpression: boundBaseExpression,
-                    fieldInfo: fieldInfo,
-                    diagnosticBuilder: diagnosticBuilder);
+                    fieldInfo: fieldInfo);
 
                 if (!boundFieldAccessExpression.IsPublic)
                 {
-                    ReportNonPublicMemberAccess(boundFieldAccessExpression, diagnosticBuilder);
+                    ReportNonPublicMemberAccess(boundFieldAccessExpression);
                 }
 
                 return boundFieldAccessExpression;
@@ -102,18 +100,17 @@ public partial class Binder
                 var boundPropertyAccessExpression = BoundNodeFactory.CreateBoundClrPropertyAccessExpression(
                     syntaxNode: memberAccessExpression,
                     boundBaseExpression: boundBaseExpression,
-                    propertyInfo: propertyInfo,
-                    diagnosticBuilder: diagnosticBuilder);
+                    propertyInfo: propertyInfo);
 
                 if (!boundPropertyAccessExpression.IsPublic)
                 {
-                    ReportNonPublicMemberAccess(boundPropertyAccessExpression, diagnosticBuilder);
+                    ReportNonPublicMemberAccess(boundPropertyAccessExpression);
                 }
 
                 return boundPropertyAccessExpression;
         }
 
-        diagnosticBuilder.Add(
+        ReportDiagnostic(
             new Diagnostic()
             {
                 Message = $"Member '{memberAccessExpression.MemberIdentifierToken.Text}' does not exist in type '{clrTypeSymbol.ClrType.FullName}'",
@@ -124,13 +121,12 @@ public partial class Binder
 
         return BoundNodeFactory.CreateBoundInvalidMemberAccessExpression(
             syntaxNode: memberAccessExpression,
-            boundBaseExpression: boundBaseExpression,
-            diagnosticBuilder: diagnosticBuilder);
+            boundBaseExpression: boundBaseExpression);
     }
 
-    private void ReportNonPublicMemberAccess(BoundMemberAccessExpression boundMemberAccessExpression, DiagnosticBag.Builder diagnosticBuilder)
+    private void ReportNonPublicMemberAccess(BoundMemberAccessExpression boundMemberAccessExpression)
     {
-        diagnosticBuilder.Add(
+        ReportDiagnostic(
             new Diagnostic()
             {
                 Message = $"Member {boundMemberAccessExpression.MemberName} is not public.",

@@ -12,16 +12,18 @@ internal sealed class BoundModule : IDiagnosable
     public IReadOnlyCollection<SyntaxTree> SyntaxTrees { get; private init; }
     public BoundEntryPointTypeDefinition EntryPointType { get; private init; }
     public BoundFunctionMember EntryPoint => EntryPointType.EntryPointFunctionMember;
+    public DiagnosticBag.Builder DiagnosticBuilder { get; private init; }
 
     public static BoundModule Create(
         ClrTypeCache clrTypeCache,
         IReadOnlyList<SyntaxTree> syntaxTrees)
     {
         syntaxTrees ??= Array.Empty<SyntaxTree>();
-        var binder = Binder.CreateModuleBinder(clrTypeCache);
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var binder = Binder.CreateModuleBinder(clrTypeCache, diagnosticBuilder);
         var entryPointType = binder.BindEntryPointTypeDefinition(syntaxTrees);
 
-        var controlFlowAnalyzer = new ControlFlowAnalyzer();
+        var controlFlowAnalyzer = new ControlFlowAnalyzer(diagnosticBuilder);
         entryPointType.Accept(controlFlowAnalyzer);
 
         var boundNodeVisitors = new BoundNodeVisitor[]
@@ -37,10 +39,11 @@ internal sealed class BoundModule : IDiagnosable
         return new()
         {
             SyntaxTrees = syntaxTrees,
-            EntryPointType = entryPointType
+            EntryPointType = entryPointType,
+            DiagnosticBuilder = diagnosticBuilder
         };
     }
 
     public IEnumerable<Diagnostic> GetDiagnostics()
-        => EntryPointType.GetDiagnostics();
+        => DiagnosticBuilder.Build();
 }

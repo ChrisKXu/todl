@@ -23,7 +23,6 @@ public partial class Binder
 {
     private BoundFunctionMember BindFunctionDeclarationMember(FunctionDeclarationMember functionDeclarationMember)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var functionSymbol = Scope.LookupFunctionSymbol(functionDeclarationMember);
         var functionBinder = CreateFunctionBinder(functionSymbol);
 
@@ -34,7 +33,7 @@ public partial class Binder
 
         if (duplicate is not null)
         {
-            diagnosticBuilder.Add(new Diagnostic()
+            ReportDiagnostic(new Diagnostic()
             {
                 Message = $"Parameter '{duplicate.First().Name}' is a duplicate",
                 ErrorCode = ErrorCode.DuplicateParameterName,
@@ -55,8 +54,7 @@ public partial class Binder
             {
                 var returnStatement = BoundNodeFactory.CreateBoundReturnStatement(
                     syntaxNode: null,
-                    boundReturnValueExpression: null,
-                    diagnosticBuilder: diagnosticBuilder);
+                    boundReturnValueExpression: null);
 
                 body = BoundNodeFactory.CreateBoundBlockStatement(
                     syntaxNode: body.SyntaxNode,
@@ -69,7 +67,6 @@ public partial class Binder
             syntaxNode: functionDeclarationMember,
             functionScope: functionBinder.Scope,
             body: body,
-            functionSymbol: functionSymbol,
-            diagnosticBuilder: diagnosticBuilder);
+            functionSymbol: functionSymbol);
     }
 }

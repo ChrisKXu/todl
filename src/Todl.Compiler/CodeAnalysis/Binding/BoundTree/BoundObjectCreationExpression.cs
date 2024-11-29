@@ -24,27 +24,22 @@ public partial class Binder
 {
     private BoundObjectCreationExpression BindNewExpression(NewExpression newExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundTypeExpression = BindTypeExpression(newExpression.TypeNameExpression);
-        diagnosticBuilder.Add(boundTypeExpression);
 
         // Treating no arguments as the same way of positional arguments
         if (newExpression.Arguments.Items.IsEmpty || !newExpression.Arguments.Items[0].IsNamedArgument)
         {
             return BindNewExpressionWithPositionalArgumentsInternal(
-                diagnosticBuilder: diagnosticBuilder,
                 targetType: boundTypeExpression.ResultType,
                 newExpression: newExpression);
         }
 
         return BindNewExpressionWithNamedArgumentsInternal(
-            diagnosticBuilder: diagnosticBuilder,
             targetType: boundTypeExpression.ResultType,
             newExpression: newExpression);
     }
 
     private BoundObjectCreationExpression BindNewExpressionWithPositionalArgumentsInternal(
-        DiagnosticBag.Builder diagnosticBuilder,
         TypeSymbol targetType,
         NewExpression newExpression)
     {
@@ -58,22 +53,18 @@ public partial class Binder
 
         if (constructorInfo is null)
         {
-            ReportNoMatchingConstructorCandidate(diagnosticBuilder, newExpression);
+            ReportNoMatchingConstructorCandidate(newExpression);
         }
-
-        diagnosticBuilder.AddRange(boundArguments);
 
         return new()
         {
             SyntaxNode = newExpression,
             ConstructorInfo = constructorInfo,
             BoundArguments = boundArguments.ToImmutableArray(),
-            DiagnosticBuilder = diagnosticBuilder
         };
     }
 
     private BoundObjectCreationExpression BindNewExpressionWithNamedArgumentsInternal(
-        DiagnosticBag.Builder diagnosticBuilder,
         TypeSymbol targetType,
         NewExpression newExpression)
     {
@@ -96,32 +87,28 @@ public partial class Binder
 
         if (constructorInfo is null)
         {
-            ReportNoMatchingConstructorCandidate(diagnosticBuilder, newExpression);
+            ReportNoMatchingConstructorCandidate(newExpression);
 
             return new()
             {
                 SyntaxNode = newExpression,
-                DiagnosticBuilder = diagnosticBuilder
             };
         }
 
         var boundArguments = constructorInfo.GetParameters().OrderBy(p => p.Position).Select(p => argumentsDictionary[p.Name]).ToList();
-        diagnosticBuilder.AddRange(boundArguments);
 
         return new()
         {
             SyntaxNode = newExpression,
             ConstructorInfo = constructorInfo,
             BoundArguments = boundArguments.ToImmutableArray(),
-            DiagnosticBuilder = diagnosticBuilder
         };
     }
 
     private void ReportNoMatchingConstructorCandidate(
-        DiagnosticBag.Builder diagnosticBuilder,
         NewExpression newExpression)
     {
-        diagnosticBuilder.Add(
+        ReportDiagnostic(
             new Diagnostic()
             {
                 Message = $"No matching constructor {newExpression.TypeNameExpression.Text} found.",

@@ -66,7 +66,6 @@ public sealed class BoundUnaryExpressionTests
         var boundUnaryExpression = boundExpressionStatement.Expression.As<BoundUnaryExpression>();
 
         boundUnaryExpression.Should().NotBeNull();
-        boundUnaryExpression.GetDiagnostics().Should().BeEmpty();
         boundUnaryExpression.Operator.BoundUnaryOperatorKind.Should().Be(expectedOperatorKind);
         boundUnaryExpression.ResultType.SpecialType.Should().Be(expectedSpecialType);
         boundUnaryExpression.Operand.As<BoundVariableExpression>().Should().NotBeNull();
@@ -85,14 +84,17 @@ public sealed class BoundUnaryExpressionTests
     [InlineData("{ let a = \"abc\"; ++a; }", "++", typeof(string))]
     public void TestBindUnaryExpressionWithMismatchedSpecialTypes(string input, string operatorText, Type operandType)
     {
-        var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input, diagnosticBuilder);
         var boundExpressionStatement = boundBlockStatement.Statements[^1].As<BoundExpressionStatement>();
         var boundUnaryExpression = boundExpressionStatement.Expression.As<BoundUnaryExpression>();
 
         boundUnaryExpression.Should().NotBeNull();
-        boundUnaryExpression.GetDiagnostics().Should().NotBeEmpty();
 
-        var diagnostic = boundUnaryExpression.GetDiagnostics().First();
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().NotBeEmpty();
+
+        var diagnostic = diagnostics.First();
         diagnostic.Message.Should().Be($"Unary operator \"{operatorText}\" is not supported on type \"{operandType.FullName}\"");
         diagnostic.ErrorCode.Should().Be(ErrorCode.UnsupportedOperator);
     }
@@ -104,14 +106,17 @@ public sealed class BoundUnaryExpressionTests
     [InlineData("{ const a = 1; a--; }")]
     public void TestBindUnaryExpressionWithReadOnlyVariables(string input)
     {
-        var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input, diagnosticBuilder);
         var boundExpressionStatement = boundBlockStatement.Statements[^1].As<BoundExpressionStatement>();
         var boundUnaryExpression = boundExpressionStatement.Expression.As<BoundUnaryExpression>();
 
         boundUnaryExpression.Should().NotBeNull();
-        boundUnaryExpression.GetDiagnostics().Should().NotBeEmpty();
 
-        var diagnostic = boundUnaryExpression.GetDiagnostics().First();
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().NotBeEmpty();
+
+        var diagnostic = diagnostics.First();
         diagnostic.Message.Should().Be($"Expression \"a\" is read only.");
         diagnostic.ErrorCode.Should().Be(ErrorCode.ReadOnlyVariable);
     }

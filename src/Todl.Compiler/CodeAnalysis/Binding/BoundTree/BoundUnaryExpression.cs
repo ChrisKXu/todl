@@ -214,7 +214,6 @@ public partial class Binder
 {
     private BoundUnaryExpression BindUnaryExpression(UnaryExpression unaryExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundOperand = BindExpression(unaryExpression.Operand);
         var boundUnaryOperator = BoundUnaryOperator.Create(
             operandType: boundOperand.ResultType,
@@ -223,7 +222,7 @@ public partial class Binder
 
         if (boundUnaryOperator is null)
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
                     Message = $"Unary operator \"{unaryExpression.Operator.Text}\" is not supported on type \"{boundOperand.ResultType.Name}\"",
@@ -235,7 +234,7 @@ public partial class Binder
 
         if (!boundOperand.LValue && boundUnaryOperator.BoundUnaryOperatorKind.HasSideEffect())
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
                     Message = $"Unary operator \"{unaryExpression.Operator.Text}\" requires an lvalue.",
@@ -246,7 +245,7 @@ public partial class Binder
         }
         else if (boundOperand.ReadOnly && boundUnaryOperator.BoundUnaryOperatorKind.HasSideEffect())
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
                     Message = $"Expression \"{unaryExpression.Operand.Text}\" is read only.",
@@ -259,7 +258,6 @@ public partial class Binder
         return BoundNodeFactory.CreateBoundUnaryExpression(
             syntaxNode: unaryExpression,
             operand: boundOperand,
-            @operator: boundUnaryOperator,
-            diagnosticBuilder: diagnosticBuilder);
+            @operator: boundUnaryOperator);
     }
 }

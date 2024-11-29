@@ -89,14 +89,13 @@ public partial class Binder
 {
     private BoundBinaryExpression BindBinaryExpression(BinaryExpression binaryExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundLeft = BindExpression(binaryExpression.Left);
         var boundRight = BindExpression(binaryExpression.Right);
         var boundBinaryOperator = BoundBinaryOperatorFactory.MatchBinaryOperator(boundLeft.ResultType, boundRight.ResultType, binaryExpression.Operator.Kind);
 
         if (boundBinaryOperator is null)
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
                     Message = $"Operator {binaryExpression.Operator.Text} is not supported on types {boundLeft.ResultType.Name} and {boundRight.ResultType.Name}",
@@ -110,7 +109,6 @@ public partial class Binder
             syntaxNode: binaryExpression,
             left: boundLeft,
             right: boundRight,
-            @operator: boundBinaryOperator,
-            diagnosticBuilder: diagnosticBuilder);
+            @operator: boundBinaryOperator);
     }
 }

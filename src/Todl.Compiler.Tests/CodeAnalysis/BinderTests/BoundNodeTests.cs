@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using FluentAssertions;
@@ -9,6 +8,7 @@ using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 using Binder = Todl.Compiler.CodeAnalysis.Binding.BoundTree.Binder;
@@ -23,15 +23,6 @@ public sealed class BoundNodeTests
     {
         boundNode.SyntaxNode.Should().NotBeNull();
         boundNode.SyntaxNode.Should().Be(syntaxNode);
-    }
-
-    [Theory]
-    [MemberData(nameof(GetAllSyntaxNodesForTest))]
-    [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
-    void DiagnosticBagShouldNotBeNull(SyntaxNode unused, BoundNode boundNode)
-    {
-        boundNode.DiagnosticBuilder.Should().NotBeNull();
-        boundNode.GetDiagnostics().Should().NotBeNull();
     }
 
     [Fact]
@@ -118,10 +109,12 @@ public sealed class BoundNodeTests
 
     public static IEnumerable<object[]> GetAllSyntaxNodesForTest()
     {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+
         foreach (var inputText in testExpressions)
         {
             var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-            var binder = Binder.CreateScriptBinder(TestDefaults.DefaultClrTypeCache);
+            var binder = Binder.CreateScriptBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
             yield return new object[] { expression, binder.BindExpression(expression) };
         }
 
@@ -129,7 +122,7 @@ public sealed class BoundNodeTests
         {
             var sourceText = SourceText.FromString("{ const a = 5; a; }");
             var blockStatement = SyntaxTree.ParseStatement(sourceText, TestDefaults.DefaultClrTypeCache);
-            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
             var boundBlockStatement =
                 binder.BindStatement(blockStatement).As<BoundBlockStatement>();
 
@@ -141,7 +134,7 @@ public sealed class BoundNodeTests
         foreach (var inputText in testStatements)
         {
             var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
             yield return new object[] { statement, binder.BindStatement(statement) };
         }
 
@@ -149,7 +142,7 @@ public sealed class BoundNodeTests
         {
             var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
             var member = syntaxTree.Members[0];
-            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
             if (member is FunctionDeclarationMember functionDeclarationMember)
             {
                 binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember));

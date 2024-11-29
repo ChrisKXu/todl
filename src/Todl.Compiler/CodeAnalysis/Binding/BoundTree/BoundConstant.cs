@@ -150,8 +150,7 @@ public partial class Binder
 
     private BoundConstant ReportUnsupportedLiteral(LiteralExpression literalExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
-        diagnosticBuilder.Add(
+        ReportDiagnostic(
             new Diagnostic()
             {
                 Message = $"Literal value {literalExpression.Text} is not supported",
@@ -162,7 +161,6 @@ public partial class Binder
 
         return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: literalExpression,
-            value: ConstantValueFactory.Null,
-            diagnosticBuilder: diagnosticBuilder);
+            value: ConstantValueFactory.Null);
     }
 }

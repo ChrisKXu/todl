@@ -32,7 +32,7 @@ public partial class Binder
 
         if (!IsInFunction)
         {
-            boundReturnStatement.DiagnosticBuilder.Add(new Diagnostic()
+            ReportDiagnostic(new Diagnostic()
             {
                 Message = "Return statements are only valid within a function declaration.",
                 ErrorCode = ErrorCode.UnexpectedStatement,
@@ -42,7 +42,7 @@ public partial class Binder
         }
         else if (!boundReturnStatement.ReturnType.Equals(FunctionSymbol.ReturnType))
         {
-            boundReturnStatement.DiagnosticBuilder.Add(new Diagnostic()
+            ReportDiagnostic(new Diagnostic()
             {
                 Message = $"The function expects a return type of {FunctionSymbol.ReturnType} but {boundReturnStatement.ReturnType} is returned.",
                 ErrorCode = ErrorCode.TypeMismatch,

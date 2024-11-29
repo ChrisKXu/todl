@@ -16,7 +16,6 @@ public sealed class BoundConditionalStatementTests
     {
         var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
         boundConditionalStatement.Should().NotBeNull();
-        boundConditionalStatement.GetDiagnostics().Should().BeEmpty();
 
         boundConditionalStatement.Condition.As<BoundConstant>().Value.Should().Be(true);
 
@@ -30,7 +29,6 @@ public sealed class BoundConditionalStatementTests
         var inputText = "if true { 0.ToString(); } else { 1.ToString(); }";
         var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
         boundConditionalStatement.Should().NotBeNull();
-        boundConditionalStatement.GetDiagnostics().Should().BeEmpty();
 
         boundConditionalStatement.Condition.As<BoundConstant>().Value.Should().Be(true);
 
@@ -47,7 +45,6 @@ public sealed class BoundConditionalStatementTests
         var inputText = "unless 0 == 1 { 0.ToString(); } else unless 1 == 2 { 1.ToString(); } else { 2.ToString(); }";
         var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
         boundConditionalStatement.Should().NotBeNull();
-        boundConditionalStatement.GetDiagnostics().Should().BeEmpty();
 
         void ValidateCondition(BoundConditionalStatement boundConditionalStatement, int expectedLeft, int expectedRight)
         {
@@ -96,11 +93,11 @@ public sealed class BoundConditionalStatementTests
     [InlineData("if 0 { 0.ToString(); }")]
     public void BoundConditionalStatementShouldHaveBooleanConditions(string inputText)
     {
-        var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText, diagnosticBuilder);
         boundConditionalStatement.Should().NotBeNull();
 
-        var diagnostics = boundConditionalStatement.GetDiagnostics().ToList();
-        diagnostics[0].ErrorCode.Should().Be(ErrorCode.TypeMismatch);
+        diagnosticBuilder.Build().First().ErrorCode.Should().Be(ErrorCode.TypeMismatch);
     }
 
     [Fact]

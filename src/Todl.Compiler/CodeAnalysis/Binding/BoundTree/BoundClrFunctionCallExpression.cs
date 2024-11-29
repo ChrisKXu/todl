@@ -57,8 +57,6 @@ public partial class Binder
     {
         Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
-        var diagnosticBuilder = new DiagnosticBag.Builder();
-
         var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
         var isStatic = boundBaseExpression is BoundTypeExpression;
         var candidates = type
@@ -83,7 +81,7 @@ public partial class Binder
 
         if (candidate is null)
         {
-            ReportNoMatchingFunctionCandidate(diagnosticBuilder, functionCallExpression);
+            ReportNoMatchingFunctionCandidate(functionCallExpression);
         }
 
         var boundArguments = candidate
@@ -95,8 +93,7 @@ public partial class Binder
             syntaxNode: functionCallExpression,
             boundBaseExpression: boundBaseExpression,
             methodInfo: candidate,
-            boundArguments: boundArguments.ToImmutableArray(),
-            diagnosticBuilder: diagnosticBuilder);
+            boundArguments: boundArguments.ToImmutableArray());
     }
 
     private BoundClrFunctionCallExpression BindFunctionCallWithPositionalArgumentsInternal(
@@ -104,8 +101,6 @@ public partial class Binder
         FunctionCallExpression functionCallExpression)
     {
         Debug.Assert(boundBaseExpression.ResultType.IsNative);
-
-        var diagnosticBuilder = new DiagnosticBag.Builder();
 
         var boundArguments = functionCallExpression.Arguments.Items.Select(a => BindExpression(a.Expression));
         var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
@@ -119,22 +114,20 @@ public partial class Binder
 
         if (candidate is null)
         {
-            ReportNoMatchingFunctionCandidate(diagnosticBuilder, functionCallExpression);
+            ReportNoMatchingFunctionCandidate(functionCallExpression);
         }
 
         return BoundNodeFactory.CreateBoundClrFunctionCallExpression(
             syntaxNode: functionCallExpression,
             boundBaseExpression: boundBaseExpression,
             methodInfo: candidate,
-            boundArguments: boundArguments.ToImmutableArray(),
-            diagnosticBuilder: diagnosticBuilder);
+            boundArguments: boundArguments.ToImmutableArray());
     }
 
     private void ReportNoMatchingFunctionCandidate(
-        DiagnosticBag.Builder diagnosticBuilder,
         FunctionCallExpression functionCallExpression)
     {
-        diagnosticBuilder.Add(
+        ReportDiagnostic(
             new Diagnostic()
             {
                 Message = $"No matching function '{functionCallExpression.NameToken.Text}' found.",

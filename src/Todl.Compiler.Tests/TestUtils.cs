@@ -10,6 +10,7 @@ using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 using Todl.Compiler.Tests.CodeGeneration;
 
 namespace Todl.Compiler.Tests;
@@ -17,29 +18,47 @@ namespace Todl.Compiler.Tests;
 internal static class TestUtils
 {
     internal static TBoundExpression BindExpression<TBoundExpression>(
-        string inputText)
+        string inputText, DiagnosticBag.Builder diagnosticBuilder)
         where TBoundExpression : BoundExpression
     {
         var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
+        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
         return binder.BindExpression(expression).As<TBoundExpression>();
     }
 
+    internal static TBoundExpression BindExpression<TBoundExpression>(string inputText)
+        where TBoundExpression : BoundExpression
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundExpression = BindExpression<TBoundExpression>(inputText, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+        return boundExpression;
+    }
+
     internal static TBoundStatement BindStatement<TBoundStatement>(
-        string inputText)
+        string inputText, DiagnosticBag.Builder diagnosticBuilder)
         where TBoundStatement : BoundStatement
     {
         var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
-        return binder.BindStatement(statement) as TBoundStatement;
+        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+        return binder.BindStatement(statement).As<TBoundStatement>();
+    }
+
+    internal static TBoundStatement BindStatement<TBoundStatement>(string inputText)
+        where TBoundStatement : BoundStatement
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundStatement = BindStatement<TBoundStatement>(inputText, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+        return boundStatement;
     }
 
     internal static TBoundMember BindMember<TBoundMember>(
-        string inputText)
+        string inputText, DiagnosticBag.Builder diagnosticBuilder)
         where TBoundMember : BoundMember
     {
         var syntaxTree = ParseSyntaxTree(inputText);
-        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache);
+        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
         var member = syntaxTree.Members[0];
 
         if (member is FunctionDeclarationMember functionDeclarationMember)
@@ -50,10 +69,20 @@ internal static class TestUtils
         return binder.BindMember(member).As<TBoundMember>();
     }
 
+    internal static TBoundMember BindMember<TBoundMember>(string inputText)
+        where TBoundMember : BoundMember
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundMember = BindMember<TBoundMember>(inputText, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+        return boundMember;
+    }
+
     internal static void EmitExpressionAndVerify(string input, params TestInstruction[] expectedInstructions)
     {
-        var boundExpressionStatement = BindStatement<BoundExpressionStatement>(input);
-        boundExpressionStatement.GetDiagnostics().Should().BeEmpty();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundExpressionStatement = BindStatement<BoundExpressionStatement>(input, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
 
         var emitter = new TestEmitter();
         emitter.EmitStatement(boundExpressionStatement);
@@ -64,8 +93,9 @@ internal static class TestUtils
 
     internal static void EmitStatementAndVerify(string input, params TestInstruction[] expectedInstructions)
     {
-        var boundStatement = BindStatement<BoundStatement>(input);
-        boundStatement.GetDiagnostics().Should().BeEmpty();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundStatement = BindStatement<BoundStatement>(input, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
 
         var emitter = new TestEmitter();
         emitter.EmitStatement(boundStatement);
