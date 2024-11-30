@@ -6,6 +6,7 @@ using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.Diagnostics;
 using Xunit;
+using Xunit.Sdk;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
@@ -140,10 +141,8 @@ public sealed class BoundFunctionMemberTests
             int func() { return 20; }
             int func(int a) { return a; }
         ";
-        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
-        boundModule.GetDiagnostics().Should().BeEmpty();
+        TestUtils.BindModule(inputText).Should().NotBeNull();
     }
 
     [Theory]
@@ -151,10 +150,10 @@ public sealed class BoundFunctionMemberTests
     [InlineData("void func(int a, string a) { }")]
     public void FunctionParametersShouldHaveDistinctNames(string inputText)
     {
-        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        TestUtils.BindModule(inputText, diagnosticBuilder).Should().NotBeNull();
 
-        var diagnostics = boundModule.GetDiagnostics().ToList();
+        var diagnostics = diagnosticBuilder.Build().ToList();
         diagnostics.Should().NotBeEmpty();
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.DuplicateParameterName);
     }
@@ -166,10 +165,11 @@ public sealed class BoundFunctionMemberTests
             int func(int a, string b) { return b.Length + a; }
             int func(int a, string b) { return b.Length + a + 1; }
         ";
-        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
-        var diagnostics = boundModule.GetDiagnostics().ToList();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        TestUtils.BindModule(inputText, diagnosticBuilder).Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build().ToList();
         diagnostics.Count.Should().Be(1);
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.AmbiguousFunctionDeclaration);
     }
@@ -185,10 +185,11 @@ public sealed class BoundFunctionMemberTests
             int func(int a, string b) { return b.Length + a; }
             int func(string b, int a) { return b.Length + a + 1; }
         ";
-        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
-        var diagnostics = boundModule.GetDiagnostics().ToList();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        TestUtils.BindModule(inputText, diagnosticBuilder).Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build().ToList();
         diagnostics.Count.Should().Be(1);
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.AmbiguousFunctionDeclaration);
     }
@@ -200,10 +201,11 @@ public sealed class BoundFunctionMemberTests
             int func(int a, string b) { return b.Length + a; }
             int func(int b, string a) { return a.Length + b + 1; }
         ";
-        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
-        var diagnostics = boundModule.GetDiagnostics().ToList();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        TestUtils.BindModule(inputText, diagnosticBuilder).Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build().ToList();
         diagnostics.Count.Should().Be(1);
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.AmbiguousFunctionDeclaration);
     }
@@ -217,7 +219,6 @@ public sealed class BoundFunctionMemberTests
     {
         var function = TestUtils.BindMember<BoundFunctionMember>(inputText);
         function.Body.Statements.Should().NotBeEmpty();
-
         function.Body.Statements.OfType<BoundReturnStatement>().Should().HaveCount(1);
 
         var lastStatement = function.Body.Statements[^1];

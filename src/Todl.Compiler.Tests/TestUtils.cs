@@ -6,6 +6,7 @@ using FluentAssertions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
+using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -76,6 +77,20 @@ internal static class TestUtils
         var boundMember = BindMember<TBoundMember>(inputText, diagnosticBuilder);
         diagnosticBuilder.Build().Should().BeEmpty();
         return boundMember;
+    }
+
+    internal static BoundModule BindModule(string inputText, DiagnosticBag.Builder diagnosticBuilder)
+    {
+        var syntaxTree = ParseSyntaxTree(inputText, diagnosticBuilder);
+        return BoundModule.Create(TestDefaults.DefaultClrTypeCache, [syntaxTree], diagnosticBuilder);
+    }
+
+    internal static BoundModule BindModule(string inputText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundModule = BindModule(inputText, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+        return boundModule;
     }
 
     internal static void EmitExpressionAndVerify(string input, params TestInstruction[] expectedInstructions)
