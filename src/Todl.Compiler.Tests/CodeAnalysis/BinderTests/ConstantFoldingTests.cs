@@ -4,6 +4,7 @@ using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -30,9 +31,10 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = ~10UL;", ~10UL)]
     public void ConstantFoldingUnaryOperatorTest(string inputText, object expectedValue)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, new());
-        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
-        module.GetDiagnostics().Should().BeEmpty();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, [syntaxTree], diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
 
         var variableMember = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>();
         variableMember.BoundVariableDeclarationStatement.Variable.Constant.Should().Be(true);
@@ -54,9 +56,10 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = -20;", -20)]
     public void BasicConstantFoldingTests(string inputText, object expectedValue)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, new());
-        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
-        module.GetDiagnostics().Should().BeEmpty();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, [syntaxTree], diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
 
         var variableMember = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>();
         variableMember.BoundVariableDeclarationStatement.Variable.Constant.Should().Be(true);
@@ -76,9 +79,10 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = 10; let b = a + 10; const c = a + b;")]
     public void BasicConstantFoldingNegativeTests(string inputText)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, new());
-        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
-        module.GetDiagnostics().Should().BeEmpty();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, [syntaxTree], diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
 
         var variableMember = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>();
         var boundVariableDeclarationStatement = variableMember.BoundVariableDeclarationStatement;
@@ -88,9 +92,10 @@ public sealed class ConstantFoldingTests
     [Fact]
     public void PartiallyFoldedConstantTests()
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString("let a = 10 + 10;"), TestDefaults.DefaultClrTypeCache, new());
-        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
-        module.GetDiagnostics().Should().BeEmpty();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var syntaxTree = SyntaxTree.Parse(SourceText.FromString("let a = 10 + 10;"), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, [syntaxTree], diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
 
         var statement = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>().BoundVariableDeclarationStatement;
         statement.Variable.Constant.Should().Be(false);

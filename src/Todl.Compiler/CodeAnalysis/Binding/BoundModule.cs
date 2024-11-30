@@ -7,17 +7,12 @@ using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
 
-internal sealed class BoundModule : IDiagnosable
+internal sealed class BoundModule
 {
     public IReadOnlyCollection<SyntaxTree> SyntaxTrees { get; private init; }
     public BoundEntryPointTypeDefinition EntryPointType { get; private init; }
     public BoundFunctionMember EntryPoint => EntryPointType.EntryPointFunctionMember;
     public DiagnosticBag.Builder DiagnosticBuilder { get; private init; }
-
-    public static BoundModule Create(
-        ClrTypeCache clrTypeCache,
-        IReadOnlyList<SyntaxTree> syntaxTrees)
-        => Create(clrTypeCache, syntaxTrees, new());
 
     public static BoundModule Create(
         ClrTypeCache clrTypeCache,
@@ -48,7 +43,4 @@ internal sealed class BoundModule : IDiagnosable
             DiagnosticBuilder = diagnosticBuilder
         };
     }
-
-    public IEnumerable<Diagnostic> GetDiagnostics()
-        => DiagnosticBuilder.Build();
 }

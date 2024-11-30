@@ -114,11 +114,8 @@ public sealed class BoundConditionalStatementTests
                 }
                 b = a + 5;
             }";
-        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
-        boundModule.GetDiagnostics().Should().BeEmpty();
+        var func = TestUtils.BindMember<BoundFunctionMember>(inputText);
 
-        var func = boundModule.EntryPointType.BoundMembers[0].As<BoundFunctionMember>();
         var conditionalStatement = func.Body.Statements[2].As<BoundConditionalStatement>();
         var consequence = conditionalStatement.Consequence.As<BoundBlockStatement>();
         consequence.Scope.Parent.Should().Be(func.FunctionScope);

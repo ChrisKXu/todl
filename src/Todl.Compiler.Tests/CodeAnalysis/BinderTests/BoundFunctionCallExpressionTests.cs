@@ -90,9 +90,8 @@ public sealed class BoundFunctionCallExpressionTests
                 Console.WriteLine();
             }
         ";
-        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
-        boundModule.GetDiagnostics().Should().BeEmpty();
+
+        TestUtils.BindModule(inputText).Should().NotBeNull();
     }
 
     [Fact]
@@ -109,10 +108,8 @@ public sealed class BoundFunctionCallExpressionTests
                 return 0;
             }
         ";
-        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
-        boundModule.GetDiagnostics().Should().BeEmpty();
+        TestUtils.BindModule(inputText).Should().NotBeNull();
     }
 
     [Fact]
@@ -129,10 +126,8 @@ public sealed class BoundFunctionCallExpressionTests
                 return 0;
             }
         ";
-        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
-        boundModule.GetDiagnostics().Should().BeEmpty();
+        TestUtils.BindModule(inputText).Should().NotBeNull();
     }
 
     [Fact]
@@ -151,9 +146,7 @@ public sealed class BoundFunctionCallExpressionTests
                 return 0;
             }
         ";
-        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
 
-        boundModule.GetDiagnostics().Should().BeEmpty();
+        TestUtils.BindModule(inputText).Should().NotBeNull();
     }
 }

@@ -51,7 +51,7 @@ public sealed class Compilation : IDisposable, IDiagnosable
         ClrTypeCache = ClrTypeCache.FromAssemblies(metadataLoadContext.GetAssemblies(), metadataLoadContext.CoreAssembly);
 
         var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, ClrTypeCache, diagnosticBuilder));
-        MainModule = BoundModule.Create(ClrTypeCache, syntaxTrees.ToImmutableList());
+        MainModule = BoundModule.Create(ClrTypeCache, syntaxTrees.ToImmutableList(), diagnosticBuilder);
 
         if (MainModule.EntryPoint is null)
         {
@@ -77,8 +77,5 @@ public sealed class Compilation : IDisposable, IDiagnosable
     }
 
     public IEnumerable<Diagnostic> GetDiagnostics()
-    {
-        diagnosticBuilder.Add(MainModule);
-        return diagnosticBuilder.Build();
-    }
+        => diagnosticBuilder.Build();
 }
