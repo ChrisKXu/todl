@@ -27,44 +27,6 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Test
-      run: dotnet test src --no-build --verbosity normal --blame-hang --blame-hang-timeout 30s
+      run: dotnet test src --verbosity normal --blame-hang --blame-hang-timeout 30s
     - name: Samples
       run: dotnet publish src --configuration Debug && dotnet build samples
-
-  deploy:
-    needs: validate
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: 8.0.x
-    - name: Publish
-      run: dotnet publish src --configuration Release
-    - name: Log in to the Container registry
-      uses: docker/login-action@v2
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Extract metadata (tags, labels) for Docker
-      id: meta
-      uses: docker/metadata-action@v4
-      with:
-        images: ghcr.io/${{ github.repository }}/playground
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: out/Release/src/Todl.Playground/Published
-        push: ${{ github.ref == 'refs/heads/main' }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        build-args: |
-          ARG_GIT_BRANCH=${{ github.ref_name }}
-          ARG_GIT_COMMIT=${{ github.sha }}
-      
