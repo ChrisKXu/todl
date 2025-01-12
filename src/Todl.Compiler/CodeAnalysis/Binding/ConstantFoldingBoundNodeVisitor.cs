@@ -4,7 +4,7 @@ using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
 
-internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
+internal sealed class ConstantFoldingBoundNodeVisitor : BoundTreeRewriter
 {
     private readonly Dictionary<VariableSymbol, BoundConstant> constantMap = new();
     private readonly ConstantValueFactory constantValueFactory;
@@ -14,7 +14,13 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
         this.constantValueFactory = constantValueFactory;
     }
 
-    protected override BoundExpression VisitBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
+    private BoundExpression VisitBoundExpression(BoundExpression expression)
+        => (BoundExpression)Visit(expression);
+
+    public override BoundNode VisitBoundConstant(BoundConstant boundConstant)
+        => boundConstant;
+
+    public override BoundNode VisitBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
     {
         var left = VisitBoundExpression(boundBinaryExpression.Left);
         var right = VisitBoundExpression(boundBinaryExpression.Right);
@@ -109,7 +115,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
             value: value);
     }
 
-    protected override BoundExpression VisitBoundUnaryExpression(BoundUnaryExpression boundUnaryExpression)
+    public override BoundNode VisitBoundUnaryExpression(BoundUnaryExpression boundUnaryExpression)
     {
         var visitedOperand = VisitBoundExpression(boundUnaryExpression.Operand);
 
@@ -154,7 +160,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
             return BoundNodeFactory.CreateBoundConstant(
                 syntaxNode: boundUnaryExpression.SyntaxNode,
                 value: value);
-        };
+        }
 
         if (visitedOperand == boundUnaryExpression.Operand)
         {
@@ -167,23 +173,13 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
             operand: visitedOperand);
     }
 
-    protected override BoundStatement VisitBoundVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)
+    public override BoundNode VisitBoundVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)
     {
         var visitedExpression = VisitBoundExpression(boundVariableDeclarationStatement.InitializerExpression);
 
         if (visitedExpression is BoundConstant constant)
         {
             constantMap.Add(boundVariableDeclarationStatement.Variable, constant);
-
-            if (visitedExpression == boundVariableDeclarationStatement.InitializerExpression)
-            {
-                return boundVariableDeclarationStatement;
-            }
-
-            return BoundNodeFactory.CreateBoundVariableDeclarationStatement(
-                syntaxNode: boundVariableDeclarationStatement.SyntaxNode,
-                variable: boundVariableDeclarationStatement.Variable,
-                initializerExpression: constant);
         }
 
         if (visitedExpression == boundVariableDeclarationStatement.InitializerExpression)
@@ -197,7 +193,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
             initializerExpression: visitedExpression);
     }
 
-    protected override BoundStatement VisitBoundReturnStatement(BoundReturnStatement boundReturnStatement)
+    public override BoundNode VisitBoundReturnStatement(BoundReturnStatement boundReturnStatement)
     {
         if (boundReturnStatement.BoundReturnValueExpression is null)
         {
@@ -215,7 +211,7 @@ internal sealed class ConstantFoldingBoundNodeVisitor : BoundNodeVisitor
             boundReturnValueExpression: boundReturnValueExpression);
     }
 
-    protected override BoundExpression VisitBoundVariableExpression(BoundVariableExpression boundVariableExpression)
+    public override BoundNode VisitBoundVariableExpression(BoundVariableExpression boundVariableExpression)
     {
         if (boundVariableExpression.Constant)
         {
