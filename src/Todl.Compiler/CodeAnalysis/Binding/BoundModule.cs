@@ -24,11 +24,16 @@ internal sealed class BoundModule
         var binder = Binder.CreateModuleBinder(clrTypeCache, constantValueFactory, diagnosticBuilder);
         var entryPointType = binder.BindEntryPointTypeDefinition(syntaxTrees);
 
-        var controlFlowAnalyzer = new ControlFlowAnalyzer(diagnosticBuilder);
-        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundNodeVisitor(binder.ConstantValueFactory);
+        var boundTreeVisitors = new BoundTreeVisitor[]
+        {
+            new ControlFlowAnalyzer(diagnosticBuilder),
+            new ConstantFoldingBoundNodeVisitor(binder.ConstantValueFactory)
+        };
 
-        entryPointType.Accept(controlFlowAnalyzer);
-        entryPointType.Accept(constantFoldingBoundNodeVisitor);
+        foreach (var boundTreeVisitor in boundTreeVisitors)
+        {
+            entryPointType = (BoundEntryPointTypeDefinition)entryPointType.Accept(boundTreeVisitor);
+        }
 
         return new()
         {
