@@ -56,8 +56,8 @@ public partial class Binder
             Scope = BoundScope.GlobalScope
         };
 
-    public static Binder CreateModuleBinder(ClrTypeCache clrTypeCache, DiagnosticBag.Builder diagnosticBuilder)
-        => new ModuleBinder(clrTypeCache, diagnosticBuilder)
+    public static Binder CreateModuleBinder(ClrTypeCache clrTypeCache, ConstantValueFactory constantValueFactory, DiagnosticBag.Builder diagnosticBuilder)
+        => new ModuleBinder(clrTypeCache, constantValueFactory, diagnosticBuilder)
         {
             Scope = BoundScope.GlobalScope.CreateChildScope(BoundScopeKind.Module)
         };
@@ -98,11 +98,11 @@ public partial class Binder
 
     internal sealed class ModuleBinder : Binder
     {
-        public ModuleBinder(ClrTypeCache clrTypeCache, DiagnosticBag.Builder diagnosticBuilder)
+        public ModuleBinder(ClrTypeCache clrTypeCache, ConstantValueFactory constantValueFactory, DiagnosticBag.Builder diagnosticBuilder)
         {
             ClrTypeCache = clrTypeCache;
             BoundBinaryOperatorFactory = new(clrTypeCache);
-            ConstantValueFactory = new(clrTypeCache.BuiltInTypes);
+            ConstantValueFactory = constantValueFactory;
             DiagnosticBuilder = diagnosticBuilder;
         }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
@@ -19,7 +20,7 @@ public sealed class BoundNodeTests
 {
     [Theory]
     [MemberData(nameof(GetAllSyntaxNodesForTest))]
-    void BoundNodeShouldHaveCorrectSyntaxNode(SyntaxNode syntaxNode, BoundNode boundNode)
+    internal void BoundNodeShouldHaveCorrectSyntaxNode(SyntaxNode syntaxNode, BoundNode boundNode)
     {
         boundNode.SyntaxNode.Should().NotBeNull();
         boundNode.SyntaxNode.Should().Be(syntaxNode);
@@ -75,8 +76,19 @@ public sealed class BoundNodeTests
             .NotContain(t => !t.IsAbstract && !t.IsSealed);
     }
 
-    private static readonly string[] testExpressions = new[]
+    [Theory]
+    [MemberData(nameof(GetAllSyntaxNodesForTest))]
+    internal void AllBoundNodeTypesHaveWalkerAndRewriterImplemented(SyntaxNode _, BoundNode boundNode)
     {
+        var walker = new TestBoundTreeWalker();
+        var rewriter = new TestBoundTreeRewriter();
+
+        boundNode.Accept(walker).Should().Be(boundNode);
+        boundNode.Accept(rewriter).Should().Be(boundNode);
+    }
+
+    private static readonly string[] testExpressions =
+    [
         "System.Uri", // BoundTypeExpression
         "a = 5", // BoundAssignmentExpression
         "-10", // BoundUnaryExpression
@@ -87,10 +99,10 @@ public sealed class BoundNodeTests
         "\"abc\".Length", // BoundClrPropertyAccessExpression
         "int.MaxValue", // BoundClrFieldAccessExpression
         "new System.Exception()" // BoundNewExpression
-    };
+    ];
 
-    private static readonly string[] testStatements = new[]
-    {
+    private static readonly string[] testStatements =
+    [
         "const a = 10;", // BoundVariableDeclarationStatement
         "a = 10;", // BoundExpressionStatement
         "{ const a = 5; a.ToString(); }", // BoundBlockStatement
@@ -99,7 +111,7 @@ public sealed class BoundNodeTests
         "break;", // BreakStatement
         "continue;", // ContinueStatement
         "while true { }" // WhileUntilStatement
-    };
+    ];
 
     private static readonly string[] testMembers = new[]
     {
@@ -122,7 +134,7 @@ public sealed class BoundNodeTests
         {
             var sourceText = SourceText.FromString("{ const a = 5; a; }");
             var blockStatement = SyntaxTree.ParseStatement(sourceText, TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
-            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, TestDefaults.ConstantValueFactory, diagnosticBuilder);
             var boundBlockStatement =
                 binder.BindStatement(blockStatement).As<BoundBlockStatement>();
 
@@ -134,7 +146,7 @@ public sealed class BoundNodeTests
         foreach (var inputText in testStatements)
         {
             var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
-            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, TestDefaults.ConstantValueFactory, diagnosticBuilder);
             yield return new object[] { statement, binder.BindStatement(statement) };
         }
 
@@ -142,7 +154,7 @@ public sealed class BoundNodeTests
         {
             var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
             var member = syntaxTree.Members[0];
-            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+            var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, TestDefaults.ConstantValueFactory, diagnosticBuilder);
             if (member is FunctionDeclarationMember functionDeclarationMember)
             {
                 binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember));
@@ -150,5 +162,15 @@ public sealed class BoundNodeTests
 
             yield return new object[] { member, binder.BindMember(member) };
         }
+    }
+
+    private sealed class TestBoundTreeWalker : BoundTreeWalker
+    {
+        public override BoundNode DefaultVisit(BoundNode node) => default;
+    }
+
+    private sealed class TestBoundTreeRewriter : BoundTreeRewriter
+    {
+        public override BoundNode DefaultVisit(BoundNode node) => default;
     }
 }

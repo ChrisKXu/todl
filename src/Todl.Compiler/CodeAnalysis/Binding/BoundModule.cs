@@ -20,20 +20,19 @@ internal sealed class BoundModule
         DiagnosticBag.Builder diagnosticBuilder)
     {
         syntaxTrees ??= Array.Empty<SyntaxTree>();
-        var binder = Binder.CreateModuleBinder(clrTypeCache, diagnosticBuilder);
+        var constantValueFactory = new ConstantValueFactory(clrTypeCache.BuiltInTypes);
+        var binder = Binder.CreateModuleBinder(clrTypeCache, constantValueFactory, diagnosticBuilder);
         var entryPointType = binder.BindEntryPointTypeDefinition(syntaxTrees);
 
-        var controlFlowAnalyzer = new ControlFlowAnalyzer(diagnosticBuilder);
-        entryPointType.Accept(controlFlowAnalyzer);
-
-        var boundNodeVisitors = new BoundNodeVisitor[]
+        var boundTreeVisitors = new BoundTreeVisitor[]
         {
-            new ConstantFoldingBoundNodeVisitor(binder.ConstantValueFactory)
+            new ControlFlowAnalyzer(diagnosticBuilder),
+            new ConstantFoldingBoundTreeRewriter(binder.ConstantValueFactory)
         };
 
-        foreach (var v in boundNodeVisitors)
+        foreach (var boundTreeVisitor in boundTreeVisitors)
         {
-            entryPointType = (BoundEntryPointTypeDefinition)v.VisitBoundTypeDefinition(entryPointType);
+            entryPointType = (BoundEntryPointTypeDefinition)entryPointType.Accept(boundTreeVisitor);
         }
 
         return new()

@@ -2,12 +2,14 @@
 using System.Linq;
 using System.Reflection;
 using Todl.Compiler.CodeAnalysis;
+using Todl.Compiler.CodeAnalysis.Binding;
 
 namespace Todl.Compiler.Tests;
 
 static class TestDefaults
 {
     public static readonly ClrTypeCache DefaultClrTypeCache;
+    public static readonly ConstantValueFactory ConstantValueFactory;
     public static readonly MetadataLoadContext MetadataLoadContext;
 
     static TestDefaults()
@@ -25,5 +27,6 @@ static class TestDefaults
         }
 
         DefaultClrTypeCache = ClrTypeCache.FromAssemblies(assemblies: MetadataLoadContext.GetAssemblies(), MetadataLoadContext.CoreAssembly);
+        ConstantValueFactory = new ConstantValueFactory(DefaultClrTypeCache.BuiltInTypes);
     }
 }

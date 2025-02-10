@@ -23,7 +23,7 @@ internal static class TestUtils
         where TBoundExpression : BoundExpression
     {
         var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
-        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, TestDefaults.ConstantValueFactory, diagnosticBuilder);
         return binder.BindExpression(expression).As<TBoundExpression>();
     }
 
@@ -41,7 +41,7 @@ internal static class TestUtils
         where TBoundStatement : BoundStatement
     {
         var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
-        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, TestDefaults.ConstantValueFactory, diagnosticBuilder);
         return binder.BindStatement(statement).As<TBoundStatement>();
     }
 
@@ -59,7 +59,7 @@ internal static class TestUtils
         where TBoundMember : BoundMember
     {
         var syntaxTree = ParseSyntaxTree(inputText);
-        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+        var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, TestDefaults.ConstantValueFactory, diagnosticBuilder);
         var member = syntaxTree.Members[0];
 
         if (member is FunctionDeclarationMember functionDeclarationMember)
