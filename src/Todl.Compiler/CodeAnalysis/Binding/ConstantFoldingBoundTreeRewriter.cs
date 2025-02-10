@@ -4,18 +4,15 @@ using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
 
-internal sealed class ConstantFoldingBoundNodeVisitor : BoundTreeRewriter
+internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
 {
     private readonly Dictionary<VariableSymbol, BoundConstant> constantMap = new();
     private readonly ConstantValueFactory constantValueFactory;
 
-    public ConstantFoldingBoundNodeVisitor(ConstantValueFactory constantValueFactory)
+    public ConstantFoldingBoundTreeRewriter(ConstantValueFactory constantValueFactory)
     {
         this.constantValueFactory = constantValueFactory;
     }
-
-    private BoundExpression VisitBoundExpression(BoundExpression expression)
-        => (BoundExpression)Visit(expression);
 
     public override BoundNode VisitBoundConstant(BoundConstant boundConstant)
         => boundConstant;

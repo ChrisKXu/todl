@@ -27,7 +27,7 @@ internal sealed class BoundModule
         var boundTreeVisitors = new BoundTreeVisitor[]
         {
             new ControlFlowAnalyzer(diagnosticBuilder),
-            new ConstantFoldingBoundNodeVisitor(binder.ConstantValueFactory)
+            new ConstantFoldingBoundTreeRewriter(binder.ConstantValueFactory)
         };
 
         foreach (var boundTreeVisitor in boundTreeVisitors)
