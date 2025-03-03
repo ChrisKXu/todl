@@ -14,6 +14,7 @@
         IfUnlessKeywordMismatch,
         DuplicateBareElseClauses,
         MisplacedBareElseClauses,
+        InvalidLoopLabel,
 
         // BinderErrors
         UndeclaredVariable,
