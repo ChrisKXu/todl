@@ -58,7 +58,7 @@ public sealed partial class Parser
         {
             ReportDiagnostic(new()
             {
-                Message = "",
+                Message = "Invalid loop label. Only simple names are allowed.",
                 ErrorCode = ErrorCode.InvalidLoopLabel,
                 TextLocation = label.Text.GetTextLocation(),
                 Level = DiagnosticLevel.Error

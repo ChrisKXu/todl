@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
@@ -69,11 +70,11 @@ public partial class Binder
             Scope = Scope.CreateChildScope(BoundScopeKind.Type)
         };
 
-    public Binder CreateLoopBinder()
-        => new LoopBinder(BoundLoopContext?.CreateChildContext() ?? new BoundLoopContext())
+    public Binder CreateLoopBinder(LoopLabel loopLabel)
+        => new LoopBinder(BoundLoopContext?.CreateChildContext(loopLabel) ?? new BoundLoopContext() { LoopLabel = loopLabel })
         {
             Parent = this,
-            Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
+            Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement),
         };
 
     protected void ReportDiagnostic(Diagnostic diagnostic)

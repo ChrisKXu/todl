@@ -45,6 +45,66 @@ public sealed class BoundLoopStatementTests
         TestUtils.BindStatement<BoundLoopStatement>(inputText).Should().NotBeNull();
     }
 
+    [Fact]
+    public void BoundLoopStatementsCanHaveNamedLoopContext()
+    {
+        var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>("while true: loop { }");
+        boundLoopStatement.Should().NotBeNull();
+        boundLoopStatement.BoundLoopContext.Should().NotBeNull();
+        boundLoopStatement.BoundLoopContext.LoopLabel.Label.Text.Should().Be("loop");
+    }
+
+    [Fact]
+    public void LoopContextCanBeStacked()
+    {
+        // This test makes sure that
+        // 1. loop labels can be stacked
+        // 2. loop labels can be reused in different scopes
+        // 3. we can have mixed loop labels and unnamed loops
+        var loops = TestUtils.BindStatement<BoundBlockStatement>(
+            @"{
+                while true: loop1 { 
+                    while true: loop2 { 
+                        while true: loop3 { } 
+                    } 
+                }
+
+                while true: loop2 { 
+                    while true: loop3 { }
+                }
+
+                while true {
+                    while true: inner { }
+                }
+            }");
+
+        loops.Should().NotBeNull();
+
+        var loop1_1 = loops.Statements[0].As<BoundLoopStatement>();
+        loop1_1.BoundLoopContext.LoopLabel.Label.Text.Should().Be("loop1");
+        loop1_1.BoundLoopContext.Parent.Should().BeNull();
+        var loop1_2 = loop1_1.Body.As<BoundBlockStatement>().Statements[0].As<BoundLoopStatement>();
+        loop1_2.BoundLoopContext.LoopLabel.Label.Text.Should().Be("loop2");
+        loop1_2.BoundLoopContext.Parent.Should().Be(loop1_1.BoundLoopContext);
+        var loop1_3 = loop1_2.Body.As<BoundBlockStatement>().Statements[0].As<BoundLoopStatement>();
+        loop1_3.BoundLoopContext.LoopLabel.Label.Text.Should().Be("loop3");
+        loop1_3.BoundLoopContext.Parent.Should().Be(loop1_2.BoundLoopContext);
+
+        var loop2_1 = loops.Statements[1].As<BoundLoopStatement>();
+        loop2_1.BoundLoopContext.LoopLabel.Label.Text.Should().Be("loop2");
+        loop2_1.BoundLoopContext.Parent.Should().BeNull();
+        var loop2_2 = loop2_1.Body.As<BoundBlockStatement>().Statements[0].As<BoundLoopStatement>();
+        loop2_2.BoundLoopContext.LoopLabel.Label.Text.Should().Be("loop3");
+        loop2_2.BoundLoopContext.Parent.Should().Be(loop2_1.BoundLoopContext);
+
+        var loop3_1 = loops.Statements[2].As<BoundLoopStatement>();
+        loop3_1.BoundLoopContext.LoopLabel.Should().BeNull();
+        loop3_1.BoundLoopContext.Parent.Should().BeNull();
+        var loop3_2 = loop3_1.Body.As<BoundBlockStatement>().Statements[0].As<BoundLoopStatement>();
+        loop3_2.BoundLoopContext.LoopLabel.Label.Text.Should().Be("inner");
+        loop3_2.BoundLoopContext.Parent.Should().Be(loop3_1.BoundLoopContext);
+    }
+
     [Theory]
     [InlineData("break;")]
     [InlineData("continue;")]
