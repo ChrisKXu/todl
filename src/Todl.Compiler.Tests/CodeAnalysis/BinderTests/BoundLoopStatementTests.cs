@@ -105,6 +105,24 @@ public sealed class BoundLoopStatementTests
         loop3_2.BoundLoopContext.Parent.Should().Be(loop3_1.BoundLoopContext);
     }
 
+    [Fact]
+    public void LoopLabelsCannotBeReusedInSameScope()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundLoopStatement = TestUtils.BindStatement<BoundBlockStatement>(
+            @"{
+                while true: loop { while true: loop { } }
+            }", diagnosticBuilder);
+        boundLoopStatement.Should().NotBeNull();
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Count().Should().Be(1);
+
+        var diagnostic = diagnostics.First();
+        diagnostic.Level.Should().Be(DiagnosticLevel.Error);
+        diagnostic.ErrorCode.Should().Be(ErrorCode.DuplicateLoopLabel);
+        diagnostic.Message.Should().Be("Duplicate loop label 'loop'");
+    }
+
     [Theory]
     [InlineData("break;")]
     [InlineData("continue;")]

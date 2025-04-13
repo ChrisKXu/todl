@@ -33,6 +33,7 @@
         UnreachableCode,
         DuplicateParameterName,
         MissingEntryPoint,
-        NoEnclosingLoop
+        NoEnclosingLoop,
+        DuplicateLoopLabel
     }
 }
