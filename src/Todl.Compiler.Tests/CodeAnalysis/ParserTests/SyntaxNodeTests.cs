@@ -38,7 +38,8 @@ public sealed class SyntaxNodeTests
             typeof(SyntaxToken),
             typeof(TypeExpression),
             typeof(ArrayRankSpecifier),
-            typeof(ElseClause)
+            typeof(ElseClause),
+            typeof(LoopLabel)
         }).ToHashSet();
 
         var allSyntaxNodeTypes = typeof(Expression)

@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -38,12 +39,26 @@ public sealed class WhileUntilStatementTests
 
         whileUntilStatement.WhileOrUntilToken.Kind.Should().Be(expectedSyntaxKind);
         whileUntilStatement.BlockStatement.InnerStatements.Should().BeEmpty();
+        whileUntilStatement.LoopLabel.Should().BeNull();
 
         var condition = whileUntilStatement.ConditionExpression.As<BinaryExpression>();
         condition.Should().NotBeNull();
         condition.Left.As<NameExpression>().Text.ToString().Should().Be("n");
         condition.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
         condition.Right.As<LiteralExpression>().Text.ToString().Should().Be("0");
+    }
+
+    [Theory]
+    [InlineData("while n == 0 : l0 { return n; }", "l0")]
+    [InlineData("until n == 0 : LongerLabel { return n; }", "LongerLabel")]
+    public void WhileUntilStatementsCanHaveLoopLabels(string inputText, string label)
+    {
+        var whileUntilStatement = TestUtils.ParseStatement<WhileUntilStatement>(inputText);
+        whileUntilStatement.Should().NotBeNull();
+
+        whileUntilStatement.LoopLabel.Should().NotBeNull();
+        whileUntilStatement.LoopLabel.Label.As<NameExpression>().Text.Should().Be(label);
+        whileUntilStatement.LoopLabel.ColonToken.Kind.Should().Be(SyntaxKind.ColonToken);
     }
 
     [Theory]

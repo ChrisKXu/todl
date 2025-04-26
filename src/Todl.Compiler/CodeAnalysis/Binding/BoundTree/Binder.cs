@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
@@ -69,12 +70,37 @@ public partial class Binder
             Scope = Scope.CreateChildScope(BoundScopeKind.Type)
         };
 
-    public Binder CreateLoopBinder()
-        => new LoopBinder(BoundLoopContext?.CreateChildContext() ?? new BoundLoopContext())
+    public Binder CreateLoopBinder(LoopLabel loopLabel)
+    {
+        var context = BoundLoopContext?.CreateChildContext(loopLabel) ?? new BoundLoopContext() { LoopLabel = loopLabel };
+
+        if (loopLabel is not null)
+        {
+            var parent = context.Parent;
+            while (parent is not null)
+            {
+                if (parent.LoopLabel is not null
+                    && parent.LoopLabel.Label.Text.ToString().Equals(loopLabel.Label.Text.ToString()))
+                {
+                    ReportDiagnostic(new Diagnostic()
+                    {
+                        ErrorCode = ErrorCode.DuplicateLoopLabel,
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = loopLabel.Text.GetTextLocation(),
+                        Message = $"Duplicate loop label '{loopLabel.Label.Text}'"
+                    });
+                }
+
+                parent = parent.Parent;
+            }
+        }
+
+        return new LoopBinder(context)
         {
             Parent = this,
             Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
         };
+    }
 
     protected void ReportDiagnostic(Diagnostic diagnostic)
         => DiagnosticBuilder.Add(diagnostic);

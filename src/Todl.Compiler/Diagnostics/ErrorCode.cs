@@ -14,6 +14,7 @@
         IfUnlessKeywordMismatch,
         DuplicateBareElseClauses,
         MisplacedBareElseClauses,
+        InvalidLoopLabel,
 
         // BinderErrors
         UndeclaredVariable,
@@ -32,6 +33,7 @@
         UnreachableCode,
         DuplicateParameterName,
         MissingEntryPoint,
-        NoEnclosingLoop
+        NoEnclosingLoop,
+        DuplicateLoopLabel
     }
 }
