@@ -29,4 +29,8 @@ jobs:
     - name: Test
       run: dotnet test src --verbosity normal --blame-hang --blame-hang-timeout 30s
     - name: Samples
-      run: dotnet publish src --configuration Debug && dotnet build samples
+      run: |- 
+        dotnet publish src --configuration Debug
+        dotnet build tools/FileCompare --configuration Debug
+        dotnet build samples
+        dotnet build samples/hello -t:Validate
