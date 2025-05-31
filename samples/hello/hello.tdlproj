@@ -3,14 +3,4 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
-
-  <UsingTask
-      TaskName="FileCompareTask"
-      AssemblyFile="$(_ToolsPath)/FileCompare/FileCompare.dll" />
-
-  <Target Name="Validate" AfterTargets="Build">
-    <Exec Command="dotnet &quot;$(TargetPath)&quot; > &quot;$(OutDir)stdout.txt&quot;" WorkingDirectory="$(MSBuildProjectDirectory)"/>
-    <Error Text="The file $(OutDir)stdout.txt does not exist." Condition="!Exists('$(OutDir)stdout.txt')" />
-    <FileCompareTask Source="stdout.expected.txt" Target="$(OutDir)stdout.txt" />
-  </Target>
 </Project>

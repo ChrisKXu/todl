@@ -33,4 +33,4 @@ jobs:
         dotnet publish src --configuration Debug
         dotnet build tools/FileCompare --configuration Debug
         dotnet build samples
-        dotnet build samples/hello -t:Validate
+        dotnet build samples -t:ValidateAll
