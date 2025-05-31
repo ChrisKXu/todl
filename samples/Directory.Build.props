@@ -4,6 +4,7 @@
   
   <PropertyGroup>
     <_TodlSdkPath>$(OutputRoot)/src/Todl.Sdk/Published</_TodlSdkPath>
+    <_ToolsPath>$(OutputRoot)/tools</_ToolsPath>
   </PropertyGroup>
   
   <Import Project="$(_TodlSdkPath)/Todl.Sdk.props" />
