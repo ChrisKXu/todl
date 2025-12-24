@@ -7,7 +7,7 @@
     <ProjectReference Include="..\Todl.Compiler\Todl.Compiler.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ICSharpCode.Decompiler" Version="7.2.1.6856" />
+    <PackageReference Include="ICSharpCode.Decompiler" Version="9.1.0.7988" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Dockerfile">
