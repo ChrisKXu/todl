@@ -10,6 +10,10 @@ updates:
     # Check the NuGet registry for updates every week (weekdays)
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "FluentAssertions"
+        versions:
+          - ">=8.0.0"
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"

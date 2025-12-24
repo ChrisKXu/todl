@@ -27,7 +27,7 @@ public class AssemblyResolver : IAssemblyResolver
         }
     }
 
-    public PEFile Resolve(IAssemblyReference reference)
+    public MetadataFile Resolve(IAssemblyReference reference)
     {
         var assemblyName = new AssemblyName(reference.FullName);
         var assembly = pathAssemblyResolver.Resolve(MetadataLoadContext, assemblyName);
@@ -41,17 +41,17 @@ public class AssemblyResolver : IAssemblyResolver
         return new PEFile(assembly.Location);
     }
 
-    public Task<PEFile> ResolveAsync(IAssemblyReference reference)
+    public Task<MetadataFile> ResolveAsync(IAssemblyReference reference)
     {
         return Task.FromResult(Resolve(reference));
     }
 
-    public PEFile ResolveModule(PEFile mainModule, string moduleName)
+    public MetadataFile ResolveModule(MetadataFile mainModule, string moduleName)
     {
         throw new NotSupportedException();
     }
 
-    public Task<PEFile> ResolveModuleAsync(PEFile mainModule, string moduleName)
+    public Task<MetadataFile> ResolveModuleAsync(MetadataFile mainModule, string moduleName)
     {
         throw new NotSupportedException();
     }
