@@ -64,7 +64,8 @@ public sealed class BoundConditionalStatementTests
 
         void ValidateBlockStatements(BoundBlockStatement boundBlockStatement, int expectedValue)
         {
-            boundBlockStatement.Statements[0].As<BoundClrFunctionCallExpression>().Invoking(func =>
+            var expressionStatement = boundBlockStatement.Statements[0].As<BoundExpressionStatement>();
+            expressionStatement.Expression.As<BoundClrFunctionCallExpression>().Invoking(func =>
             {
                 func.BoundBaseExpression.As<BoundConstant>().Value.Should().Be(expectedValue);
                 func.BoundArguments.Should().BeEmpty();
