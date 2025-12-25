@@ -306,12 +306,7 @@ internal sealed class Lexer
                 }
                 break;
             case '+':
-                if (Peak == '+')
-                {
-                    kind = SyntaxKind.PlusPlusToken;
-                    this.position += 2;
-                }
-                else if (Peak == '=')
+                if (Peak == '=')
                 {
                     kind = SyntaxKind.PlusEqualsToken;
                     this.position += 2;
@@ -323,12 +318,7 @@ internal sealed class Lexer
                 }
                 break;
             case '-':
-                if (Peak == '-')
-                {
-                    kind = SyntaxKind.MinusMinusToken;
-                    this.position += 2;
-                }
-                else if (Peak == '=')
+                if (Peak == '=')
                 {
                     kind = SyntaxKind.MinusEqualsToken;
                     this.position += 2;
