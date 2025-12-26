@@ -30,12 +30,12 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                     innerExpression.Operator.Text.Should().Be("+");
                     innerExpression.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
                     innerExpression.Right.As<LiteralExpression>().LiteralToken.Text.Should().Be("3");
-                });
+                }).Should().NotThrow();
 
                 expression.Operator.Text.Should().Be("*");
                 expression.Operator.Kind.Should().Be(SyntaxKind.StarToken);
                 expression.Right.As<LiteralExpression>().Text.Should().Be("2");
-            });
+            }).Should().NotThrow();
         }
 
         [Theory]

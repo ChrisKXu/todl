@@ -12,7 +12,7 @@ public sealed class BlockStatementTests
         var inputText = @"
             {
                 a = 1 + 2;
-                ++a;
+                a = a + 1;
                 b = a;
             }
             ";
@@ -36,7 +36,7 @@ public sealed class BlockStatementTests
         var inputText = @"
             {
                 a = 1 + 2;
-                ++a;
+                a = a + 1;
                 b = a;
             ";
         var blockStatement = TestUtils.ParseStatement<BlockStatement>(inputText);

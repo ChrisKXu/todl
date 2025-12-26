@@ -164,7 +164,7 @@ public sealed class IfUnlessStatementTests
             left.Left.As<NameExpression>().Text.Should().Be("a");
             left.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
             left.Right.As<LiteralExpression>().Text.Should().Be("0");
-        });
+        }).Should().NotThrow();
 
         condition.Operator.Kind.Should().Be(SyntaxKind.AmpersandAmpersandToken);
 
@@ -178,6 +178,6 @@ public sealed class IfUnlessStatementTests
             right.Left.As<FunctionCallExpression>().Should().NotBeNull();
             right.Operator.Kind.Should().Be(SyntaxKind.PipePipeToken);
             right.Right.As<FunctionCallExpression>().Should().NotBeNull();
-        });
+        }).Should().NotThrow();
     }
 }

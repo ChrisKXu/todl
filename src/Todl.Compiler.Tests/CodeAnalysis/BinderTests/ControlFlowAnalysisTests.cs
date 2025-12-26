@@ -24,7 +24,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else { if a == 1 { return 1; } return 0; } }")]
     [InlineData("System.Uri func(string a) { return new System.Uri(a); }")]
     [InlineData("int func() { while true { return 1; } }")]
-    [InlineData("int func() { let i = 0; while i < 10 { ++i; } return i; }")]
+    [InlineData("int func() { let i = 0; while i < 10 { i = i + 1; } return i; }")]
     public void TestControlFlowAnalysisBasic(string inputText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();

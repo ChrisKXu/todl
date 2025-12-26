@@ -112,16 +112,14 @@ public sealed partial class Parser
                 };
                 break;
             case SyntaxKind.OpenParenthesisToken:
-                baseExpression = ParseTrailingUnaryExpression(this.ParseParethesizedExpression());
+                baseExpression = this.ParseParethesizedExpression();
                 break;
             case SyntaxKind.NewKeywordToken:
                 baseExpression = ParseNewExpression();
                 break;
             case SyntaxKind.IdentifierToken:
             default:
-                var nameExpression = ParseNameExpression();
-                baseExpression = ParseTrailingUnaryExpression(nameExpression);
-
+                baseExpression = ParseNameExpression();
                 break;
         }
 
@@ -133,13 +131,13 @@ public sealed partial class Parser
             }
             else if (Current.Kind == SyntaxKind.DotToken && Peak.Kind == SyntaxKind.IdentifierToken)
             {
-                baseExpression = ParseTrailingUnaryExpression(new MemberAccessExpression()
+                baseExpression = new MemberAccessExpression()
                 {
                     SyntaxTree = syntaxTree,
                     BaseExpression = baseExpression,
                     DotToken = ExpectToken(SyntaxKind.DotToken),
                     MemberIdentifierToken = ExpectToken(SyntaxKind.IdentifierToken)
-                });
+                };
             }
             else if (Current.Kind == SyntaxKind.OpenParenthesisToken)
             {
