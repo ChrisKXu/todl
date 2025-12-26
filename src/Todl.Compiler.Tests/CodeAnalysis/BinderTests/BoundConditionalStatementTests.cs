@@ -53,7 +53,7 @@ public sealed class BoundConditionalStatementTests
                 b.Left.As<BoundConstant>().Value.Should().Be(expectedLeft);
                 b.Right.As<BoundConstant>().Value.Should().Be(expectedRight);
                 b.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryOperatorKind.Equality);
-            });
+            }).Should().NotThrow();
         }
 
         void ValidateAlternative(BoundConditionalStatement boundConditionalStatement, int expectedValue)
@@ -70,7 +70,7 @@ public sealed class BoundConditionalStatementTests
                 func.BoundBaseExpression.As<BoundConstant>().Value.Should().Be(expectedValue);
                 func.BoundArguments.Should().BeEmpty();
                 func.MethodInfo.Name.Should().Be("ToString");
-            });
+            }).Should().NotThrow();
         }
 
         // 0 == 1

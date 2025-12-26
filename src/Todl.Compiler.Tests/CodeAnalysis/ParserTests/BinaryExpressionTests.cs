@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Xunit;
 
@@ -17,7 +17,7 @@ public sealed class BinaryExpressionTests
             left.Operator.Text.Should().Be("+");
             left.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
             left.Right.As<LiteralExpression>().Text.Should().Be("2");
-        });
+        }).Should().NotThrow();
 
         binaryExpression.Operator.Text.Should().Be("+");
         binaryExpression.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
@@ -44,7 +44,7 @@ public sealed class BinaryExpressionTests
             binaryExpression.Operator.Text.Should().Be("-");
             binaryExpression.Operator.Kind.Should().Be(SyntaxKind.MinusToken);
             binaryExpression.Right.As<LiteralExpression>().Text.Should().Be("4");
-        });
+        }).Should().NotThrow();
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public sealed class BinaryExpressionTests
             binaryExpression.Operator.Text.Should().Be("<=");
             binaryExpression.Operator.Kind.Should().Be(SyntaxKind.LessThanOrEqualsToken);
             binaryExpression.Right.As<LiteralExpression>().Text.Should().Be("4");
-        });
+        }).Should().NotThrow();
     }
 
     [Fact]
@@ -83,12 +83,12 @@ public sealed class BinaryExpressionTests
                 inner.Operator.Text.Should().Be("+");
                 inner.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
                 inner.Right.As<LiteralExpression>().Text.Should().Be("2");
-            });
+            }).Should().NotThrow();
 
             multiplication.Operator.Text.Should().Be("*");
             multiplication.Operator.Kind.Should().Be(SyntaxKind.StarToken);
-            multiplication.As<LiteralExpression>().Text.Should().Be("4");
-        });
+            multiplication.Right.As<LiteralExpression>().Text.Should().Be("3");
+        }).Should().NotThrow();
 
         binaryExpression.Operator.Text.Should().Be("-");
         binaryExpression.Operator.Kind.Should().Be(SyntaxKind.MinusToken);
@@ -110,7 +110,7 @@ public sealed class BinaryExpressionTests
             right.Operator.Text.Should().Be("+");
             right.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
             right.Right.As<LiteralExpression>().Text.Should().Be("2");
-        });
+        }).Should().NotThrow();
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public sealed class BinaryExpressionTests
             right.Operator.Text.Should().Be("+");
             right.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
             right.Right.As<LiteralExpression>().Text.Should().Be("2");
-        });
+        }).Should().NotThrow();
     }
 
     [Fact]
@@ -145,17 +145,17 @@ public sealed class BinaryExpressionTests
                     unaryExpression.Operator.Text.Should().Be("-");
                     unaryExpression.Operator.Kind.Should().Be(SyntaxKind.MinusToken);
                     unaryExpression.Operand.As<NameExpression>().Text.Should().Be("a");
-                });
+                }).Should().NotThrow();
 
                 inner.Operator.Text.Should().Be("+");
                 inner.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
                 inner.Right.As<LiteralExpression>().Text.Should().Be("2");
-            });
+            }).Should().NotThrow();
 
             multiplication.Operator.Text.Should().Be("*");
             multiplication.Operator.Kind.Should().Be(SyntaxKind.StarToken);
             multiplication.Right.As<LiteralExpression>().Text.Should().Be("3");
-        });
+        }).Should().NotThrow();
 
         binaryExpression.Operator.Text.Should().Be("+");
         binaryExpression.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
