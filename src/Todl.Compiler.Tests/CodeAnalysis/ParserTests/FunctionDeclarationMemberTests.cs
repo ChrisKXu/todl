@@ -151,12 +151,12 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                     inner.Operator.Text.Should().Be("+");
                     inner.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
                     inner.Right.As<LiteralExpression>().Text.Should().Be("2");
-                });
+                }).Should().NotThrow();
 
                 binaryExpression.Operator.Text.Should().Be("*");
                 binaryExpression.Operator.Kind.Should().Be(SyntaxKind.StarToken);
                 binaryExpression.Right.As<LiteralExpression>().Text.Should().Be("4");
-            });
+            }).Should().NotThrow();
         }
     }
 }
