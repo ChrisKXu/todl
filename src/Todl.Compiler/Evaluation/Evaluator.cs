@@ -80,38 +80,13 @@ namespace Todl.Compiler.Evaluation
 
             Debug.Assert(operandValue != null);
 
-            return boundUnaryExpression.Operator.BoundUnaryOperatorKind switch
+            return boundUnaryExpression.Operator.BoundUnaryOperatorKind.GetOperationKind() switch
             {
                 BoundUnaryOperatorKind.UnaryPlus => operandValue,
                 BoundUnaryOperatorKind.UnaryMinus => -(int)operandValue,
                 BoundUnaryOperatorKind.LogicalNegation => !(bool)operandValue,
-                _ => this.EvaluateBoundUnaryExpressionWithSideEffects(boundUnaryExpression)
+                _ => throw new NotSupportedException($"Unary operator {boundUnaryExpression.Operator.BoundUnaryOperatorKind} is not supported for evaluation")
             };
-        }
-
-        private object EvaluateBoundUnaryExpressionWithSideEffects(BoundUnaryExpression boundUnaryExpression)
-        {
-            if (boundUnaryExpression.Operand is BoundVariableExpression boundVariableExpression)
-            {
-                var variable = boundVariableExpression.Variable;
-                var oldValue = this.variables[variable];
-
-                switch (boundUnaryExpression.Operator.BoundUnaryOperatorKind)
-                {
-                    case BoundUnaryOperatorKind.PrefixIncrement:
-                        return SetVariableValue(variable, (int)oldValue + 1);
-                    case BoundUnaryOperatorKind.PostfixIncrement:
-                        SetVariableValue(variable, (int)oldValue + 1);
-                        return oldValue;
-                    case BoundUnaryOperatorKind.PrefixDecrement:
-                        return SetVariableValue(variable, (int)oldValue - 1);
-                    case BoundUnaryOperatorKind.PostfixDecrement:
-                        SetVariableValue(variable, (int)oldValue - 1);
-                        return oldValue;
-                }
-            }
-
-            return null;
         }
 
         private object EvaluateBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)

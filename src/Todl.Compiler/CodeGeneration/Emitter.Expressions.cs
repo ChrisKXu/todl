@@ -285,22 +285,10 @@ internal partial class Emitter
         private void EmitUnaryExpression(BoundUnaryExpression boundUnaryExpression, bool emitSideEffect)
         {
             var boundUnaryOperatorKind = boundUnaryExpression.Operator.BoundUnaryOperatorKind;
-
-            if (!boundUnaryOperatorKind.HasSideEffect())
-            {
-                EmitUnaryExpressionWithoutSideEffect(boundUnaryExpression.Operand, boundUnaryOperatorKind);
-            }
-            else
-            {
-                EmitStore(boundUnaryExpression.Operand, () =>
-                {
-                    EmitUnaryExpressionWithoutSideEffect(boundUnaryExpression.Operand, boundUnaryOperatorKind);
-                    EmitUnaryOperatorWithSideEffect(boundUnaryOperatorKind, emitSideEffect);
-                });
-            }
+            EmitUnaryExpressionCore(boundUnaryExpression.Operand, boundUnaryOperatorKind);
         }
 
-        private void EmitUnaryExpressionWithoutSideEffect(BoundExpression operand, BoundUnaryOperatorKind boundUnaryOperatorKind)
+        private void EmitUnaryExpressionCore(BoundExpression operand, BoundUnaryOperatorKind boundUnaryOperatorKind)
         {
             EmitExpression(operand);
 
@@ -323,48 +311,6 @@ internal partial class Emitter
                     return;
                 default:
                     break;
-            }
-        }
-
-        private void EmitUnaryOperatorWithSideEffect(BoundUnaryOperatorKind boundUnaryOperatorKind, bool emitSideEffect)
-        {
-            var operationKind = boundUnaryOperatorKind.GetOperationKind();
-
-            var opCode =
-                operationKind == BoundUnaryOperatorKind.PrefixIncrement
-                || operationKind == BoundUnaryOperatorKind.PostfixIncrement
-                ? OpCodes.Add
-                : OpCodes.Sub;
-
-            var prefix = operationKind == BoundUnaryOperatorKind.PrefixIncrement || operationKind == BoundUnaryOperatorKind.PrefixDecrement;
-
-            if (!prefix && emitSideEffect)
-            {
-                ILProcessor.Emit(OpCodes.Dup);
-            }
-
-            switch (boundUnaryOperatorKind.GetOperandKind())
-            {
-                case BoundUnaryOperatorKind.Long:
-                case BoundUnaryOperatorKind.ULong:
-                    EmitInt64Value(1L);
-                    break;
-                case BoundUnaryOperatorKind.Float:
-                    EmitFloatValue(1.0F);
-                    break;
-                case BoundUnaryOperatorKind.Double:
-                    EmitDoubleValue(1.0);
-                    break;
-                default:
-                    EmitIntValue(1);
-                    break;
-            }
-
-            ILProcessor.Emit(opCode);
-
-            if (prefix && emitSideEffect)
-            {
-                ILProcessor.Emit(OpCodes.Dup);
             }
         }
 

@@ -76,10 +76,8 @@ public sealed partial class LexerTests
     private static readonly Dictionary<SyntaxKind, string> singleTokenTestData = new()
     {
         { SyntaxKind.PlusToken, "+" },
-        { SyntaxKind.PlusPlusToken, "++" },
         { SyntaxKind.PlusEqualsToken, "+=" },
         { SyntaxKind.MinusToken, "-" },
-        { SyntaxKind.MinusMinusToken, "--" },
         { SyntaxKind.MinusEqualsToken, "-=" },
         { SyntaxKind.StarToken, "*" },
         { SyntaxKind.StarEqualsToken, "*=" },
