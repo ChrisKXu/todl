@@ -30,8 +30,7 @@ public sealed partial class Parser
             {
                 SyntaxTree = syntaxTree,
                 Operator = operatorToken,
-                Operand = ParsePrimaryExpression(),
-                Trailing = false
+                Operand = ParsePrimaryExpression()
             };
         }
 
