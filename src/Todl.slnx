@@ -1,0 +1,11 @@
+<Solution>
+  <Project Path="Todl/Todl.csproj" />
+  <Project Path="Todl.Compiler/Todl.Compiler.csproj" />
+  <Project Path="Todl.Compiler.Tests/Todl.Compiler.Tests.csproj" />
+  <Project Path="Todl.Compiler.SourceGenerators/Todl.Compiler.SourceGenerators.csproj" />
+  <Project Path="Todl.Sdk/Todl.Sdk.csproj" />
+  <Project Path="Todl.Playground/Todl.Playground.csproj" />
+  <Folder Name="/Solution Items/">
+    <File Path="../.editorconfig" />
+  </Folder>
+</Solution>
