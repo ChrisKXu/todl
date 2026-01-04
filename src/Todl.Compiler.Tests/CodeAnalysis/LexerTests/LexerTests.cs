@@ -108,6 +108,7 @@ public sealed partial class LexerTests
         { SyntaxKind.CloseBracketToken, "]" },
         { SyntaxKind.SemicolonToken, ";" },
         { SyntaxKind.ColonToken, ":" },
+        { SyntaxKind.ColonColonToken, "::" },
         { SyntaxKind.LetKeywordToken, "let" },
         { SyntaxKind.ConstKeywordToken, "const" },
         { SyntaxKind.ImportKeywordToken, "import" },

@@ -39,7 +39,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Theory]
-        [InlineData("System.Threading.Tasks.Task.WhenAny")]
+        [InlineData("System::Threading::Tasks::Task.WhenAny")]
         [InlineData("(1 + 2).ToString")]
         [InlineData("\"abc\".Length")]
         public void TestMemberAccessExpressionBasic(string inputText)
@@ -79,18 +79,18 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
         [Theory]
         [InlineData("import * from System;")]
-        [InlineData("import * from System.Threading.Tasks;")]
-        [InlineData("import { Task } from System.Threading.Tasks;")]
-        [InlineData("import { ConcurrentBag, ConcurrentDictionary, ConcurrentQueue } from System.Collections.Concurrent;")]
+        [InlineData("import * from System::Threading::Tasks;")]
+        [InlineData("import { Task } from System::Threading::Tasks;")]
+        [InlineData("import { ConcurrentBag, ConcurrentDictionary, ConcurrentQueue } from System::Collections::Concurrent;")]
         public void TestParseImportDirective(string inputText)
         {
             var directive = TestUtils.ParseDirective<ImportDirective>(inputText);
 
             // calculate namespace by directly parsing the text to see
-            // if match with the parser results
+            // if match with the parser results (convert :: to . for comparison)
             var fromPosition = inputText.IndexOf("from");
             var semicolonPosition = inputText.IndexOf(";");
-            var expectedNamespace = inputText[(fromPosition + 5)..semicolonPosition]; // assuming only one space character after 'from'
+            var expectedNamespace = inputText[(fromPosition + 5)..semicolonPosition].Replace("::", "."); // convert :: to .
 
             directive.Should().NotBeNull();
             directive.ImportAll.Should().Be(inputText.Contains('*'));

@@ -22,7 +22,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { if true { } return 0; }")]
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else if a == 1 { return 1; } else { return 0; } }")]
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else { if a == 1 { return 1; } return 0; } }")]
-    [InlineData("System.Uri func(string a) { return new System.Uri(a); }")]
+    [InlineData("System::Uri func(string a) { return new System::Uri(a); }")]
     [InlineData("int func() { while true { return 1; } }")]
     [InlineData("int func() { let i = 0; while i < 10 { i = i + 1; } return i; }")]
     public void TestControlFlowAnalysisBasic(string inputText)
@@ -49,7 +49,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("void func() { return; 10.ToString(); }")]
     [InlineData("int func() { return 10; 10.ToString(); }")]
     [InlineData("int func() { if true { return 10; 10.ToString();} return 0; }")]
-    [InlineData("System.Uri func(string a) { const r = new System.Uri(a); return r; r.ToString(); }")]
+    [InlineData("System::Uri func(string a) { const r = new System::Uri(a); return r; r.ToString(); }")]
     public void TestControlFlowAnalysisWithUnreachableCode(string inputText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();

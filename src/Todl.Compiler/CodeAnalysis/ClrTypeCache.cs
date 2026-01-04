@@ -10,13 +10,9 @@ namespace Todl.Compiler.CodeAnalysis;
 
 public sealed class ClrTypeCache
 {
-    private readonly ImmutableHashSet<string>.Builder loadedNamespaces
-        = ImmutableHashSet.CreateBuilder<string>();
-
     public ImmutableHashSet<Assembly> Assemblies { get; }
     public Assembly CoreAssembly { get; } // the assembly that contains object, bool, int, etc...
     public ImmutableHashSet<ClrTypeSymbol> Types { get; }
-    public ImmutableHashSet<string> Namespaces => loadedNamespaces.ToImmutable();
 
     public BuiltInTypes BuiltInTypes { get; }
 
@@ -62,8 +58,6 @@ public sealed class ClrTypeCache
             .ToImmutableHashSet();
 
         BuiltInTypes = new BuiltInTypes(this);
-
-        PopulateNamespaces();
     }
 
     public ClrTypeSymbol Resolve(string name)
@@ -118,32 +112,4 @@ public sealed class ClrTypeCache
 
     public static ClrTypeCache FromAssemblies(IEnumerable<Assembly> assemblies, Assembly coreAssembly)
         => new(assemblies, coreAssembly);
-
-    /// <summary>
-    /// Populating loadedNamespaces with a full list of namespaces
-    /// e.g.
-    /// when input is "System.Collections.Generic"
-    /// the result should be
-    /// {
-    ///     "System",
-    ///     "System.Collections",
-    ///     "System.Collections.Generic"
-    /// }
-    /// </summary>
-    private void PopulateNamespaces()
-    {
-        var namespaces = Types
-            .Where(t => !string.IsNullOrEmpty(t.Namespace))
-            .Select(t => t.Namespace);
-
-        foreach (var n in namespaces)
-        {
-            var position = -1;
-            while ((position = n.IndexOf('.', position + 1)) != -1)
-            {
-                loadedNamespaces.Add(n[..position]);
-            }
-            loadedNamespaces.Add(n);
-        }
-    }
 }

@@ -14,10 +14,10 @@ public sealed class BoundFunctionMemberTests
 {
     [Theory]
     [InlineData("int Function() {}", typeof(int), 0)]
-    [InlineData("System.Uri Function() {}", typeof(Uri), 0)]
+    [InlineData("System::Uri Function() {}", typeof(Uri), 0)]
     [InlineData("void Function() {}", typeof(void), 1)]
     [InlineData("int[] Function() {}", typeof(int[]), 0)]
-    [InlineData("System.Uri[][] Function() {}", typeof(Uri[][]), 0)]
+    [InlineData("System::Uri[][] Function() {}", typeof(Uri[][]), 0)]
     public void TestBindFunctionDeclarationMemberWithoutParametersOrBody(string inputText, Type expectedReturnType, int expectedStatementsCount)
     {
         var function = TestUtils.BindMember<BoundFunctionMember>(inputText);
@@ -32,7 +32,7 @@ public sealed class BoundFunctionMemberTests
     public void TestBindFunctionDeclarationMemberWithBody()
     {
         var function = TestUtils.BindMember<BoundFunctionMember>(
-            inputText: "void Main() { const a = 30; System.Threading.Thread.Sleep(a); }");
+            inputText: "void Main() { const a = 30; System::Threading::Thread.Sleep(a); }");
 
         function.Body.Statements.Should().HaveCount(3);
 
@@ -50,7 +50,7 @@ public sealed class BoundFunctionMemberTests
     public void TestBindFunctionDeclarationMemberWithParameters()
     {
         var function = TestUtils.BindMember<BoundFunctionMember>(
-            inputText: "void Sleep(int a) { System.Threading.Thread.Sleep(a); }");
+            inputText: "void Sleep(int a) { System::Threading::Thread.Sleep(a); }");
 
         var a = function.FunctionScope.LookupVariable("a");
         a.Should().NotBeNull();
@@ -94,7 +94,7 @@ public sealed class BoundFunctionMemberTests
 
     [Theory]
     [InlineData("int Function() { return 0; }", typeof(int))]
-    [InlineData("System.Uri Function() { return new System.Uri(\"https://www.google.com\"); }", typeof(Uri))]
+    [InlineData("System::Uri Function() { return new System::Uri(\"https://www.google.com\"); }", typeof(Uri))]
     [InlineData("void Function() { return; }", typeof(void))]
     public void TestBindFunctionDeclarationMemberWithReturnStatement(string inputText, Type expectedReturnType)
     {
@@ -111,7 +111,7 @@ public sealed class BoundFunctionMemberTests
 
     [Theory]
     [InlineData("int Function() { return; }", typeof(int), typeof(void))]
-    [InlineData("System.Uri Function() { return \"https://www.google.com\"; }", typeof(Uri), typeof(string))]
+    [InlineData("System::Uri Function() { return \"https://www.google.com\"; }", typeof(Uri), typeof(string))]
     [InlineData("void Function() { return 0; }", typeof(void), typeof(int))]
     public void TestBindFunctionDeclarationMemberWithMismatchedReturnStatement(string inputText, Type expectedReturnType, Type actualReturnType)
     {
@@ -213,8 +213,8 @@ public sealed class BoundFunctionMemberTests
     [Theory]
     [InlineData("void func() {}")]
     [InlineData("void func() { return; }")]
-    [InlineData("void func(int a) { System.Threading.Thread.Sleep(a); }")]
-    [InlineData("void func(int a) { System.Threading.Thread.Sleep(a); return; }")]
+    [InlineData("void func(int a) { System::Threading::Thread.Sleep(a); }")]
+    [InlineData("void func(int a) { System::Threading::Thread.Sleep(a); return; }")]
     public void FunctionsThatReturnsVoidShouldNotHaveDuplicateReturnStatements(string inputText)
     {
         var function = TestUtils.BindMember<BoundFunctionMember>(inputText);

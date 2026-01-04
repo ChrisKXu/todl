@@ -24,7 +24,7 @@ public sealed class BoundMemberAccessExpressionTests
     [Fact]
     public void TestBoundClrFieldAccessExpressionStatic()
     {
-        var boundClrFieldAccessExpression = TestUtils.BindExpression<BoundClrFieldAccessExpression>("System.Int32.MaxValue");
+        var boundClrFieldAccessExpression = TestUtils.BindExpression<BoundClrFieldAccessExpression>("System::Int32.MaxValue");
 
         boundClrFieldAccessExpression.MemberName.Should().Be("MaxValue");
         boundClrFieldAccessExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
@@ -37,7 +37,7 @@ public sealed class BoundMemberAccessExpressionTests
     public void TestBoundInvalidMemberAccessExpression()
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
-        var boundExpression = TestUtils.BindExpression<BoundMemberAccessExpression>("System.Int32.Maxvalue", diagnosticBuilder);
+        var boundExpression = TestUtils.BindExpression<BoundMemberAccessExpression>("System::Int32.Maxvalue", diagnosticBuilder);
 
         var diagnostic = diagnosticBuilder.Build().First();
         diagnostic.Level.Should().Be(DiagnosticLevel.Error);

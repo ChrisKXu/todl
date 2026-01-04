@@ -388,8 +388,16 @@ internal sealed class Lexer
                 ++this.position;
                 break;
             case ':':
-                kind = SyntaxKind.ColonToken;
-                ++this.position;
+                if (Peak == ':')
+                {
+                    kind = SyntaxKind.ColonColonToken;
+                    this.position += 2;
+                }
+                else
+                {
+                    kind = SyntaxKind.ColonToken;
+                    ++this.position;
+                }
                 break;
             case '=':
                 if (Peak == '=')

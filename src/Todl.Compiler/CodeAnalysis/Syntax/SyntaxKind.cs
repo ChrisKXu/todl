@@ -23,6 +23,7 @@
         CloseBracketToken,
         SemicolonToken,
         ColonToken,
+        ColonColonToken,
         EqualsToken,
         EqualsEqualsToken,
         BangToken,

@@ -34,12 +34,12 @@ public sealed class FunctionCallExpressionTests
     [Fact]
     public void TestParseFunctionCallExpressionWithOnePositionalArgument()
     {
-        var inputText = "System.Int32.Parse(\"123\")";
+        var inputText = "System::Int32.Parse(\"123\")";
         var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.BaseExpression.As<NameExpression>().Text.Should().Be("System.Int32");
+        functionCallExpression.BaseExpression.As<NameExpression>().Text.Should().Be("System::Int32");
         functionCallExpression.NameToken.Text.Should().Be("Parse");
 
         functionCallExpression.Arguments.Items.Should().NotBeEmpty();
@@ -53,12 +53,12 @@ public sealed class FunctionCallExpressionTests
     [Fact]
     public void TestParseFunctionCallExpressionWithOneNamedArgument()
     {
-        var inputText = "System.Int32.Parse(s: \"123\")";
+        var inputText = "System::Int32.Parse(s: \"123\")";
         var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.BaseExpression.As<NameExpression>().Text.Should().Be("System.Int32");
+        functionCallExpression.BaseExpression.As<NameExpression>().Text.Should().Be("System::Int32");
         functionCallExpression.NameToken.Text.Should().Be("Parse");
 
         functionCallExpression.Arguments.Items.Should().NotBeEmpty();
@@ -76,7 +76,7 @@ public sealed class FunctionCallExpressionTests
     [Fact]
     public void TestParseFunctionCallExpressionWithoutClosingBracket()
     {
-        var inputText = "System.Int32.Parse(s: \"123\"";
+        var inputText = "System::Int32.Parse(s: \"123\"";
         var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         functionCallExpression.Arguments.CloseParenthesisToken.Missing.Should().BeTrue();
