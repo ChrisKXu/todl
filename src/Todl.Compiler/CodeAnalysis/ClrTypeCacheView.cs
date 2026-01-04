@@ -28,7 +28,7 @@ public sealed class ClrTypeCacheView
     }
 
     public ClrTypeSymbol ResolveType(NameExpression nameExpression)
-        => ResolveBaseType(nameExpression.Text.ToString());
+        => ResolveBaseType(nameExpression.CanonicalName);
 
     public ClrTypeSymbol ResolveType(TypeExpression typeExpression)
     {
@@ -57,7 +57,7 @@ public sealed class ClrTypeCacheView
 
         var importedTypes = importDirectives.SelectMany(importDirective =>
         {
-            var importedNamespace = importDirective.Namespace.ToString();
+            var importedNamespace = importDirective.Namespace;
             var types = clrTypeCache
                 .Types
                 .Where(t => importedNamespace.Equals(t.Namespace));

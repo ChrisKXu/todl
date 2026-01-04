@@ -45,7 +45,7 @@ public sealed class EmitLoopStatementTests
     public void BoundLoopStatementsCanHaveOneOrMoreInnerStatements()
     {
         TestUtils.EmitStatementAndVerify(
-            "while Todl.Compiler.Tests.TestClass.PublicStaticIntField != 0 { System.Console.WriteLine(); }",
+            "while Todl::Compiler::Tests::TestClass.PublicStaticIntField != 0 { System::Console.WriteLine(); }",
             TestInstruction.Create(OpCodes.Br_S, 8),
             TestInstruction.Create(OpCodes.Nop),
             TestInstruction.Create(OpCodes.Call, "System.Void System.Console::WriteLine()"),

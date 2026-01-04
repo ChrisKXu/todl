@@ -12,6 +12,29 @@ public sealed class NameExpression : Expression
         => TextSpan.FromTextSpans(SyntaxTokens[0].Text, SyntaxTokens[^1].Text);
 
     public bool IsSimpleName => SyntaxTokens.Length == 1;
+
+    /// <summary>
+    /// Returns the name with :: replaced by . for CLR type lookup.
+    /// e.g., "System::Console" becomes "System.Console"
+    /// </summary>
+    public string CanonicalName
+    {
+        get
+        {
+            if (IsSimpleName)
+                return SyntaxTokens[0].Text.ToString();
+
+            var builder = new StringBuilder();
+            foreach (var token in SyntaxTokens)
+            {
+                if (token.Kind == SyntaxKind.ColonColonToken)
+                    builder.Append('.');
+                else
+                    builder.Append(token.Text);
+            }
+            return builder.ToString();
+        }
+    }
 }
 
 public sealed partial class Parser
@@ -30,20 +53,11 @@ public sealed partial class Parser
         var syntaxTokens = ImmutableArray.CreateBuilder<SyntaxToken>();
         syntaxTokens.Add(ExpectToken(SyntaxKind.IdentifierToken));
 
-        var builder = new StringBuilder(syntaxTokens[0].Text.ToString());
-
-        while (Current.Kind == SyntaxKind.DotToken && Peak.Kind == SyntaxKind.IdentifierToken)
+        // Use :: for namespace qualification - no ClrTypeCache check needed
+        while (Current.Kind == SyntaxKind.ColonColonToken && Peak.Kind == SyntaxKind.IdentifierToken)
         {
-            if (!syntaxTree.ClrTypeCache.Namespaces.Contains(builder.ToString()))
-            {
-                break;
-            }
-
-            syntaxTokens.Add(ExpectToken(SyntaxKind.DotToken));
-
-            var identifierToken = ExpectToken(SyntaxKind.IdentifierToken);
-            syntaxTokens.Add(identifierToken);
-            builder.Append($".{identifierToken.Text}");
+            syntaxTokens.Add(ExpectToken(SyntaxKind.ColonColonToken));
+            syntaxTokens.Add(ExpectToken(SyntaxKind.IdentifierToken));
         }
 
         return new()

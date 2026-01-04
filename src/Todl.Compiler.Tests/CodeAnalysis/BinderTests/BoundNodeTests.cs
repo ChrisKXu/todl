@@ -89,16 +89,16 @@ public sealed class BoundNodeTests
 
     private static readonly string[] testExpressions =
     [
-        "System.Uri", // BoundTypeExpression
+        "System::Uri", // BoundTypeExpression
         "a = 5", // BoundAssignmentExpression
         "-10", // BoundUnaryExpression
-        "System.Int32.MinValue + 10", // BoundBinaryExpression
+        "System::Int32.MinValue + 10", // BoundBinaryExpression
         "100.ToString()", // BoundClrFunctionCallExpression
         "func()", // BoundTodlFunctionCallExpression
         "\"Hello World!\"", // BoundConstant
         "\"abc\".Length", // BoundClrPropertyAccessExpression
         "int.MaxValue", // BoundClrFieldAccessExpression
-        "new System.Exception()" // BoundNewExpression
+        "new System::Exception()" // BoundNewExpression
     ];
 
     private static readonly string[] testStatements =

@@ -21,7 +21,7 @@ public sealed class BoundFunctionCallExpressionTests
     [Fact]
     public void TestBindClrFunctionCallExpressionWithOnePositionalArgument()
     {
-        var boundFunctionCallExpression = TestUtils.BindExpression<BoundClrFunctionCallExpression>("System.Math.Abs(-10)");
+        var boundFunctionCallExpression = TestUtils.BindExpression<BoundClrFunctionCallExpression>("System::Math.Abs(-10)");
 
         boundFunctionCallExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
         boundFunctionCallExpression.MethodInfo.Name.Should().Be("Abs");

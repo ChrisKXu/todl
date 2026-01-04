@@ -19,7 +19,11 @@ public sealed class ImportDirective : Directive
 
     public bool ImportAll => StarToken != null;
 
-    public TextSpan Namespace => NamespaceExpression.Text;
+    /// <summary>
+    /// Returns the namespace as a dotted string for CLR lookup.
+    /// e.g., "System::Collections::Generic" becomes "System.Collections.Generic"
+    /// </summary>
+    public string Namespace => NamespaceExpression.CanonicalName;
 
     public IEnumerable<string> ImportedNames
     {
@@ -39,8 +43,8 @@ public sealed partial class Parser
 {
     // Supported import directive forms
     // 1. import { Console } from System;
-    // 2. import { List, Dictionary, LinkedList } from System.Collections.Generic;
-    // 3. import * from System.Threading.Tasks;
+    // 2. import { List, Dictionary, LinkedList } from System::Collections::Generic;
+    // 3. import * from System::Threading::Tasks;
     private ImportDirective ParseImportDirective()
     {
         var importKeyword = ExpectToken(SyntaxKind.ImportKeywordToken);

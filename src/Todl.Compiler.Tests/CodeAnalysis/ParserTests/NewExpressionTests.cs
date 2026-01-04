@@ -20,22 +20,22 @@ public sealed class NewExpressionTests
     [Fact]
     public void TestParseNewExpressionBasicWithNoArguments()
     {
-        var inputText = "new System.Exception()";
+        var inputText = "new System::Exception()";
         var newExpression = TestUtils.ParseExpression<NewExpression>(inputText);
 
         PerformBasicValidationForNewExpression(newExpression);
-        newExpression.TypeNameExpression.Text.Should().Be("System.Exception");
+        newExpression.TypeNameExpression.Text.Should().Be("System::Exception");
         newExpression.Arguments.Items.Should().BeEmpty();
     }
 
     [Fact]
     public void TestParseNewExpressionBasicWithOnePositionalArgument()
     {
-        var inputText = "new System.Uri(\"https://google.com\")";
+        var inputText = "new System::Uri(\"https://google.com\")";
         var newExpression = TestUtils.ParseExpression<NewExpression>(inputText);
 
         PerformBasicValidationForNewExpression(newExpression);
-        newExpression.TypeNameExpression.Text.Should().Be("System.Uri");
+        newExpression.TypeNameExpression.Text.Should().Be("System::Uri");
         newExpression.Arguments.Items.Should().SatisfyRespectively(argument =>
         {
             argument.IsNamedArgument.Should().BeFalse();
@@ -46,11 +46,11 @@ public sealed class NewExpressionTests
     [Fact]
     public void TestParseNewExpressionBasicWithOneNamedArgument()
     {
-        var inputText = "new System.Uri(uriString: \"https://google.com\")";
+        var inputText = "new System::Uri(uriString: \"https://google.com\")";
         var newExpression = TestUtils.ParseExpression<NewExpression>(inputText);
 
         PerformBasicValidationForNewExpression(newExpression);
-        newExpression.TypeNameExpression.Text.Should().Be("System.Uri");
+        newExpression.TypeNameExpression.Text.Should().Be("System::Uri");
         newExpression.Arguments.Items.Should().SatisfyRespectively(argument =>
         {
             argument.IsNamedArgument.Should().BeTrue();
@@ -62,11 +62,11 @@ public sealed class NewExpressionTests
     [Fact]
     public void TestParseNewExpressionBasicWithMultiplePositionalArguments()
     {
-        var inputText = "new System.Uri(\"https://google.com\", false)";
+        var inputText = "new System::Uri(\"https://google.com\", false)";
         var newExpression = TestUtils.ParseExpression<NewExpression>(inputText);
 
         PerformBasicValidationForNewExpression(newExpression);
-        newExpression.TypeNameExpression.Text.Should().Be("System.Uri");
+        newExpression.TypeNameExpression.Text.Should().Be("System::Uri");
 
         newExpression.Arguments.Items.Should().SatisfyRespectively(
             _0 =>
@@ -84,11 +84,11 @@ public sealed class NewExpressionTests
     [Fact]
     public void TestParseNewExpressionBasicWithMultipleNamedArguments()
     {
-        var inputText = "new System.Uri(uriString: \"https://google.com\", dontEscape: false)";
+        var inputText = "new System::Uri(uriString: \"https://google.com\", dontEscape: false)";
         var newExpression = TestUtils.ParseExpression<NewExpression>(inputText);
 
         PerformBasicValidationForNewExpression(newExpression);
-        newExpression.TypeNameExpression.Text.Should().Be("System.Uri");
+        newExpression.TypeNameExpression.Text.Should().Be("System::Uri");
 
         newExpression.Arguments.Items.Should().SatisfyRespectively(
             uriString =>

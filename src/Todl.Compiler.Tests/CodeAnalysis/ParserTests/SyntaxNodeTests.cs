@@ -57,12 +57,12 @@ public sealed class SyntaxNodeTests
 
     private static readonly string[] testExpressions = new[]
     {
-        "System.Uri", // NameExpression
+        "System::Uri", // NameExpression
         "a = 5", // AssignmentExpression
         "(a == b)", // ParameterizedExpression
         "-a", // UnaryExpression
         "a + 10", // BinaryExpression
-        "System.Console.WriteLine(\"Hello World!\")", // FunctionCallExpression
+        "System::Console.WriteLine(\"Hello World!\")", // FunctionCallExpression
         "\"Hello World!\"", // LiteralExpression
         "\"abc\".Length", // MemberAccessExpression
         "new object()" // NewExpression

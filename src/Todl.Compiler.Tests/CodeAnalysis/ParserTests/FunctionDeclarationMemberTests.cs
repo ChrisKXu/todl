@@ -20,10 +20,10 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithQualifiedReturnType()
         {
-            var function = TestUtils.ParseMember<FunctionDeclarationMember>("System.Uri Function() {}");
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("System::Uri Function() {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
-            function.ReturnType.Text.Should().Be("System.Uri");
+            function.ReturnType.Text.Should().Be("System::Uri");
             function.Parameters.Items.Should().BeEmpty();
             function.Body.InnerStatements.Should().BeEmpty();
         }
@@ -58,7 +58,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithMultipleParameters()
         {
-            var function = TestUtils.ParseMember<FunctionDeclarationMember>("void Function(int a, System.Uri b) {}");
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("void Function(int a, System::Uri b) {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("void");
@@ -70,14 +70,14 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             a.Identifier.Text.Should().Be("a");
 
             var b = function.Parameters.Items[1];
-            b.ParameterType.Text.Should().Be("System.Uri");
+            b.ParameterType.Text.Should().Be("System::Uri");
             b.Identifier.Text.Should().Be("b");
         }
 
         [Fact]
         public void ParseFunctionDeclarationMemberWithArrayParameters()
         {
-            var function = TestUtils.ParseMember<FunctionDeclarationMember>("void Function(string[] a, System.Uri[] b) {}");
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("void Function(string[] a, System::Uri[] b) {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("void");
@@ -90,7 +90,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             a.ParameterType.IsArrayType.Should().BeTrue();
 
             var b = function.Parameters.Items[1];
-            b.ParameterType.Text.Should().Be("System.Uri[]");
+            b.ParameterType.Text.Should().Be("System::Uri[]");
             b.Identifier.Text.Should().Be("b");
             b.ParameterType.IsArrayType.Should().BeTrue();
         }
@@ -98,7 +98,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void ParseFunctionDeclarationMemberWithMultiDimensionalArrayParameters()
         {
-            var function = TestUtils.ParseMember<FunctionDeclarationMember>("void Function(int intParameter, string[] stringArrayParameter, System.Uri[][] twoDimensionalArraysParameter) {}");
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("void Function(int intParameter, string[] stringArrayParameter, System::Uri[][] twoDimensionalArraysParameter) {}");
             function.Should().NotBeNull();
             function.Name.Text.Should().Be("Function");
             function.ReturnType.Text.Should().Be("void");
@@ -116,7 +116,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             stringArrayParameter.ParameterType.IsArrayType.Should().BeTrue();
 
             var twoDimensionalArraysParameter = function.Parameters.Items[2];
-            twoDimensionalArraysParameter.ParameterType.Text.Should().Be("System.Uri[][]");
+            twoDimensionalArraysParameter.ParameterType.Text.Should().Be("System::Uri[][]");
             twoDimensionalArraysParameter.Identifier.Text.Should().Be(nameof(twoDimensionalArraysParameter));
             twoDimensionalArraysParameter.ParameterType.IsArrayType.Should().BeTrue();
         }

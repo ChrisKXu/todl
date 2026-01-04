@@ -84,7 +84,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestBoundObjectCreationExpressionWithNoArguments()
         {
-            var boundObjectCreationExpression = TestUtils.BindExpression<BoundObjectCreationExpression>("new System.Exception()");
+            var boundObjectCreationExpression = TestUtils.BindExpression<BoundObjectCreationExpression>("new System::Exception()");
 
             var exceptionType = TestDefaults.DefaultClrTypeCache.Resolve(typeof(Exception).FullName);
             boundObjectCreationExpression.ResultType.Should().Be(exceptionType);
@@ -93,8 +93,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Theory]
-        [InlineData("new System.Exception(\"exception message\")")]
-        [InlineData("new System.Exception(message: \"exception message\")")]
+        [InlineData("new System::Exception(\"exception message\")")]
+        [InlineData("new System::Exception(message: \"exception message\")")]
         public void TestBoundObjectCreationExpressionWithOneArgument(string inputText)
         {
             var boundObjectCreationExpression = TestUtils.BindExpression<BoundObjectCreationExpression>(inputText);
