@@ -16,10 +16,10 @@ public sealed class ClrTypeCache
     public BuiltInTypes BuiltInTypes { get; }
 
     // Lazy cache: full type name -> ClrTypeSymbol
-    private readonly ConcurrentDictionary<string, ClrTypeSymbol> _typeCache = new();
+    private readonly ConcurrentDictionary<string, ClrTypeSymbol> typeCache = new();
 
     // Lazy namespace -> types mapping (only populated when needed for wildcard imports)
-    private readonly ConcurrentDictionary<string, ImmutableArray<ClrTypeSymbol>> _namespaceTypes = new();
+    private readonly ConcurrentDictionary<string, ImmutableArray<ClrTypeSymbol>> namespaceTypes = new();
 
     private static readonly ImmutableDictionary<string, SpecialType> builtInTypeNames
         = new Dictionary<string, SpecialType>()
@@ -67,7 +67,7 @@ public sealed class ClrTypeCache
         }
 
         // 2. Check cache
-        if (_typeCache.TryGetValue(name, out var cached))
+        if (typeCache.TryGetValue(name, out var cached))
         {
             return cached;
         }
@@ -80,7 +80,7 @@ public sealed class ClrTypeCache
             {
                 var symbol = new ClrTypeSymbol(type);
                 // Thread-safe cache population
-                return _typeCache.GetOrAdd(name, symbol);
+                return typeCache.GetOrAdd(name, symbol);
             }
         }
 
@@ -100,7 +100,7 @@ public sealed class ClrTypeCache
 
         // Check cache by full name
         var fullName = type.FullName;
-        if (_typeCache.TryGetValue(fullName, out var cached))
+        if (typeCache.TryGetValue(fullName, out var cached))
         {
             return cached;
         }
@@ -109,7 +109,7 @@ public sealed class ClrTypeCache
         if (!type.IsGenericType)
         {
             var symbol = new ClrTypeSymbol(type);
-            return _typeCache.GetOrAdd(fullName, symbol);
+            return typeCache.GetOrAdd(fullName, symbol);
         }
 
         return null;
@@ -146,7 +146,7 @@ public sealed class ClrTypeCache
     /// </summary>
     public ImmutableArray<ClrTypeSymbol> GetTypesInNamespace(string namespaceName)
     {
-        return _namespaceTypes.GetOrAdd(namespaceName, ns =>
+        return namespaceTypes.GetOrAdd(namespaceName, ns =>
         {
             var builder = ImmutableArray.CreateBuilder<ClrTypeSymbol>();
             foreach (var assembly in Assemblies)
