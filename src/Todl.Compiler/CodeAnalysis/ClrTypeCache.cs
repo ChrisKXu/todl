@@ -1,7 +1,7 @@
-﻿using System;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Reflection;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -10,11 +10,16 @@ namespace Todl.Compiler.CodeAnalysis;
 
 public sealed class ClrTypeCache
 {
-    public ImmutableHashSet<Assembly> Assemblies { get; }
+    public ImmutableArray<Assembly> Assemblies { get; }
     public Assembly CoreAssembly { get; } // the assembly that contains object, bool, int, etc...
-    public ImmutableHashSet<ClrTypeSymbol> Types { get; }
 
     public BuiltInTypes BuiltInTypes { get; }
+
+    // Lazy cache: full type name -> ClrTypeSymbol
+    private readonly ConcurrentDictionary<string, ClrTypeSymbol> _typeCache = new();
+
+    // Lazy namespace -> types mapping (only populated when needed for wildcard imports)
+    private readonly ConcurrentDictionary<string, ImmutableArray<ClrTypeSymbol>> _namespaceTypes = new();
 
     private static readonly ImmutableDictionary<string, SpecialType> builtInTypeNames
         = new Dictionary<string, SpecialType>()
@@ -47,39 +52,67 @@ public sealed class ClrTypeCache
 
     private ClrTypeCache(IEnumerable<Assembly> assemblies, Assembly coreAssembly)
     {
-        Assemblies = assemblies.ToImmutableHashSet();
+        Assemblies = assemblies.ToImmutableArray();
         CoreAssembly = coreAssembly;
-
-        Types = assemblies
-            .SelectMany(a => a.GetExportedTypes())
-            .Where(t => !t.IsGenericType) // TODO: support generic type
-            .Where(t => !builtInTypeNames.ContainsKey(t.FullName))
-            .Select(t => new ClrTypeSymbol(t))
-            .ToImmutableHashSet();
-
         BuiltInTypes = new BuiltInTypes(this);
+        // No eager type loading - types resolved on demand
     }
 
     public ClrTypeSymbol Resolve(string name)
     {
-        if (builtInTypeNames.ContainsKey(name))
+        // 1. Check built-in types first (fast path)
+        if (builtInTypeNames.TryGetValue(name, out var specialType))
         {
-            return ResolveSpecialType(builtInTypeNames[name]);
+            return ResolveSpecialType(specialType);
         }
 
-        // TODO: obviously we need to optimize this
-        return Types.FirstOrDefault(t => t.Name == name);
+        // 2. Check cache
+        if (_typeCache.TryGetValue(name, out var cached))
+        {
+            return cached;
+        }
+
+        // 3. Try direct assembly lookup (O(1) via CLR metadata)
+        foreach (var assembly in Assemblies)
+        {
+            var type = assembly.GetType(name);
+            if (type != null && !type.IsGenericType)
+            {
+                var symbol = new ClrTypeSymbol(type);
+                // Thread-safe cache population
+                return _typeCache.GetOrAdd(name, symbol);
+            }
+        }
+
+        // 4. Not found
+        return null;
     }
 
     public ClrTypeSymbol Resolve(Type type)
     {
-        if (builtInTypeNames.ContainsKey(type.FullName))
+        if (type == null) return null;
+
+        // Check built-in types
+        if (builtInTypeNames.TryGetValue(type.FullName, out var specialType))
         {
-            return ResolveSpecialType(builtInTypeNames[type.FullName]);
+            return ResolveSpecialType(specialType);
         }
 
-        // TODO: obviously we need to optimize this
-        return Types.FirstOrDefault(t => t.ClrType.Equals(type));
+        // Check cache by full name
+        var fullName = type.FullName;
+        if (_typeCache.TryGetValue(fullName, out var cached))
+        {
+            return cached;
+        }
+
+        // Create and cache
+        if (!type.IsGenericType)
+        {
+            var symbol = new ClrTypeSymbol(type);
+            return _typeCache.GetOrAdd(fullName, symbol);
+        }
+
+        return null;
     }
 
     public ClrTypeSymbol ResolveSpecialType(SpecialType specialType)
@@ -105,6 +138,33 @@ public sealed class ClrTypeCache
         };
 
         return new(type, specialType);
+    }
+
+    /// <summary>
+    /// Gets all types in a namespace (lazy, cached).
+    /// Used for wildcard imports.
+    /// </summary>
+    public ImmutableArray<ClrTypeSymbol> GetTypesInNamespace(string namespaceName)
+    {
+        return _namespaceTypes.GetOrAdd(namespaceName, ns =>
+        {
+            var builder = ImmutableArray.CreateBuilder<ClrTypeSymbol>();
+            foreach (var assembly in Assemblies)
+            {
+                foreach (var type in assembly.GetExportedTypes())
+                {
+                    if (type.Namespace == ns && !type.IsGenericType)
+                    {
+                        var symbol = Resolve(type);
+                        if (symbol != null)
+                        {
+                            builder.Add(symbol);
+                        }
+                    }
+                }
+            }
+            return builder.ToImmutable();
+        });
     }
 
     public ClrTypeCacheView CreateView(IEnumerable<ImportDirective> importDirectives)
