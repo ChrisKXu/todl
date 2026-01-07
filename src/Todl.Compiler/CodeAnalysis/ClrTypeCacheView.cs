@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
@@ -19,9 +18,9 @@ public sealed class ClrTypeCacheView
             throw new ArgumentNullException(nameof(name));
         }
 
-        if (typeAliases.ContainsKey(name))
+        if (typeAliases.TryGetValue(name, out var aliased))
         {
-            return typeAliases[name];
+            return aliased;
         }
 
         return clrTypeCache.Resolve(name);
@@ -55,27 +54,36 @@ public sealed class ClrTypeCacheView
             throw new ArgumentNullException(nameof(importDirectives));
         }
 
-        var importedTypes = importDirectives.SelectMany(importDirective =>
+        var builder = ImmutableDictionary.CreateBuilder<string, ClrTypeSymbol>();
+
+        foreach (var importDirective in importDirectives)
         {
-            var importedNamespace = importDirective.Namespace;
-            var types = clrTypeCache
-                .Types
-                .Where(t => importedNamespace.Equals(t.Namespace));
+            var ns = importDirective.Namespace;
 
-            if (!importDirective.ImportAll)
+            if (importDirective.ImportAll)
             {
-                var importedNames = importDirective
-                    .ImportedNames
-                    .Select(n => $"{importedNamespace}.{n}")
-                    .ToHashSet();
-
-                types = types.Where(t => importedNames.Contains(t.Name));
+                // Use GetTypesInNamespace for wildcard imports (lazy, cached)
+                foreach (var symbol in clrTypeCache.GetTypesInNamespace(ns))
+                {
+                    builder.TryAdd(symbol.ClrType.Name, symbol);
+                }
             }
+            else
+            {
+                // Import specific types - direct lookup
+                foreach (var typeName in importDirective.ImportedNames)
+                {
+                    var fullName = $"{ns}.{typeName}";
+                    var symbol = clrTypeCache.Resolve(fullName);
+                    if (symbol != null)
+                    {
+                        builder.TryAdd(typeName, symbol);
+                    }
+                }
+            }
+        }
 
-            return types;
-        }).Distinct();
-
-        return importedTypes.ToImmutableDictionary(t => t.ClrType.Name);
+        return builder.ToImmutable();
     }
 
     internal ClrTypeCacheView(ClrTypeCache cache, IEnumerable<ImportDirective> importDirectives)
