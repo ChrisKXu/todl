@@ -9,7 +9,7 @@ public sealed class UnaryExpressionTests
     [Theory]
     [InlineData("+1", SyntaxKind.PlusToken)]
     [InlineData("-1", SyntaxKind.MinusToken)]
-    public void TestParingUnaryExpressionWithConstants(string input, SyntaxKind expectedOperatorKind)
+    public void TestParsingUnaryExpressionWithConstants(string input, SyntaxKind expectedOperatorKind)
     {
         var unaryExpression = TestUtils.ParseExpression<UnaryExpression>(input);
 
