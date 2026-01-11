@@ -144,7 +144,7 @@ public sealed class BinaryExpressionTests
                 {
                     unaryExpression.Operator.Text.Should().Be("-");
                     unaryExpression.Operator.Kind.Should().Be(SyntaxKind.MinusToken);
-                    unaryExpression.Operand.As<NameExpression>().Text.Should().Be("a");
+                    unaryExpression.Operand.As<SimpleNameExpression>().Text.Should().Be("a");
                 }).Should().NotThrow();
 
                 inner.Operator.Text.Should().Be("+");

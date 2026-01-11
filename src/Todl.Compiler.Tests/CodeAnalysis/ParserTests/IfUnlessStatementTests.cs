@@ -23,7 +23,7 @@ public sealed class IfUnlessStatementTests
         var condition = ifUnlessStatement.ConditionExpression.As<BinaryExpression>();
         condition.Should().NotBeNull();
 
-        condition.Left.As<NameExpression>().Text.ToString().Should().Be("n");
+        condition.Left.As<SimpleNameExpression>().Text.ToString().Should().Be("n");
         condition.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
         condition.Right.As<LiteralExpression>().Text.ToString().Should().Be("0");
     }
@@ -55,7 +55,7 @@ public sealed class IfUnlessStatementTests
         var condition = ifUnlessStatement.ConditionExpression.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>();
         condition.Should().NotBeNull();
 
-        condition.Left.As<NameExpression>().Text.ToString().Should().Be("n");
+        condition.Left.As<SimpleNameExpression>().Text.ToString().Should().Be("n");
         condition.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
         condition.Right.As<LiteralExpression>().Text.ToString().Should().Be("0");
     }
@@ -161,7 +161,7 @@ public sealed class IfUnlessStatementTests
 
         condition.Left.As<BinaryExpression>().Invoking(left =>
         {
-            left.Left.As<NameExpression>().Text.Should().Be("a");
+            left.Left.As<SimpleNameExpression>().Text.Should().Be("a");
             left.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
             left.Right.As<LiteralExpression>().Text.Should().Be("0");
         }).Should().NotThrow();

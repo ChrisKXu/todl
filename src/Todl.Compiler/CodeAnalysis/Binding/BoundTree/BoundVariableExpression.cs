@@ -18,33 +18,64 @@ internal sealed class BoundVariableExpression : BoundExpression
 
 public partial class Binder
 {
-    private BoundExpression BindNameExpression(NameExpression nameExpression)
+    /// <summary>
+    /// Binds a simple name - could be a type or a variable.
+    /// </summary>
+    private BoundExpression BindSimpleNameExpression(SimpleNameExpression simpleNameExpression)
     {
-        var name = nameExpression.Text.ToString();
-        var type = nameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(nameExpression);
+        var name = simpleNameExpression.CanonicalName;
 
+        // First check if it's a type (imported or built-in)
+        var type = simpleNameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(simpleNameExpression);
         if (type != null)
         {
             return BoundNodeFactory.CreateBoundTypeExpression(
-                syntaxNode: nameExpression,
+                syntaxNode: simpleNameExpression,
                 targetType: type);
         }
 
+        // Then check if it's a variable
         var variable = Scope.LookupVariable(name);
         if (variable == null)
         {
             ReportDiagnostic(
                 new Diagnostic()
                 {
-                    Message = $"Undeclared variable {nameExpression.Text}",
+                    Message = $"Undeclared variable {simpleNameExpression.Text}",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = nameExpression.SyntaxTokens[0].GetTextLocation(),
+                    TextLocation = simpleNameExpression.IdentifierToken.GetTextLocation(),
                     ErrorCode = ErrorCode.UndeclaredVariable
                 });
         }
 
         return BoundNodeFactory.CreateBoundVariableExpression(
-            syntaxNode: nameExpression,
+            syntaxNode: simpleNameExpression,
             variable: variable);
+    }
+
+    /// <summary>
+    /// Binds a namespace-qualified expression - ALWAYS resolves to a type.
+    /// This is a key semantic distinction: :: means namespace qualification,
+    /// and namespace-qualified names are always types, never variables.
+    /// </summary>
+    private BoundExpression BindNamespaceQualifiedNameExpression(NamespaceQualifiedNameExpression NamespaceQualifiedNameExpression)
+    {
+        var type = NamespaceQualifiedNameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(NamespaceQualifiedNameExpression);
+
+        if (type == null)
+        {
+            ReportDiagnostic(
+                new Diagnostic()
+                {
+                    Message = $"Type '{NamespaceQualifiedNameExpression.CanonicalName}' could not be found",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = NamespaceQualifiedNameExpression.TypeIdentifierToken.GetTextLocation(),
+                    ErrorCode = ErrorCode.TypeNotFound
+                });
+        }
+
+        return BoundNodeFactory.CreateBoundTypeExpression(
+            syntaxNode: NamespaceQualifiedNameExpression,
+            targetType: type);
     }
 }

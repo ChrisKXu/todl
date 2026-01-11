@@ -18,7 +18,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var assignmentExpression = TestUtils.ParseExpression<AssignmentExpression>($"a {expectedOperatorToken} (b + 3) * 2");
 
-            assignmentExpression.Left.As<NameExpression>().Text.Should().Be("a");
+            assignmentExpression.Left.As<SimpleNameExpression>().Text.Should().Be("a");
             assignmentExpression.AssignmentOperator.Text.Should().Be(expectedOperatorToken);
             assignmentExpression.AssignmentOperator.Kind.Should().Be(expectedTokenKind);
 
@@ -26,7 +26,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             {
                 expression.Left.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>().Invoking(innerExpression =>
                 {
-                    innerExpression.Left.As<NameExpression>().Text.Should().Be("b");
+                    innerExpression.Left.As<SimpleNameExpression>().Text.Should().Be("b");
                     innerExpression.Operator.Text.Should().Be("+");
                     innerExpression.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
                     innerExpression.Right.As<LiteralExpression>().LiteralToken.Text.Should().Be("3");
@@ -73,7 +73,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 {
                     var letStatement = _1.As<VariableDeclarationStatement>();
                     letStatement.IdentifierToken.Text.Should().Be("b");
-                    letStatement.InitializerExpression.As<NameExpression>().Text.Should().Be("a");
+                    letStatement.InitializerExpression.As<SimpleNameExpression>().Text.Should().Be("a");
                 });
         }
 

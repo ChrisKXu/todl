@@ -56,9 +56,9 @@ public partial class Binder
         var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
         var right = BindExpression(assignmentExpression.Right);
 
-        if (assignmentExpression.Left is NameExpression nameExpression)
+        if (assignmentExpression.Left is SimpleNameExpression simpleNameExpression)
         {
-            var variableName = nameExpression.Text.ToString();
+            var variableName = simpleNameExpression.CanonicalName;
             var variable = Scope.LookupVariable(variableName);
 
             if (variable == null)
@@ -81,7 +81,7 @@ public partial class Binder
                     {
                         Message = $"Variable {variableName} is read-only",
                         Level = DiagnosticLevel.Error,
-                        TextLocation = nameExpression.SyntaxTokens[0].GetTextLocation(),
+                        TextLocation = simpleNameExpression.IdentifierToken.GetTextLocation(),
                         ErrorCode = ErrorCode.ReadOnlyVariable
                     });
             }
@@ -92,7 +92,7 @@ public partial class Binder
                     {
                         Message = $"Variable {variableName} cannot be assigned to type {right.ResultType}",
                         Level = DiagnosticLevel.Error,
-                        TextLocation = nameExpression.SyntaxTokens[0].GetTextLocation(),
+                        TextLocation = simpleNameExpression.IdentifierToken.GetTextLocation(),
                         ErrorCode = ErrorCode.TypeMismatch
                     });
             }
