@@ -23,7 +23,7 @@ public partial class Binder
             ParethesizedExpression parethesizedExpression => BindExpression(parethesizedExpression.InnerExpression),
             AssignmentExpression assignmentExpression => BindAssignmentExpression(assignmentExpression),
             SimpleNameExpression simpleNameExpression => BindSimpleNameExpression(simpleNameExpression),
-            NamespaceQualifiedExpression namespaceQualifiedExpression => BindNamespaceQualifiedExpression(namespaceQualifiedExpression),
+            NamespaceQualifiedNameExpression NamespaceQualifiedNameExpression => BindNamespaceQualifiedNameExpression(NamespaceQualifiedNameExpression),
             MemberAccessExpression memberAccessExpression => BindMemberAccessExpression(memberAccessExpression),
             FunctionCallExpression functionCallExpression => BindFunctionCallExpression(functionCallExpression),
             NewExpression newExpression => BindNewExpression(newExpression),

@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text;
 using Todl.Compiler.CodeAnalysis.Text;
 
@@ -42,7 +42,7 @@ public sealed class SimpleNameExpression : NameExpression
 /// Uses a flat structure: namespace parts are stored in an array,
 /// not as nested expressions.
 /// </summary>
-public sealed class NamespaceQualifiedExpression : NameExpression
+public sealed class NamespaceQualifiedNameExpression : NameExpression
 {
     /// <summary>
     /// The namespace part identifiers (e.g., [System, Collections, Generic] for System::Collections::Generic::List).
@@ -85,7 +85,7 @@ public sealed partial class Parser
     /// <summary>
     /// Parses a name expression, which can be:
     /// - SimpleNameExpression: identifier or built-in type keyword
-    /// - NamespaceQualifiedExpression: namespace::namespace::...::typeName
+    /// - NamespaceQualifiedNameExpression: namespace::namespace::...::typeName
     /// </summary>
     private NameExpression ParseNameExpression()
     {
@@ -130,7 +130,7 @@ public sealed partial class Parser
             else
             {
                 // This is the final type name
-                return new NamespaceQualifiedExpression()
+                return new NamespaceQualifiedNameExpression()
                 {
                     SyntaxTree = syntaxTree,
                     NamespaceIdentifiers = namespaceIdentifiers.ToImmutable(),

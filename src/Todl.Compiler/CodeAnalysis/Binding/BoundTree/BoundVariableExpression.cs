@@ -58,24 +58,24 @@ public partial class Binder
     /// This is a key semantic distinction: :: means namespace qualification,
     /// and namespace-qualified names are always types, never variables.
     /// </summary>
-    private BoundExpression BindNamespaceQualifiedExpression(NamespaceQualifiedExpression namespaceQualifiedExpression)
+    private BoundExpression BindNamespaceQualifiedNameExpression(NamespaceQualifiedNameExpression NamespaceQualifiedNameExpression)
     {
-        var type = namespaceQualifiedExpression.SyntaxTree.ClrTypeCacheView.ResolveType(namespaceQualifiedExpression);
+        var type = NamespaceQualifiedNameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(NamespaceQualifiedNameExpression);
 
         if (type == null)
         {
             ReportDiagnostic(
                 new Diagnostic()
                 {
-                    Message = $"Type '{namespaceQualifiedExpression.CanonicalName}' could not be found",
+                    Message = $"Type '{NamespaceQualifiedNameExpression.CanonicalName}' could not be found",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = namespaceQualifiedExpression.TypeIdentifierToken.GetTextLocation(),
+                    TextLocation = NamespaceQualifiedNameExpression.TypeIdentifierToken.GetTextLocation(),
                     ErrorCode = ErrorCode.TypeNotFound
                 });
         }
 
         return BoundNodeFactory.CreateBoundTypeExpression(
-            syntaxNode: namespaceQualifiedExpression,
+            syntaxNode: NamespaceQualifiedNameExpression,
             targetType: type);
     }
 }

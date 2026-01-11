@@ -58,7 +58,7 @@ public sealed class SyntaxNodeTests
     private static readonly string[] testExpressions = new[]
     {
         "Uri", // SimpleNameExpression
-        "System::Uri", // NamespaceQualifiedExpression
+        "System::Uri", // NamespaceQualifiedNameExpression
         "a = 5", // AssignmentExpression
         "(a == b)", // ParameterizedExpression
         "-a", // UnaryExpression

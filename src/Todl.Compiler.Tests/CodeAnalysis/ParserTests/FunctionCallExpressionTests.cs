@@ -39,7 +39,7 @@ public sealed class FunctionCallExpressionTests
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.BaseExpression.As<NamespaceQualifiedExpression>().Text.Should().Be("System::Int32");
+        functionCallExpression.BaseExpression.As<NamespaceQualifiedNameExpression>().Text.Should().Be("System::Int32");
         functionCallExpression.NameToken.Text.Should().Be("Parse");
 
         functionCallExpression.Arguments.Items.Should().NotBeEmpty();
@@ -58,7 +58,7 @@ public sealed class FunctionCallExpressionTests
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.BaseExpression.As<NamespaceQualifiedExpression>().Text.Should().Be("System::Int32");
+        functionCallExpression.BaseExpression.As<NamespaceQualifiedNameExpression>().Text.Should().Be("System::Int32");
         functionCallExpression.NameToken.Text.Should().Be("Parse");
 
         functionCallExpression.Arguments.Items.Should().NotBeEmpty();
