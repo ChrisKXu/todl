@@ -70,4 +70,18 @@ public sealed class WhileUntilStatementTests
         whileUntilStatement.Should().NotBeNull();
         whileUntilStatement.BlockStatement.InnerStatements.Should().HaveCount(expectedStatementsCount);
     }
+
+    [Fact]
+    public void InvalidLoopLabelProducesError()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var whileUntilStatement = TestUtils.ParseStatement<WhileUntilStatement>(
+            "while n == 0 : System::Label { }", diagnosticBuilder);
+
+        whileUntilStatement.Should().NotBeNull();
+        whileUntilStatement.LoopLabel.Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().Contain(d => d.ErrorCode == ErrorCode.InvalidLoopLabel);
+    }
 }

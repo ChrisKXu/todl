@@ -14,7 +14,7 @@ public sealed class NameExpressionTests
     [InlineData("Console")]
     [InlineData("myVariable")]
     [InlineData("myVar123")]
-    public void TestSimpleNameExpression_Identifier(string identifier)
+    public void TestSimpleNameExpressionWithIdentifier(string identifier)
     {
         var name = TestUtils.ParseExpression<SimpleNameExpression>(identifier);
 
@@ -32,7 +32,7 @@ public sealed class NameExpressionTests
     [InlineData("byte", SyntaxKind.ByteKeywordToken)]
     [InlineData("char", SyntaxKind.CharKeywordToken)]
     [InlineData("long", SyntaxKind.LongKeywordToken)]
-    public void TestSimpleNameExpression_BuiltInType(string typeName, SyntaxKind expectedKind)
+    public void TestSimpleNameExpressionWithBuiltInType(string typeName, SyntaxKind expectedKind)
     {
         var name = TestUtils.ParseExpression<SimpleNameExpression>(typeName);
 
@@ -42,7 +42,7 @@ public sealed class NameExpressionTests
     }
 
     [Fact]
-    public void TestNamespaceQualifiedNameExpression_SingleNamespace()
+    public void TestNamespaceQualifiedNameExpressionWithSingleNamespace()
     {
         var name = TestUtils.ParseExpression<NamespaceQualifiedNameExpression>("System::Console");
 
@@ -54,7 +54,7 @@ public sealed class NameExpressionTests
     }
 
     [Fact]
-    public void TestNamespaceQualifiedNameExpression_TwoNamespaces()
+    public void TestNamespaceQualifiedNameExpressionWithTwoNamespaces()
     {
         var name = TestUtils.ParseExpression<NamespaceQualifiedNameExpression>("System::Threading::Task");
 
@@ -67,7 +67,7 @@ public sealed class NameExpressionTests
     }
 
     [Fact]
-    public void TestNamespaceQualifiedNameExpression_ThreeNamespaces()
+    public void TestNamespaceQualifiedNameExpressionWithThreeNamespaces()
     {
         var name = TestUtils.ParseExpression<NamespaceQualifiedNameExpression>("System::Collections::Generic::List");
 
@@ -81,7 +81,7 @@ public sealed class NameExpressionTests
     }
 
     [Fact]
-    public void TestNamespaceQualifiedNameExpression_GetUnqualifiedName()
+    public void TestNamespaceQualifiedNameExpressionGetUnqualifiedName()
     {
         var name = TestUtils.ParseExpression<NamespaceQualifiedNameExpression>("System::Collections::Generic::Dictionary");
 
@@ -93,7 +93,7 @@ public sealed class NameExpressionTests
     }
 
     [Fact]
-    public void TestNamespaceQualifiedNameExpression_TextSpan()
+    public void TestNamespaceQualifiedNameExpressionTextSpan()
     {
         var name = TestUtils.ParseExpression<NamespaceQualifiedNameExpression>("System::Console");
 
@@ -105,7 +105,7 @@ public sealed class NameExpressionTests
     #region Binder Tests
 
     [Fact]
-    public void TestSimpleNameExpression_ResolvesToVariable()
+    public void TestSimpleNameExpressionResolvesToVariable()
     {
         var inputText = @"
         {
@@ -124,7 +124,7 @@ public sealed class NameExpressionTests
     }
 
     [Fact]
-    public void TestNamespaceQualifiedNameExpression_ResolvesToType()
+    public void TestNamespaceQualifiedNameExpressionResolvesToType()
     {
         var boundExpression = TestUtils.BindExpression<BoundTypeExpression>("System::Console");
 
@@ -134,7 +134,7 @@ public sealed class NameExpressionTests
     }
 
     [Fact]
-    public void TestNamespaceQualifiedNameExpression_NestedNamespace_ResolvesToType()
+    public void TestNamespaceQualifiedNameExpressionWithNestedNamespaceResolvesToType()
     {
         var boundExpression = TestUtils.BindExpression<BoundTypeExpression>("System::Threading::Tasks::Task");
 
@@ -144,7 +144,7 @@ public sealed class NameExpressionTests
     }
 
     [Fact]
-    public void TestNamespaceQualifiedNameExpression_InvalidType_ProducesError()
+    public void TestNamespaceQualifiedNameExpressionWithInvalidTypeProducesError()
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundExpression = TestUtils.BindExpression<BoundTypeExpression>("System::NonExistentType", diagnosticBuilder);
@@ -155,7 +155,7 @@ public sealed class NameExpressionTests
     }
 
     [Fact]
-    public void TestSimpleNameExpression_UndeclaredVariable_ProducesError()
+    public void TestSimpleNameExpressionWithUndeclaredVariableProducesError()
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundExpression = TestUtils.BindExpression<BoundVariableExpression>("undeclaredVariable", diagnosticBuilder);
