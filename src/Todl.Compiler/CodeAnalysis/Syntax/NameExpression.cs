@@ -1,69 +1,145 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.Text;
 using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
 
-public sealed class NameExpression : Expression
+/// <summary>
+/// Abstract base class for all name expressions.
+/// </summary>
+public abstract class NameExpression : Expression
 {
-    public ImmutableArray<SyntaxToken> SyntaxTokens { get; internal init; }
-
-    public override TextSpan Text
-        => TextSpan.FromTextSpans(SyntaxTokens[0].Text, SyntaxTokens[^1].Text);
-
-    public bool IsSimpleName => SyntaxTokens.Length == 1;
-
     /// <summary>
-    /// Returns the name with :: replaced by . for CLR type lookup.
+    /// Returns the canonical name for CLR type lookup (with dots).
     /// e.g., "System::Console" becomes "System.Console"
     /// </summary>
-    public string CanonicalName
+    public abstract string CanonicalName { get; }
+
+    /// <summary>
+    /// Returns the rightmost simple name.
+    /// </summary>
+    public abstract SimpleNameExpression GetUnqualifiedName();
+}
+
+/// <summary>
+/// Represents a simple identifier name (e.g., "Console", "x", "int").
+/// Can resolve to either a type or a variable in the binder.
+/// </summary>
+public sealed class SimpleNameExpression : NameExpression
+{
+    public SyntaxToken IdentifierToken { get; internal init; }
+
+    public override TextSpan Text => IdentifierToken.Text;
+    public override string CanonicalName => IdentifierToken.Text.ToString();
+    public override SimpleNameExpression GetUnqualifiedName() => this;
+}
+
+/// <summary>
+/// Represents a namespace-qualified name using the :: operator.
+/// Always resolves to a type in the binder (never a variable).
+/// Example: System::Console, System::Collections::Generic::List
+///
+/// Uses a flat structure: namespace parts are stored in an array,
+/// not as nested expressions.
+/// </summary>
+public sealed class NamespaceQualifiedExpression : NameExpression
+{
+    /// <summary>
+    /// The namespace part identifiers (e.g., [System, Collections, Generic] for System::Collections::Generic::List).
+    /// </summary>
+    public ImmutableArray<SyntaxToken> NamespaceIdentifiers { get; internal init; }
+
+    /// <summary>
+    /// The type name (the rightmost identifier, e.g., "List").
+    /// </summary>
+    public SyntaxToken TypeIdentifierToken { get; internal init; }
+
+    public override TextSpan Text
+        => TextSpan.FromTextSpans(NamespaceIdentifiers[0].Text, TypeIdentifierToken.Text);
+
+    public override string CanonicalName
     {
         get
         {
-            if (IsSimpleName)
-                return SyntaxTokens[0].Text.ToString();
-
             var builder = new StringBuilder();
-            foreach (var token in SyntaxTokens)
+            foreach (var ns in NamespaceIdentifiers)
             {
-                if (token.Kind == SyntaxKind.ColonColonToken)
-                    builder.Append('.');
-                else
-                    builder.Append(token.Text);
+                builder.Append(ns.Text);
+                builder.Append('.');
             }
+            builder.Append(TypeIdentifierToken.Text);
             return builder.ToString();
         }
     }
+
+    public override SimpleNameExpression GetUnqualifiedName()
+        => new SimpleNameExpression
+        {
+            SyntaxTree = SyntaxTree,
+            IdentifierToken = TypeIdentifierToken
+        };
 }
 
 public sealed partial class Parser
 {
+    /// <summary>
+    /// Parses a name expression, which can be:
+    /// - SimpleNameExpression: identifier or built-in type keyword
+    /// - NamespaceQualifiedExpression: namespace::namespace::...::typeName
+    /// </summary>
     private NameExpression ParseNameExpression()
     {
+        // Handle built-in type keywords (int, string, bool, etc.)
         if (SyntaxFacts.BuiltInTypes.Contains(Current.Kind))
         {
-            return new()
+            return new SimpleNameExpression()
             {
                 SyntaxTree = syntaxTree,
-                SyntaxTokens = ImmutableArray.CreateRange([ExpectToken(Current.Kind)])
+                IdentifierToken = ExpectToken(Current.Kind)
             };
         }
 
-        var syntaxTokens = ImmutableArray.CreateBuilder<SyntaxToken>();
-        syntaxTokens.Add(ExpectToken(SyntaxKind.IdentifierToken));
+        var firstIdentifier = ExpectToken(SyntaxKind.IdentifierToken);
 
-        // Use :: for namespace qualification - no ClrTypeCache check needed
-        while (Current.Kind == SyntaxKind.ColonColonToken && Peak.Kind == SyntaxKind.IdentifierToken)
+        // Check if this is a namespace-qualified name
+        if (Current.Kind != SyntaxKind.ColonColonToken)
         {
-            syntaxTokens.Add(ExpectToken(SyntaxKind.ColonColonToken));
-            syntaxTokens.Add(ExpectToken(SyntaxKind.IdentifierToken));
+            // Simple name - just an identifier
+            return new SimpleNameExpression()
+            {
+                SyntaxTree = syntaxTree,
+                IdentifierToken = firstIdentifier
+            };
         }
 
-        return new()
+        // Namespace-qualified name: collect all parts
+        var namespaceIdentifiers = ImmutableArray.CreateBuilder<SyntaxToken>();
+        namespaceIdentifiers.Add(firstIdentifier);
+
+        while (Current.Kind == SyntaxKind.ColonColonToken && Peak.Kind == SyntaxKind.IdentifierToken)
         {
-            SyntaxTree = syntaxTree,
-            SyntaxTokens = syntaxTokens.ToImmutable()
-        };
+            ExpectToken(SyntaxKind.ColonColonToken); // consume but don't store
+            var nextIdentifier = ExpectToken(SyntaxKind.IdentifierToken);
+
+            // Check if there's another :: coming - if so, this is a namespace part
+            // If not, this is the type name
+            if (Current.Kind == SyntaxKind.ColonColonToken)
+            {
+                namespaceIdentifiers.Add(nextIdentifier);
+            }
+            else
+            {
+                // This is the final type name
+                return new NamespaceQualifiedExpression()
+                {
+                    SyntaxTree = syntaxTree,
+                    NamespaceIdentifiers = namespaceIdentifiers.ToImmutable(),
+                    TypeIdentifierToken = nextIdentifier
+                };
+            }
+        }
+
+        // This shouldn't be reached in normal parsing
+        throw new System.InvalidOperationException("Unexpected state in ParseNameExpression");
     }
 }

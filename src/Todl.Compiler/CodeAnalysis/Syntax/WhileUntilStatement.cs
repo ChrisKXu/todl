@@ -54,7 +54,7 @@ public sealed partial class Parser
         var colonToken = ExpectToken(SyntaxKind.ColonToken);
         var label = ParseNameExpression();
 
-        if (!label.IsSimpleName)
+        if (label is not SimpleNameExpression)
         {
             ReportDiagnostic(new()
             {

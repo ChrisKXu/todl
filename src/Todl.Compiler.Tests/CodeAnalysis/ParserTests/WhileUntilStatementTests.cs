@@ -43,7 +43,7 @@ public sealed class WhileUntilStatementTests
 
         var condition = whileUntilStatement.ConditionExpression.As<BinaryExpression>();
         condition.Should().NotBeNull();
-        condition.Left.As<NameExpression>().Text.ToString().Should().Be("n");
+        condition.Left.As<SimpleNameExpression>().Text.ToString().Should().Be("n");
         condition.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
         condition.Right.As<LiteralExpression>().Text.ToString().Should().Be("0");
     }
@@ -57,7 +57,7 @@ public sealed class WhileUntilStatementTests
         whileUntilStatement.Should().NotBeNull();
 
         whileUntilStatement.LoopLabel.Should().NotBeNull();
-        whileUntilStatement.LoopLabel.Label.As<NameExpression>().Text.Should().Be(label);
+        whileUntilStatement.LoopLabel.Label.As<SimpleNameExpression>().Text.Should().Be(label);
         whileUntilStatement.LoopLabel.ColonToken.Kind.Should().Be(SyntaxKind.ColonToken);
     }
 

@@ -99,12 +99,13 @@ public sealed partial class Parser
             };
         }
 
-        Debug.Assert(baseExpression is NameExpression nameExpression && nameExpression.IsSimpleName);
+        Debug.Assert(baseExpression is SimpleNameExpression);
+        var simpleNameExpression = (SimpleNameExpression)baseExpression;
 
         return new()
         {
             SyntaxTree = syntaxTree,
-            NameToken = (baseExpression as NameExpression).SyntaxTokens[0],
+            NameToken = simpleNameExpression.IdentifierToken,
             Arguments = arguments
         };
     }

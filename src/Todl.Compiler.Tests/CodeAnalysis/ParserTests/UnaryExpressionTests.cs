@@ -31,7 +31,7 @@ public sealed class UnaryExpressionTests
         unaryExpression.Should().NotBeNull();
         unaryExpression.Operator.Kind.Should().Be(expectedOperatorKind);
 
-        unaryExpression.Operand.Should().BeOfType<NameExpression>();
+        unaryExpression.Operand.Should().BeOfType<SimpleNameExpression>();
     }
 
     [Theory]

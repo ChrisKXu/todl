@@ -26,7 +26,7 @@ public sealed class FunctionCallExpressionTests
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.BaseExpression.As<NameExpression>().Text.Should().Be("a");
+        functionCallExpression.BaseExpression.As<SimpleNameExpression>().Text.Should().Be("a");
         functionCallExpression.NameToken.Text.Should().Be("ToString");
         functionCallExpression.Arguments.Items.Should().BeEmpty();
     }
@@ -39,7 +39,7 @@ public sealed class FunctionCallExpressionTests
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.BaseExpression.As<NameExpression>().Text.Should().Be("System::Int32");
+        functionCallExpression.BaseExpression.As<NamespaceQualifiedExpression>().Text.Should().Be("System::Int32");
         functionCallExpression.NameToken.Text.Should().Be("Parse");
 
         functionCallExpression.Arguments.Items.Should().NotBeEmpty();
@@ -58,7 +58,7 @@ public sealed class FunctionCallExpressionTests
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.BaseExpression.As<NameExpression>().Text.Should().Be("System::Int32");
+        functionCallExpression.BaseExpression.As<NamespaceQualifiedExpression>().Text.Should().Be("System::Int32");
         functionCallExpression.NameToken.Text.Should().Be("Parse");
 
         functionCallExpression.Arguments.Items.Should().NotBeEmpty();
