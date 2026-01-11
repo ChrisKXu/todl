@@ -55,7 +55,7 @@ public sealed class SyntaxNodeTests
         uncoveredTypes.Should().BeEmpty();
     }
 
-    private static readonly string[] testExpressions = new[]
+    private static readonly string[] testExpressions =
     {
         "Uri", // SimpleNameExpression
         "System::Uri", // NamespaceQualifiedNameExpression
@@ -69,7 +69,7 @@ public sealed class SyntaxNodeTests
         "new object()" // NewExpression
     };
 
-    private static readonly string[] testStatements = new[]
+    private static readonly string[] testStatements =
     {
         "{ a = 5; a.ToString(); }", // BlockStatement
         "a = 5;", // ExpressionStatement
@@ -81,12 +81,12 @@ public sealed class SyntaxNodeTests
         "while a == 0 { break; }" // WhileUntilStatement
     };
 
-    private static readonly string[] testDirectives = new[]
+    private static readonly string[] testDirectives =
     {
         "import * from System;" // ImportDirective
     };
 
-    private static readonly string[] testMembers = new[]
+    private static readonly string[] testMembers =
     {
         "const a = 5;", // VariableDeclarationMember
         "void A() { const a = 5; }" // FunctionDeclarationMember
