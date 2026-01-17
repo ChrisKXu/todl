@@ -9,7 +9,7 @@ public sealed class UnaryExpressionTests
     [Theory]
     [InlineData("+1", SyntaxKind.PlusToken)]
     [InlineData("-1", SyntaxKind.MinusToken)]
-    public void TestParingUnaryExpressionWithConstants(string input, SyntaxKind expectedOperatorKind)
+    public void TestParsingUnaryExpressionWithConstants(string input, SyntaxKind expectedOperatorKind)
     {
         var unaryExpression = TestUtils.ParseExpression<UnaryExpression>(input);
 
@@ -47,5 +47,28 @@ public sealed class UnaryExpressionTests
         unaryExpression.Operator.Kind.Should().Be(expectedOperatorKind);
 
         unaryExpression.Operand.Should().BeOfType<MemberAccessExpression>();
+    }
+
+    [Fact]
+    public void TestParsingUnaryWithParenthesizedExpression()
+    {
+        var unaryExpression = TestUtils.ParseExpression<UnaryExpression>("-(a + b)");
+
+        unaryExpression.Should().NotBeNull();
+        unaryExpression.Operator.Kind.Should().Be(SyntaxKind.MinusToken);
+
+        var parenExpr = unaryExpression.Operand.As<ParethesizedExpression>();
+        parenExpr.Should().NotBeNull();
+        parenExpr.InnerExpression.Should().BeOfType<BinaryExpression>();
+    }
+
+    [Fact]
+    public void TestParsingBitwiseNotWithLiteral()
+    {
+        var unaryExpression = TestUtils.ParseExpression<UnaryExpression>("~255");
+
+        unaryExpression.Should().NotBeNull();
+        unaryExpression.Operator.Kind.Should().Be(SyntaxKind.TildeToken);
+        unaryExpression.Operand.As<LiteralExpression>().Text.Should().Be("255");
     }
 }
