@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Todl.Compiler.Diagnostics;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
+using Todl.Compiler.CodeAnalysis.Symbols;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
 
@@ -17,7 +18,11 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
     {
         var controlFlowGraph = ControlFlowGraph.Create(boundFunctionMember);
 
-        AllPathsShouldReturn(controlFlowGraph, boundFunctionMember);
+        if (boundFunctionMember.ReturnType.SpecialType != SpecialType.ClrVoid)
+        {
+            AllPathsShouldReturn(controlFlowGraph, boundFunctionMember);
+        }
+
         AllBlocksShouldBeReachable(controlFlowGraph);
 
         return boundFunctionMember;

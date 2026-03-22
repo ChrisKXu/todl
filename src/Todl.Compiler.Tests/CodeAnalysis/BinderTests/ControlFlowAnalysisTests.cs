@@ -15,6 +15,8 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("void func() { return; }")]
     [InlineData("void func() { int.MaxValue.ToString(); return; }")]
     [InlineData("void func() { if true { int.MaxValue.ToString(); } }")]
+    [InlineData("void func() { if true { return; } }")]
+    [InlineData("void func() { if true { return; } int.MaxValue.ToString(); }")]
     [InlineData("int func() { return int.MaxValue; }")]
     [InlineData("int func() { int.MaxValue.ToString(); return int.MaxValue; }")]
     [InlineData("int func() { if true { return int.MaxValue; } return 0; }")]

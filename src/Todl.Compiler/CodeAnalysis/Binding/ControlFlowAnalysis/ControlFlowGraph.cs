@@ -161,7 +161,7 @@ internal sealed class ControlFlowGraph
             blocks.Add(current);
             var next = new BasicBlock();
 
-            if (current.IsTeminal)
+            if (current.IsTerminal)
             {
                 Connect(current, end);
             }
@@ -205,7 +205,7 @@ internal sealed class ControlFlowGraph
         public List<BasicBlockBranch> Incoming { get; } = new();
         public List<BasicBlockBranch> Outgoing { get; } = new();
 
-        public bool IsTeminal
+        public bool IsTerminal
         {
             get
             {
