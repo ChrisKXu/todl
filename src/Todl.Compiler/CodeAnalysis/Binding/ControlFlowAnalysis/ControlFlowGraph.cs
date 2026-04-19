@@ -66,19 +66,20 @@ internal sealed class ControlFlowGraph
         {
             var begin = current;
 
-            StartNewBlock(endBlock);
-            Connect(begin, current);
-            Visit(boundConditionalStatement.Consequence);
-            var consequence = current;
+            // Ensure begin is a proper block so branches can't absorb it
+            if (!begin.Statements.Any())
+            {
+                begin.Statements.Add(new BoundNoOpStatement());
+            }
+            blocks.Add(begin);
 
-            StartNewBlock(endBlock);
-            Connect(begin, current);
-            Visit(boundConditionalStatement.Alternative);
-            var alternative = current;
+            var consequenceEnd = VisitBranch(boundConditionalStatement.Consequence, begin);
+            var alternativeEnd = VisitBranch(boundConditionalStatement.Alternative, begin);
 
-            StartNewBlock(endBlock);
-            Connect(consequence, current);
-            Connect(alternative, current);
+            // Merge block — only connect branches with live, non-terminal flow
+            current = new BasicBlock();
+            ConnectToMerge(consequenceEnd, current);
+            ConnectToMerge(alternativeEnd, current);
 
             if (boundConditionalStatement.Consequence is BoundNoOpStatement || boundConditionalStatement.Alternative is BoundNoOpStatement)
             {
@@ -86,6 +87,31 @@ internal sealed class ControlFlowGraph
             }
 
             return boundConditionalStatement;
+        }
+
+        private BasicBlock VisitBranch(BoundStatement branch, BasicBlock from)
+        {
+            current = new BasicBlock();
+            Connect(from, current);
+            Visit(branch);
+            var end = current;
+            if (end.Statements.Any())
+            {
+                blocks.Add(end);
+                if (end.IsTerminal)
+                {
+                    Connect(end, endBlock);
+                }
+            }
+            return end;
+        }
+
+        private void ConnectToMerge(BasicBlock branchEnd, BasicBlock merge)
+        {
+            if (branchEnd.Incoming.Any() && !branchEnd.IsTerminal)
+            {
+                Connect(branchEnd, merge);
+            }
         }
 
         public override BoundNode VisitBoundLoopStatement(BoundLoopStatement boundLoopStatement)
@@ -185,7 +211,7 @@ internal sealed class ControlFlowGraph
 
             Connect(startBlock, blocks[1]);
 
-            if (blocks.Count > 2)
+            if (blocks.Count > 2 && !blocks[^2].IsTerminal)
             {
                 Connect(blocks[^2], endBlock);
             }
