@@ -15,6 +15,8 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("void func() { return; }")]
     [InlineData("void func() { int.MaxValue.ToString(); return; }")]
     [InlineData("void func() { if true { int.MaxValue.ToString(); } }")]
+    [InlineData("void func() { if true { return; } }")]
+    [InlineData("void func() { if true { return; } int.MaxValue.ToString(); }")]
     [InlineData("int func() { return int.MaxValue; }")]
     [InlineData("int func() { int.MaxValue.ToString(); return int.MaxValue; }")]
     [InlineData("int func() { if true { return int.MaxValue; } return 0; }")]
@@ -25,6 +27,10 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("System::Uri func(string a) { return new System::Uri(a); }")]
     [InlineData("int func() { while true { return 1; } }")]
     [InlineData("int func() { let i = 0; while i < 10 { i = i + 1; } return i; }")]
+    [InlineData("int func() { unless false { return 1; } return 0; }")]
+    [InlineData("int func() { unless false { return 1; } else { return 0; } }")]
+    [InlineData("int func() { if true { return 1; } if true { return 2; } return 0; }")]
+    [InlineData("int func() { if true { if false { return 1; } else { return 2; } } else { return 3; } }")]
     public void TestControlFlowAnalysisBasic(string inputText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
@@ -41,6 +47,7 @@ public sealed class ControlFlowAnalysisTests
         BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
         var diagnostics = diagnosticBuilder.Build().ToList();
 
+        diagnostics.Count.Should().Be(1);
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.NotAllPathsReturn);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Error);
     }
@@ -70,6 +77,7 @@ public sealed class ControlFlowAnalysisTests
         BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
         var diagnostics = diagnosticBuilder.Build().ToList();
 
+        diagnostics.Count.Should().Be(1);
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.NotAllPathsReturn);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Error);
     }
@@ -87,6 +95,39 @@ public sealed class ControlFlowAnalysisTests
 
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
+    }
+
+    [Theory]
+    [InlineData("int func() { if true { return 1; } else { return 0; } 10.ToString(); }")]
+    [InlineData("int func() { const a = 1; if a == 0 { return 0; } else if a == 1 { return 1; } else { return 2; } 10.ToString(); }")]
+    public void ControlFlowAnalysisWithUnreachableCodeAfterFullyReturningConditional(string inputText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+        diagnostics.Count.Should().Be(1);
+
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
+    }
+
+    [Theory]
+    [InlineData("int func() { return 1; }")]
+    [InlineData("int func() { if true { return 1; } else { return 0; } }")]
+    public void ControlFlowGraphShouldNotHaveDuplicateEdges(string inputText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundMember = TestUtils.BindMember<BoundFunctionMember>(inputText, diagnosticBuilder);
+        var controlFlowGraph = ControlFlowGraph.Create(boundMember);
+
+        foreach (var block in controlFlowGraph.Blocks)
+        {
+            var outgoingTargets = block.Outgoing.Select(b => b.To).ToList();
+            outgoingTargets.Should().OnlyHaveUniqueItems($"block should not have duplicate outgoing edges");
+
+            var incomingSources = block.Incoming.Select(b => b.From).ToList();
+            incomingSources.Should().OnlyHaveUniqueItems($"block should not have duplicate incoming edges");
+        }
     }
 
     private static TBoundMember BindMemberAndAnalyze<TBoundMember>(string inputText, DiagnosticBag.Builder diagnosticBuilder) where TBoundMember : BoundMember
