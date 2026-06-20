@@ -16,6 +16,10 @@ public sealed partial class Parser
     private readonly ImmutableArray<Member>.Builder members
         = ImmutableArray.CreateBuilder<Member>();
 
+    // Immutable collections that will be populated once parsing finishes.
+    public ImmutableArray<Directive> Directives { get; private set; }
+    public ImmutableArray<Member> Members { get; private set; }
+
     private int position = 0;
 
     private ImmutableArray<SyntaxToken> SyntaxTokens => syntaxTree.SyntaxTokens;
@@ -23,8 +27,6 @@ public sealed partial class Parser
     private SyntaxToken Current => Seek(0);
     private SyntaxToken Peak => Seek(1);
 
-    public ImmutableArray<Directive> Directives => directives.ToImmutable();
-    public ImmutableArray<Member> Members => members.ToImmutable();
 
     private SyntaxToken Seek(int offset)
     {
@@ -93,6 +95,10 @@ public sealed partial class Parser
         {
             members.Add(ParseMember());
         }
+
+        // Materialize the immutable collections once parsing is finished.
+        Directives = directives.ToImmutable();
+        Members = members.ToImmutable();
     }
 
     private Expression ParsePrimaryExpression()
@@ -154,7 +160,6 @@ public sealed partial class Parser
 
     private SyntaxToken ReportUnexpectedToken(SyntaxKind expectedSyntaxKind)
     {
-        // return a fake syntax token of the expected kind, with a text span at the current location with 0 length 
         return new()
         {
             Kind = expectedSyntaxKind,

@@ -21,7 +21,7 @@ internal sealed class Lexer
     private char Current => Seek(0);
     private char Peak => Seek(1);
 
-    public ImmutableArray<SyntaxToken> SyntaxTokens => syntaxTokens.ToImmutable();
+    public ImmutableArray<SyntaxToken> SyntaxTokens { get; private set; }
 
     private char Seek(int offset)
     {
@@ -526,8 +526,8 @@ internal sealed class Lexer
 
     public void Lex()
     {
-        // if syntaxTokens is not empty, it means lexer has already been executed.
-        if (syntaxTokens.Any())
+        // if position is not 0, it means lexer has already been executed.
+        if (position != 0)
         {
             return;
         }
@@ -541,5 +541,7 @@ internal sealed class Lexer
         }
         while (token.Kind != SyntaxKind.BadToken
             && token.Kind != SyntaxKind.EndOfFileToken);
+
+        SyntaxTokens = syntaxTokens.ToImmutable();
     }
 }
