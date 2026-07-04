@@ -26,8 +26,6 @@ public sealed class ClrTypeCache
     // View cache: import directive hash -> ClrTypeCacheView
     private readonly ConcurrentDictionary<int, ClrTypeCacheView> viewCache = new();
 
-    // Assembly cache: assembly hash -> ClrTypeCache (for reuse across compilations)
-    private static readonly ConcurrentDictionary<int, ClrTypeCache> assemblyCache = new();
 
     private static readonly ImmutableDictionary<string, SpecialType> builtInTypeNames
         = new Dictionary<string, SpecialType>()
@@ -182,18 +180,5 @@ public sealed class ClrTypeCache
     }
 
     public static ClrTypeCache FromAssemblies(IEnumerable<Assembly> assemblies, Assembly coreAssembly)
-    {
-        var hash = GetAssemblyHash(assemblies);
-        return assemblyCache.GetOrAdd(hash, _ => new(assemblies, coreAssembly));
-    }
-
-    private static int GetAssemblyHash(IEnumerable<Assembly> assemblies)
-    {
-        var builder = new HashCode();
-        foreach (var asm in assemblies.OrderBy(a => a.FullName))
-        {
-            builder.Add(asm.FullName);
-        }
-        return builder.ToHashCode();
-    }
+        => new(assemblies, coreAssembly);
 }
