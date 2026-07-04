@@ -8,5 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Todl.Compiler\Todl.Compiler.csproj" />
+    <ProjectReference Include="..\Todl.CommandLine\Todl.CommandLine.csproj" />
   </ItemGroup>
 </Project>
