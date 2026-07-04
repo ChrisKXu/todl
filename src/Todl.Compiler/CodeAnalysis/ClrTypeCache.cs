@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using System.Linq;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis;
@@ -20,6 +21,11 @@ public sealed class ClrTypeCache
 
     // Lazy namespace -> types mapping (only populated when needed for wildcard imports)
     private readonly ConcurrentDictionary<string, ImmutableArray<ClrTypeSymbol>> namespaceTypes = new();
+
+
+    // View cache: import directive hash -> ClrTypeCacheView
+    private readonly ConcurrentDictionary<int, ClrTypeCacheView> viewCache = new();
+
 
     private static readonly ImmutableDictionary<string, SpecialType> builtInTypeNames
         = new Dictionary<string, SpecialType>()
@@ -168,7 +174,10 @@ public sealed class ClrTypeCache
     }
 
     public ClrTypeCacheView CreateView(IEnumerable<ImportDirective> importDirectives)
-        => new(this, importDirectives);
+    {
+        var hash = ImportDirective.GetHash(importDirectives);
+        return viewCache.GetOrAdd(hash, _ => new(this, importDirectives));
+    }
 
     public static ClrTypeCache FromAssemblies(IEnumerable<Assembly> assemblies, Assembly coreAssembly)
         => new(assemblies, coreAssembly);

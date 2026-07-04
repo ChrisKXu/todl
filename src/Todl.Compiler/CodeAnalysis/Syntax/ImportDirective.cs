@@ -37,6 +37,27 @@ public sealed class ImportDirective : Directive
 
     public override TextSpan Text
         => TextSpan.FromTextSpans(ImportKeywordToken.Text, SemicolonToken.Text);
+
+    internal static int GetHash(IEnumerable<ImportDirective> directives)
+    {
+        if (directives is null) return 0;
+
+        var builder = new HashCode();
+
+        foreach (var directive in directives)
+        {
+            builder.Add(directive.ImportAll);
+            builder.Add(directive.Namespace);
+
+            var sortedNames = directive.ImportedNames.OrderBy(n => n, StringComparer.Ordinal).ToArray();
+            foreach (var name in sortedNames)
+            {
+                builder.Add(name);
+            }
+        }
+
+        return builder.ToHashCode();
+    }
 }
 
 public sealed partial class Parser

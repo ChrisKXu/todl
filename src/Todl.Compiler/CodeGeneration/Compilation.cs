@@ -65,6 +65,50 @@ public sealed class Compilation : IDisposable, IDiagnosable
         }
     }
 
+    /// <summary>
+    /// Creates a Compilation that borrows an existing ClrTypeCache (does not own MetadataLoadContext).
+    /// Useful for editor sessions where the cache is long-lived and reused across edits.
+    /// </summary>
+    public Compilation(
+        string assemblyName,
+        Version version,
+        IEnumerable<SourceText> sourceTexts,
+        ClrTypeCache clrTypeCache)
+    {
+        if (string.IsNullOrEmpty(assemblyName))
+        {
+            throw new ArgumentNullException(nameof(assemblyName));
+        }
+
+        if (sourceTexts is null)
+        {
+            throw new ArgumentNullException(nameof(sourceTexts));
+        }
+
+        if (clrTypeCache is null)
+        {
+            throw new ArgumentNullException(nameof(clrTypeCache));
+        }
+
+        AssemblyName = assemblyName;
+        Version = version;
+        ClrTypeCache = clrTypeCache;
+        // metadataLoadContext remains null - caller owns it
+
+        var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, ClrTypeCache, diagnosticBuilder));
+        MainModule = BoundModule.Create(ClrTypeCache, syntaxTrees.ToImmutableList(), diagnosticBuilder);
+
+        if (MainModule.EntryPoint is null)
+        {
+            diagnosticBuilder.Add(new Diagnostic()
+            {
+                Message = "Module does not have an entry point.",
+                ErrorCode = ErrorCode.MissingEntryPoint,
+                TextLocation = default,
+                Level = DiagnosticLevel.Error
+            });
+        }
+    }
     public AssemblyDefinition Emit()
     {
         var emitter = Emitter.CreateAssemblyEmitter(this);
