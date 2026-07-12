@@ -9,7 +9,7 @@ namespace Todl.CommandLine.Tests.Manifest;
 public sealed class TodlManifestLoaderTests
 {
     [Fact]
-    public void Parse_MinimalManifest_DefaultsVersionAndNugetPackages()
+    public void TestParseMinimalManifestDefaultsVersionAndNugetPackages()
     {
         var manifest = TodlManifestLoader.Parse("""{ "name": "hello" }""");
 
@@ -19,7 +19,7 @@ public sealed class TodlManifestLoaderTests
     }
 
     [Fact]
-    public void Parse_ExplicitVersion_OverridesDefault()
+    public void TestParseExplicitVersionOverridesDefault()
     {
         var manifest = TodlManifestLoader.Parse("""{ "name": "hello", "version": "2.3.4" }""");
 
@@ -27,7 +27,7 @@ public sealed class TodlManifestLoaderTests
     }
 
     [Fact]
-    public void Parse_NugetPackages_PlainVersionString()
+    public void TestParseNugetPackagePlainVersionString()
     {
         var manifest = TodlManifestLoader.Parse("""
             {
@@ -41,7 +41,7 @@ public sealed class TodlManifestLoaderTests
     }
 
     [Fact]
-    public void Parse_NugetPackages_ExpandedObjectShape()
+    public void TestParseNugetPackageExpandedObjectShape()
     {
         var manifest = TodlManifestLoader.Parse("""
             {
@@ -64,7 +64,7 @@ public sealed class TodlManifestLoaderTests
     [InlineData("""{ "version": "1.0.0" }""")]
     [InlineData("""{ "name": "", "version": "1.0.0" }""")]
     [InlineData("""{ "name": "   " }""")]
-    public void Parse_MissingOrEmptyName_ThrowsTodlManifestException(string json)
+    public void TestParseMissingOrEmptyNameThrowsTodlManifestException(string json)
     {
         var act = () => TodlManifestLoader.Parse(json);
 
@@ -75,7 +75,7 @@ public sealed class TodlManifestLoaderTests
     [Theory]
     [InlineData("{ not valid json")]
     [InlineData("""{ "name": "hello", }""")]
-    public void Parse_MalformedJson_ThrowsTodlManifestException(string json)
+    public void TestParseMalformedJsonThrowsTodlManifestException(string json)
     {
         var act = () => TodlManifestLoader.Parse(json);
 
@@ -84,7 +84,7 @@ public sealed class TodlManifestLoaderTests
     }
 
     [Fact]
-    public void Parse_NugetPackageEntryMissingVersion_ThrowsTodlManifestException()
+    public void TestParseNugetPackageEntryMissingVersionThrowsTodlManifestException()
     {
         var json = """
             {
@@ -99,7 +99,7 @@ public sealed class TodlManifestLoaderTests
     }
 
     [Fact]
-    public void ResolveManifestPath_DirectoryPath_AppendsManifestFileName()
+    public void TestResolveManifestPathForDirectoryAppendsManifestFileName()
     {
         using var tempDirectory = new TempDirectory();
 
@@ -109,7 +109,7 @@ public sealed class TodlManifestLoaderTests
     }
 
     [Fact]
-    public void ResolveManifestPath_FilePath_ReturnsItDirectly()
+    public void TestResolveManifestPathForFileReturnsItDirectly()
     {
         using var tempDirectory = new TempDirectory();
         var manifestPath = Path.Combine(tempDirectory.Path, "todl.json");
@@ -121,7 +121,7 @@ public sealed class TodlManifestLoaderTests
     }
 
     [Fact]
-    public void ResolveManifestPath_NullOrEmptyPath_DefaultsToCurrentDirectory()
+    public void TestResolveManifestPathForNullOrEmptyPathDefaultsToCurrentDirectory()
     {
         var resolved = TodlManifestLoader.ResolveManifestPath(null);
 
@@ -129,7 +129,7 @@ public sealed class TodlManifestLoaderTests
     }
 
     [Fact]
-    public void Load_DirectoryWithManifest_LoadsSuccessfully()
+    public void TestLoadDirectoryWithManifestLoadsSuccessfully()
     {
         using var tempDirectory = new TempDirectory();
         File.WriteAllText(Path.Combine(tempDirectory.Path, "todl.json"), """{ "name": "sample-project" }""");
@@ -140,7 +140,7 @@ public sealed class TodlManifestLoaderTests
     }
 
     [Fact]
-    public void Load_MissingManifest_ThrowsTodlManifestException()
+    public void TestLoadMissingManifestThrowsTodlManifestException()
     {
         using var tempDirectory = new TempDirectory();
 
@@ -154,7 +154,7 @@ public sealed class TodlManifestLoaderTests
     [InlineData("hello")]
     [InlineData("fibonacci")]
     [InlineData("Fibonacci.Loop")]
-    public void Load_SampleManifests_ParseSuccessfully(string sampleName)
+    public void TestLoadSampleManifestsParseSuccessfully(string sampleName)
     {
         var samplePath = Path.Combine(TestPaths.SamplesDirectory, sampleName);
 

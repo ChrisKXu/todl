@@ -10,7 +10,7 @@ namespace Todl.CommandLine.Tests.Commands;
 public sealed class BuildCommandTests
 {
     [Fact]
-    public void Invoke_ValidManifest_ReturnsZeroAndPrintsManifestInfo()
+    public void TestInvokeBuildWithValidManifestReturnsZeroAndPrintsManifestInfo()
     {
         using var tempDirectory = new TempDirectory();
         File.WriteAllText(Path.Combine(tempDirectory.Path, "todl.json"), """{ "name": "sample-project", "version": "9.9.9" }""");
@@ -22,7 +22,7 @@ public sealed class BuildCommandTests
     }
 
     [Fact]
-    public void Invoke_MissingManifest_ReturnsNonZeroAndPrintsDiagnosticToStdErr()
+    public void TestInvokeBuildWithMissingManifestReturnsNonZeroAndPrintsDiagnosticToStdErr()
     {
         using var tempDirectory = new TempDirectory();
 
