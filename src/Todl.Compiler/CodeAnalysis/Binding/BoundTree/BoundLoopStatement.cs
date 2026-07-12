@@ -29,7 +29,7 @@ public partial class Binder
             {
                 ErrorCode = ErrorCode.TypeMismatch,
                 Level = DiagnosticLevel.Error,
-                TextLocation = whileUntilStatement.ConditionExpression.Text.GetTextLocation(),
+                TextLocation = whileUntilStatement.ConditionExpression.GetTextLocation(),
                 Message = "Condition must be of boolean type."
             });
         }

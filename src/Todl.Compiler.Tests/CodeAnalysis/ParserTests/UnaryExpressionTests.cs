@@ -69,6 +69,6 @@ public sealed class UnaryExpressionTests
 
         unaryExpression.Should().NotBeNull();
         unaryExpression.Operator.Kind.Should().Be(SyntaxKind.TildeToken);
-        unaryExpression.Operand.As<LiteralExpression>().Text.Should().Be("255");
+        unaryExpression.Operand.As<LiteralExpression>().GetText().Should().Be("255");
     }
 }

@@ -115,7 +115,7 @@ public partial class Binder
             {
                 Message = $"Member '{memberAccessExpression.MemberIdentifierToken.Text}' does not exist in type '{clrTypeSymbol.ClrType.FullName}'",
                 Level = DiagnosticLevel.Error,
-                TextLocation = memberAccessExpression.MemberIdentifierToken.GetTextLocation(),
+                TextLocation = memberAccessExpression.GetTextLocation(memberAccessExpression.MemberIdentifierToken.Span),
                 ErrorCode = ErrorCode.MemberNotFound
             });
 
@@ -131,7 +131,7 @@ public partial class Binder
             {
                 Message = $"Member {boundMemberAccessExpression.MemberName} is not public.",
                 Level = DiagnosticLevel.Error,
-                TextLocation = boundMemberAccessExpression.SyntaxNode.Text.GetTextLocation(),
+                TextLocation = boundMemberAccessExpression.SyntaxNode.GetTextLocation(),
                 ErrorCode = ErrorCode.MemberNotAccessible
             });
     }

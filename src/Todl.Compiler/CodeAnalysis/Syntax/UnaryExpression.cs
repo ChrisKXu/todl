@@ -7,5 +7,5 @@ public sealed class UnaryExpression : Expression
     public SyntaxToken Operator { get; internal init; }
     public Expression Operand { get; internal init; }
 
-    public override TextSpan Text => TextSpan.FromTextSpans(Operator.Text, Operand.Text);
+    public override TextSpan Text => TextSpan.FromBounds(Operator.Span.Start, Operand.Text.End);
 }

@@ -85,18 +85,18 @@ public partial class Binder
     {
         if (boundConditionalStatement.Condition.ResultType.SpecialType != SpecialType.ClrBoolean)
         {
-            var text = boundConditionalStatement.SyntaxNode switch
+            var conditionSyntaxNode = boundConditionalStatement.SyntaxNode switch
             {
-                IfUnlessStatement ifUnlessStatement => ifUnlessStatement.ConditionExpression.Text,
-                ElseClause elseClause => elseClause.ConditionExpression.Text,
-                _ => boundConditionalStatement.SyntaxNode.Text
+                IfUnlessStatement ifUnlessStatement => ifUnlessStatement.ConditionExpression,
+                ElseClause elseClause => elseClause.ConditionExpression,
+                _ => boundConditionalStatement.SyntaxNode
             };
 
             ReportDiagnostic(new Diagnostic()
             {
                 Message = "Condition expressions need to be of boolean type",
                 ErrorCode = ErrorCode.TypeMismatch,
-                TextLocation = text.GetTextLocation(),
+                TextLocation = conditionSyntaxNode.GetTextLocation(),
                 Level = DiagnosticLevel.Error
             });
         }

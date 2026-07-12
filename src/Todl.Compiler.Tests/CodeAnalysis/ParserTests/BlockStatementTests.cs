@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Xunit;
 
@@ -18,7 +18,7 @@ public sealed class BlockStatementTests
             ";
         var blockStatement = TestUtils.ParseStatement<BlockStatement>(inputText);
 
-        blockStatement.OpenBraceToken.Text.Should().Be("{");
+        blockStatement.OpenBraceToken.Text.ToString().Should().Be("{");
         blockStatement.OpenBraceToken.Kind.Should().Be(SyntaxKind.OpenBraceToken);
 
         blockStatement.InnerStatements.Should().SatisfyRespectively(
@@ -26,7 +26,7 @@ public sealed class BlockStatementTests
             _1 => _1.As<ExpressionStatement>().Should().NotBeNull(),
             _2 => _2.As<ExpressionStatement>().Should().NotBeNull());
 
-        blockStatement.CloseBraceToken.Text.Should().Be("}");
+        blockStatement.CloseBraceToken.Text.ToString().Should().Be("}");
         blockStatement.CloseBraceToken.Kind.Should().Be(SyntaxKind.CloseBraceToken);
     }
 
@@ -41,7 +41,7 @@ public sealed class BlockStatementTests
             ";
         var blockStatement = TestUtils.ParseStatement<BlockStatement>(inputText);
 
-        blockStatement.OpenBraceToken.Text.Should().Be("{");
+        blockStatement.OpenBraceToken.Text.ToString().Should().Be("{");
         blockStatement.OpenBraceToken.Kind.Should().Be(SyntaxKind.OpenBraceToken);
 
         blockStatement.InnerStatements.Should().SatisfyRespectively(
@@ -49,7 +49,7 @@ public sealed class BlockStatementTests
             _1 => _1.As<ExpressionStatement>().Should().NotBeNull(),
             _2 => _2.As<ExpressionStatement>().Should().NotBeNull());
 
-        blockStatement.CloseBraceToken.Text.Should().Be("");
+        blockStatement.CloseBraceToken.Text.ToString().Should().Be("");
         blockStatement.CloseBraceToken.Kind.Should().Be(SyntaxKind.CloseBraceToken);
         blockStatement.CloseBraceToken.Missing.Should().BeTrue();
         //blockStatement.GetDiagnostics().Should().NotBeEmpty();

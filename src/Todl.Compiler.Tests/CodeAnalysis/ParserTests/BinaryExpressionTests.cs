@@ -13,15 +13,15 @@ public sealed class BinaryExpressionTests
 
         binaryExpression.Left.As<BinaryExpression>().Invoking(left =>
         {
-            left.Left.As<LiteralExpression>().Text.Should().Be("1");
-            left.Operator.Text.Should().Be("+");
+            left.Left.As<LiteralExpression>().GetText().Should().Be("1");
+            left.Operator.Text.ToString().Should().Be("+");
             left.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
-            left.Right.As<LiteralExpression>().Text.Should().Be("2");
+            left.Right.As<LiteralExpression>().GetText().Should().Be("2");
         }).Should().NotThrow();
 
-        binaryExpression.Operator.Text.Should().Be("+");
+        binaryExpression.Operator.Text.ToString().Should().Be("+");
         binaryExpression.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
-        binaryExpression.Right.As<LiteralExpression>().Text.Should().Be("3");
+        binaryExpression.Right.As<LiteralExpression>().GetText().Should().Be("3");
     }
 
     [Fact]
@@ -30,20 +30,20 @@ public sealed class BinaryExpressionTests
         var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("1 + 2 * 3 - 4");
 
         var left = binaryExpression.Left.As<BinaryExpression>();
-        left.Left.As<LiteralExpression>().Text.Should().Be("1");
-        left.Operator.Text.Should().Be("+");
+        left.Left.As<LiteralExpression>().GetText().Should().Be("1");
+        left.Operator.Text.ToString().Should().Be("+");
         left.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
 
         left.Right.As<BinaryExpression>().Invoking(multiplication =>
         {
-            multiplication.Left.As<LiteralExpression>().Text.Should().Be("2");
-            multiplication.Operator.Text.Should().Be("*");
+            multiplication.Left.As<LiteralExpression>().GetText().Should().Be("2");
+            multiplication.Operator.Text.ToString().Should().Be("*");
             multiplication.Operator.Kind.Should().Be(SyntaxKind.StarToken);
-            multiplication.Right.As<LiteralExpression>().Text.Should().Be("3");
+            multiplication.Right.As<LiteralExpression>().GetText().Should().Be("3");
 
-            binaryExpression.Operator.Text.Should().Be("-");
+            binaryExpression.Operator.Text.ToString().Should().Be("-");
             binaryExpression.Operator.Kind.Should().Be(SyntaxKind.MinusToken);
-            binaryExpression.Right.As<LiteralExpression>().Text.Should().Be("4");
+            binaryExpression.Right.As<LiteralExpression>().GetText().Should().Be("4");
         }).Should().NotThrow();
     }
 
@@ -53,20 +53,20 @@ public sealed class BinaryExpressionTests
         var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("1 + 2 * 3 <= 4");
 
         var left = binaryExpression.Left.As<BinaryExpression>();
-        left.Left.As<LiteralExpression>().Text.Should().Be("1");
-        left.Operator.Text.Should().Be("+");
+        left.Left.As<LiteralExpression>().GetText().Should().Be("1");
+        left.Operator.Text.ToString().Should().Be("+");
         left.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
 
         left.Right.As<BinaryExpression>().Invoking(multiplication =>
         {
-            multiplication.Left.As<LiteralExpression>().Text.Should().Be("2");
-            multiplication.Operator.Text.Should().Be("*");
+            multiplication.Left.As<LiteralExpression>().GetText().Should().Be("2");
+            multiplication.Operator.Text.ToString().Should().Be("*");
             multiplication.Operator.Kind.Should().Be(SyntaxKind.StarToken);
-            multiplication.Right.As<LiteralExpression>().Text.Should().Be("3");
+            multiplication.Right.As<LiteralExpression>().GetText().Should().Be("3");
 
-            binaryExpression.Operator.Text.Should().Be("<=");
+            binaryExpression.Operator.Text.ToString().Should().Be("<=");
             binaryExpression.Operator.Kind.Should().Be(SyntaxKind.LessThanOrEqualsToken);
-            binaryExpression.Right.As<LiteralExpression>().Text.Should().Be("4");
+            binaryExpression.Right.As<LiteralExpression>().GetText().Should().Be("4");
         }).Should().NotThrow();
     }
 
@@ -79,20 +79,20 @@ public sealed class BinaryExpressionTests
         {
             multiplication.Left.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>().Invoking(inner =>
             {
-                inner.Left.As<LiteralExpression>().Text.Should().Be("1");
-                inner.Operator.Text.Should().Be("+");
+                inner.Left.As<LiteralExpression>().GetText().Should().Be("1");
+                inner.Operator.Text.ToString().Should().Be("+");
                 inner.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
-                inner.Right.As<LiteralExpression>().Text.Should().Be("2");
+                inner.Right.As<LiteralExpression>().GetText().Should().Be("2");
             }).Should().NotThrow();
 
-            multiplication.Operator.Text.Should().Be("*");
+            multiplication.Operator.Text.ToString().Should().Be("*");
             multiplication.Operator.Kind.Should().Be(SyntaxKind.StarToken);
-            multiplication.Right.As<LiteralExpression>().Text.Should().Be("3");
+            multiplication.Right.As<LiteralExpression>().GetText().Should().Be("3");
         }).Should().NotThrow();
 
-        binaryExpression.Operator.Text.Should().Be("-");
+        binaryExpression.Operator.Text.ToString().Should().Be("-");
         binaryExpression.Operator.Kind.Should().Be(SyntaxKind.MinusToken);
-        binaryExpression.Right.As<LiteralExpression>().Text.Should().Be("4");
+        binaryExpression.Right.As<LiteralExpression>().GetText().Should().Be("4");
     }
 
     [Fact]
@@ -100,16 +100,16 @@ public sealed class BinaryExpressionTests
     {
         var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("3 == 1 + 2");
 
-        binaryExpression.Left.Text.Should().Be("3");
-        binaryExpression.Operator.Text.Should().Be("==");
+        binaryExpression.Left.GetText().Should().Be("3");
+        binaryExpression.Operator.Text.ToString().Should().Be("==");
         binaryExpression.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
 
         binaryExpression.Right.As<BinaryExpression>().Invoking(right =>
         {
-            right.Left.As<LiteralExpression>().Text.Should().Be("1");
-            right.Operator.Text.Should().Be("+");
+            right.Left.As<LiteralExpression>().GetText().Should().Be("1");
+            right.Operator.Text.ToString().Should().Be("+");
             right.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
-            right.Right.As<LiteralExpression>().Text.Should().Be("2");
+            right.Right.As<LiteralExpression>().GetText().Should().Be("2");
         }).Should().NotThrow();
     }
 
@@ -118,16 +118,16 @@ public sealed class BinaryExpressionTests
     {
         var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("5 != 1 + 2");
 
-        binaryExpression.Left.As<LiteralExpression>().Text.Should().Be("5");
-        binaryExpression.Operator.Text.Should().Be("!=");
+        binaryExpression.Left.As<LiteralExpression>().GetText().Should().Be("5");
+        binaryExpression.Operator.Text.ToString().Should().Be("!=");
         binaryExpression.Operator.Kind.Should().Be(SyntaxKind.BangEqualsToken);
 
         binaryExpression.Right.As<BinaryExpression>().Invoking(right =>
         {
-            right.Left.As<LiteralExpression>().Text.Should().Be("1");
-            right.Operator.Text.Should().Be("+");
+            right.Left.As<LiteralExpression>().GetText().Should().Be("1");
+            right.Operator.Text.ToString().Should().Be("+");
             right.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
-            right.Right.As<LiteralExpression>().Text.Should().Be("2");
+            right.Right.As<LiteralExpression>().GetText().Should().Be("2");
         }).Should().NotThrow();
     }
 
@@ -142,24 +142,24 @@ public sealed class BinaryExpressionTests
             {
                 inner.Left.As<UnaryExpression>().Invoking(unaryExpression =>
                 {
-                    unaryExpression.Operator.Text.Should().Be("-");
+                    unaryExpression.Operator.Text.ToString().Should().Be("-");
                     unaryExpression.Operator.Kind.Should().Be(SyntaxKind.MinusToken);
-                    unaryExpression.Operand.As<SimpleNameExpression>().Text.Should().Be("a");
+                    unaryExpression.Operand.As<SimpleNameExpression>().GetText().Should().Be("a");
                 }).Should().NotThrow();
 
-                inner.Operator.Text.Should().Be("+");
+                inner.Operator.Text.ToString().Should().Be("+");
                 inner.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
-                inner.Right.As<LiteralExpression>().Text.Should().Be("2");
+                inner.Right.As<LiteralExpression>().GetText().Should().Be("2");
             }).Should().NotThrow();
 
-            multiplication.Operator.Text.Should().Be("*");
+            multiplication.Operator.Text.ToString().Should().Be("*");
             multiplication.Operator.Kind.Should().Be(SyntaxKind.StarToken);
-            multiplication.Right.As<LiteralExpression>().Text.Should().Be("3");
+            multiplication.Right.As<LiteralExpression>().GetText().Should().Be("3");
         }).Should().NotThrow();
 
-        binaryExpression.Operator.Text.Should().Be("+");
+        binaryExpression.Operator.Text.ToString().Should().Be("+");
         binaryExpression.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
-        binaryExpression.Right.As<LiteralExpression>().Text.Should().Be("4");
+        binaryExpression.Right.As<LiteralExpression>().GetText().Should().Be("4");
     }
 
     [Theory]
@@ -172,10 +172,10 @@ public sealed class BinaryExpressionTests
         var binaryExpression = TestUtils.ParseExpression<BinaryExpression>(input);
 
         binaryExpression.Should().NotBeNull();
-        binaryExpression.Left.As<SimpleNameExpression>().Text.Should().Be("a");
-        binaryExpression.Operator.Text.Should().Be(expectedOperatorText);
+        binaryExpression.Left.As<SimpleNameExpression>().GetText().Should().Be("a");
+        binaryExpression.Operator.Text.ToString().Should().Be(expectedOperatorText);
         binaryExpression.Operator.Kind.Should().Be(expectedKind);
-        binaryExpression.Right.As<SimpleNameExpression>().Text.Should().Be("b");
+        binaryExpression.Right.As<SimpleNameExpression>().GetText().Should().Be("b");
     }
 
     [Theory]
@@ -188,10 +188,10 @@ public sealed class BinaryExpressionTests
         var binaryExpression = TestUtils.ParseExpression<BinaryExpression>(input);
 
         binaryExpression.Should().NotBeNull();
-        binaryExpression.Left.As<SimpleNameExpression>().Text.Should().Be("a");
-        binaryExpression.Operator.Text.Should().Be(expectedOperatorText);
+        binaryExpression.Left.As<SimpleNameExpression>().GetText().Should().Be("a");
+        binaryExpression.Operator.Text.ToString().Should().Be(expectedOperatorText);
         binaryExpression.Operator.Kind.Should().Be(expectedKind);
-        binaryExpression.Right.As<SimpleNameExpression>().Text.Should().Be("b");
+        binaryExpression.Right.As<SimpleNameExpression>().GetText().Should().Be("b");
     }
 
     [Fact]
@@ -200,10 +200,10 @@ public sealed class BinaryExpressionTests
         var binaryExpression = TestUtils.ParseExpression<BinaryExpression>("10 / 2");
 
         binaryExpression.Should().NotBeNull();
-        binaryExpression.Left.As<LiteralExpression>().Text.Should().Be("10");
-        binaryExpression.Operator.Text.Should().Be("/");
+        binaryExpression.Left.As<LiteralExpression>().GetText().Should().Be("10");
+        binaryExpression.Operator.Text.ToString().Should().Be("/");
         binaryExpression.Operator.Kind.Should().Be(SyntaxKind.SlashToken);
-        binaryExpression.Right.As<LiteralExpression>().Text.Should().Be("2");
+        binaryExpression.Right.As<LiteralExpression>().GetText().Should().Be("2");
     }
 
     [Fact]
@@ -218,13 +218,13 @@ public sealed class BinaryExpressionTests
 
         var left = binaryExpression.Left.As<BinaryExpression>();
         left.Operator.Kind.Should().Be(SyntaxKind.AmpersandAmpersandToken);
-        left.Left.As<SimpleNameExpression>().Text.Should().Be("a");
-        left.Right.As<SimpleNameExpression>().Text.Should().Be("b");
+        left.Left.As<SimpleNameExpression>().GetText().Should().Be("a");
+        left.Right.As<SimpleNameExpression>().GetText().Should().Be("b");
 
         var right = binaryExpression.Right.As<BinaryExpression>();
         right.Operator.Kind.Should().Be(SyntaxKind.AmpersandAmpersandToken);
-        right.Left.As<SimpleNameExpression>().Text.Should().Be("c");
-        right.Right.As<SimpleNameExpression>().Text.Should().Be("d");
+        right.Left.As<SimpleNameExpression>().GetText().Should().Be("c");
+        right.Right.As<SimpleNameExpression>().GetText().Should().Be("d");
     }
 
     [Fact]
@@ -236,12 +236,12 @@ public sealed class BinaryExpressionTests
 
         binaryExpression.Should().NotBeNull();
         binaryExpression.Operator.Kind.Should().Be(SyntaxKind.PipeToken);
-        binaryExpression.Left.As<SimpleNameExpression>().Text.Should().Be("a");
+        binaryExpression.Left.As<SimpleNameExpression>().GetText().Should().Be("a");
 
         var right = binaryExpression.Right.As<BinaryExpression>();
         right.Operator.Kind.Should().Be(SyntaxKind.AmpersandToken);
-        right.Left.As<SimpleNameExpression>().Text.Should().Be("b");
-        right.Right.As<SimpleNameExpression>().Text.Should().Be("c");
+        right.Left.As<SimpleNameExpression>().GetText().Should().Be("b");
+        right.Right.As<SimpleNameExpression>().GetText().Should().Be("c");
     }
 
     [Fact]

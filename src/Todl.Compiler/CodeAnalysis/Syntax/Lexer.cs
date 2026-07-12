@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
@@ -82,7 +83,7 @@ internal sealed class Lexer
             if (length > 0)
             {
                 triviaList.Add(
-                    new SyntaxTrivia(kind, SourceText.GetTextSpan(start, length)));
+                    new SyntaxTrivia(kind, new TextSpan(start, length), SourceText.Text.AsMemory(start, length)));
             }
 
             start = position;
@@ -501,14 +502,16 @@ internal sealed class Lexer
         var length = this.position - start;
 
         var trailingTrivia = ReadTrailingSyntaxTrivia();
-        var text = SourceText.GetTextSpan(start, length);
+        var span = new TextSpan(start, length);
+        var lexeme = SourceText.Text.AsMemory(start, length);
 
         if (kind == SyntaxKind.BadToken)
         {
             return new()
             {
                 Kind = kind,
-                Text = text,
+                Span = span,
+                Text = lexeme,
                 LeadingTrivia = leadingTrivia,
                 TrailingTrivia = trailingTrivia,
                 ErrorCode = errorCode
@@ -518,7 +521,8 @@ internal sealed class Lexer
         return new()
         {
             Kind = kind,
-            Text = text,
+            Span = span,
+            Text = lexeme,
             LeadingTrivia = leadingTrivia,
             TrailingTrivia = trailingTrivia
         };

@@ -19,7 +19,7 @@ public sealed class Argument : SyntaxNode
         {
             if (IsNamedArgument)
             {
-                return TextSpan.FromTextSpans(Identifier.Value.Text, Expression.Text);
+                return TextSpan.FromBounds(Identifier.Value.Span.Start, Expression.Text.End);
             }
 
             return Expression.Text;
@@ -40,10 +40,10 @@ public sealed class FunctionCallExpression : Expression
         {
             if (BaseExpression != null)
             {
-                return TextSpan.FromTextSpans(BaseExpression.Text, Arguments.Text);
+                return TextSpan.FromBounds(BaseExpression.Text.Start, Arguments.Text.End);
             }
 
-            return TextSpan.FromTextSpans(NameToken.Text, Arguments.Text);
+            return TextSpan.FromBounds(NameToken.Span.Start, Arguments.Text.End);
         }
     }
 }
@@ -81,8 +81,7 @@ public sealed partial class Parser
                 new Diagnostic()
                 {
                     Message = "Either all or none of the arguments should be named arguments",
-                    Level = DiagnosticLevel.Error,
-                    TextLocation = arguments.OpenParenthesisToken.GetTextLocation(),
+                    TextLocation = arguments.GetTextLocation(arguments.OpenParenthesisToken.Span),
                     ErrorCode = ErrorCode.MixedPositionalAndNamedArguments
                 });
         }

@@ -8,7 +8,7 @@ public sealed class BreakStatement : Statement
     public SyntaxToken SemicolonToken { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(BreakKeywordToken.Text, SemicolonToken.Text);
+        => TextSpan.FromBounds(BreakKeywordToken.Span.Start, SemicolonToken.Span.End);
 }
 
 public sealed partial class Parser

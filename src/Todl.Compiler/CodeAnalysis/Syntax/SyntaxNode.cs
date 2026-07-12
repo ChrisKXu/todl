@@ -9,4 +9,5 @@ public abstract class SyntaxNode
 
     public string GetText() => SyntaxTree.SourceText.ToString(Text);
     public TextLocation GetTextLocation() => new(SyntaxTree.SourceText, Text);
+    public TextLocation GetTextLocation(TextSpan span) => new(SyntaxTree.SourceText, span);
 }

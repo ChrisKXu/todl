@@ -36,7 +36,7 @@ public partial class Binder
             {
                 Message = "Return statements are only valid within a function declaration.",
                 ErrorCode = ErrorCode.UnexpectedStatement,
-                TextLocation = returnStatement.Text.GetTextLocation(),
+                TextLocation = returnStatement.GetTextLocation(),
                 Level = DiagnosticLevel.Error
             });
         }
@@ -46,7 +46,7 @@ public partial class Binder
             {
                 Message = $"The function expects a return type of {FunctionSymbol.ReturnType} but {boundReturnStatement.ReturnType} is returned.",
                 ErrorCode = ErrorCode.TypeMismatch,
-                TextLocation = returnStatement.Text.GetTextLocation(),
+                TextLocation = returnStatement.GetTextLocation(),
                 Level = DiagnosticLevel.Error
             });
         }

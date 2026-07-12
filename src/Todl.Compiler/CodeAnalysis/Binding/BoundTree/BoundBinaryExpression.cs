@@ -100,7 +100,7 @@ public partial class Binder
                 {
                     Message = $"Operator {binaryExpression.Operator.Text} is not supported on types {boundLeft.ResultType.Name} and {boundRight.ResultType.Name}",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = binaryExpression.Operator.GetTextLocation(),
+                    TextLocation = binaryExpression.GetTextLocation(binaryExpression.Operator.Span),
                     ErrorCode = ErrorCode.UnsupportedOperator
                 });
         }

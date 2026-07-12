@@ -10,7 +10,7 @@ public sealed class NewExpression : Expression
     public NameExpression TypeNameExpression { get; internal init; }
     public CommaSeparatedSyntaxList<Argument> Arguments { get; internal init; }
 
-    public override TextSpan Text => TextSpan.FromTextSpans(NewKeywordToken.Text, Arguments.Text);
+    public override TextSpan Text => TextSpan.FromBounds(NewKeywordToken.Span.Start, Arguments.Text.End);
 }
 
 public sealed partial class Parser
@@ -28,8 +28,7 @@ public sealed partial class Parser
                 new Diagnostic()
                 {
                     Message = "Either all or none of the arguments should be named arguments",
-                    Level = DiagnosticLevel.Error,
-                    TextLocation = arguments.OpenParenthesisToken.GetTextLocation(),
+                    TextLocation = arguments.GetTextLocation(arguments.OpenParenthesisToken.Span),
                     ErrorCode = ErrorCode.MixedPositionalAndNamedArguments
                 });
         }

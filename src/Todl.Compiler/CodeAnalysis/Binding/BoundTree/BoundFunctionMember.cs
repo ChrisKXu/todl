@@ -38,7 +38,7 @@ public partial class Binder
                 Message = $"Parameter '{duplicate.First().Name}' is a duplicate",
                 ErrorCode = ErrorCode.DuplicateParameterName,
                 Level = DiagnosticLevel.Error,
-                TextLocation = functionDeclarationMember.Name.GetTextLocation()
+                TextLocation = functionDeclarationMember.GetTextLocation(functionDeclarationMember.Name.Span)
             });
         }
 

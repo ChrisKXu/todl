@@ -42,7 +42,7 @@ public sealed class ClrTypeCacheView
             return null;
         }
 
-        var resolvedTypeString = typeExpression.Text.ToString().Replace(typeExpression.BaseTypeExpression.Text.ToString(), baseType.Name);
+        var resolvedTypeString = typeExpression.GetText().Replace(typeExpression.BaseTypeExpression.GetText(), baseType.Name);
 
         return new(baseType.ClrType.Assembly.GetType(resolvedTypeString));
     }

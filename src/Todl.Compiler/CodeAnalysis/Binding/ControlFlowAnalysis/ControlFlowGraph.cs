@@ -266,7 +266,7 @@ internal sealed class ControlFlowGraph
                 return "[Empty]";
             }
 
-            return Statements[0].SyntaxNode.Text.ToString();
+            return Statements[0].SyntaxNode.GetText();
         }
     }
 

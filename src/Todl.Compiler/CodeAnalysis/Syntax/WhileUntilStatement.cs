@@ -11,7 +11,7 @@ public sealed class WhileUntilStatement : Statement
     public BlockStatement BlockStatement { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(WhileOrUntilToken.Text, BlockStatement.Text);
+        => TextSpan.FromBounds(WhileOrUntilToken.Span.Start, BlockStatement.Text.End);
 }
 
 public sealed class LoopLabel : SyntaxNode
@@ -20,7 +20,7 @@ public sealed class LoopLabel : SyntaxNode
     public NameExpression Label { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(ColonToken.Text, Label.Text);
+        => TextSpan.FromBounds(ColonToken.Span.Start, Label.Text.End);
 }
 
 public sealed partial class Parser
@@ -58,9 +58,8 @@ public sealed partial class Parser
         {
             ReportDiagnostic(new()
             {
-                Message = "Invalid loop label. Only simple names are allowed.",
+                TextLocation = label.GetTextLocation(),
                 ErrorCode = ErrorCode.InvalidLoopLabel,
-                TextLocation = label.Text.GetTextLocation(),
                 Level = DiagnosticLevel.Error
             });
         }

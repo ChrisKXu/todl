@@ -11,7 +11,7 @@ public sealed class CommaSeparatedSyntaxList<T> : SyntaxNode where T : SyntaxNod
     public SyntaxToken CloseParenthesisToken { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(OpenParenthesisToken.Text, CloseParenthesisToken.Text);
+        => TextSpan.FromBounds(OpenParenthesisToken.Span.Start, CloseParenthesisToken.Span.End);
 }
 
 public sealed partial class Parser

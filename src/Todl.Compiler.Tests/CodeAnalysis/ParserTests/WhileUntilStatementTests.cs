@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 using Xunit;
@@ -43,9 +43,9 @@ public sealed class WhileUntilStatementTests
 
         var condition = whileUntilStatement.ConditionExpression.As<BinaryExpression>();
         condition.Should().NotBeNull();
-        condition.Left.As<SimpleNameExpression>().Text.ToString().Should().Be("n");
+        condition.Left.As<SimpleNameExpression>().GetText().Should().Be("n");
         condition.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
-        condition.Right.As<LiteralExpression>().Text.ToString().Should().Be("0");
+        condition.Right.As<LiteralExpression>().GetText().Should().Be("0");
     }
 
     [Theory]
@@ -57,7 +57,7 @@ public sealed class WhileUntilStatementTests
         whileUntilStatement.Should().NotBeNull();
 
         whileUntilStatement.LoopLabel.Should().NotBeNull();
-        whileUntilStatement.LoopLabel.Label.As<SimpleNameExpression>().Text.Should().Be(label);
+        whileUntilStatement.LoopLabel.Label.As<SimpleNameExpression>().GetText().Should().Be(label);
         whileUntilStatement.LoopLabel.ColonToken.Kind.Should().Be(SyntaxKind.ColonToken);
     }
 

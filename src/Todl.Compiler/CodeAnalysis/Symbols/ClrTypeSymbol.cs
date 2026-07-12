@@ -1,7 +1,6 @@
-﻿using System;
+﻿﻿using System;
 using System.Linq;
 using System.Reflection;
-using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Symbols;
 
@@ -39,7 +38,7 @@ public sealed class ClrTypeSymbol : TypeSymbol
         return false;
     }
 
-    public MemberInfo ResolveMember(TextSpan name)
+    public MemberInfo ResolveMember(ReadOnlyMemory<char> name)
     {
         return ClrType.GetMember(name.ToString()).FirstOrDefault();
     }

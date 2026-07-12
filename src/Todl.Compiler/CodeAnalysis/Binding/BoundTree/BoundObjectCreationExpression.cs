@@ -111,9 +111,9 @@ public partial class Binder
         ReportDiagnostic(
             new Diagnostic()
             {
-                Message = $"No matching constructor {newExpression.TypeNameExpression.Text} found.",
+                Message = $"No matching constructor {newExpression.TypeNameExpression.GetText()} found.",
                 Level = DiagnosticLevel.Error,
-                TextLocation = newExpression.TypeNameExpression.Text.GetTextLocation(),
+                TextLocation = newExpression.TypeNameExpression.GetTextLocation(),
                 ErrorCode = ErrorCode.NoMatchingCandidate
             });
     }

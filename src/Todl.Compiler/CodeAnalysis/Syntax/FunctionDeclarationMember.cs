@@ -8,7 +8,7 @@ public sealed class Parameter : SyntaxNode
     public SyntaxToken Identifier { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(ParameterType.Text, Identifier.Text);
+        => TextSpan.FromBounds(ParameterType.Text.Start, Identifier.Span.End);
 }
 
 public sealed class FunctionDeclarationMember : Member
@@ -18,7 +18,7 @@ public sealed class FunctionDeclarationMember : Member
     public CommaSeparatedSyntaxList<Parameter> Parameters { get; internal init; }
     public BlockStatement Body { get; internal init; }
 
-    public override TextSpan Text => TextSpan.FromTextSpans(ReturnType.Text, Body.Text);
+    public override TextSpan Text => TextSpan.FromBounds(ReturnType.Text.Start, Body.Text.End);
 }
 
 public sealed partial class Parser

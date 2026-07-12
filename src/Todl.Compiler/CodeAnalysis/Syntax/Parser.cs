@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
+using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
@@ -163,7 +164,8 @@ public sealed partial class Parser
         return new()
         {
             Kind = expectedSyntaxKind,
-            Text = syntaxTree.SourceText.GetTextSpan(Current.Text.Start, 0),
+            Span = new TextSpan(Current.Span.Start, 0),
+            Text = ReadOnlyMemory<char>.Empty,
             LeadingTrivia = ImmutableArray<SyntaxTrivia>.Empty,
             TrailingTrivia = ImmutableArray<SyntaxTrivia>.Empty,
             Missing = true,

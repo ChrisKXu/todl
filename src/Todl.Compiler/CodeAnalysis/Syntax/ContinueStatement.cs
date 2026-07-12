@@ -8,7 +8,7 @@ public sealed class ContinueStatement : Statement
     public SyntaxToken SemicolonToken { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(ContinueKeywordToken.Text, SemicolonToken.Text);
+        => TextSpan.FromBounds(ContinueKeywordToken.Span.Start, SemicolonToken.Span.End);
 }
 
 public sealed partial class Parser

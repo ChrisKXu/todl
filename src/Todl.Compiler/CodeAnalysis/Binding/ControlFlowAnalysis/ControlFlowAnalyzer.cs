@@ -44,7 +44,7 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
                 Message = "Not all paths return a value",
                 ErrorCode = ErrorCode.NotAllPathsReturn,
                 Level = DiagnosticLevel.Error,
-                TextLocation = boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.Name.GetTextLocation()
+                TextLocation = boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.GetTextLocation(boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.Name.Span)
             });
         }
     }
@@ -66,7 +66,7 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
                 Message = "Unreachable code",
                 ErrorCode = ErrorCode.UnreachableCode,
                 Level = DiagnosticLevel.Warning,
-                TextLocation = unreachableBlock.Statements[0].SyntaxNode.Text.GetTextLocation()
+                TextLocation = unreachableBlock.Statements[0].SyntaxNode.GetTextLocation()
             });
         }
     }

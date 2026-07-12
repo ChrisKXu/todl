@@ -14,7 +14,7 @@ public sealed class TypeExpression : Expression
     public override TextSpan Text
         => !IsArrayType
             ? BaseTypeExpression.Text
-            : TextSpan.FromTextSpans(BaseTypeExpression.Text, ArrayRankSpecifiers[^1].CloseBracketToken.Text);
+            : TextSpan.FromBounds(BaseTypeExpression.Text.Start, ArrayRankSpecifiers[^1].CloseBracketToken.Span.End);
 }
 
 public sealed class ArrayRankSpecifier : SyntaxNode
@@ -22,7 +22,7 @@ public sealed class ArrayRankSpecifier : SyntaxNode
     public SyntaxToken OpenBracketToken { get; internal set; }
     public SyntaxToken CloseBracketToken { get; internal set; }
 
-    public override TextSpan Text => TextSpan.FromTextSpans(OpenBracketToken.Text, CloseBracketToken.Text);
+    public override TextSpan Text => TextSpan.FromBounds(OpenBracketToken.Span.Start, CloseBracketToken.Span.End);
 }
 
 public sealed partial class Parser
@@ -39,6 +39,7 @@ public sealed partial class Parser
 
         return new()
         {
+            SyntaxTree = syntaxTree,
             BaseTypeExpression = nameExpression,
             ArrayRankSpecifiers = arrayRankSpecifiers.ToImmutable()
         };
@@ -47,6 +48,7 @@ public sealed partial class Parser
     private ArrayRankSpecifier ParseArrayRankSpecifier()
         => new()
         {
+            SyntaxTree = syntaxTree,
             OpenBracketToken = ExpectToken(SyntaxKind.OpenBracketToken),
             CloseBracketToken = ExpectToken(SyntaxKind.CloseBracketToken)
         };

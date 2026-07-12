@@ -29,7 +29,7 @@ public sealed class SimpleNameExpression : NameExpression
 {
     public SyntaxToken IdentifierToken { get; internal init; }
 
-    public override TextSpan Text => IdentifierToken.Text;
+    public override TextSpan Text => IdentifierToken.Span;
     public override string CanonicalName => IdentifierToken.Text.ToString();
     public override SimpleNameExpression GetUnqualifiedName() => this;
 }
@@ -55,7 +55,7 @@ public sealed class NamespaceQualifiedNameExpression : NameExpression
     public SyntaxToken TypeIdentifierToken { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(NamespaceIdentifiers[0].Text, TypeIdentifierToken.Text);
+        => TextSpan.FromBounds(NamespaceIdentifiers[0].Span.Start, TypeIdentifierToken.Span.End);
 
     public override string CanonicalName
     {

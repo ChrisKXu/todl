@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
@@ -9,7 +10,8 @@ namespace Todl.Compiler.CodeAnalysis.Syntax;
 public record struct SyntaxToken
 (
     SyntaxKind Kind,
-    TextSpan Text,
+    TextSpan Span,
+    ReadOnlyMemory<char> Text,
     ImmutableArray<SyntaxTrivia> LeadingTrivia,
     ImmutableArray<SyntaxTrivia> TrailingTrivia,
     bool Missing,
@@ -45,5 +47,11 @@ public record struct SyntaxToken
         };
     }
 
-    public TextLocation GetTextLocation() => new() { TextSpan = Text };
+    /// <summary>
+    /// Builds a TextLocation from this token's Span alone. Tokens carry no reference to their
+    /// originating SyntaxTree/SourceText, so the resulting TextLocation cannot resolve source
+    /// text on its own. Prefer the enclosing SyntaxNode's GetTextLocation(TextSpan) when a
+    /// SourceText-backed TextLocation is required (e.g. for diagnostics).
+    /// </summary>
+    public TextLocation GetTextLocation() => new(default, Span);
 }

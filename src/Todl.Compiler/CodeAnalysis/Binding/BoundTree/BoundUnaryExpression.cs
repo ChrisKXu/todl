@@ -161,7 +161,7 @@ public partial class Binder
                 {
                     Message = $"Unary operator \"{unaryExpression.Operator.Text}\" is not supported on type \"{boundOperand.ResultType.Name}\"",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = unaryExpression.Operator.GetTextLocation(),
+                    TextLocation = unaryExpression.GetTextLocation(unaryExpression.Operator.Span),
                     ErrorCode = ErrorCode.UnsupportedOperator
                 });
         }
