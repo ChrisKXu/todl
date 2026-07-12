@@ -22,7 +22,7 @@ public partial class Binder
                 Level = DiagnosticLevel.Error,
                 ErrorCode = ErrorCode.NoEnclosingLoop,
                 Message = "No enclosing loop out of which to break or continue.",
-                TextLocation = breakStatement.Text.GetTextLocation()
+                TextLocation = breakStatement.GetTextLocation()
             });
         }
 

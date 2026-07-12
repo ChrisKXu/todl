@@ -12,6 +12,6 @@ internal abstract class BoundNode
 
     private string GetDebuggerDisplay()
     {
-        return SyntaxNode == null ? GetType().Name : SyntaxNode.Text.ToString();
+        return SyntaxNode == null ? GetType().Name : SyntaxNode.GetText();
     }
 }

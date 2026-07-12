@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -47,7 +47,7 @@ public sealed partial class LexerTests
     {
         var token = LexSingle(text);
         token.Kind.Should().Be(kind);
-        token.Text.Should().Be(text);
+        token.Text.ToString().Should().Be(text);
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public sealed partial class LexerTests
     {
         var token = LexSingle(text);
         token.Kind.Should().Be(SyntaxKind.StringToken);
-        token.Text.Should().Be(text);
+        token.Text.ToString().Should().Be(text);
     }
 
     [Fact]

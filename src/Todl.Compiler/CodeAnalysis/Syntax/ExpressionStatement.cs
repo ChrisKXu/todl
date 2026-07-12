@@ -8,7 +8,7 @@ public sealed class ExpressionStatement : Statement
     public SyntaxToken SemicolonToken { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(Expression.Text, SemicolonToken.Text);
+        => TextSpan.FromBounds(Expression.Text.Start, SemicolonToken.Span.End);
 }
 
 public sealed partial class Parser

@@ -14,7 +14,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public SyntaxToken SemicolonToken { get; internal init; }
 
         public override TextSpan Text
-            => TextSpan.FromTextSpans(DeclarationKeyword.Text, SemicolonToken.Text);
+            => TextSpan.FromBounds(DeclarationKeyword.Span.Start, SemicolonToken.Span.End);
     }
 
     public sealed partial class Parser

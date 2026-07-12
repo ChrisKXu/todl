@@ -21,7 +21,6 @@ namespace Todl.Compiler.CodeAnalysis.Text
                 Text = File.ReadAllText(filePath)
             };
 
-        public TextSpan GetTextSpan(int start, int length) => new(this, start, length);
         public string ToString(TextSpan span)
             => Text.Substring(span.Start, span.Length);
 

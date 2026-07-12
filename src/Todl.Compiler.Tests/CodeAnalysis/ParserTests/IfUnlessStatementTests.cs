@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -23,9 +23,9 @@ public sealed class IfUnlessStatementTests
         var condition = ifUnlessStatement.ConditionExpression.As<BinaryExpression>();
         condition.Should().NotBeNull();
 
-        condition.Left.As<SimpleNameExpression>().Text.ToString().Should().Be("n");
+        condition.Left.As<SimpleNameExpression>().GetText().Should().Be("n");
         condition.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
-        condition.Right.As<LiteralExpression>().Text.ToString().Should().Be("0");
+        condition.Right.As<LiteralExpression>().GetText().Should().Be("0");
     }
 
     [Theory]
@@ -55,9 +55,9 @@ public sealed class IfUnlessStatementTests
         var condition = ifUnlessStatement.ConditionExpression.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>();
         condition.Should().NotBeNull();
 
-        condition.Left.As<SimpleNameExpression>().Text.ToString().Should().Be("n");
+        condition.Left.As<SimpleNameExpression>().GetText().Should().Be("n");
         condition.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
-        condition.Right.As<LiteralExpression>().Text.ToString().Should().Be("0");
+        condition.Right.As<LiteralExpression>().GetText().Should().Be("0");
     }
 
     [Theory]
@@ -71,7 +71,7 @@ public sealed class IfUnlessStatementTests
         ifUnlessStatement.ElseClauses.Should().HaveCount(1);
         ifUnlessStatement.ElseClauses[0].BlockStatement.InnerStatements.Should().HaveCount(1);
         var returnStatement = ifUnlessStatement.ElseClauses[0].BlockStatement.InnerStatements[0].As<ReturnStatement>();
-        returnStatement.ReturnValueExpression.Text.Should().Be("0");
+        returnStatement.ReturnValueExpression.GetText().Should().Be("0");
     }
 
     [Theory]
@@ -109,7 +109,7 @@ public sealed class IfUnlessStatementTests
         var duplicateBareElseClauses = diagnostics.First(d => d.ErrorCode == ErrorCode.DuplicateBareElseClauses);
         duplicateBareElseClauses.Should().NotBeNull();
         duplicateBareElseClauses.Level.Should().Be(DiagnosticLevel.Error);
-        duplicateBareElseClauses.TextLocation.TextSpan.ToString().Should().Be("else");
+        duplicateBareElseClauses.TextLocation.GetText().Should().Be("else");
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public sealed class IfUnlessStatementTests
         var misplacedBareElseClauses = diagnostics.First(d => d.ErrorCode == ErrorCode.MisplacedBareElseClauses);
         misplacedBareElseClauses.Should().NotBeNull();
         misplacedBareElseClauses.Level.Should().Be(DiagnosticLevel.Error);
-        misplacedBareElseClauses.TextLocation.TextSpan.ToString().Should().Be("else");
+        misplacedBareElseClauses.TextLocation.GetText().Should().Be("else");
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public sealed class IfUnlessStatementTests
         var ifUnlessKeywordMismatch = diagnostics.First(d => d.ErrorCode == ErrorCode.IfUnlessKeywordMismatch);
         ifUnlessKeywordMismatch.Should().NotBeNull();
         ifUnlessKeywordMismatch.Level.Should().Be(DiagnosticLevel.Error);
-        ifUnlessKeywordMismatch.TextLocation.TextSpan.ToString().Should().Be("unless");
+        ifUnlessKeywordMismatch.TextLocation.GetText().Should().Be("unless");
     }
 
     [Fact]
@@ -161,9 +161,9 @@ public sealed class IfUnlessStatementTests
 
         condition.Left.As<BinaryExpression>().Invoking(left =>
         {
-            left.Left.As<SimpleNameExpression>().Text.Should().Be("a");
+            left.Left.As<SimpleNameExpression>().GetText().Should().Be("a");
             left.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
-            left.Right.As<LiteralExpression>().Text.Should().Be("0");
+            left.Right.As<LiteralExpression>().GetText().Should().Be("0");
         }).Should().NotThrow();
 
         condition.Operator.Kind.Should().Be(SyntaxKind.AmpersandAmpersandToken);

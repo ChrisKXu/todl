@@ -57,7 +57,7 @@ public partial class Binder
 
     private BoundConstant BindNumericConstant(LiteralExpression literalExpression)
     {
-        var text = literalExpression.LiteralToken.Text.ToReadOnlyTextSpan();
+        var text = literalExpression.LiteralToken.Text.Span;
 
         var @base = 10;
         var startIndex = 0;
@@ -102,7 +102,7 @@ public partial class Binder
 
     private BoundConstant BindStringConstant(LiteralExpression literalExpression)
     {
-        var text = literalExpression.LiteralToken.Text.ToReadOnlyTextSpan();
+        var text = literalExpression.LiteralToken.Text.Span;
         var escape = text[0] != '@';
         var builder = new StringBuilder();
 
@@ -153,9 +153,9 @@ public partial class Binder
         ReportDiagnostic(
             new Diagnostic()
             {
-                Message = $"Literal value {literalExpression.Text} is not supported",
+                Message = $"Literal value {literalExpression.GetText()} is not supported",
                 Level = DiagnosticLevel.Error,
-                TextLocation = literalExpression.LiteralToken.GetTextLocation(),
+                TextLocation = literalExpression.GetTextLocation(),
                 ErrorCode = ErrorCode.UnsupportedLiteral
             });
 

@@ -97,7 +97,7 @@ public sealed class NameExpressionTests
     {
         var name = TestUtils.ParseExpression<NamespaceQualifiedNameExpression>("System::Console");
 
-        name.Text.ToString().Should().Be("System::Console");
+        name.GetText().Should().Be("System::Console");
     }
 
     #endregion

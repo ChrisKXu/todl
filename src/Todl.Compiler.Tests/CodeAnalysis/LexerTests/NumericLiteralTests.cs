@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Xunit;
 
@@ -31,7 +31,7 @@ public sealed partial class LexerTests
     {
         var token = LexSingle(text);
         token.Kind.Should().Be(SyntaxKind.NumberToken);
-        token.Text.Should().Be(text);
+        token.Text.ToString().Should().Be(text);
     }
 
     [Theory]
@@ -49,7 +49,7 @@ public sealed partial class LexerTests
     {
         var token = LexSingle(text);
         token.Kind.Should().Be(SyntaxKind.NumberToken);
-        token.Text.Should().Be(text);
+        token.Text.ToString().Should().Be(text);
     }
 
     [Theory]
@@ -68,6 +68,6 @@ public sealed partial class LexerTests
     {
         var token = LexSingle(text);
         token.Kind.Should().Be(SyntaxKind.NumberToken);
-        token.Text.Should().Be(text);
+        token.Text.ToString().Should().Be(text);
     }
 }

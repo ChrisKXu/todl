@@ -36,7 +36,7 @@ public sealed class ImportDirective : Directive
     }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(ImportKeywordToken.Text, SemicolonToken.Text);
+        => TextSpan.FromBounds(ImportKeywordToken.Span.Start, SemicolonToken.Span.End);
 
     internal static int GetHash(IEnumerable<ImportDirective> directives)
     {

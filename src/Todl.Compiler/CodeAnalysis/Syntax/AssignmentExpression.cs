@@ -10,7 +10,7 @@ public sealed class AssignmentExpression : Expression
     public SyntaxToken AssignmentOperator { get; internal init; }
     public Expression Right { get; internal init; }
 
-    public override TextSpan Text => TextSpan.FromTextSpans(Left.Text, Right.Text);
+    public override TextSpan Text => TextSpan.FromBounds(Left.Text.Start, Right.Text.End);
 
     public static readonly IReadOnlySet<SyntaxKind> AssignmentOperators
         = ImmutableHashSet.CreateRange(

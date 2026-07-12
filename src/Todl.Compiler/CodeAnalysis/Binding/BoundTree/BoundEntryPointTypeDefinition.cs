@@ -75,7 +75,7 @@ public partial class Binder
                 {
                     Message = "Ambiguous function declaration. Multiple functions with the same name and parameters set are declared within the same scope.",
                     ErrorCode = ErrorCode.AmbiguousFunctionDeclaration,
-                    TextLocation = functionDeclarationMember.Name.Text.GetTextLocation(),
+                    TextLocation = functionDeclarationMember.GetTextLocation(functionDeclarationMember.Name.Span),
                     Level = DiagnosticLevel.Error
                 });
             }

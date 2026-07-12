@@ -9,5 +9,5 @@ public sealed class MemberAccessExpression : Expression
     public SyntaxToken MemberIdentifierToken { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(BaseExpression.Text, MemberIdentifierToken.Text);
+        => TextSpan.FromBounds(BaseExpression.Text.Start, MemberIdentifierToken.Span.End);
 }

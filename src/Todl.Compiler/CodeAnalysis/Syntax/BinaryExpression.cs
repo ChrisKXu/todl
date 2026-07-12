@@ -10,7 +10,7 @@ public sealed class BinaryExpression : Expression
     public SyntaxToken Operator { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(Left.Text, Right.Text);
+        => TextSpan.FromBounds(Left.Text.Start, Right.Text.End);
 }
 
 public sealed partial class Parser

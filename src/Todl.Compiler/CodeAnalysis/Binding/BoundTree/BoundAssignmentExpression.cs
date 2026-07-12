@@ -81,7 +81,7 @@ public partial class Binder
                     {
                         Message = $"Variable {variableName} is read-only",
                         Level = DiagnosticLevel.Error,
-                        TextLocation = simpleNameExpression.IdentifierToken.GetTextLocation(),
+                        TextLocation = simpleNameExpression.GetTextLocation(),
                         ErrorCode = ErrorCode.ReadOnlyVariable
                     });
             }
@@ -92,7 +92,7 @@ public partial class Binder
                     {
                         Message = $"Variable {variableName} cannot be assigned to type {right.ResultType}",
                         Level = DiagnosticLevel.Error,
-                        TextLocation = simpleNameExpression.IdentifierToken.GetTextLocation(),
+                        TextLocation = simpleNameExpression.GetTextLocation(),
                         ErrorCode = ErrorCode.TypeMismatch
                     });
             }

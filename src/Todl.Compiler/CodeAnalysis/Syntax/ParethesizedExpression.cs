@@ -9,7 +9,7 @@ public sealed class ParethesizedExpression : Expression
     public SyntaxToken RightParenthesisToken { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(LeftParenthesisToken.Text, RightParenthesisToken.Text);
+        => TextSpan.FromBounds(LeftParenthesisToken.Span.Start, RightParenthesisToken.Span.End);
 }
 
 public sealed partial class Parser

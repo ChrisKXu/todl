@@ -16,7 +16,7 @@ public sealed class SyntaxNodeTests
     [MemberData(nameof(GetAllSyntaxNodesForTest))]
     public void TextShouldBeRepeatable(string inputText, SyntaxNode syntaxNode)
     {
-        syntaxNode.Text.ToString().Should().Be(inputText);
+        syntaxNode.GetText().Should().Be(inputText);
     }
 
     [Theory]

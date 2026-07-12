@@ -10,7 +10,7 @@ public sealed class BlockStatement : Statement
     public ImmutableArray<Statement> InnerStatements { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(OpenBraceToken.Text, CloseBraceToken.Text);
+        => TextSpan.FromBounds(OpenBraceToken.Span.Start, CloseBraceToken.Span.End);
 }
 
 public sealed partial class Parser

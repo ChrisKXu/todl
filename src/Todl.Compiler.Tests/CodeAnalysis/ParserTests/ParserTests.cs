@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
@@ -19,23 +19,23 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         {
             var assignmentExpression = TestUtils.ParseExpression<AssignmentExpression>($"a {expectedOperatorToken} (b + 3) * 2");
 
-            assignmentExpression.Left.As<SimpleNameExpression>().Text.Should().Be("a");
-            assignmentExpression.AssignmentOperator.Text.Should().Be(expectedOperatorToken);
+            assignmentExpression.Left.As<SimpleNameExpression>().GetText().Should().Be("a");
+            assignmentExpression.AssignmentOperator.Text.ToString().Should().Be(expectedOperatorToken);
             assignmentExpression.AssignmentOperator.Kind.Should().Be(expectedTokenKind);
 
             assignmentExpression.Right.As<BinaryExpression>().Invoking(expression =>
             {
                 expression.Left.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>().Invoking(innerExpression =>
                 {
-                    innerExpression.Left.As<SimpleNameExpression>().Text.Should().Be("b");
-                    innerExpression.Operator.Text.Should().Be("+");
+                    innerExpression.Left.As<SimpleNameExpression>().GetText().Should().Be("b");
+                    innerExpression.Operator.Text.ToString().Should().Be("+");
                     innerExpression.Operator.Kind.Should().Be(SyntaxKind.PlusToken);
-                    innerExpression.Right.As<LiteralExpression>().LiteralToken.Text.Should().Be("3");
+                    innerExpression.Right.As<LiteralExpression>().LiteralToken.Text.ToString().Should().Be("3");
                 }).Should().NotThrow();
 
-                expression.Operator.Text.Should().Be("*");
+                expression.Operator.Text.ToString().Should().Be("*");
                 expression.Operator.Kind.Should().Be(SyntaxKind.StarToken);
-                expression.Right.As<LiteralExpression>().Text.Should().Be("2");
+                expression.Right.As<LiteralExpression>().GetText().Should().Be("2");
             }).Should().NotThrow();
         }
 
@@ -49,7 +49,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             memberAccessExpression.Should().NotBeNull();
 
             var memberName = inputText[(inputText.LastIndexOf('.') + 1)..^0];
-            memberAccessExpression.MemberIdentifierToken.Text.Should().Be(memberName);
+            memberAccessExpression.MemberIdentifierToken.Text.ToString().Should().Be(memberName);
         }
 
         [Fact]
@@ -67,14 +67,14 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 _0 =>
                 {
                     var constStatement = _0.As<VariableDeclarationStatement>();
-                    constStatement.IdentifierToken.Text.Should().Be("a");
-                    constStatement.InitializerExpression.As<LiteralExpression>().LiteralToken.Text.Should().Be("0");
+                    constStatement.IdentifierToken.Text.ToString().Should().Be("a");
+                    constStatement.InitializerExpression.As<LiteralExpression>().LiteralToken.Text.ToString().Should().Be("0");
                 },
                 _1 =>
                 {
                     var letStatement = _1.As<VariableDeclarationStatement>();
-                    letStatement.IdentifierToken.Text.Should().Be("b");
-                    letStatement.InitializerExpression.As<SimpleNameExpression>().Text.Should().Be("a");
+                    letStatement.IdentifierToken.Text.ToString().Should().Be("b");
+                    letStatement.InitializerExpression.As<SimpleNameExpression>().GetText().Should().Be("a");
                 });
         }
 
@@ -138,10 +138,10 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var expression = TestUtils.ParseExpression<MemberAccessExpression>("System::Console.Out.WriteLine");
 
             expression.Should().NotBeNull();
-            expression.MemberIdentifierToken.Text.Should().Be("WriteLine");
+            expression.MemberIdentifierToken.Text.ToString().Should().Be("WriteLine");
 
             var innerAccess = expression.BaseExpression.As<MemberAccessExpression>();
-            innerAccess.MemberIdentifierToken.Text.Should().Be("Out");
+            innerAccess.MemberIdentifierToken.Text.ToString().Should().Be("Out");
 
             innerAccess.BaseExpression.Should().BeOfType<NamespaceQualifiedNameExpression>();
         }
@@ -153,15 +153,15 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var expression = TestUtils.ParseExpression<AssignmentExpression>("a = b = c = 5");
 
             expression.Should().NotBeNull();
-            expression.Left.As<SimpleNameExpression>().Text.Should().Be("a");
+            expression.Left.As<SimpleNameExpression>().GetText().Should().Be("a");
             expression.AssignmentOperator.Kind.Should().Be(SyntaxKind.EqualsToken);
 
             var inner1 = expression.Right.As<AssignmentExpression>();
-            inner1.Left.As<SimpleNameExpression>().Text.Should().Be("b");
+            inner1.Left.As<SimpleNameExpression>().GetText().Should().Be("b");
 
             var inner2 = inner1.Right.As<AssignmentExpression>();
-            inner2.Left.As<SimpleNameExpression>().Text.Should().Be("c");
-            inner2.Right.As<LiteralExpression>().Text.Should().Be("5");
+            inner2.Left.As<SimpleNameExpression>().GetText().Should().Be("c");
+            inner2.Right.As<LiteralExpression>().GetText().Should().Be("5");
         }
 
         [Fact]
@@ -170,7 +170,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var expression = TestUtils.ParseExpression<MemberAccessExpression>("\"hello\".Length");
 
             expression.Should().NotBeNull();
-            expression.MemberIdentifierToken.Text.Should().Be("Length");
+            expression.MemberIdentifierToken.Text.ToString().Should().Be("Length");
             expression.BaseExpression.Should().BeOfType<LiteralExpression>();
         }
 
@@ -180,7 +180,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var expression = TestUtils.ParseExpression<MemberAccessExpression>("(a + b).ToString");
 
             expression.Should().NotBeNull();
-            expression.MemberIdentifierToken.Text.Should().Be("ToString");
+            expression.MemberIdentifierToken.Text.ToString().Should().Be("ToString");
             expression.BaseExpression.Should().BeOfType<ParethesizedExpression>();
         }
 
@@ -190,7 +190,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var expression = TestUtils.ParseExpression<MemberAccessExpression>("new System::Object().ToString");
 
             expression.Should().NotBeNull();
-            expression.MemberIdentifierToken.Text.Should().Be("ToString");
+            expression.MemberIdentifierToken.Text.ToString().Should().Be("ToString");
             expression.BaseExpression.Should().BeOfType<NewExpression>();
         }
 
@@ -375,7 +375,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             level1.Should().NotBeNull();
             var level2 = level1.InnerExpression.As<ParethesizedExpression>();
             level2.Should().NotBeNull();
-            level2.InnerExpression.As<SimpleNameExpression>().Text.Should().Be("a");
+            level2.InnerExpression.As<SimpleNameExpression>().GetText().Should().Be("a");
         }
 
         [Fact]
@@ -437,8 +437,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var member = TestUtils.ParseMember<VariableDeclarationMember>(input);
 
             member.Should().NotBeNull();
-            member.VariableDeclarationStatement.IdentifierToken.Text.Should().Be(expectedName);
-            member.VariableDeclarationStatement.InitializerExpression.As<LiteralExpression>().Text.Should().Be(expectedValue);
+            member.VariableDeclarationStatement.IdentifierToken.Text.ToString().Should().Be(expectedName);
+            member.VariableDeclarationStatement.InitializerExpression.As<LiteralExpression>().GetText().Should().Be(expectedValue);
         }
 
         [Fact]
@@ -447,7 +447,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var member = TestUtils.ParseMember<VariableDeclarationMember>("const sum = 1 + 2 + 3;");
 
             member.Should().NotBeNull();
-            member.VariableDeclarationStatement.IdentifierToken.Text.Should().Be("sum");
+            member.VariableDeclarationStatement.IdentifierToken.Text.ToString().Should().Be("sum");
             member.VariableDeclarationStatement.InitializerExpression.Should().BeOfType<BinaryExpression>();
         }
 

@@ -80,14 +80,14 @@ public partial class Binder
             while (parent is not null)
             {
                 if (parent.LoopLabel is not null
-                    && parent.LoopLabel.Label.Text.ToString().Equals(loopLabel.Label.Text.ToString()))
+                    && parent.LoopLabel.Label.GetText().Equals(loopLabel.Label.GetText()))
                 {
                     ReportDiagnostic(new Diagnostic()
                     {
                         ErrorCode = ErrorCode.DuplicateLoopLabel,
                         Level = DiagnosticLevel.Error,
-                        TextLocation = loopLabel.Text.GetTextLocation(),
-                        Message = $"Duplicate loop label '{loopLabel.Label.Text}'"
+                        TextLocation = loopLabel.GetTextLocation(),
+                        Message = $"Duplicate loop label '{loopLabel.Label.GetText()}'"
                     });
                 }
 

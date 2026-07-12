@@ -41,9 +41,9 @@ public partial class Binder
             ReportDiagnostic(
                 new Diagnostic()
                 {
-                    Message = $"Undeclared variable {simpleNameExpression.Text}",
+                    Message = $"Undeclared variable {simpleNameExpression.GetText()}",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = simpleNameExpression.IdentifierToken.GetTextLocation(),
+                    TextLocation = simpleNameExpression.GetTextLocation(),
                     ErrorCode = ErrorCode.UndeclaredVariable
                 });
         }
@@ -69,7 +69,7 @@ public partial class Binder
                 {
                     Message = $"Type '{NamespaceQualifiedNameExpression.CanonicalName}' could not be found",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = NamespaceQualifiedNameExpression.TypeIdentifierToken.GetTextLocation(),
+                    TextLocation = NamespaceQualifiedNameExpression.GetTextLocation(NamespaceQualifiedNameExpression.TypeIdentifierToken.Span),
                     ErrorCode = ErrorCode.TypeNotFound
                 });
         }

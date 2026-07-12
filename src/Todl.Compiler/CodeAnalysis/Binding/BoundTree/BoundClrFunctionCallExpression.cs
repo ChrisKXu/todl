@@ -132,7 +132,7 @@ public partial class Binder
             {
                 Message = $"No matching function '{functionCallExpression.NameToken.Text}' found.",
                 Level = DiagnosticLevel.Error,
-                TextLocation = functionCallExpression.NameToken.Text.GetTextLocation(),
+                TextLocation = functionCallExpression.GetTextLocation(functionCallExpression.NameToken.Span),
                 ErrorCode = ErrorCode.NoMatchingCandidate
             });
     }

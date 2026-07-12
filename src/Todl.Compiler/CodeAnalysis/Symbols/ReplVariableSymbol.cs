@@ -10,7 +10,7 @@ internal sealed class ReplVariableSymbol : VariableSymbol
     public AssignmentExpression AssignmentExpression { get; internal init; }
     public BoundExpression BoundInitializer { get; internal init; }
 
-    public override string Name => AssignmentExpression.Left.Text.ToString();
+    public override string Name => AssignmentExpression.Left.GetText();
     public override bool ReadOnly => false;
     public override TypeSymbol Type => BoundInitializer.ResultType;
 

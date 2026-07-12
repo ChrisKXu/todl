@@ -26,9 +26,9 @@ public partial class Binder
             diagnosticBuilder.Add(
                 new Diagnostic()
                 {
-                    Message = $"Type {nameExpression.Text} is invalid",
+                    Message = $"Type {nameExpression.GetText()} is invalid",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = nameExpression.Text.GetTextLocation(),
+                    TextLocation = nameExpression.GetTextLocation(),
                     ErrorCode = ErrorCode.TypeNotFound
                 });
         }
