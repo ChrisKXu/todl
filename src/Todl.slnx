@@ -5,6 +5,7 @@
   <Project Path="Todl.Compiler.SourceGenerators/Todl.Compiler.SourceGenerators.csproj" />
   <Project Path="Todl.Sdk/Todl.Sdk.csproj" />
   <Project Path="Todl.CommandLine/Todl.CommandLine.csproj" />
+  <Project Path="Todl.CommandLine.Tests/Todl.CommandLine.Tests.csproj" />
   <Project Path="Todl.Playground/Todl.Playground.csproj" />
   <Folder Name="/Solution Items/">
     <File Path="../.editorconfig" />
