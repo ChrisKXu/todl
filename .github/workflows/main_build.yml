@@ -28,6 +28,58 @@ jobs:
         dotnet-version: 10.0.x
     - name: Test
       run: dotnet test src --verbosity normal --blame-hang --blame-hang-timeout 30s
+    - name: Build todl
+      run: dotnet build src/Todl/Todl.csproj --configuration Debug
+    - name: Build and run samples with todl build
+      shell: pwsh
+      run: |-
+        $todl = Join-Path $env:GITHUB_WORKSPACE "out/Debug/src/Todl/todl.dll"
+        $sampleDirs = @("hello", "fibonacci", "Fibonacci.Loop")
+        $failed = $false
+
+        foreach ($sampleDir in $sampleDirs) {
+          $path = Join-Path $env:GITHUB_WORKSPACE "samples/$sampleDir"
+          $manifest = Get-Content (Join-Path $path "todl.json") -Raw | ConvertFrom-Json
+          $outDir = Join-Path $path "out"
+
+          Write-Host "::group::todl build $sampleDir"
+          dotnet $todl build $path --output $outDir
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::todl build failed for $sampleDir"
+            $failed = $true
+            Write-Host "::endgroup::"
+            continue
+          }
+
+          $assembly = Join-Path $outDir "$($manifest.name).dll"
+          if (-not (Test-Path $assembly)) {
+            Write-Host "::error::$assembly was not produced"
+            $failed = $true
+            Write-Host "::endgroup::"
+            continue
+          }
+
+          $actual = ((dotnet $assembly) -join "`n").TrimEnd()
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::running $assembly failed"
+            $failed = $true
+            Write-Host "::endgroup::"
+            continue
+          }
+
+          $expected = ((Get-Content (Join-Path $path "stdout.expected.txt")) -join "`n").TrimEnd()
+          if ($actual -ne $expected) {
+            Write-Host "::error::$sampleDir stdout did not match stdout.expected.txt"
+            Write-Host "expected: [$expected]"
+            Write-Host "actual:   [$actual]"
+            $failed = $true
+          } else {
+            Write-Host "$sampleDir OK"
+          }
+          Write-Host "::endgroup::"
+        }
+
+        if ($failed) { exit 1 }
     - name: Samples
       run: |- 
         dotnet publish src --configuration Debug
