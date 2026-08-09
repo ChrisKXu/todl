@@ -1,9 +1,6 @@
 {
   "omnisharp.enableRoslynAnalyzers": true,
   "omnisharp.enableEditorConfigSupport": true,
-  "files.associations": {
-    "*.tdlproj": "xml"
-  },
   "debug.internalConsoleOptions": "neverOpen",
   "azureFunctions.preDeployTask": "publish (functions)",
   "dotnet.defaultSolution": "src\\Todl.slnx"
