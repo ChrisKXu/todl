@@ -10,6 +10,7 @@ updates:
     # Check the NuGet registry for updates every week (weekdays)
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 1
     ignore:
       - dependency-name: "FluentAssertions"
         versions:
@@ -22,3 +23,4 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 1
