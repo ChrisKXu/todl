@@ -28,6 +28,11 @@ jobs:
         dotnet-version: 10.0.x
     - name: Test
       run: dotnet test src --verbosity normal --blame-hang --blame-hang-timeout 30s
+    - name: Build todl
+      run: dotnet build src/Todl/Todl.csproj --configuration Debug
+    - name: Build and run samples with todl build
+      shell: pwsh
+      run: ./.github/scripts/validate-samples.ps1 -Configuration Debug
     - name: Samples
       run: |- 
         dotnet publish src --configuration Debug
