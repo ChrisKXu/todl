@@ -10,7 +10,7 @@ namespace Todl.CommandLine.Tests.Commands;
 public sealed class BuildCommandTests
 {
     [Fact]
-    public void TestInvokeBuildWithValidProjectReturnsZeroAndWritesOutputArtifacts()
+    public void BuildWithValidProjectShouldReturnZeroAndWriteOutputArtifacts()
     {
         using var tempDirectory = new TempDirectory();
         File.WriteAllText(Path.Combine(tempDirectory.Path, "todl.json"), """{ "name": "sample-project", "version": "9.9.9" }""");
@@ -33,7 +33,7 @@ public sealed class BuildCommandTests
     }
 
     [Fact]
-    public void TestInvokeBuildWithNoSourceFilesReturnsNonZero()
+    public void BuildWithNoSourceFilesShouldReturnNonZero()
     {
         using var tempDirectory = new TempDirectory();
         File.WriteAllText(Path.Combine(tempDirectory.Path, "todl.json"), """{ "name": "sample-project", "version": "9.9.9" }""");
@@ -45,7 +45,7 @@ public sealed class BuildCommandTests
     }
 
     [Fact]
-    public void TestInvokeBuildWithCompileErrorReturnsNonZeroAndPrintsDiagnosticToStdErr()
+    public void BuildWithCompileErrorShouldReturnNonZeroAndPrintDiagnosticToStdErr()
     {
         using var tempDirectory = new TempDirectory();
         File.WriteAllText(Path.Combine(tempDirectory.Path, "todl.json"), """{ "name": "sample-project", "version": "9.9.9" }""");

@@ -10,7 +10,7 @@ namespace Todl.CommandLine.Tests.References;
 public sealed class FrameworkReferenceResolverTests
 {
     [Fact]
-    public void TestGetTargetFrameworkReturnsNet10()
+    public void GetTargetFrameworkShouldReturnNet10()
     {
         var (tfm, band) = FrameworkReferenceResolver.GetTargetFramework();
 
@@ -19,7 +19,7 @@ public sealed class FrameworkReferenceResolverTests
     }
 
     [Fact]
-    public void TestResolveReturnsFrameworkAssemblies()
+    public void ResolveShouldReturnFrameworkAssemblies()
     {
         var refs = FrameworkReferenceResolver.Resolve();
 
@@ -28,7 +28,7 @@ public sealed class FrameworkReferenceResolverTests
     }
 
     [Fact]
-    public void TestResolveReturnsNoAnalyzerAssemblies()
+    public void ResolveShouldNotReturnAnalyzerAssemblies()
     {
         var refs = FrameworkReferenceResolver.Resolve();
 
@@ -36,7 +36,7 @@ public sealed class FrameworkReferenceResolverTests
     }
 
     [Fact]
-    public void TestResolveAssemblyPathsAllExist()
+    public void ResolvedAssemblyPathsShouldAllExist()
     {
         var refs = FrameworkReferenceResolver.Resolve();
 
@@ -44,7 +44,7 @@ public sealed class FrameworkReferenceResolverTests
     }
 
     [Fact]
-    public void TestResolveAssemblyNamesAreUnique()
+    public void ResolvedAssemblyNamesShouldBeUnique()
     {
         var refs = FrameworkReferenceResolver.Resolve();
 
@@ -53,7 +53,7 @@ public sealed class FrameworkReferenceResolverTests
     }
 
     [Fact]
-    public void TestResolveFrameworkVersionIsBandFloor()
+    public void ResolvedFrameworkVersionShouldBeBandFloor()
     {
         var refs = FrameworkReferenceResolver.Resolve();
 
@@ -63,7 +63,7 @@ public sealed class FrameworkReferenceResolverTests
     }
 
     [Fact]
-    public void TestResolveWithTodlRefPackOverride()
+    public void ResolveShouldHonorTodlRefPackOverride()
     {
         using var tempDirectory = new TempDirectory();
         var dataDirectory = Directory.CreateDirectory(Path.Combine(tempDirectory.Path, "data"));
