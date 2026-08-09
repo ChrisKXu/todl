@@ -20,8 +20,9 @@ to run all the tests.
 ## Running the samples
 A great way to play with Todl is by running the samples. To do so, please make sure that the latest .NET 10 is installed and then run the following
 ```bash
-$ dotnet publish src --configuration Debug
-$ dotnet run --project samples/hello/hello.tdlproj
+$ dotnet build src/Todl/Todl.csproj --configuration Debug
+$ dotnet out/Debug/src/Todl/todl.dll build samples/hello
+$ dotnet samples/hello/out/hello.dll
 ```
 
 ## Special thanks
