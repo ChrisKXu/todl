@@ -23,7 +23,7 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
             AllPathsShouldReturn(controlFlowGraph, boundFunctionMember);
         }
 
-        AllBlocksShouldBeReachable(controlFlowGraph);
+        AllBlocksShouldBeReachable(controlFlowGraph, boundFunctionMember);
 
         return boundFunctionMember;
     }
@@ -50,23 +50,32 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
     }
 
     private void AllBlocksShouldBeReachable(
-        ControlFlowGraph controlFlowGraph)
+        ControlFlowGraph controlFlowGraph,
+        BoundFunctionMember boundFunctionMember)
     {
-        var unreachableBlock = controlFlowGraph
-            .Blocks
-            .FirstOrDefault(block =>
-                !block.Equals(controlFlowGraph.StartBlock)
-                && !block.Equals(controlFlowGraph.EndBlock)
-                && !block.Reachable);
-
-        if (unreachableBlock is not null)
+        foreach (var block in controlFlowGraph.Blocks)
         {
+            if (block.Equals(controlFlowGraph.StartBlock)
+                || block.Equals(controlFlowGraph.EndBlock)
+                || block.Reachable)
+            {
+                continue;
+            }
+
+            // Synthesized statements (e.g. an empty block/branch's placeholder) carry no
+            // SyntaxNode; fall back to the function's own location rather than crash.
+            var textLocation = block.Statements
+                .Select(statement => statement.SyntaxNode)
+                .FirstOrDefault(syntaxNode => syntaxNode is not null)
+                ?.GetTextLocation()
+                ?? boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.GetTextLocation(boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.Name.Span);
+
             diagnosticBuilder.Add(new Diagnostic()
             {
                 Message = "Unreachable code",
                 ErrorCode = ErrorCode.UnreachableCode,
                 Level = DiagnosticLevel.Warning,
-                TextLocation = unreachableBlock.Statements[0].SyntaxNode.GetTextLocation()
+                TextLocation = textLocation
             });
         }
     }
