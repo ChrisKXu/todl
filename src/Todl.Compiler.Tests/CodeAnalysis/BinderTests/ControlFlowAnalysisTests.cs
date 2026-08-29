@@ -89,7 +89,7 @@ public sealed class ControlFlowAnalysisTests
     }
 
     [Fact]
-    public void TestControlFlowAnalysisWithLoopStatements_BreakLeavesUnreachableCodeAndMissingReturn()
+    public void BreakInInfiniteLoopShouldReportUnreachableCodeAndMissingReturn()
     {
         // `break` gives the loop a real, reachable exit path with no return after it -
         // both the dead code after `break` and the missing return must be reported.
@@ -103,7 +103,7 @@ public sealed class ControlFlowAnalysisTests
     }
 
     [Fact]
-    public void TestControlFlowAnalysisWithLoopStatements_ContinueNeverLeavesTheLoop()
+    public void ContinueInInfiniteLoopShouldOnlyReportUnreachableCode()
     {
         // `continue` always re-enters the loop, so `while true { continue; ... }` never
         // reaches an exit; only the dead code after `continue` is reachable-code-wise wrong.
@@ -160,7 +160,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { let i = 0; while i < 10 { while i < 5 { continue; } i = i + 1; } return i; }")]
     [InlineData("int func() { let i = 0; while i < 1 { while i < 2 { while i < 3 { break; } } } return i; }")]
     [InlineData("void func() { if true { } while true { } }")]
-    public void ControlFlowGraphBlocksContainEveryReferencedBlock(string inputText)
+    public void ControlFlowGraphBlocksShouldContainEveryReferencedBlock(string inputText)
     {
         // Every block a Branch points at or from must actually be present in Blocks;
         // otherwise a consumer walking Blocks (e.g. a future emitter) silently loses edges.
@@ -179,7 +179,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { let i = 0; while i < 10 { i = i + 1; } return i; }")]
     [InlineData("int func() { let i = 0; while i < 10 { while i < 5 { continue; } i = i + 1; } return i; }")]
     [InlineData("int func() { let i = 0; while i < 1 { while i < 2 { while i < 3 { break; } } } return i; }")]
-    public void ControlFlowGraphLoopsProduceBackEdges(string inputText)
+    public void ControlFlowGraphShouldProduceBackEdgesForLoops(string inputText)
     {
         // A loop that can iterate more than once must have at least one edge whose target
         // appears no later than its source in Blocks - i.e. an actual back edge, not just a
@@ -202,7 +202,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("void func() { break; }")]
     [InlineData("void func() { continue; }")]
     [InlineData("void func() { if true { break; } }")]
-    public void ControlFlowAnalysisDoesNotThrowWhenBreakOrContinueHasNoEnclosingLoop(string inputText)
+    public void ControlFlowAnalysisShouldNotThrowWhenBreakOrContinueHasNoEnclosingLoop(string inputText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
 
@@ -219,7 +219,7 @@ public sealed class ControlFlowAnalysisTests
     [Theory]
     [InlineData("int func() { return 1; if true { 2.ToString(); } }")]
     [InlineData("int func() { return 1; if true { } }")]
-    public void ControlFlowAnalysisDoesNotThrowOnUnreachableSynthesizedBlock(string inputText)
+    public void ControlFlowAnalysisShouldNotThrowOnUnreachableSynthesizedBlock(string inputText)
     {
         // The synthesized placeholder for an empty/no-else branch carries no SyntaxNode;
         // reporting it as unreachable must fall back to a location instead of crashing.
@@ -234,7 +234,7 @@ public sealed class ControlFlowAnalysisTests
     }
 
     [Fact]
-    public void ControlFlowAnalysisReportsMissingReturnWhenLoopCanExitWithoutReturning()
+    public void ControlFlowAnalysisShouldReportMissingReturnWhenLoopCanExitWithoutReturning()
     {
         // The loop's zero-iteration fallthrough is a real path out of the function that
         // never reaches a return statement.
@@ -248,7 +248,7 @@ public sealed class ControlFlowAnalysisTests
     }
 
     [Fact]
-    public void ControlFlowAnalysisTracksVariableDeclarationsForReachability()
+    public void ControlFlowAnalysisShouldTrackVariableDeclarationsForReachability()
     {
         // Variable declarations must be visible to the CFG like any other statement.
         var diagnosticBuilder = new DiagnosticBag.Builder();
@@ -261,7 +261,7 @@ public sealed class ControlFlowAnalysisTests
     }
 
     [Fact]
-    public void ControlFlowAnalysisResolvesContinueToTheInnermostLoop()
+    public void ControlFlowAnalysisShouldResolveContinueToTheInnermostLoop()
     {
         // `continue` inside the inner loop must re-check the inner loop's own condition,
         // not fall through to outer-loop code - so only the code after `continue` in the
