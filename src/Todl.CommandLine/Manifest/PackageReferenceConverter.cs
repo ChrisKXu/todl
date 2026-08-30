@@ -18,9 +18,9 @@ public sealed class PackageReferenceConverter : JsonConverter<PackageReference>
             // heuristic: a string that parses as a NuGet version requirement
             // is a NuGet reference, anything else is a relative folder path
             // to a local project. A leading "./" never parses as a version,
-            // so it's the escape hatch for a path that would otherwise
-            // collide with version syntax (e.g. a sibling folder literally
-            // named "2.0").
+            // so prefixing it is the escape hatch for a path that would
+            // otherwise collide with version syntax (e.g. a sibling folder
+            // literally named "2.0" — write "./2.0").
             return VersionRange.TryParse(value, out _)
                 ? new PackageReference { Version = value }
                 : new PackageReference { Path = value };
@@ -31,45 +31,23 @@ public sealed class PackageReferenceConverter : JsonConverter<PackageReference>
             using var document = JsonDocument.ParseValue(ref reader);
             var root = document.RootElement;
 
-            var hasPath = root.TryGetProperty("path", out var pathElement);
-            var hasVersion = root.TryGetProperty("version", out var versionElement);
+            var version = root.TryGetProperty("version", out var versionElement)
+                ? versionElement.GetString()
+                : null;
+            var source = root.TryGetProperty("source", out var sourceElement)
+                ? sourceElement.GetString()
+                : null;
 
-            if (hasPath && hasVersion)
+            if (string.IsNullOrWhiteSpace(version))
             {
-                throw new JsonException("A package reference entry given as an object must specify exactly one of 'path' or 'version', not both.");
+                throw new JsonException("A NuGet package entry given as an object must specify a non-empty 'version'.");
             }
 
-            if (hasPath)
-            {
-                var path = pathElement.GetString();
-                if (string.IsNullOrWhiteSpace(path))
-                {
-                    throw new JsonException("A package reference entry given as an object with a 'path' must have a non-empty value.");
-                }
-
-                return new PackageReference { Path = path };
-            }
-
-            if (hasVersion)
-            {
-                var version = versionElement.GetString();
-                var source = root.TryGetProperty("source", out var sourceElement)
-                    ? sourceElement.GetString()
-                    : null;
-
-                if (string.IsNullOrWhiteSpace(version))
-                {
-                    throw new JsonException("A NuGet package entry given as an object must specify a non-empty 'version'.");
-                }
-
-                return new PackageReference { Version = version, Source = source };
-            }
-
-            throw new JsonException("A package reference entry given as an object must specify exactly one of 'path' or 'version'.");
+            return new PackageReference { Version = version, Source = source };
         }
 
         throw new JsonException(
-            $"Unexpected token '{reader.TokenType}' for a package reference entry; expected a version/path string or an object with a 'version' or 'path' field.");
+            $"Unexpected token '{reader.TokenType}' for a package reference entry; expected a version/path string or a {{version, source}} object.");
     }
 
     public override void Write(Utf8JsonWriter writer, PackageReference value, JsonSerializerOptions options)

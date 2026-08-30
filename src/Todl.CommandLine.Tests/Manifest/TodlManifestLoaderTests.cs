@@ -113,48 +113,37 @@ public sealed class TodlManifestLoaderTests
     }
 
     [Fact]
-    public void TestParseProjectReferencePathObjectShape()
+    public void TestParseProjectReferencePathCollidingWithVersionSyntaxResolvesAsPathViaDotSlashPrefix()
     {
         var manifest = TodlManifestLoader.Parse("""
             {
                 "name": "hello",
-                "nugetPackages": { "MyLib": { "path": "../MyLib" } }
-            }
-            """);
-
-        manifest.NugetPackages.Should().ContainKey("MyLib")
-            .WhoseValue.Should().Be(new PackageReference { Path = "../MyLib" });
-    }
-
-    [Theory]
-    [InlineData("""{ "path": "2.0" }""")]
-    [InlineData("\"./2.0\"")]
-    public void TestParseProjectReferencePathCollidingWithVersionSyntaxResolvesAsPath(string pathToken)
-    {
-        var manifest = TodlManifestLoader.Parse($$"""
-            {
-                "name": "hello",
-                "nugetPackages": { "OtherLib": {{pathToken}} }
+                "nugetPackages": { "OtherLib": "./2.0" }
             }
             """);
 
         manifest.NugetPackages.Should().ContainKey("OtherLib")
-            .WhoseValue.Path.Should().Be(pathToken.StartsWith('{') ? "2.0" : "./2.0");
+            .WhoseValue.Should().Be(new PackageReference { Path = "./2.0" });
     }
 
     [Fact]
-    public void TestParseProjectReferenceEntryWithBothPathAndVersionThrowsTodlManifestException()
+    public void TestParseProjectReferenceObjectPathShapeIsNotSupportedThrowsTodlManifestException()
     {
+        // { "path": ... } is deliberately not a recognized object shape: the
+        // "./" string prefix already disambiguates a path from a version
+        // unambiguously, so an object form would be pure duplication. An
+        // object always means NuGet and therefore requires 'version'.
         var json = """
             {
                 "name": "hello",
-                "nugetPackages": { "MyLib": { "path": "../MyLib", "version": "1.0.0" } }
+                "nugetPackages": { "MyLib": { "path": "../MyLib" } }
             }
             """;
 
         var act = () => TodlManifestLoader.Parse(json);
 
-        act.Should().Throw<TodlManifestException>();
+        act.Should().Throw<TodlManifestException>()
+            .WithMessage("*version*");
     }
 
     [Fact]
