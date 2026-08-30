@@ -8,6 +8,6 @@ public sealed record TodlManifest
 
     public string Version { get; init; } = "0.1.0";
 
-    public IReadOnlyDictionary<string, NugetPackageReference> NugetPackages { get; init; }
-        = new Dictionary<string, NugetPackageReference>();
+    public IReadOnlyDictionary<string, PackageReference> NugetPackages { get; init; }
+        = new Dictionary<string, PackageReference>();
 }

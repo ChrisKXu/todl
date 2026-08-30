@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Immutable;
 using System.CommandLine;
 using System.IO;
 using System.Linq;
@@ -80,6 +81,16 @@ public class BuildCommand : Command
                 return 1;
             }
 
+            try
+            {
+                references = ResolveProjectReferences(manifest, projectDirectory, references);
+            }
+            catch (Exception ex) when (ex is TodlManifestException or ProjectReferenceException)
+            {
+                Console.Error.WriteLine($"error: {ex.Message}");
+                return 1;
+            }
+
             var assemblyResolver = new PathAssemblyResolver(references.Compile.Select(r => r.Path).ToArray());
 
             // Compilation's constructor takes ownership of metadataLoadContext and
@@ -111,6 +122,7 @@ public class BuildCommand : Command
 
             using var assemblyDefinition = compilation.Emit();
             Directory.CreateDirectory(outputDirectory);
+            CopyRuntimeCopyLocal(references.RuntimeCopyLocal, outputDirectory);
             var assemblyPath = Path.Combine(outputDirectory, $"{manifest.Name}.dll");
             assemblyDefinition.Write(assemblyPath);
             WriteRuntimeConfig(outputDirectory, manifest.Name!, references.Framework);
@@ -135,9 +147,10 @@ public class BuildCommand : Command
         return $"{filePath}({position.Line + 1},{position.Character + 1}): {level} {diagnostic.ErrorCode}: {diagnostic.Message}";
     }
 
-    // No deps.json is written: its absence means the host's trusted-platform-
-    // assemblies list is the output directory's contents, which is why an
-    // empty RuntimeCopyLocal is fine for a package-free project.
+    // No deps.json is written for the output: its absence means the host's
+    // trusted-platform-assemblies list is the output directory's contents,
+    // which is why CopyRuntimeCopyLocal (above) must physically copy every
+    // non-framework assembly there rather than just listing it.
     private static void WriteRuntimeConfig(string outputDirectory, string name, FrameworkReference framework)
         => File.WriteAllText(
             Path.Combine(outputDirectory, $"{name}.runtimeconfig.json"),
@@ -152,4 +165,78 @@ public class BuildCommand : Command
               }
             }
             """);
+
+    private static ResolvedReferences ResolveProjectReferences(TodlManifest manifest, string projectDirectory, ResolvedReferences references)
+    {
+        var projectReferenceEntries = manifest.NugetPackages
+            .Where(entry => entry.Value.Path is not null)
+            .ToArray();
+
+        if (projectReferenceEntries.Length == 0)
+        {
+            return references;
+        }
+
+        MSBuildBootstrap.EnsureRegistered();
+
+        var frameworkNames = new HashSet<string>(references.Compile.Select(a => a.Name), StringComparer.Ordinal);
+        var resolvedByName = new Dictionary<string, (ResolvedAssembly Assembly, string ReferenceName)>(StringComparer.Ordinal);
+        var builder = new ProjectReferenceBuilder();
+
+        foreach (var entry in projectReferenceEntries)
+        {
+            var csprojPath = ProjectReferenceResolver.ResolveCsprojPath(projectDirectory, entry.Value.Path!, entry.Key);
+            var buildResult = builder.Build(csprojPath, entry.Key);
+            var closure = ProjectReferenceClosureResolver.ResolveClosure(buildResult);
+
+            foreach (var assembly in closure)
+            {
+                if (frameworkNames.Contains(assembly.Name))
+                {
+                    continue;
+                }
+
+                if (resolvedByName.TryGetValue(assembly.Name, out var existing))
+                {
+                    if (existing.Assembly.Version != assembly.Version)
+                    {
+                        throw new ProjectReferenceException(
+                            $"assembly '{assembly.Name}' is referenced with conflicting versions: " +
+                            $"{existing.Assembly.Version} (via project reference '{existing.ReferenceName}') vs " +
+                            $"{assembly.Version} (via project reference '{entry.Key}').");
+                    }
+
+                    continue;
+                }
+
+                resolvedByName[assembly.Name] = (assembly, entry.Key);
+            }
+        }
+
+        var projectAssemblies = resolvedByName.Values.Select(v => v.Assembly).ToImmutableArray();
+
+        return references with
+        {
+            Compile = references.Compile.AddRange(projectAssemblies),
+            RuntimeCopyLocal = references.RuntimeCopyLocal.AddRange(projectAssemblies),
+        };
+    }
+
+    // RuntimeCopyLocal assemblies aren't supplied by the shared framework, so
+    // the runtime host's trusted-platform-assemblies probing (no deps.json is
+    // written for the output, see WriteRuntimeConfig above) only finds them if
+    // they're physically copied beside the emitted assembly.
+    private static void CopyRuntimeCopyLocal(ImmutableArray<ResolvedAssembly> runtimeCopyLocal, string outputDirectory)
+    {
+        foreach (var assembly in runtimeCopyLocal)
+        {
+            var destinationPath = Path.Combine(outputDirectory, Path.GetFileName(assembly.Path));
+            if (string.Equals(Path.GetFullPath(assembly.Path), Path.GetFullPath(destinationPath), StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            File.Copy(assembly.Path, destinationPath, overwrite: true);
+        }
+    }
 }
