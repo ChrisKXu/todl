@@ -4,10 +4,10 @@ using System.Linq;
 namespace Todl.CommandLine.Manifest;
 
 /// <summary>
-/// Resolves a <see cref="PackageReference.Path"/> value (as written in
-/// <c>todl.json</c>, relative and '/'-delimited) to the single .csproj file
-/// inside the folder it points at. Not stored pre-resolved on the manifest:
-/// the folder's .csproj contents can change between manifest load and build.
+/// Resolves a <see cref="PackageReference.Path"/> value to the single .csproj
+/// file inside the folder it points at. Not stored pre-resolved on the
+/// manifest — the folder's .csproj contents can change between manifest
+/// load and build.
 /// </summary>
 public static class ProjectReferenceResolver
 {

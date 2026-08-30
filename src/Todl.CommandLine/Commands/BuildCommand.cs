@@ -147,10 +147,6 @@ public class BuildCommand : Command
         return $"{filePath}({position.Line + 1},{position.Character + 1}): {level} {diagnostic.ErrorCode}: {diagnostic.Message}";
     }
 
-    // No deps.json is written for the output: its absence means the host's
-    // trusted-platform-assemblies list is the output directory's contents,
-    // which is why CopyRuntimeCopyLocal (above) must physically copy every
-    // non-framework assembly there rather than just listing it.
     private static void WriteRuntimeConfig(string outputDirectory, string name, FrameworkReference framework)
         => File.WriteAllText(
             Path.Combine(outputDirectory, $"{name}.runtimeconfig.json"),
@@ -222,10 +218,9 @@ public class BuildCommand : Command
         };
     }
 
-    // RuntimeCopyLocal assemblies aren't supplied by the shared framework, so
-    // the runtime host's trusted-platform-assemblies probing (no deps.json is
-    // written for the output, see WriteRuntimeConfig above) only finds them if
-    // they're physically copied beside the emitted assembly.
+    // No deps.json is written for the output, so the runtime host's
+    // trusted-platform-assemblies list is just the output directory's
+    // contents — non-framework assemblies must be physically copied there.
     private static void CopyRuntimeCopyLocal(ImmutableArray<ResolvedAssembly> runtimeCopyLocal, string outputDirectory)
     {
         foreach (var assembly in runtimeCopyLocal)

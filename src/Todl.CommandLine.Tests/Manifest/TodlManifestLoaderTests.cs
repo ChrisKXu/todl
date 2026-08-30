@@ -129,10 +129,8 @@ public sealed class TodlManifestLoaderTests
     [Fact]
     public void TestParseProjectReferenceObjectPathShapeIsNotSupportedThrowsTodlManifestException()
     {
-        // { "path": ... } is deliberately not a recognized object shape: the
-        // "./" string prefix already disambiguates a path from a version
-        // unambiguously, so an object form would be pure duplication. An
-        // object always means NuGet and therefore requires 'version'.
+        // { "path": ... } is deliberately unsupported — "./" already
+        // disambiguates unambiguously, so an object always means NuGet.
         var json = """
             {
                 "name": "hello",

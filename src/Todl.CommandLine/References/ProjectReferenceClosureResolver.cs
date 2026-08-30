@@ -12,10 +12,9 @@ namespace Todl.CommandLine.References;
 /// contributes to the referencing compilation: its own primary output, plus
 /// its transitive package/project dependency closure read from
 /// <c>.deps.json</c> (<c>BuiltProjectOutputGroup</c> alone returns only the
-/// primary output, not the closure — verified in
-/// todl-design/ideas/tooling/project-file-format.md). No
-/// <c>Microsoft.Build.*</c> type is touched here, so this class carries none
-/// of <see cref="MSBuildBootstrap"/>'s ordering constraint.
+/// primary output, not the closure). No <c>Microsoft.Build.*</c> type is
+/// touched here, so this class carries none of
+/// <see cref="MSBuildBootstrap"/>'s ordering constraint.
 /// </summary>
 internal static class ProjectReferenceClosureResolver
 {
@@ -52,9 +51,8 @@ internal static class ProjectReferenceClosureResolver
         }
         catch (BadImageFormatException)
         {
-            // Not a managed assembly (a native asset that slipped through, or a
-            // resource-only satellite) — not something MetadataLoadContext can
-            // load, and not something to fail the whole build over.
+            // Native asset or resource-only satellite that slipped through —
+            // not loadable, not worth failing the whole build over.
             return;
         }
 
@@ -67,13 +65,10 @@ internal static class ProjectReferenceClosureResolver
         });
     }
 
-    // Reads targets["<runtimeTarget>"][*]["runtime"] asset paths, resolving each
-    // library against the global packages folder (type: "package") or the
-    // referenced project's own output directory (type: "project" — nested
-    // ProjectReferences that are copy-local into it). Deliberately reads only
-    // "runtime" (not "compile"): Todl has no ref/impl split for package or
-    // project assemblies, so the implementation assembly serves as both the
-    // compile-time reference and the runtime copy-local artifact.
+    // Resolves each library against the global packages folder ("package")
+    // or the project's own output directory ("project" — nested copy-local
+    // ProjectReferences). Only "runtime" assets, not "compile": Todl has no
+    // ref/impl split, so the impl assembly serves as both.
     private static IEnumerable<string> ReadDepsJsonRuntimeAssetPaths(string depsJsonPath, ProjectBuildResult buildResult)
     {
         using var document = JsonDocument.Parse(File.ReadAllText(depsJsonPath));

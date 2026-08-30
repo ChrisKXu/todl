@@ -8,12 +8,9 @@ using Xunit;
 
 namespace Todl.CommandLine.Tests.Commands;
 
-// End-to-end: todl build resolving a local project reference (todl-design's
-// ideas/tooling/project-file-format-plan.md Step 5 "done when" criterion) —
-// builds the referenced .csproj in-process via MSBuild, resolves its output
-// into the compilation's references, and produces a runnable artifact.
-// Exercises a real MSBuild restore+build, so it is slower than the other
-// BuildCommand tests.
+// End-to-end: restores and builds a real referenced project in-process via
+// MSBuild, resolves its output into the compilation's references, and runs
+// the produced executable. Slower than the other BuildCommand tests.
 public sealed class ProjectReferenceBuildCommandTests
 {
     [Fact]

@@ -16,13 +16,11 @@
 
     <!--
       The one deliberate MSBuild dependency in an otherwise MSBuild-free CLI,
-      scoped to local project references only (todl-design's
-      ideas/tooling/project-file-format.md, Decision 2). ExcludeAssets="runtime"
-      keeps these compile-time reference assemblies out of the published
-      output, so Microsoft.Build.Locator's assembly-resolve hook (installed
-      by MSBuildBootstrap.EnsureRegistered()) is what actually gets loaded at
-      run time, redirected to whatever .NET SDK is installed on the machine
-      running todl — not the version restored here.
+      scoped to local project references only. ExcludeAssets="runtime" keeps
+      these out of the published output, so Microsoft.Build.Locator's
+      assembly-resolve hook (MSBuildBootstrap.EnsureRegistered()) is what
+      actually loads at run time, redirected to whatever SDK is installed —
+      not the version restored here.
     -->
     <PackageReference Include="Microsoft.Build.Locator" Version="1.11.2" />
     <PackageReference Include="Microsoft.Build" Version="18.9.6" ExcludeAssets="runtime" />

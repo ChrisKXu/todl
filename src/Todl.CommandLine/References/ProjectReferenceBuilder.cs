@@ -64,9 +64,9 @@ internal sealed class ProjectReferenceBuilder
         BuildManager.DefaultBuildManager.BeginBuild(parameters);
         try
         {
-            // Restore and Build are two separate BuildRequest calls inside one
-            // BeginBuild/EndBuild session, issued against different global-property
-            // sets — matching dotnet/sdk's own VirtualProjectBuildingCommand.
+            // Restore and Build are separate BuildRequests in one BeginBuild/
+            // EndBuild session, against different global properties — matching
+            // dotnet/sdk's own VirtualProjectBuildingCommand.
             var restoreGlobalProperties = new Dictionary<string, string>(globalProperties)
             {
                 ["MSBuildRestoreSessionId"] = Guid.NewGuid().ToString("D"),
@@ -81,9 +81,8 @@ internal sealed class ProjectReferenceBuilder
                 throw new ProjectReferenceException(FormatFailure(referenceName, csprojPath, "restore", logger.Errors));
             }
 
-            // -p:GenerateDependencyFile=true rather than depending on the SDK's
-            // (unverified, version-dependent) default for class libraries — the
-            // closure-discovery step below needs .deps.json unconditionally.
+            // Force it rather than depend on the SDK's unverified,
+            // version-dependent default — closure discovery needs .deps.json.
             var buildGlobalProperties = new Dictionary<string, string>(globalProperties)
             {
                 ["GenerateDependencyFile"] = "true",
@@ -128,9 +127,8 @@ internal sealed class ProjectReferenceBuilder
         return $"{phase} failed for project reference '{referenceName}' ('{csprojPath}'):{Environment.NewLine}{details}";
     }
 
-    // Collects error events instead of writing to the console — todl build's
-    // own diagnostic formatting owns stderr; MSBuild's own logging output
-    // would otherwise be indistinguishable noise mixed into it.
+    // Collects errors instead of writing to the console — MSBuild's own log
+    // output would otherwise be noise mixed into todl build's diagnostics.
     private sealed class ErrorCollectingLogger : ILogger
     {
         public List<string> Errors { get; } = [];

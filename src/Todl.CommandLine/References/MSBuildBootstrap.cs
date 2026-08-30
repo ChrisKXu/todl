@@ -5,22 +5,15 @@ namespace Todl.CommandLine.References;
 
 /// <summary>
 /// Registers the machine's installed .NET SDK with Microsoft.Build.Locator
-/// before any <c>Microsoft.Build.*</c> type is touched.
-///
-/// This type deliberately references only <see cref="MSBuildLocator"/>
-/// (a separate package that is safe to touch before registration) and never
-/// a <c>Microsoft.Build.*</c> SDK type. The actual MSBuild hosting work lives
-/// in <see cref="ProjectReferenceBuilder"/>, a different class whose public
-/// surface also uses no <c>Microsoft.Build.*</c> types — the CLR resolves a
-/// call's target-method *signature* eagerly but defers JITting the target
-/// method's own body (and therefore resolving the types *it* references)
-/// until the method is first invoked. Since neither this type's nor
-/// <see cref="ProjectReferenceBuilder"/>'s public signatures mention a
-/// <c>Microsoft.Build.*</c> type, calling <see cref="EnsureRegistered"/> and
-/// then constructing a <see cref="ProjectReferenceBuilder"/> from the same
-/// caller method is safe — <c>Microsoft.Build.*</c> type tokens are resolved
-/// only once <see cref="ProjectReferenceBuilder"/>'s own methods are JITted,
-/// which happens strictly after this method has returned.
+/// before any <c>Microsoft.Build.*</c> type is touched — required because the
+/// JIT resolves a method's type tokens (including <c>Microsoft.Build.*</c>
+/// ones) before its first statement runs. Safe to call from anywhere: this
+/// type and <see cref="ProjectReferenceBuilder"/> both keep
+/// <c>Microsoft.Build.*</c> types out of their public surface, so calling
+/// <see cref="EnsureRegistered"/> and then using
+/// <see cref="ProjectReferenceBuilder"/> from the same method never resolves
+/// those tokens until <see cref="ProjectReferenceBuilder"/>'s own methods are
+/// first invoked, by which point registration has already run.
 /// </summary>
 internal static class MSBuildBootstrap
 {
@@ -45,15 +38,9 @@ internal static class MSBuildBootstrap
             {
                 try
                 {
-                    // RegisterDefaults() both hooks assembly resolution to the
-                    // discovered SDK and sets the MSBuildExtensionsPath/MSBuildSDKsPath
-                    // environment variables its SDK resolver needs to find
-                    // Sdk.props/Sdk.targets for <Project Sdk="Microsoft.NET.Sdk">
-                    // (RegisterInstance calls ApplyDotNetSdkEnvironmentVariables
-                    // whenever the discovered instance is DiscoveryType.DotNetSdk,
-                    // the only kind GetInstances() can return on .NET as opposed to
-                    // .NET Framework — verified against Microsoft.Build.Locator's
-                    // own source). No manual env var setup needed here.
+                    // Also sets the MSBuildExtensionsPath/MSBuildSDKsPath env
+                    // vars the SDK resolver needs (verified against
+                    // Microsoft.Build.Locator's source) — no manual setup needed.
                     MSBuildLocator.RegisterDefaults();
                 }
                 catch (InvalidOperationException ex)

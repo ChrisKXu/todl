@@ -13,14 +13,11 @@ public sealed class PackageReferenceConverter : JsonConverter<PackageReference>
         {
             var value = reader.GetString() ?? string.Empty;
 
-            // Disambiguation is a strict function of the exact grammar NuGet
-            // package references already depend on, not a suffix/separator
-            // heuristic: a string that parses as a NuGet version requirement
-            // is a NuGet reference, anything else is a relative folder path
-            // to a local project. A leading "./" never parses as a version,
-            // so prefixing it is the escape hatch for a path that would
-            // otherwise collide with version syntax (e.g. a sibling folder
-            // literally named "2.0" — write "./2.0").
+            // A string that parses as a NuGet version requirement is a NuGet
+            // reference; anything else is a relative path to a local project.
+            // "./" never parses as a version, so it disambiguates a folder
+            // name that would otherwise collide with version syntax (e.g. a
+            // sibling literally named "2.0" — write "./2.0").
             return VersionRange.TryParse(value, out _)
                 ? new PackageReference { Version = value }
                 : new PackageReference { Path = value };
