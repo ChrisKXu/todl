@@ -37,7 +37,7 @@ public sealed class TodlManifestLoaderTests
             """);
 
         manifest.NugetPackages.Should().ContainKey("Newtonsoft.Json")
-            .WhoseValue.Should().Be(new NugetPackageReference { Version = "13.0.3" });
+            .WhoseValue.Should().Be(new PackageReference { Version = "13.0.3" });
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public sealed class TodlManifestLoaderTests
             """);
 
         manifest.NugetPackages.Should().ContainKey("Contoso.Internal")
-            .WhoseValue.Should().Be(new NugetPackageReference
+            .WhoseValue.Should().Be(new PackageReference
             {
                 Version = "1.4.0",
                 Source = "https://nuget.contoso.internal/v3/index.json"
@@ -90,6 +90,67 @@ public sealed class TodlManifestLoaderTests
             {
                 "name": "hello",
                 "nugetPackages": { "Contoso.Internal": { "source": "https://example.com" } }
+            }
+            """;
+
+        var act = () => TodlManifestLoader.Parse(json);
+
+        act.Should().Throw<TodlManifestException>();
+    }
+
+    [Fact]
+    public void TestParseProjectReferenceBarePathString()
+    {
+        var manifest = TodlManifestLoader.Parse("""
+            {
+                "name": "hello",
+                "nugetPackages": { "MyLib": "../MyLib" }
+            }
+            """);
+
+        manifest.NugetPackages.Should().ContainKey("MyLib")
+            .WhoseValue.Should().Be(new PackageReference { Path = "../MyLib" });
+    }
+
+    [Fact]
+    public void TestParseProjectReferencePathCollidingWithVersionSyntaxResolvesAsPathViaDotSlashPrefix()
+    {
+        var manifest = TodlManifestLoader.Parse("""
+            {
+                "name": "hello",
+                "nugetPackages": { "OtherLib": "./2.0" }
+            }
+            """);
+
+        manifest.NugetPackages.Should().ContainKey("OtherLib")
+            .WhoseValue.Should().Be(new PackageReference { Path = "./2.0" });
+    }
+
+    [Fact]
+    public void TestParseProjectReferenceObjectPathShapeIsNotSupportedThrowsTodlManifestException()
+    {
+        // { "path": ... } is deliberately unsupported — "./" already
+        // disambiguates unambiguously, so an object always means NuGet.
+        var json = """
+            {
+                "name": "hello",
+                "nugetPackages": { "MyLib": { "path": "../MyLib" } }
+            }
+            """;
+
+        var act = () => TodlManifestLoader.Parse(json);
+
+        act.Should().Throw<TodlManifestException>()
+            .WithMessage("*version*");
+    }
+
+    [Fact]
+    public void TestParsePackageReferenceEntryWithNeitherPathNorVersionThrowsTodlManifestException()
+    {
+        var json = """
+            {
+                "name": "hello",
+                "nugetPackages": { "MyLib": { "source": "https://example.com" } }
             }
             """;
 

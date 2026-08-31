@@ -63,6 +63,7 @@ public enum ReferenceOrigin
 {
     Framework,
     Package,
+    Project,
 }
 
 public sealed record FrameworkReference
