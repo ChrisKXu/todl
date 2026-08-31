@@ -22,6 +22,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
     - name: Setup .NET
       uses: actions/setup-dotnet@v6
       with:
@@ -30,6 +32,39 @@ jobs:
       run: dotnet test src --verbosity normal --blame-hang --blame-hang-timeout 30s
     - name: Build todl
       run: dotnet build src/Todl/Todl.csproj --configuration Debug
+    - name: Pack todl
+      run: dotnet pack src/Todl/Todl.csproj --configuration Debug
+    - name: Install todl tool
+      shell: bash
+      run: |
+        dotnet tool install --global todl --add-source out/Debug/Packages --prerelease
+        echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
     - name: Build and run samples with todl build
       shell: pwsh
-      run: ./.github/scripts/validate-samples.ps1 -Configuration Debug
+      run: ./.github/scripts/validate-samples.ps1
+
+  publish:
+    name: Publish todl package
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: 10.0.x
+    - name: Pack todl
+      run: dotnet pack src/Todl/Todl.csproj --configuration Release
+    - name: Push to GitHub Packages
+      run: >
+        dotnet nuget push "out/Release/Packages/*.nupkg"
+        --source https://nuget.pkg.github.com/ChrisKXu/index.json
+        --api-key ${{ secrets.GITHUB_TOKEN }}
+        --skip-duplicate
