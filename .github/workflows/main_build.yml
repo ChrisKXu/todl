@@ -34,9 +34,14 @@ jobs:
       run: dotnet build src/Todl/Todl.csproj --configuration Debug
     - name: Pack todl
       run: dotnet pack src/Todl/Todl.csproj --configuration Debug
+    - name: Install todl tool
+      shell: bash
+      run: |
+        dotnet tool install --global todl --add-source out/Debug/Packages --prerelease
+        echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
     - name: Build and run samples with todl build
       shell: pwsh
-      run: ./.github/scripts/validate-samples.ps1 -Configuration Debug
+      run: ./.github/scripts/validate-samples.ps1
 
   publish:
     name: Publish todl package

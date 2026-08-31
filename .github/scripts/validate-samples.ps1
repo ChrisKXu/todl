@@ -10,22 +10,21 @@
     The expected assembly name is read from each manifest's "name" field
     rather than assumed from the directory name (they can differ, e.g.
     samples/Fibonacci.Loop -> "fibonacci.loop").
+
+    The todl CLI is expected to already be installed and resolvable as a
+    command (e.g. via 'dotnet tool install --global todl'), not discovered
+    from a build output directory.
 #>
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")),
-    [string]$Configuration = "Debug",
-    [string]$TodlPath
+    [string]$TodlCommand = "todl"
 )
 
 $ErrorActionPreference = "Stop"
 
-if (-not $TodlPath) {
-    $TodlPath = Join-Path $RepoRoot "out/$Configuration/src/Todl/todl.dll"
-}
-
-if (-not (Test-Path $TodlPath)) {
-    throw "todl CLI not found at '$TodlPath'. Build src/Todl/Todl.csproj first."
+if (-not (Get-Command $TodlCommand -ErrorAction SilentlyContinue)) {
+    throw "todl CLI '$TodlCommand' not found on PATH. Install it first, e.g. 'dotnet tool install --global todl --add-source <local-feed> --prerelease'."
 }
 
 $samplesRoot = Join-Path $RepoRoot "samples"
@@ -44,7 +43,7 @@ foreach ($sample in $sampleDirs) {
     $outDir = Join-Path $sample.FullName "out"
 
     Write-Host "::group::todl build $sampleName"
-    dotnet $TodlPath build $sample.FullName --output $outDir
+    & $TodlCommand build $sample.FullName --output $outDir
     if ($LASTEXITCODE -ne 0) {
         Write-Host "::error::todl build failed for $sampleName"
         $failed = $true
