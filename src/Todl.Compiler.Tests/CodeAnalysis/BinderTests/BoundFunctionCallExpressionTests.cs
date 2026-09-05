@@ -1,7 +1,9 @@
-﻿using FluentAssertions;
+﻿using System.Linq;
+using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -92,6 +94,36 @@ public sealed class BoundFunctionCallExpressionTests
         ";
 
         TestUtils.BindModule(inputText).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void BindFunctionCallWithNoMatchingPositionalOverloadShouldReportDiagnosticAndReturnInvalidNode()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundExpression = TestUtils.BindExpression<BoundExpression>("100.ToString(1, 2, 3)", diagnosticBuilder);
+
+        boundExpression.Should().BeOfType<BoundInvalidFunctionCallExpression>();
+        boundExpression.ResultType.Should().BeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().ContainSingle();
+        diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
+        diagnostics.Single().ErrorCode.Should().Be(ErrorCode.NoMatchingCandidate);
+    }
+
+    [Fact]
+    public void BindFunctionCallWithNoMatchingNamedOverloadShouldReportDiagnosticAndReturnInvalidNode()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundExpression = TestUtils.BindExpression<BoundExpression>("100.ToString(format: \"G\", bogus: 1)", diagnosticBuilder);
+
+        boundExpression.Should().BeOfType<BoundInvalidFunctionCallExpression>();
+        boundExpression.ResultType.Should().BeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().ContainSingle();
+        diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
+        diagnostics.Single().ErrorCode.Should().Be(ErrorCode.NoMatchingCandidate);
     }
 
     [Fact]

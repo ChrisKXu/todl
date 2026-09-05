@@ -82,7 +82,7 @@ public sealed class ClrTypeCache
         foreach (var assembly in Assemblies)
         {
             var type = assembly.GetType(name);
-            if (type != null && !type.IsGenericType)
+            if (type != null && !type.IsGenericType && type.IsVisible)
             {
                 var symbol = new ClrTypeSymbol(type);
                 // Thread-safe cache population
