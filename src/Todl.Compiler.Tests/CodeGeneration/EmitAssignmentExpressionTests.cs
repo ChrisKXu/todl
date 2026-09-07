@@ -19,6 +19,7 @@ public sealed class EmitAssignmentExpressionTests
             "{ let a = 1; a += 10; }",
             TestInstruction.Create(OpCodes.Ldc_I4_1),
             TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
             TestInstruction.Create(OpCodes.Ldc_I4_S, (sbyte)10),
             TestInstruction.Create(OpCodes.Add),
             TestInstruction.Create(OpCodes.Stloc_0));
@@ -27,6 +28,7 @@ public sealed class EmitAssignmentExpressionTests
             "{ let a = 1; a -= 10; }",
             TestInstruction.Create(OpCodes.Ldc_I4_1),
             TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
             TestInstruction.Create(OpCodes.Ldc_I4_S, (sbyte)10),
             TestInstruction.Create(OpCodes.Sub),
             TestInstruction.Create(OpCodes.Stloc_0));
@@ -35,6 +37,7 @@ public sealed class EmitAssignmentExpressionTests
             "{ let a = 1; a *= 10; }",
             TestInstruction.Create(OpCodes.Ldc_I4_1),
             TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
             TestInstruction.Create(OpCodes.Ldc_I4_S, (sbyte)10),
             TestInstruction.Create(OpCodes.Mul),
             TestInstruction.Create(OpCodes.Stloc_0));
@@ -43,6 +46,7 @@ public sealed class EmitAssignmentExpressionTests
             "{ let a = 1; a /= 10; }",
             TestInstruction.Create(OpCodes.Ldc_I4_1),
             TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
             TestInstruction.Create(OpCodes.Ldc_I4_S, (sbyte)10),
             TestInstruction.Create(OpCodes.Div),
             TestInstruction.Create(OpCodes.Stloc_0));
