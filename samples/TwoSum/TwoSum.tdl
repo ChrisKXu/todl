@@ -4,9 +4,10 @@ void Main() {
     Console.WriteLine(FindPair());
 }
 
-// Classic Two Sum: scan pairs (i, j) from two nested countdown loops over 1..9 for a
-// pair summing to 11. A labeled break exits both loops the instant a match is found,
-// instead of letting the outer loop run through its remaining candidates.
+// Classic Two Sum via two nested countdown loops; break outer exits both the instant a
+// match is found. Parameterless with inlined constants and a foundI == 0 sentinel (rather
+// than a `found` flag) to stay within known compiler limits: multi-parameter functions and
+// int parameter `.ToString()` calls are currently broken, and a 5th local crashes the emitter.
 string FindPair() {
     let i = 9;
     let foundI = 0;
@@ -14,7 +15,7 @@ string FindPair() {
 
     while i > 0 : outer {
         let j = 9;
-        while j > i : inner {
+        while j > i {
             if i + j == 11 {
                 foundI = i;
                 foundJ = j;
