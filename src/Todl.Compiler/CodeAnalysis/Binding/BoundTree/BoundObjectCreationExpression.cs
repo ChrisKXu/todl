@@ -35,6 +35,18 @@ public partial class Binder
     {
         var boundTypeExpression = BindTypeExpression(newExpression.TypeNameExpression);
 
+        // Type unresolved (already reported); still bind args, then bail out.
+        if (boundTypeExpression.ResultType is null)
+        {
+            var invalidBoundArguments = newExpression.Arguments.Items
+                .Select(a => BindExpression(a.Expression))
+                .ToImmutableArray();
+
+            return BoundNodeFactory.CreateBoundInvalidObjectCreationExpression(
+                syntaxNode: newExpression,
+                boundArguments: invalidBoundArguments);
+        }
+
         // Treating no arguments as the same way of positional arguments
         if (newExpression.Arguments.Items.IsEmpty || !newExpression.Arguments.Items[0].IsNamedArgument)
         {

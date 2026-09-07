@@ -139,5 +139,20 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
             diagnostics.Single().ErrorCode.Should().Be(ErrorCode.NoMatchingCandidate);
         }
+
+        [Fact]
+        public void BindObjectCreationWithUnresolvedTypeShouldReportDiagnosticAndReturnInvalidNodeInsteadOfThrowing()
+        {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            var boundExpression = TestUtils.BindExpression<BoundExpression>("new System::NonExistentType(1)", diagnosticBuilder);
+
+            boundExpression.Should().BeOfType<BoundInvalidObjectCreationExpression>();
+            boundExpression.ResultType.Should().BeNull();
+
+            var diagnostics = diagnosticBuilder.Build();
+            diagnostics.Should().ContainSingle();
+            diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
+            diagnostics.Single().ErrorCode.Should().Be(ErrorCode.TypeNotFound);
+        }
     }
 }

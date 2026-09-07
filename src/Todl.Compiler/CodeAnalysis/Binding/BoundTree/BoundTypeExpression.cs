@@ -19,11 +19,10 @@ public partial class Binder
     private BoundTypeExpression BindTypeExpression(NameExpression nameExpression)
     {
         var type = nameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(nameExpression);
-        var diagnosticBuilder = new DiagnosticBag.Builder();
 
         if (type is null)
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
                     Message = $"Type {nameExpression.GetText()} is invalid",
