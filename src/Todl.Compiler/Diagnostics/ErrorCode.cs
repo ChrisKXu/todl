@@ -34,6 +34,7 @@
         DuplicateParameterName,
         MissingEntryPoint,
         NoEnclosingLoop,
-        DuplicateLoopLabel
+        DuplicateLoopLabel,
+        UndefinedLoopLabel
     }
 }
