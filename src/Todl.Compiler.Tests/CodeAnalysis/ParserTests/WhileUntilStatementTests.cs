@@ -14,6 +14,7 @@ public sealed class WhileUntilStatementTests
         breakStatement.Should().NotBeNull();
 
         breakStatement.BreakKeywordToken.Kind.Should().Be(SyntaxKind.BreakKeywordToken);
+        breakStatement.Label.Should().BeNull();
         breakStatement.SemicolonToken.Kind.Should().Be(SyntaxKind.SemicolonToken);
         breakStatement.Text.Length.Should().Be(6);
     }
@@ -25,6 +26,7 @@ public sealed class WhileUntilStatementTests
         continueStatement.Should().NotBeNull();
 
         continueStatement.ContinueKeywordToken.Kind.Should().Be(SyntaxKind.ContinueKeywordToken);
+        continueStatement.Label.Should().BeNull();
         continueStatement.SemicolonToken.Kind.Should().Be(SyntaxKind.SemicolonToken);
         continueStatement.Text.Length.Should().Be(9);
     }
@@ -80,6 +82,58 @@ public sealed class WhileUntilStatementTests
 
         whileUntilStatement.Should().NotBeNull();
         whileUntilStatement.LoopLabel.Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().Contain(d => d.ErrorCode == ErrorCode.InvalidLoopLabel);
+    }
+
+    [Theory]
+    [InlineData("break outer;", "outer")]
+    [InlineData("break LongerLabel;", "LongerLabel")]
+    public void BreakStatementsCanHaveLabels(string inputText, string label)
+    {
+        var breakStatement = TestUtils.ParseStatement<BreakStatement>(inputText);
+        breakStatement.Should().NotBeNull();
+
+        breakStatement.Label.Should().NotBeNull();
+        breakStatement.Label.As<SimpleNameExpression>().GetText().Should().Be(label);
+    }
+
+    [Theory]
+    [InlineData("continue outer;", "outer")]
+    [InlineData("continue LongerLabel;", "LongerLabel")]
+    public void ContinueStatementsCanHaveLabels(string inputText, string label)
+    {
+        var continueStatement = TestUtils.ParseStatement<ContinueStatement>(inputText);
+        continueStatement.Should().NotBeNull();
+
+        continueStatement.Label.Should().NotBeNull();
+        continueStatement.Label.As<SimpleNameExpression>().GetText().Should().Be(label);
+    }
+
+    [Fact]
+    public void InvalidBreakLabelProducesError()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var breakStatement = TestUtils.ParseStatement<BreakStatement>(
+            "break System::Label;", diagnosticBuilder);
+
+        breakStatement.Should().NotBeNull();
+        breakStatement.Label.Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().Contain(d => d.ErrorCode == ErrorCode.InvalidLoopLabel);
+    }
+
+    [Fact]
+    public void InvalidContinueLabelProducesError()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var continueStatement = TestUtils.ParseStatement<ContinueStatement>(
+            "continue System::Label;", diagnosticBuilder);
+
+        continueStatement.Should().NotBeNull();
+        continueStatement.Label.Should().NotBeNull();
 
         var diagnostics = diagnosticBuilder.Build();
         diagnostics.Should().Contain(d => d.ErrorCode == ErrorCode.InvalidLoopLabel);
