@@ -1,14 +1,15 @@
 import { Console } from System;
 
 void Main() {
-    Console.WriteLine(FindPair());
+    Console.WriteLine(FindPair(11));
 }
 
 // Classic Two Sum via two nested countdown loops; break outer exits both the instant a
-// match is found. Parameterless with inlined constants and a foundI == 0 sentinel (rather
-// than a `found` flag) to stay within known compiler limits: multi-parameter functions and
-// int parameter `.ToString()` calls are currently broken, and a 5th local crashes the emitter.
-string FindPair() {
+// match is found. A single `sum` parameter avoids a real bug where multi-argument calls
+// push arguments in a non-deterministic order (BoundArguments is a name-keyed
+// ImmutableDictionary, enumerated for argument order - varies build to build). foundI == 0
+// is used as a sentinel (rather than a `found` flag) since a 5th local crashes the emitter.
+string FindPair(int sum) {
     let i = 9;
     let foundI = 0;
     let foundJ = 0;
@@ -16,7 +17,7 @@ string FindPair() {
     while i > 0 : outer {
         let j = 9;
         while j > i {
-            if i + j == 11 {
+            if i + j == sum {
                 foundI = i;
                 foundJ = j;
                 break outer;
