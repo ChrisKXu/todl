@@ -21,9 +21,9 @@ string FindPair() {
                 foundJ = j;
                 break outer;
             }
-            j = j - 1;
+            j -= 1;
         }
-        i = i - 1;
+        i -= 1;
     }
 
     unless foundI == 0 {
