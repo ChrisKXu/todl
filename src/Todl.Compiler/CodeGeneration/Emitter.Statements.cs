@@ -1,4 +1,6 @@
-﻿using Mono.Cecil.Cil;
+﻿using System.Collections.Generic;
+using Mono.Cecil.Cil;
+using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
@@ -8,6 +10,12 @@ internal partial class Emitter
 {
     internal partial class InstructionEmitter
     {
+        // Tracks each loop's continue target (condition re-check) and break target
+        // (first instruction after the loop), keyed by the loop's own BoundLoopContext so
+        // a labeled break/continue can jump directly to any enclosing loop, not just the
+        // innermost one - mirroring ControlFlowGraph.Builder's loopBlocks.
+        private readonly Dictionary<BoundLoopContext, (Instruction ContinueTarget, Instruction BreakTarget)> loopTargets = new();
+
         public void EmitStatement(BoundStatement boundStatement)
         {
             switch (boundStatement)
@@ -29,6 +37,12 @@ internal partial class Emitter
                     return;
                 case BoundLoopStatement boundLoopStatement:
                     EmitLoopStatement(boundLoopStatement);
+                    return;
+                case BoundBreakStatement boundBreakStatement:
+                    EmitBreakStatement(boundBreakStatement);
+                    return;
+                case BoundContinueStatement boundContinueStatement:
+                    EmitContinueStatement(boundContinueStatement);
                     return;
                 default:
                     return;
@@ -105,6 +119,11 @@ internal partial class Emitter
         {
             var startLabel = ILProcessor.Create(OpCodes.Nop);
             var conditionLabel = ILProcessor.Create(OpCodes.Nop);
+            var breakLabel = ILProcessor.Create(OpCodes.Nop);
+
+            // Registered before emitting the body so nested break/continue statements -
+            // including labeled ones targeting this exact loop - resolve correctly.
+            loopTargets[boundLoopStatement.BoundLoopContext] = (conditionLabel, breakLabel);
 
             ILProcessor.Emit(OpCodes.Br, conditionLabel);
             ILProcessor.Append(startLabel);
@@ -118,6 +137,31 @@ internal partial class Emitter
                 : OpCodes.Brtrue_S;
 
             ILProcessor.Emit(opCode, startLabel);
+            ILProcessor.Append(breakLabel);
+        }
+
+        private void EmitBreakStatement(BoundBreakStatement boundBreakStatement)
+        {
+            if (boundBreakStatement.BoundLoopContext is null)
+            {
+                // Already reported as NoEnclosingLoop/UndefinedLoopLabel during binding.
+                return;
+            }
+
+            var (_, breakTarget) = loopTargets[boundBreakStatement.BoundLoopContext];
+            ILProcessor.Emit(OpCodes.Br, breakTarget);
+        }
+
+        private void EmitContinueStatement(BoundContinueStatement boundContinueStatement)
+        {
+            if (boundContinueStatement.BoundLoopContext is null)
+            {
+                // Already reported as NoEnclosingLoop/UndefinedLoopLabel during binding.
+                return;
+            }
+
+            var (continueTarget, _) = loopTargets[boundContinueStatement.BoundLoopContext];
+            ILProcessor.Emit(OpCodes.Br, continueTarget);
         }
     }
 }
