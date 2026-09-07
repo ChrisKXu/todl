@@ -1,5 +1,4 @@
 ﻿using Todl.Compiler.CodeAnalysis.Syntax;
-using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
@@ -15,17 +14,7 @@ public partial class Binder
 {
     private BoundBreakStatement BindBreakStatement(BreakStatement breakStatement)
     {
-        if (BoundLoopContext is null)
-        {
-            ReportDiagnostic(new Diagnostic()
-            {
-                Level = DiagnosticLevel.Error,
-                ErrorCode = ErrorCode.NoEnclosingLoop,
-                Message = "No enclosing loop out of which to break or continue.",
-                TextLocation = breakStatement.GetTextLocation()
-            });
-        }
-
-        return BoundNodeFactory.CreateBoundBreakStatement(breakStatement, BoundLoopContext);
+        var boundLoopContext = ResolveLoopContext(breakStatement.Label, breakStatement.GetTextLocation());
+        return BoundNodeFactory.CreateBoundBreakStatement(breakStatement, boundLoopContext);
     }
 }

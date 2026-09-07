@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
@@ -100,6 +101,53 @@ public partial class Binder
             Parent = this,
             Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
         };
+    }
+
+    /// <summary>
+    /// Resolves the <see cref="BoundLoopContext"/> that a <c>break</c>/<c>continue</c>
+    /// statement targets: the innermost enclosing loop when unlabeled, or the ancestor loop whose
+    /// declared label matches when labeled. Reports <see cref="ErrorCode.NoEnclosingLoop"/> when there
+    /// is no enclosing loop at all, or <see cref="ErrorCode.UndefinedLoopLabel"/> when a label doesn't
+    /// match any enclosing loop, and returns null in both cases.
+    /// </summary>
+    private BoundLoopContext ResolveLoopContext(NameExpression label, TextLocation statementTextLocation)
+    {
+        if (BoundLoopContext is null)
+        {
+            ReportDiagnostic(new Diagnostic()
+            {
+                Level = DiagnosticLevel.Error,
+                ErrorCode = ErrorCode.NoEnclosingLoop,
+                Message = "No enclosing loop out of which to break or continue.",
+                TextLocation = statementTextLocation
+            });
+
+            return null;
+        }
+
+        if (label is null)
+        {
+            return BoundLoopContext;
+        }
+
+        var labelText = label.GetText();
+        for (var context = BoundLoopContext; context is not null; context = context.Parent)
+        {
+            if (context.LoopLabel is not null && context.LoopLabel.Label.GetText().Equals(labelText))
+            {
+                return context;
+            }
+        }
+
+        ReportDiagnostic(new Diagnostic()
+        {
+            Level = DiagnosticLevel.Error,
+            ErrorCode = ErrorCode.UndefinedLoopLabel,
+            Message = $"No enclosing loop is labeled '{labelText}'.",
+            TextLocation = label.GetTextLocation()
+        });
+
+        return null;
     }
 
     protected void ReportDiagnostic(Diagnostic diagnostic)

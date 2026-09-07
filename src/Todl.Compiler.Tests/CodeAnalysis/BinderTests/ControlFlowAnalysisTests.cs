@@ -35,6 +35,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { let i = 0; while i < 10 { while i < 5 { continue; } i = i + 1; } return i; }")]
     [InlineData("int func() { let i = 0; while i < 1 { while i < 2 { while i < 3 { break; } } } return i; }")]
     [InlineData("int func() { let i = 0; while i < 10 : outer { while true : inner { break; } i = i + 1; } return i; }")]
+    [InlineData("int func() { let i = 0; while i < 10 : outer { while i < 5 : inner { continue outer; } i = i + 1; } return i; }")]
     [InlineData("int func() { let i = 0; while i < 10 { break; } return i; }")]
     [InlineData("int func() { until false { return 1; } }")]
     public void TestControlFlowAnalysisBasic(string inputText)
@@ -138,6 +139,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { let i = 0; while i < 10 { while i < 5 { continue; } i = i + 1; } return i; }")]
     [InlineData("int func() { let i = 0; while i < 1 { while i < 2 { while i < 3 { break; } } } return i; }")]
     [InlineData("int func() { let i = 0; while i < 10 { break; } return i; }")]
+    [InlineData("int func() { let i = 0; while i < 10 : outer { while true : inner { break outer; } i = i + 1; } return i; }")]
     public void ControlFlowGraphShouldNotHaveDuplicateEdges(string inputText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
@@ -160,6 +162,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { let i = 0; while i < 10 { while i < 5 { continue; } i = i + 1; } return i; }")]
     [InlineData("int func() { let i = 0; while i < 1 { while i < 2 { while i < 3 { break; } } } return i; }")]
     [InlineData("void func() { if true { } while true { } }")]
+    [InlineData("int func() { let i = 0; while i < 10 : outer { while true : inner { break outer; } i = i + 1; } return i; }")]
     public void ControlFlowGraphBlocksShouldContainEveryReferencedBlock(string inputText)
     {
         // Every block a Branch points at or from must actually be present in Blocks;
@@ -217,6 +220,23 @@ public sealed class ControlFlowAnalysisTests
     }
 
     [Theory]
+    [InlineData("void func() { let i = 0; while i < 10 { break outer; } }")]
+    [InlineData("void func() { let i = 0; while i < 10 { continue outer; } }")]
+    public void ControlFlowAnalysisShouldNotThrowWhenLoopLabelIsUndefined(string inputText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+
+        var act = () => BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+
+        act.Should().NotThrow();
+
+        var diagnostics = diagnosticBuilder.Build().ToList();
+        diagnostics.Count.Should().Be(1);
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UndefinedLoopLabel);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Error);
+    }
+
+    [Theory]
     [InlineData("int func() { return 1; if true { 2.ToString(); } }")]
     [InlineData("int func() { return 1; if true { } }")]
     public void ControlFlowAnalysisShouldNotThrowOnUnreachableSynthesizedBlock(string inputText)
@@ -269,6 +289,26 @@ public sealed class ControlFlowAnalysisTests
         var diagnosticBuilder = new DiagnosticBag.Builder();
         BindMemberAndAnalyze<BoundFunctionMember>(
             "int func() { let i = 0; while i < 1 { i.ToString(); while i < 2 { continue; i.ToString(); } } return i; }",
+            diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Count.Should().Be(1);
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
+    }
+
+    [Fact]
+    public void ControlFlowAnalysisShouldResolveLabeledBreakToTheTargetLoop()
+    {
+        // `break outer;` must exit the *outer* loop directly. The inner loop's condition is
+        // a constant `true` with no break of its own, so its exit is unreachable - meaning
+        // the only way out is the labeled break, and the code between the inner loop and
+        // the end of the outer loop's body is dead. A bare `break;` here (see the
+        // `TestControlFlowAnalysisBasic` case with the same shape) would instead exit only
+        // the inner loop, leaving `i = i + 1;` reachable.
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(
+            "int func() { let i = 0; while i < 10 : outer { while true : inner { break outer; } i = i + 1; } return i; }",
             diagnosticBuilder);
         var diagnostics = diagnosticBuilder.Build().ToList();
 
