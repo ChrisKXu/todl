@@ -1,5 +1,4 @@
 ﻿using Todl.Compiler.CodeAnalysis.Text;
-using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
 
@@ -34,7 +33,7 @@ public sealed partial class Parser
 
         var conditionExpression = ParseExpression();
         var loopLabel = Current.Kind == SyntaxKind.ColonToken
-            ? ParseLoopLabel()
+            ? ParseLoopLabelDeclaration()
             : null;
 
         var blockStatement = ParseBlockStatement();
@@ -49,20 +48,10 @@ public sealed partial class Parser
         };
     }
 
-    private LoopLabel ParseLoopLabel()
+    private LoopLabel ParseLoopLabelDeclaration()
     {
         var colonToken = ExpectToken(SyntaxKind.ColonToken);
-        var label = ParseNameExpression();
-
-        if (label is not SimpleNameExpression)
-        {
-            ReportDiagnostic(new()
-            {
-                TextLocation = label.GetTextLocation(),
-                ErrorCode = ErrorCode.InvalidLoopLabel,
-                Level = DiagnosticLevel.Error
-            });
-        }
+        var label = ParseLoopLabel();
 
         return new()
         {

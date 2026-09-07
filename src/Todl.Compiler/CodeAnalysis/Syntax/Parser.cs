@@ -173,6 +173,28 @@ public sealed partial class Parser
         };
     }
 
+    /// <summary>
+    /// Parses a label reference, used by loop declarations (<see cref="WhileUntilStatement.LoopLabel"/>)
+    /// as well as <c>break</c>/<c>continue</c> statements. Labels must be simple identifiers;
+    /// namespace-qualified names are rejected via <see cref="ErrorCode.InvalidLoopLabel"/>.
+    /// </summary>
+    private NameExpression ParseLoopLabel()
+    {
+        var label = ParseNameExpression();
+
+        if (label is not SimpleNameExpression)
+        {
+            ReportDiagnostic(new()
+            {
+                TextLocation = label.GetTextLocation(),
+                ErrorCode = ErrorCode.InvalidLoopLabel,
+                Level = DiagnosticLevel.Error
+            });
+        }
+
+        return label;
+    }
+
     private void ReportDiagnostic(Diagnostic diagnostic)
         => diagnosticBuilder.Add(diagnostic);
 }
