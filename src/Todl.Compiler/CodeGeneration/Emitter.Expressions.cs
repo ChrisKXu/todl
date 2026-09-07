@@ -434,11 +434,21 @@ internal partial class Emitter
 
         private void EmitAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
         {
+            var operatorKind = boundAssignmentExpression.Operator.BoundAssignmentOperatorKind;
+            var isInline = operatorKind != BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment;
+
             EmitStore(boundAssignmentExpression.Left, () =>
             {
+                // Inline operators (+=, -=, *=, /=) need the current value of the target
+                // under the new one before applying the operator; plain `=` does not.
+                if (isInline)
+                {
+                    EmitExpression(boundAssignmentExpression.Left);
+                }
+
                 EmitExpression(boundAssignmentExpression.Right);
 
-                switch (boundAssignmentExpression.Operator.BoundAssignmentOperatorKind)
+                switch (operatorKind)
                 {
                     case BoundAssignmentExpression.BoundAssignmentOperatorKind.AdditionInline:
                         ILProcessor.Emit(OpCodes.Add);
