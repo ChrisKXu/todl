@@ -1,0 +1,33 @@
+import { Console } from System;
+
+void Main() {
+    Console.WriteLine(FindPair());
+}
+
+// Classic Two Sum: scan pairs (i, j) from two nested countdown loops over 1..9 for a
+// pair summing to 11. A labeled break exits both loops the instant a match is found,
+// instead of letting the outer loop run through its remaining candidates.
+string FindPair() {
+    let i = 9;
+    let foundI = 0;
+    let foundJ = 0;
+
+    while i > 0 : outer {
+        let j = 9;
+        while j > i : inner {
+            if i + j == 11 {
+                foundI = i;
+                foundJ = j;
+                break outer;
+            }
+            j = j - 1;
+        }
+        i = i - 1;
+    }
+
+    unless foundI == 0 {
+        return foundI.ToString() + " + " + foundJ.ToString();
+    }
+
+    return "no pair found";
+}

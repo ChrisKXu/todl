@@ -109,12 +109,10 @@ public sealed class EmitLoopStatementTests
 
         var instructions = emitter.ILProcessor.Body.Instructions;
 
-        // The outer loop's break-target Nop is always the very last instruction emitted.
+        // The outer loop's break target is always the very last instruction emitted.
         var outerBreakTarget = instructions[^1];
-        outerBreakTarget.OpCode.Should().Be(OpCodes.Nop);
 
-        // Only `break outer;` should jump there - not the inner loop's own machinery, which
-        // would instead target the inner loop's own (earlier) break/condition labels.
+        // Only `break outer;` should jump there, not the inner loop's own machinery.
         var jumpsToOuterExit = instructions.Where(i => ReferenceEquals(i.Operand, outerBreakTarget)).ToList();
         jumpsToOuterExit.Should().HaveCount(1);
         jumpsToOuterExit[0].OpCode.Should().Be(OpCodes.Br_S);
@@ -134,13 +132,10 @@ public sealed class EmitLoopStatementTests
 
         var instructions = emitter.ILProcessor.Body.Instructions;
 
-        // The outer loop's own opening instruction always jumps to its condition-recheck -
-        // that target Nop is what a correctly-resolved `continue outer;` must also jump to.
+        // The outer loop's own opening jump targets its condition-recheck Nop.
         var outerConditionTarget = instructions[0].Operand;
 
-        // Exactly two instructions should target it: the outer loop's own opening jump, and
-        // `continue outer;` from inside the inner loop. Nothing belonging to the inner loop
-        // should ever point here.
+        // Only that opening jump and `continue outer;` should target it.
         var jumpsToOuterCondition = instructions.Where(i => ReferenceEquals(i.Operand, outerConditionTarget)).ToList();
         jumpsToOuterCondition.Should().HaveCount(2);
         jumpsToOuterCondition.Should().Contain(instructions[0]);

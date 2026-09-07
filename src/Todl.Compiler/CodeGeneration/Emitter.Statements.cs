@@ -10,10 +10,8 @@ internal partial class Emitter
 {
     internal partial class InstructionEmitter
     {
-        // Tracks each loop's continue target (condition re-check) and break target
-        // (first instruction after the loop), keyed by the loop's own BoundLoopContext so
-        // a labeled break/continue can jump directly to any enclosing loop, not just the
-        // innermost one - mirroring ControlFlowGraph.Builder's loopBlocks.
+        // Per-loop continue/break targets, keyed by BoundLoopContext so a labeled
+        // break/continue can reach any enclosing loop (mirrors loopBlocks in the CFG).
         private readonly Dictionary<BoundLoopContext, (Instruction ContinueTarget, Instruction BreakTarget)> loopTargets = new();
 
         public void EmitStatement(BoundStatement boundStatement)
@@ -121,8 +119,7 @@ internal partial class Emitter
             var conditionLabel = ILProcessor.Create(OpCodes.Nop);
             var breakLabel = ILProcessor.Create(OpCodes.Nop);
 
-            // Registered before emitting the body so nested break/continue statements -
-            // including labeled ones targeting this exact loop - resolve correctly.
+            // Registered before the body so nested break/continue - including labeled - resolve.
             loopTargets[boundLoopStatement.BoundLoopContext] = (conditionLabel, breakLabel);
 
             ILProcessor.Emit(OpCodes.Br, conditionLabel);
