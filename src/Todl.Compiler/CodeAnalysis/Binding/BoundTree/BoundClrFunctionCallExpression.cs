@@ -21,6 +21,16 @@ internal sealed class BoundClrFunctionCallExpression : BoundExpression
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundClrFunctionCallExpression(this);
 }
 
+// This is not emittable, just to place a node in the bound tree to indicate this is an error
+[BoundNode]
+internal sealed class BoundInvalidFunctionCallExpression : BoundExpression
+{
+    public BoundExpression BoundBaseExpression { get; internal init; }
+    public ImmutableArray<BoundExpression> BoundArguments { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundInvalidFunctionCallExpression(this);
+}
+
 public partial class Binder
 {
     private BoundExpression BindFunctionCallExpression(FunctionCallExpression functionCallExpression)
@@ -33,7 +43,7 @@ public partial class Binder
         return BindTodlFunctionCallExpression(functionCallExpression);
     }
 
-    private BoundClrFunctionCallExpression BindClrFunctionCallExpression(FunctionCallExpression functionCallExpression)
+    private BoundExpression BindClrFunctionCallExpression(FunctionCallExpression functionCallExpression)
     {
         var boundBaseExpression = BindExpression(functionCallExpression.BaseExpression);
 
@@ -51,7 +61,7 @@ public partial class Binder
             functionCallExpression: functionCallExpression);
     }
 
-    private BoundClrFunctionCallExpression BindFunctionCallWithNamedArgumentsInternal(
+    private BoundExpression BindFunctionCallWithNamedArgumentsInternal(
         BoundExpression boundBaseExpression,
         FunctionCallExpression functionCallExpression)
     {
@@ -82,6 +92,11 @@ public partial class Binder
         if (candidate is null)
         {
             ReportNoMatchingFunctionCandidate(functionCallExpression);
+
+            return BoundNodeFactory.CreateBoundInvalidFunctionCallExpression(
+                syntaxNode: functionCallExpression,
+                boundBaseExpression: boundBaseExpression,
+                boundArguments: arguments.Values.ToImmutableArray());
         }
 
         var boundArguments = candidate
@@ -96,13 +111,13 @@ public partial class Binder
             boundArguments: boundArguments.ToImmutableArray());
     }
 
-    private BoundClrFunctionCallExpression BindFunctionCallWithPositionalArgumentsInternal(
+    private BoundExpression BindFunctionCallWithPositionalArgumentsInternal(
         BoundExpression boundBaseExpression,
         FunctionCallExpression functionCallExpression)
     {
         Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
-        var boundArguments = functionCallExpression.Arguments.Items.Select(a => BindExpression(a.Expression));
+        var boundArguments = functionCallExpression.Arguments.Items.Select(a => BindExpression(a.Expression)).ToImmutableArray();
         var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
 
         var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
@@ -115,13 +130,18 @@ public partial class Binder
         if (candidate is null)
         {
             ReportNoMatchingFunctionCandidate(functionCallExpression);
+
+            return BoundNodeFactory.CreateBoundInvalidFunctionCallExpression(
+                syntaxNode: functionCallExpression,
+                boundBaseExpression: boundBaseExpression,
+                boundArguments: boundArguments);
         }
 
         return BoundNodeFactory.CreateBoundClrFunctionCallExpression(
             syntaxNode: functionCallExpression,
             boundBaseExpression: boundBaseExpression,
             methodInfo: candidate,
-            boundArguments: boundArguments.ToImmutableArray());
+            boundArguments: boundArguments);
     }
 
     private void ReportNoMatchingFunctionCandidate(

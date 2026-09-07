@@ -91,11 +91,26 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         return boundFunctionMember;
     }
 
+    public override BoundNode VisitBoundInvalidFunctionCallExpression(BoundInvalidFunctionCallExpression boundInvalidFunctionCallExpression)
+    {
+        Visit(boundInvalidFunctionCallExpression.BoundBaseExpression);
+        VisitList(boundInvalidFunctionCallExpression.BoundArguments);
+
+        return boundInvalidFunctionCallExpression;
+    }
+
     public override BoundNode VisitBoundInvalidMemberAccessExpression(BoundInvalidMemberAccessExpression boundInvalidMemberAccess)
     {
         Visit(boundInvalidMemberAccess.BoundBaseExpression);
 
         return boundInvalidMemberAccess;
+    }
+
+    public override BoundNode VisitBoundInvalidObjectCreationExpression(BoundInvalidObjectCreationExpression boundInvalidObjectCreationExpression)
+    {
+        VisitList(boundInvalidObjectCreationExpression.BoundArguments);
+
+        return boundInvalidObjectCreationExpression;
     }
 
     public override BoundNode VisitBoundLoopStatement(BoundLoopStatement boundLoopStatement)

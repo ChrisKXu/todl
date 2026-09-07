@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
@@ -106,6 +108,36 @@ namespace Todl.Compiler.Tests.CodeAnalysis
 
             var message = boundObjectCreationExpression.BoundArguments[0].As<BoundConstant>();
             message.Value.Should().Be("exception message");
+        }
+
+        [Fact]
+        public void BindObjectCreationWithNoMatchingPositionalConstructorShouldReportDiagnosticAndReturnInvalidNode()
+        {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            var boundExpression = TestUtils.BindExpression<BoundExpression>("new System::Exception(1)", diagnosticBuilder);
+
+            boundExpression.Should().BeOfType<BoundInvalidObjectCreationExpression>();
+            boundExpression.ResultType.Should().BeNull();
+
+            var diagnostics = diagnosticBuilder.Build();
+            diagnostics.Should().ContainSingle();
+            diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
+            diagnostics.Single().ErrorCode.Should().Be(ErrorCode.NoMatchingCandidate);
+        }
+
+        [Fact]
+        public void BindObjectCreationWithNoMatchingNamedConstructorShouldReportDiagnosticAndReturnInvalidNode()
+        {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            var boundExpression = TestUtils.BindExpression<BoundExpression>("new System::Exception(bogus: 1)", diagnosticBuilder);
+
+            boundExpression.Should().BeOfType<BoundInvalidObjectCreationExpression>();
+            boundExpression.ResultType.Should().BeNull();
+
+            var diagnostics = diagnosticBuilder.Build();
+            diagnostics.Should().ContainSingle();
+            diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
+            diagnostics.Single().ErrorCode.Should().Be(ErrorCode.NoMatchingCandidate);
         }
     }
 }

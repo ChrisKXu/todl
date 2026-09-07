@@ -113,6 +113,16 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
             : BoundNodeFactory.CreateBoundFunctionMember(boundFunctionMember.SyntaxNode, boundFunctionMember.FunctionScope, body, boundFunctionMember.FunctionSymbol);
     }
 
+    public override BoundNode VisitBoundInvalidFunctionCallExpression(BoundInvalidFunctionCallExpression boundInvalidFunctionCallExpression)
+    {
+        var baseExpression = VisitBoundExpression(boundInvalidFunctionCallExpression.BoundBaseExpression);
+        var arguments = VisitList(boundInvalidFunctionCallExpression.BoundArguments);
+
+        return baseExpression == boundInvalidFunctionCallExpression.BoundBaseExpression && arguments == boundInvalidFunctionCallExpression.BoundArguments
+            ? boundInvalidFunctionCallExpression
+            : BoundNodeFactory.CreateBoundInvalidFunctionCallExpression(boundInvalidFunctionCallExpression.SyntaxNode, baseExpression, arguments);
+    }
+
     public override BoundNode VisitBoundInvalidMemberAccessExpression(BoundInvalidMemberAccessExpression boundInvalidMemberAccess)
     {
         var baseExpression = VisitBoundExpression(boundInvalidMemberAccess.BoundBaseExpression);
@@ -120,6 +130,15 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
         return baseExpression == boundInvalidMemberAccess.BoundBaseExpression
             ? boundInvalidMemberAccess
             : BoundNodeFactory.CreateBoundInvalidMemberAccessExpression(boundInvalidMemberAccess.SyntaxNode, baseExpression);
+    }
+
+    public override BoundNode VisitBoundInvalidObjectCreationExpression(BoundInvalidObjectCreationExpression boundInvalidObjectCreationExpression)
+    {
+        var arguments = VisitList(boundInvalidObjectCreationExpression.BoundArguments);
+
+        return arguments == boundInvalidObjectCreationExpression.BoundArguments
+            ? boundInvalidObjectCreationExpression
+            : BoundNodeFactory.CreateBoundInvalidObjectCreationExpression(boundInvalidObjectCreationExpression.SyntaxNode, arguments);
     }
 
     public override BoundNode VisitBoundLoopStatement(BoundLoopStatement boundLoopStatement)

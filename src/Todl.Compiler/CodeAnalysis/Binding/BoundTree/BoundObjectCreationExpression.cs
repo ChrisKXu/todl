@@ -20,9 +20,18 @@ internal sealed class BoundObjectCreationExpression : BoundExpression
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundObjectCreationExpression(this);
 }
 
+// This is not emittable, just to place a node in the bound tree to indicate this is an error
+[BoundNode]
+internal sealed class BoundInvalidObjectCreationExpression : BoundExpression
+{
+    public ImmutableArray<BoundExpression> BoundArguments { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundInvalidObjectCreationExpression(this);
+}
+
 public partial class Binder
 {
-    private BoundObjectCreationExpression BindNewExpression(NewExpression newExpression)
+    private BoundExpression BindNewExpression(NewExpression newExpression)
     {
         var boundTypeExpression = BindTypeExpression(newExpression.TypeNameExpression);
 
@@ -39,14 +48,14 @@ public partial class Binder
             newExpression: newExpression);
     }
 
-    private BoundObjectCreationExpression BindNewExpressionWithPositionalArgumentsInternal(
+    private BoundExpression BindNewExpressionWithPositionalArgumentsInternal(
         TypeSymbol targetType,
         NewExpression newExpression)
     {
         Debug.Assert(targetType.IsNative);
 
         var clrType = (targetType as ClrTypeSymbol).ClrType;
-        var boundArguments = newExpression.Arguments.Items.Select(a => BindExpression(a.Expression));
+        var boundArguments = newExpression.Arguments.Items.Select(a => BindExpression(a.Expression)).ToImmutableArray();
         var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
 
         var constructorInfo = clrType.GetConstructor(argumentTypes);
@@ -54,17 +63,21 @@ public partial class Binder
         if (constructorInfo is null)
         {
             ReportNoMatchingConstructorCandidate(newExpression);
+
+            return BoundNodeFactory.CreateBoundInvalidObjectCreationExpression(
+                syntaxNode: newExpression,
+                boundArguments: boundArguments);
         }
 
-        return new()
+        return new BoundObjectCreationExpression()
         {
             SyntaxNode = newExpression,
             ConstructorInfo = constructorInfo,
-            BoundArguments = boundArguments.ToImmutableArray(),
+            BoundArguments = boundArguments,
         };
     }
 
-    private BoundObjectCreationExpression BindNewExpressionWithNamedArgumentsInternal(
+    private BoundExpression BindNewExpressionWithNamedArgumentsInternal(
         TypeSymbol targetType,
         NewExpression newExpression)
     {
@@ -89,15 +102,14 @@ public partial class Binder
         {
             ReportNoMatchingConstructorCandidate(newExpression);
 
-            return new()
-            {
-                SyntaxNode = newExpression,
-            };
+            return BoundNodeFactory.CreateBoundInvalidObjectCreationExpression(
+                syntaxNode: newExpression,
+                boundArguments: argumentsDictionary.Values.ToImmutableArray());
         }
 
         var boundArguments = constructorInfo.GetParameters().OrderBy(p => p.Position).Select(p => argumentsDictionary[p.Name]).ToList();
 
-        return new()
+        return new BoundObjectCreationExpression()
         {
             SyntaxNode = newExpression,
             ConstructorInfo = constructorInfo,
