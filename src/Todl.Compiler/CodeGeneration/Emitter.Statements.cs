@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
@@ -42,8 +43,10 @@ internal partial class Emitter
                 case BoundContinueStatement boundContinueStatement:
                     EmitContinueStatement(boundContinueStatement);
                     return;
-                default:
+                case BoundNoOpStatement:
                     return;
+                default:
+                    throw new NotSupportedException($"Statement type {boundStatement.GetType().Name} is not supported.");
             }
         }
 
