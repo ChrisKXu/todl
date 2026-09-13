@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -11,6 +12,7 @@ internal sealed class BoundModule
 {
     public IReadOnlyCollection<SyntaxTree> SyntaxTrees { get; private init; }
     public BoundEntryPointTypeDefinition EntryPointType { get; private init; }
+    public ImmutableArray<BoundTodlTypeDefinition> Types { get; private init; }
     public BoundFunctionMember EntryPoint => EntryPointType.EntryPointFunctionMember;
     public DiagnosticBag.Builder DiagnosticBuilder { get; private init; }
 
@@ -39,6 +41,7 @@ internal sealed class BoundModule
         {
             SyntaxTrees = syntaxTrees,
             EntryPointType = entryPointType,
+            Types = ImmutableArray.Create<BoundTodlTypeDefinition>(entryPointType),
             DiagnosticBuilder = diagnosticBuilder
         };
     }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -86,7 +87,28 @@ internal partial class Emitter
             this.compilation = compilation;
 
             var assemblyName = new AssemblyNameDefinition(compilation.AssemblyName, compilation.Version);
-            assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, compilation.AssemblyName, ModuleKind.Console);
+            var moduleParameters = new ModuleParameters
+            {
+                Kind = ModuleKind.Console,
+                AssemblyResolver = CreateAssemblyResolver(compilation)
+            };
+            assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, compilation.AssemblyName, moduleParameters);
+        }
+
+        private static DefaultAssemblyResolver CreateAssemblyResolver(Compilation compilation)
+        {
+            var resolver = new DefaultAssemblyResolver();
+            var directories = compilation.ClrTypeCache.Assemblies
+                .Select(assembly => Path.GetDirectoryName(assembly.Location))
+                .Where(directory => !string.IsNullOrEmpty(directory))
+                .Distinct();
+
+            foreach (var directory in directories)
+            {
+                resolver.AddSearchDirectory(directory);
+            }
+
+            return resolver;
         }
 
         public override Compilation Compilation => compilation;
@@ -94,9 +116,13 @@ internal partial class Emitter
 
         public AssemblyDefinition Emit()
         {
-            var typeEmitter = CreateTypeEmitter(Compilation.MainModule.EntryPointType);
-            var entryPointType = typeEmitter.Emit();
-            AssemblyDefinition.MainModule.Types.Add(entryPointType);
+            foreach (var boundTodlTypeDefinition in Compilation.MainModule.Types)
+            {
+                var typeEmitter = CreateTypeEmitter(boundTodlTypeDefinition);
+                var typeDefinition = typeEmitter.Emit();
+                AssemblyDefinition.MainModule.Types.Add(typeDefinition);
+            }
+
             return AssemblyDefinition;
         }
     }
