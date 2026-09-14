@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Mono.Cecil;
@@ -48,19 +49,63 @@ internal partial class Emitter
             SpecialType.ClrUInt64 => typeSystem.UInt64,
             SpecialType.ClrFloat => typeSystem.Single,
             SpecialType.ClrDouble => typeSystem.Double,
-            _ => AssemblyDefinition.MainModule.ImportReference(clrTypeSymbol.ClrType)
+            _ => ResolveComplexTypeReference(clrTypeSymbol.ClrType)
         };
+    }
+
+    // MetadataLoadContext-sourced primitives import as CLASS<TypeRef> instead of intrinsic
+    // element types, which the runtime rejects; route composite constituents back through
+    // ResolveTypeReference so primitives hit the SpecialType fast path.
+    private TypeReference ResolveComplexTypeReference(Type clrType)
+    {
+        if (clrType.IsArray)
+        {
+            var elementType = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(clrType.GetElementType()));
+            return clrType.IsSZArray ? new ArrayType(elementType) : new ArrayType(elementType, clrType.GetArrayRank());
+        }
+
+        if (clrType.IsConstructedGenericType)
+        {
+            var openTypeReference = AssemblyDefinition.MainModule.ImportReference(clrType.GetGenericTypeDefinition());
+            var genericInstanceType = new GenericInstanceType(openTypeReference);
+
+            foreach (var typeArgument in clrType.GetGenericArguments())
+            {
+                genericInstanceType.GenericArguments.Add(ResolveTypeReference(Compilation.ClrTypeCache.Resolve(typeArgument)));
+            }
+
+            return genericInstanceType;
+        }
+
+        return AssemblyDefinition.MainModule.ImportReference(clrType);
     }
 
     private MethodReference ResolveMethodReference(BoundClrFunctionCallExpression boundClrFunctionCallExpression)
     {
-        var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrFunctionCallExpression.MethodInfo);
+        var methodInfo = boundClrFunctionCallExpression.MethodInfo;
+        var methodReference = AssemblyDefinition.MainModule.ImportReference(methodInfo);
         methodReference.ReturnType = ResolveTypeReference(boundClrFunctionCallExpression.ResultType as ClrTypeSymbol);
 
+        var parameters = methodInfo.GetParameters();
         for (var i = 0; i != methodReference.Parameters.Count; ++i)
         {
             methodReference.Parameters[i].ParameterType
-                = ResolveTypeReference(boundClrFunctionCallExpression.BoundArguments[i].ResultType as ClrTypeSymbol);
+                = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(parameters[i].ParameterType));
+        }
+
+        return methodReference;
+    }
+
+    private MethodReference ResolveMethodReference(BoundObjectCreationExpression boundObjectCreationExpression)
+    {
+        var constructorInfo = boundObjectCreationExpression.ConstructorInfo;
+        var methodReference = AssemblyDefinition.MainModule.ImportReference(constructorInfo);
+
+        var parameters = constructorInfo.GetParameters();
+        for (var i = 0; i != methodReference.Parameters.Count; ++i)
+        {
+            methodReference.Parameters[i].ParameterType
+                = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(parameters[i].ParameterType));
         }
 
         return methodReference;
