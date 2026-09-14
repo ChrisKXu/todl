@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Reflection;
 using Todl.Compiler.CodeAnalysis.Symbols;
-using System.Linq;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis;
@@ -96,7 +96,17 @@ public sealed class ClrTypeCache
 
     public ClrTypeSymbol Resolve(Type type)
     {
-        if (type == null) return null;
+        if (type == null)
+        {
+            return null;
+        }
+
+        // Open generic definitions and unresolved generic parameters have no concrete
+        // type args and unreliable FullName; closed generics (e.g. List<int>) are fine.
+        if (type.ContainsGenericParameters)
+        {
+            return null;
+        }
 
         // Check built-in types
         if (builtInTypeNames.TryGetValue(type.FullName, out var specialType))
@@ -112,13 +122,8 @@ public sealed class ClrTypeCache
         }
 
         // Create and cache
-        if (!type.IsGenericType)
-        {
-            var symbol = new ClrTypeSymbol(type);
-            return typeCache.GetOrAdd(fullName, symbol);
-        }
-
-        return null;
+        var symbol = new ClrTypeSymbol(type);
+        return typeCache.GetOrAdd(fullName, symbol);
     }
 
     public ClrTypeSymbol ResolveSpecialType(SpecialType specialType)

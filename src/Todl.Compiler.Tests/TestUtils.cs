@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using FluentAssertions;
 using Mono.Cecil;
@@ -11,6 +13,7 @@ using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.CodeGeneration;
 using Todl.Compiler.Diagnostics;
 using Todl.Compiler.Tests.CodeGeneration;
 
@@ -117,6 +120,26 @@ internal static class TestUtils
         emitter.Emit();
 
         emitter.ILProcessor.Body.Instructions.ShouldHaveExactInstructionSequence(expectedInstructions);
+    }
+
+    internal static (AssemblyDefinition, IEnumerable<Diagnostic>) Compile(SourceText sourceText)
+    {
+        var compilation = new Compilation(
+            assemblyName: "test",
+            version: new Version(1, 0),
+            sourceTexts: new[] { sourceText },
+            metadataLoadContext: TestDefaults.MetadataLoadContext);
+
+        return (compilation.Emit(), compilation.GetDiagnostics());
+    }
+
+    internal static void RunAssembly(AssemblyDefinition assemblyDefinition, Action<System.Reflection.Assembly> action)
+    {
+        using var memoryStream = new MemoryStream();
+        assemblyDefinition.Write(memoryStream);
+        var assembly = System.Reflection.Assembly.Load(memoryStream.GetBuffer());
+
+        action(assembly);
     }
 
     internal static SyntaxTree ParseSyntaxTree(string inputText, DiagnosticBag.Builder diagnosticBuilder)

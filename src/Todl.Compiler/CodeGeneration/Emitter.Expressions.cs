@@ -37,6 +37,9 @@ internal partial class Emitter
                 case BoundTodlFunctionCallExpression boundTodlFunctionCallExpression:
                     EmitTodlFunctionCallExpression(boundTodlFunctionCallExpression);
                     return;
+                case BoundObjectCreationExpression boundObjectCreationExpression:
+                    EmitObjectCreationExpression(boundObjectCreationExpression);
+                    return;
                 case BoundUnaryExpression boundUnaryExpression:
                     EmitUnaryExpression(boundUnaryExpression, true);
                     return;
@@ -167,6 +170,17 @@ internal partial class Emitter
 
             var methodReference = ResolveMethodReference(boundClrFunctionCallExpression);
             ILProcessor.Emit(OpCodes.Call, methodReference);
+        }
+
+        private void EmitObjectCreationExpression(BoundObjectCreationExpression boundObjectCreationExpression)
+        {
+            foreach (var argument in boundObjectCreationExpression.BoundArguments)
+            {
+                EmitExpression(argument);
+            }
+
+            var methodReference = ResolveMethodReference(boundObjectCreationExpression);
+            ILProcessor.Emit(OpCodes.Newobj, methodReference);
         }
 
         private void EmitBinaryExpression(BoundBinaryExpression boundBinaryExpression)
@@ -417,7 +431,7 @@ internal partial class Emitter
                 default:
                     ILProcessor.Emit(OpCodes.Stloc, variableDefinition);
                     return;
-            };
+            }
         }
 
         private void EmitArgStore(ParameterDefinition parameterDefinition)
