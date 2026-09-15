@@ -132,9 +132,13 @@ internal partial class Emitter
             ILProcessor.Append(conditionLabel);
             EmitExpression(boundLoopStatement.Condition);
 
+            // Long form: the loop body can easily exceed the short form's -128..127 byte
+            // range, and Mono.Cecil does not auto-widen Brtrue_S/Brfalse_S, so using the
+            // short form here silently truncates/corrupts the branch target once a loop
+            // body grows past ~127 bytes.
             var opCode = boundLoopStatement.ConditionNegated
-                ? OpCodes.Brfalse_S
-                : OpCodes.Brtrue_S;
+                ? OpCodes.Brfalse
+                : OpCodes.Brtrue;
 
             ILProcessor.Emit(opCode, startLabel);
             ILProcessor.Append(breakLabel);

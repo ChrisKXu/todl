@@ -5,6 +5,7 @@ using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.CodeAnalysis.Syntax;
 
 using MethodInfo = System.Reflection.MethodInfo;
 
@@ -150,26 +151,38 @@ internal partial class Emitter
 
         private void EmitClrFunctionCallExpression(BoundClrFunctionCallExpression boundClrFunctionCallExpression)
         {
+            // The "this" reference must be on the stack ahead of the arguments for an
+            // instance call - pushing arguments first leaves an invalid evaluation stack.
+            if (!boundClrFunctionCallExpression.IsStatic)
+            {
+                EmitInstanceCallReceiver(boundClrFunctionCallExpression.BoundBaseExpression);
+            }
+
             foreach (var argument in boundClrFunctionCallExpression.BoundArguments)
             {
                 EmitExpression(argument);
             }
 
-            if (!boundClrFunctionCallExpression.IsStatic)
-            {
-                if (boundClrFunctionCallExpression.BoundBaseExpression is BoundVariableExpression boundVariableExpression
-                    && boundVariableExpression.Variable is LocalVariableSymbol localVariableSymbol)
-                {
-                    EmitLocalAddress(localVariableSymbol);
-                }
-                else
-                {
-                    EmitExpression(boundClrFunctionCallExpression.BoundBaseExpression);
-                }
-            }
-
             var methodReference = ResolveMethodReference(boundClrFunctionCallExpression);
             ILProcessor.Emit(OpCodes.Call, methodReference);
+        }
+
+        // A value-type receiver (local or parameter) needs its managed pointer on the stack,
+        // not its value, so the callee can be invoked with `call` against the struct in place.
+        private void EmitInstanceCallReceiver(BoundExpression baseExpression)
+        {
+            switch ((baseExpression as BoundVariableExpression)?.Variable)
+            {
+                case LocalVariableSymbol localVariableSymbol:
+                    EmitLocalAddress(localVariableSymbol);
+                    return;
+                case ParameterSymbol parameterSymbol:
+                    EmitParameterAddress(parameterSymbol);
+                    return;
+                default:
+                    EmitExpression(baseExpression);
+                    return;
+            }
         }
 
         private void EmitObjectCreationExpression(BoundObjectCreationExpression boundObjectCreationExpression)
@@ -200,8 +213,32 @@ internal partial class Emitter
                     ILProcessor.Emit(OpCodes.Ceq);
                     return;
                 case BoundBinaryOperatorKind.Comparison:
-                    ILProcessor.Emit(OpCodes.Cgt);
-                    return;
+                    // BoundBinaryOperatorKind.Comparison covers all four relational operators;
+                    // the actual operator survives on Operator.SyntaxKind. `<=`/`>=` have no
+                    // dedicated CIL opcode, so they're the negation of the strict opposite.
+                    switch (boundBinaryExpression.Operator.SyntaxKind)
+                    {
+                        case SyntaxKind.LessThanToken:
+                            ILProcessor.Emit(OpCodes.Clt);
+                            return;
+                        case SyntaxKind.GreaterThanToken:
+                            ILProcessor.Emit(OpCodes.Cgt);
+                            return;
+                        case SyntaxKind.LessThanOrEqualsToken:
+                            // left <= right ==> (left > right) == 0
+                            ILProcessor.Emit(OpCodes.Cgt);
+                            ILProcessor.Emit(OpCodes.Ldc_I4_0);
+                            ILProcessor.Emit(OpCodes.Ceq);
+                            return;
+                        case SyntaxKind.GreaterThanOrEqualsToken:
+                            // left >= right ==> (left < right) == 0
+                            ILProcessor.Emit(OpCodes.Clt);
+                            ILProcessor.Emit(OpCodes.Ldc_I4_0);
+                            ILProcessor.Emit(OpCodes.Ceq);
+                            return;
+                        default:
+                            throw new NotSupportedException($"{boundBinaryExpression.Operator.SyntaxKind} is not a supported comparison operator");
+                    }
                 case BoundBinaryOperatorKind.LogicalAnd:
                     ILProcessor.Emit(OpCodes.And);
                     return;
@@ -213,6 +250,14 @@ internal partial class Emitter
                     return;
                 case BoundBinaryOperatorKind.NumericSubstraction:
                     ILProcessor.Emit(OpCodes.Sub);
+                    return;
+                case BoundBinaryOperatorKind.NumericMultiplication:
+                    ILProcessor.Emit(OpCodes.Mul);
+                    return;
+                case BoundBinaryOperatorKind.NumericDivision:
+                    // Only Int32 (signed) division is currently a supported binary operator, so
+                    // Div (not Div_Un) matches every binder-resolved operand type today.
+                    ILProcessor.Emit(OpCodes.Div);
                     return;
                 case BoundBinaryOperatorKind.StringConcatenation:
                     var methodReference = AssemblyDefinition.MainModule.ImportReference(StringConcatMethodInfo);
@@ -241,9 +286,9 @@ internal partial class Emitter
 
         private void EmitLocalLoad(LocalVariableSymbol localVariableSymbol)
         {
-            var slot = Variables[localVariableSymbol].Index;
+            var variableDefinition = Variables[localVariableSymbol];
 
-            switch (slot)
+            switch (variableDefinition.Index)
             {
                 case 0:
                     ILProcessor.Emit(OpCodes.Ldloc_0);
@@ -258,10 +303,10 @@ internal partial class Emitter
                     ILProcessor.Emit(OpCodes.Ldloc_3);
                     return;
                 case < 0xFF:
-                    ILProcessor.Emit(OpCodes.Ldloc_S, (sbyte)slot);
+                    ILProcessor.Emit(OpCodes.Ldloc_S, variableDefinition);
                     return;
                 default:
-                    ILProcessor.Emit(OpCodes.Ldloc, slot);
+                    ILProcessor.Emit(OpCodes.Ldloc, variableDefinition);
                     return;
             }
         }
@@ -274,22 +319,44 @@ internal partial class Emitter
                 return;
             }
 
-            var slot = Variables[localVariableSymbol].Index;
-            if (slot < 0xFF)
+            var variableDefinition = Variables[localVariableSymbol];
+            if (variableDefinition.Index < 0xFF)
             {
-                ILProcessor.Emit(OpCodes.Ldloca_S, (byte)slot);
+                ILProcessor.Emit(OpCodes.Ldloca_S, variableDefinition);
             }
             else
             {
-                ILProcessor.Emit(OpCodes.Ldloca, slot);
+                ILProcessor.Emit(OpCodes.Ldloca, variableDefinition);
+            }
+        }
+
+        private void EmitParameterAddress(ParameterSymbol parameterSymbol)
+        {
+            if (parameterSymbol.Type.IsReferenceType)
+            {
+                ILProcessor.Emit(OpCodes.Ldarg, Parameters[parameterSymbol]);
+                return;
+            }
+
+            var parameterDefinition = Parameters[parameterSymbol];
+            if (parameterDefinition.Index < 0xFF)
+            {
+                ILProcessor.Emit(OpCodes.Ldarga_S, parameterDefinition);
+            }
+            else
+            {
+                ILProcessor.Emit(OpCodes.Ldarga, parameterDefinition);
             }
         }
 
         private void EmitTodlFunctionCallExpression(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
         {
-            foreach (var argument in boundTodlFunctionCallExpression.BoundArguments.Values)
+            // BoundArguments is a name-keyed dictionary; its enumeration order is not guaranteed
+            // to match declaration order, but positional argument pushes onto the stack must -
+            // walk the function's declared parameter order instead of the dictionary's.
+            foreach (var parameterName in boundTodlFunctionCallExpression.FunctionSymbol.OrderedParameterNames)
             {
-                EmitExpression(argument);
+                EmitExpression(boundTodlFunctionCallExpression.BoundArguments[parameterName]);
             }
 
             var methodReference = ResolveMethodReference(boundTodlFunctionCallExpression);
