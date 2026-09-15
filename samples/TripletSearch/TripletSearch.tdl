@@ -5,20 +5,10 @@ void Main() {
     Console.WriteLine(FindClearTriplet());
 }
 
-// Goal: find the first 3-point configuration (p1, p2, p3) forming a valid, empty
-// triangle, bypassing candidate baselines as soon as an obstacle or a size
-// constraint rules them out.
-//
-// todl has no array type and no `for` loop, so:
-//   - the point/obstacle sets are hardcoded lookups (PointX/PointY, ObstacleX/ObstacleY)
-//     indexed the same way a real array would be;
-//   - each bounded range loop below uses the "pre-increment while" idiom: the index
-//     starts one below its first value and is incremented as the very first statement
-//     in the loop body. That way `continue`/`continue <label>` - which jump straight
-//     back to the loop's own condition check, not to a trailing increment - still
-//     advance the index correctly.
-// Distances and areas are compared in squared/doubled form so everything stays in
-// Int32 arithmetic (todl's binary operators only support Int32 today).
+// Finds the first non-degenerate, obstacle-free triangle among a fixed point set.
+// No arrays or for-loops in todl: points are index-keyed lookup functions, and each
+// range loop uses a pre-increment while so `continue`/`continue <label>` still advance
+// the index. Distances/areas are compared in squared/doubled form to stay in Int32.
 string FindClearTriplet() {
     const pointCount = 6;
     const obstacleCount = 2;
@@ -37,8 +27,7 @@ string FindClearTriplet() {
             const p2x = PointX(j);
             const p2y = PointY(j);
 
-            // 1. Base segment too wide: stop testing p2 candidates for this p1 and
-            //    advance straight to the next p1.
+            // Base too wide: bail out to the next p1.
             if DistanceSquared(p1x, p1y, p2x, p2y) > maxBaseDistSquared {
                 break baseline;
             }
@@ -58,15 +47,13 @@ string FindClearTriplet() {
                 while o < obstacleCount - 1 {
                     o += 1;
 
-                    // 2. Obstacle validation: if any obstacle sits inside this triangle,
-                    //    the whole baseline (p1, p2) is invalid here - skip straight past
-                    //    the rest of this loop and the triangle loop to the next baseline.
+                    // Obstacle inside: skip straight to the next baseline.
                     if IsInside(ObstacleX(o), ObstacleY(o), p1x, p1y, p2x, p2y, p3x, p3y) {
                         continue baseline;
                     }
                 }
 
-                // 3. Match found! `return` unwinds all three loops immediately.
+                // Found it: return unwinds every loop at once.
                 const realArea = area / 2;
                 return "Clear triplet: (" + p1x.ToString() + ", " + p1y.ToString() + ") - ("
                     + p2x.ToString() + ", " + p2y.ToString() + ") - ("
@@ -112,8 +99,7 @@ int DistanceSquared(int x1, int y1, int x2, int y2) {
     return dx * dx + dy * dy;
 }
 
-// Twice the (unsigned) area of triangle (x1,y1)-(x2,y2)-(x3,y3), via the shoelace
-// formula. Comparing doubled area avoids needing a fractional type.
+// Twice the triangle's area (shoelace formula); avoids needing a fractional type.
 int TwiceArea(int x1, int y1, int x2, int y2, int x3, int y3) {
     const cross = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
     return Math.Abs(cross);
