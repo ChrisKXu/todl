@@ -7,21 +7,12 @@ using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
-using MethodInfo = System.Reflection.MethodInfo;
-
 namespace Todl.Compiler.CodeGeneration;
 
 internal partial class Emitter
 {
     internal partial class InstructionEmitter
     {
-        // TODO: Replace this with proper lowering logic
-        private static readonly MethodInfo StringConcatMethodInfo = typeof(string)
-            .GetMethods(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
-            .Single(m => m.Name == nameof(string.Concat)
-                && m.GetParameters().Length == 2
-                && m.GetParameters()[0].ParameterType.Equals(typeof(string)));
-
         public void EmitExpression(BoundExpression boundExpression)
         {
             switch (boundExpression)
@@ -259,12 +250,8 @@ internal partial class Emitter
                     // Div (not Div_Un) matches every binder-resolved operand type today.
                     ILProcessor.Emit(OpCodes.Div);
                     return;
-                case BoundBinaryOperatorKind.StringConcatenation:
-                    var methodReference = AssemblyDefinition.MainModule.ImportReference(StringConcatMethodInfo);
-                    ILProcessor.Emit(OpCodes.Call, methodReference);
-                    return;
                 default:
-                    return;
+                    throw new NotSupportedException($"{boundBinaryExpression.Operator.BoundBinaryOperatorKind} is not a supported binary operator kind");
             }
         }
 
