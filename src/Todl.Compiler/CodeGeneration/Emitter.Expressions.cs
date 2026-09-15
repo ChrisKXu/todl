@@ -180,7 +180,29 @@ internal partial class Emitter
                     EmitParameterAddress(parameterSymbol);
                     return;
                 default:
+                    if (baseExpression.ResultType.IsReferenceType)
+                    {
+                        EmitExpression(baseExpression);
+                        return;
+                    }
+
+                    // The receiver isn't a local/parameter, so it has no stable storage to take
+                    // the address of. Spill it into a synthesized temp local so it becomes
+                    // addressable, then push that local's address for `call`.
+                    ILProcessor.Body.InitLocals = true;
+                    var temp = new VariableDefinition(ResolveTypeReference(baseExpression.ResultType as ClrTypeSymbol));
+                    ILProcessor.Body.Variables.Add(temp);
                     EmitExpression(baseExpression);
+                    EmitLocalStore(temp);
+
+                    if (temp.Index < 0xFF)
+                    {
+                        ILProcessor.Emit(OpCodes.Ldloca_S, temp);
+                    }
+                    else
+                    {
+                        ILProcessor.Emit(OpCodes.Ldloca, temp);
+                    }
                     return;
             }
         }
