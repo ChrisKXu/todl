@@ -186,9 +186,7 @@ internal partial class Emitter
                         return;
                     }
 
-                    // The receiver isn't a local/parameter, so it has no stable storage to take
-                    // the address of. Spill it into a synthesized temp local so it becomes
-                    // addressable, then push that local's address for `call`.
+                    // Not a local/parameter, so spill it to a temp local to make it addressable.
                     ILProcessor.Body.InitLocals = true;
                     var temp = new VariableDefinition(ResolveTypeReference(baseExpression.ResultType as ClrTypeSymbol));
                     ILProcessor.Body.Variables.Add(temp);

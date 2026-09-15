@@ -9,11 +9,7 @@ public sealed class InstanceCallReceiverTests
     [Fact]
     public void CallingInstanceMethodOnValueTypeExpressionResultShouldEmitAndRunSuccessfully()
     {
-        // Regression test: EmitInstanceCallReceiver only took the address of a value-type
-        // receiver when it was a local or a parameter. For any other value-type-resultant
-        // expression (here, the result of a binary addition), it pushed the raw value instead
-        // of a managed pointer, which is invalid input to `call` and crashed at runtime with a
-        // NullReferenceException inside Int32.ToString().
+        // Regression test: value-type receivers with no stable storage crashed at runtime.
         var inputText = @"
 import { Console } from System;
 
