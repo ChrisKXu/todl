@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -74,6 +75,18 @@ public sealed class BoundBinaryOperatorFactory
                 { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.GreaterThanOrEqualsToken), new(SyntaxKind.GreaterThanOrEqualsToken, BoundBinaryOperatorKind.Comparison, builtInTypes.Boolean) },
                 { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.GreaterThanToken), new(SyntaxKind.GreaterThanToken, BoundBinaryOperatorKind.Comparison, builtInTypes.Boolean) },
             };
+
+        // string + <built-in value type> and <built-in value type> + string: the non-string
+        // side gets converted via ToString() when binding (see BindBinaryExpression below).
+        foreach (var valueType in new[]
+        {
+            builtInTypes.Boolean, builtInTypes.Byte, builtInTypes.Char, builtInTypes.Int32,
+            builtInTypes.UInt32, builtInTypes.Int64, builtInTypes.UInt64, builtInTypes.Float, builtInTypes.Double
+        })
+        {
+            supportedBinaryOperators.Add((valueType, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String));
+            supportedBinaryOperators.Add((builtInTypes.String, valueType, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String));
+        }
     }
 
     public BoundBinaryOperator MatchBinaryOperator(
@@ -104,11 +117,36 @@ public partial class Binder
                     ErrorCode = ErrorCode.UnsupportedOperator
                 });
         }
+        else if (boundBinaryOperator.BoundBinaryOperatorKind == BoundBinaryOperatorKind.StringConcatenation)
+        {
+            boundLeft = ConvertToStringOperand(boundLeft);
+            boundRight = ConvertToStringOperand(boundRight);
+        }
 
         return BoundNodeFactory.CreateBoundBinaryExpression(
             syntaxNode: binaryExpression,
             left: boundLeft,
             right: boundRight,
             @operator: boundBinaryOperator);
+    }
+
+    // Value-type operands in a string concatenation are converted via their own ToString()
+    // override; reference types (other than string itself) aren't supported here since a null
+    // receiver would crash - see BoundBinaryOperatorFactory for which types this applies to.
+    private static BoundExpression ConvertToStringOperand(BoundExpression operand)
+    {
+        if (operand.ResultType.SpecialType == SpecialType.ClrString)
+        {
+            return operand;
+        }
+
+        var clrType = (operand.ResultType as ClrTypeSymbol).ClrType;
+        var toStringMethod = clrType.GetMethod(nameof(ToString), Type.EmptyTypes);
+
+        return BoundNodeFactory.CreateBoundClrFunctionCallExpression(
+            syntaxNode: operand.SyntaxNode,
+            boundBaseExpression: operand,
+            methodInfo: toStringMethod,
+            boundArguments: []);
     }
 }
