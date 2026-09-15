@@ -26,10 +26,12 @@ internal sealed class BoundModule
         var binder = Binder.CreateModuleBinder(clrTypeCache, constantValueFactory, diagnosticBuilder);
         var entryPointType = binder.BindEntryPointTypeDefinition(syntaxTrees);
 
+        // Order matters: constant folding must run before string concatenation lowering.
         var boundTreeVisitors = new BoundTreeVisitor[]
         {
             new ControlFlowAnalyzer(diagnosticBuilder),
-            new ConstantFoldingBoundTreeRewriter(binder.ConstantValueFactory)
+            new ConstantFoldingBoundTreeRewriter(binder.ConstantValueFactory),
+            new StringConcatenationLoweringBoundTreeRewriter(binder.ConstantValueFactory)
         };
 
         foreach (var boundTreeVisitor in boundTreeVisitors)
