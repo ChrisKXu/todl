@@ -1,6 +1,8 @@
-﻿using FluentAssertions;
+﻿using System.Linq;
+using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -42,5 +44,46 @@ public sealed class BoundBinaryExpressionTests
         multiplication.Left.As<BoundConstant>().Value.Should().Be(2);
         multiplication.Right.As<BoundConstant>().Value.Should().Be(3);
         multiplication.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryOperatorKind.NumericMultiplication);
+    }
+
+    [Theory]
+    [InlineData("1 + \" apples\"", true)]
+    [InlineData("\"count: \" + 1", false)]
+    [InlineData("true + \" flag\"", true)]
+    [InlineData("\"flag: \" + true", false)]
+    [InlineData("3.5 + \" pi\"", true)]
+    [InlineData("\"pi: \" + 3.5", false)]
+    public void TestBindStringConcatenationWithValueTypeOperand(string input, bool leftIsValueType)
+    {
+        var boundBinaryExpression = TestUtils.BindExpression<BoundBinaryExpression>(input);
+
+        boundBinaryExpression.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryOperatorKind.StringConcatenation);
+        boundBinaryExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
+
+        var convertedOperand = leftIsValueType ? boundBinaryExpression.Left : boundBinaryExpression.Right;
+        var stringOperand = leftIsValueType ? boundBinaryExpression.Right : boundBinaryExpression.Left;
+
+        var toStringCall = convertedOperand.Should().BeOfType<BoundClrFunctionCallExpression>().Subject;
+        toStringCall.MethodInfo.Name.Should().Be("ToString");
+        toStringCall.MethodInfo.GetParameters().Should().BeEmpty();
+        toStringCall.IsStatic.Should().BeFalse();
+
+        stringOperand.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
+    }
+
+    [Fact]
+    public void TestBindStringConcatenationWithReferenceTypeOperandIsUnsupported()
+    {
+        // Scope boundary: reference types aren't widened, only built-in value types are.
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundBinaryExpression = TestUtils.BindExpression<BoundBinaryExpression>(
+            "\"err: \" + new System::Exception()", diagnosticBuilder);
+
+        boundBinaryExpression.Should().NotBeNull();
+        boundBinaryExpression.Operator.Should().BeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().ContainSingle();
+        diagnostics.Single().ErrorCode.Should().Be(ErrorCode.UnsupportedOperator);
     }
 }

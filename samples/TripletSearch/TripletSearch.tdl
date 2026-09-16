@@ -55,9 +55,9 @@ string FindClearTriplet() {
 
                 // Found it: return unwinds every loop at once.
                 const realArea = area / 2;
-                return "Clear triplet: (" + p1x.ToString() + ", " + p1y.ToString() + ") - ("
-                    + p2x.ToString() + ", " + p2y.ToString() + ") - ("
-                    + p3x.ToString() + ", " + p3y.ToString() + "), area " + realArea.ToString();
+                return "Clear triplet: (" + p1x + ", " + p1y + ") - ("
+                    + p2x + ", " + p2y + ") - ("
+                    + p3x + ", " + p3y + "), area " + realArea;
             }
         }
     }

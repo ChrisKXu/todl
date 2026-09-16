@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -67,6 +68,27 @@ public sealed class BoundBinaryOperatorFactory
 
                 { (builtInTypes.String, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
 
+                // string concatenation with any built-in value type; the non-string side is
+                // converted via ToString() at bind time (see ConvertToStringOperand below).
+                { (builtInTypes.Boolean, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.String, builtInTypes.Boolean, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.Byte, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.String, builtInTypes.Byte, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.Char, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.String, builtInTypes.Char, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.Int32, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.String, builtInTypes.Int32, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.UInt32, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.String, builtInTypes.UInt32, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.Int64, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.String, builtInTypes.Int64, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.UInt64, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.String, builtInTypes.UInt64, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.Float, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.String, builtInTypes.Float, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.Double, builtInTypes.String, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+                { (builtInTypes.String, builtInTypes.Double, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, builtInTypes.String) },
+
                 { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.EqualsEqualsToken), new(SyntaxKind.EqualsEqualsToken, BoundBinaryOperatorKind.Equality, builtInTypes.Boolean) },
                 { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.BangEqualsToken), new(SyntaxKind.BangEqualsToken, BoundBinaryOperatorKind.Inequality, builtInTypes.Boolean) },
                 { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.LessThanOrEqualsToken), new(SyntaxKind.LessThanOrEqualsToken, BoundBinaryOperatorKind.Comparison, builtInTypes.Boolean) },
@@ -104,11 +126,34 @@ public partial class Binder
                     ErrorCode = ErrorCode.UnsupportedOperator
                 });
         }
+        else if (boundBinaryOperator.BoundBinaryOperatorKind == BoundBinaryOperatorKind.StringConcatenation)
+        {
+            boundLeft = ConvertToStringOperand(boundLeft);
+            boundRight = ConvertToStringOperand(boundRight);
+        }
 
         return BoundNodeFactory.CreateBoundBinaryExpression(
             syntaxNode: binaryExpression,
             left: boundLeft,
             right: boundRight,
             @operator: boundBinaryOperator);
+    }
+
+    // Reference-typed operands: no null-conditional support to guard a null ToString() receiver.
+    private static BoundExpression ConvertToStringOperand(BoundExpression operand)
+    {
+        if (operand.ResultType.SpecialType == SpecialType.ClrString)
+        {
+            return operand;
+        }
+
+        var clrType = (operand.ResultType as ClrTypeSymbol).ClrType;
+        var toStringMethod = clrType.GetMethod(nameof(ToString), Type.EmptyTypes);
+
+        return BoundNodeFactory.CreateBoundClrFunctionCallExpression(
+            syntaxNode: operand.SyntaxNode,
+            boundBaseExpression: operand,
+            methodInfo: toStringMethod,
+            boundArguments: ImmutableArray<BoundExpression>.Empty);
     }
 }

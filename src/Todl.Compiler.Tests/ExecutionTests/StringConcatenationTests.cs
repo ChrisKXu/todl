@@ -19,6 +19,26 @@ public sealed class StringConcatenationTests
         "string Run(string a, string b) { return \"[\" + a + \"]-[\" + b + \"]\"; }",
         new object[] { "foo", "bar" },
         "[foo]-[bar]")]
+    [InlineData(
+        "string Run(int a) { return \"n: \" + a; }",
+        new object[] { 5 },
+        "n: 5")]
+    [InlineData(
+        "string Run(int a) { return a + \" apples\"; }",
+        new object[] { 5 },
+        "5 apples")]
+    [InlineData(
+        "string Run(bool a) { return \"flag: \" + a; }",
+        new object[] { true },
+        "flag: True")]
+    [InlineData(
+        "string Run(double a) { return \"pi=\" + a + \"!\"; }",
+        new object[] { 3.5 },
+        "pi=3.5!")]
+    [InlineData(
+        "string Run(int a, int b) { return \"sum: \" + (a + b); }",
+        new object[] { 2, 3 },
+        "sum: 5")]
     public void StringConcatenationShouldEmitAndRunSuccessfully(string functionText, object[] arguments, string expected)
     {
         var inputText = $@"
