@@ -74,9 +74,7 @@ public sealed class BoundBinaryExpressionTests
     [Fact]
     public void TestBindStringConcatenationWithReferenceTypeOperandIsUnsupported()
     {
-        // Scope boundary: reference-typed operands aren't widened to string concatenation -
-        // only built-in value types are, since a null reference-typed operand would crash
-        // calling ToString() on it with no null-conditional support to guard it.
+        // Scope boundary: reference types aren't widened, only built-in value types are.
         var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundBinaryExpression = TestUtils.BindExpression<BoundBinaryExpression>(
             "\"err: \" + new System::Exception()", diagnosticBuilder);

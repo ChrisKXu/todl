@@ -76,8 +76,7 @@ public sealed class BoundBinaryOperatorFactory
                 { (builtInTypes.Int32, builtInTypes.Int32, SyntaxKind.GreaterThanToken), new(SyntaxKind.GreaterThanToken, BoundBinaryOperatorKind.Comparison, builtInTypes.Boolean) },
             };
 
-        // string + <built-in value type> and <built-in value type> + string: the non-string
-        // side gets converted via ToString() when binding (see BindBinaryExpression below).
+        // string/value-type concat: the non-string side is converted via ToString() at bind time.
         foreach (var valueType in new[]
         {
             builtInTypes.Boolean, builtInTypes.Byte, builtInTypes.Char, builtInTypes.Int32,
@@ -130,9 +129,7 @@ public partial class Binder
             @operator: boundBinaryOperator);
     }
 
-    // Value-type operands in a string concatenation are converted via their own ToString()
-    // override; reference types (other than string itself) aren't supported here since a null
-    // receiver would crash - see BoundBinaryOperatorFactory for which types this applies to.
+    // Reference-typed operands: no null-conditional support to guard a null ToString() receiver.
     private static BoundExpression ConvertToStringOperand(BoundExpression operand)
     {
         if (operand.ResultType.SpecialType == SpecialType.ClrString)
@@ -147,6 +144,6 @@ public partial class Binder
             syntaxNode: operand.SyntaxNode,
             boundBaseExpression: operand,
             methodInfo: toStringMethod,
-            boundArguments: []);
+            boundArguments: ImmutableArray<BoundExpression>.Empty);
     }
 }
