@@ -158,7 +158,7 @@ public partial class Binder
         public ScriptBinder(ClrTypeCache clrTypeCache, DiagnosticBag.Builder diagnosticBuilder)
         {
             ClrTypeCache = clrTypeCache;
-            BoundBinaryOperatorFactory = new(clrTypeCache);
+            BoundBinaryOperatorFactory = new();
             ConstantValueFactory = new(clrTypeCache.BuiltInTypes);
             DiagnosticBuilder = diagnosticBuilder;
         }
@@ -175,7 +175,7 @@ public partial class Binder
         public ModuleBinder(ClrTypeCache clrTypeCache, ConstantValueFactory constantValueFactory, DiagnosticBag.Builder diagnosticBuilder)
         {
             ClrTypeCache = clrTypeCache;
-            BoundBinaryOperatorFactory = new(clrTypeCache);
+            BoundBinaryOperatorFactory = new();
             ConstantValueFactory = constantValueFactory;
             DiagnosticBuilder = diagnosticBuilder;
         }
