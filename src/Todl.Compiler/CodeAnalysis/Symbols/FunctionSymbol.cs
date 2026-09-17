@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -32,13 +31,6 @@ public sealed class FunctionSymbol : Symbol
             Parameters = parameters.ToImmutableArray()
         };
     }
-
-    public override bool Equals(Symbol other)
-        => other is FunctionSymbol functionSymbol
-        && FunctionDeclarationMember == functionSymbol.FunctionDeclarationMember;
-
-    public override int GetHashCode()
-        => HashCode.Combine(FunctionDeclarationMember);
 
     public bool Match(string name, IReadOnlyDictionary<string, TypeSymbol> namedArguments)
     {

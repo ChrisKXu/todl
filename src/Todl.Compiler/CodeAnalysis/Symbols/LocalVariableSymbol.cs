@@ -1,5 +1,4 @@
-﻿using System;
-using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
+﻿using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Symbols;
@@ -17,11 +16,4 @@ internal sealed class LocalVariableSymbol : VariableSymbol
 
     public override TypeSymbol Type => BoundInitializer.ResultType;
     public override bool Constant => ReadOnly && BoundInitializer.Constant;
-
-    public override bool Equals(Symbol other)
-        => other is LocalVariableSymbol localVariableSymbol
-        && VariableDeclarationStatement.Equals(localVariableSymbol.VariableDeclarationStatement);
-
-    public override int GetHashCode()
-        => HashCode.Combine(VariableDeclarationStatement);
 }
