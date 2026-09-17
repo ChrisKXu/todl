@@ -70,6 +70,13 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
     public override BoundNode VisitBoundContinueStatement(BoundContinueStatement boundContinueStatement)
         => boundContinueStatement;
 
+    public override BoundNode VisitBoundConversionExpression(BoundConversionExpression boundConversionExpression)
+    {
+        Visit(boundConversionExpression.Operand);
+
+        return boundConversionExpression;
+    }
+
     public override BoundNode VisitBoundEntryPointTypeDefinition(BoundEntryPointTypeDefinition boundEntryPointTypeDefinition)
     {
         VisitList(boundEntryPointTypeDefinition.BoundMembers);

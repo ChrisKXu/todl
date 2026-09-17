@@ -1,8 +1,6 @@
 using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
-using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-namespace Todl.Compiler.CodeAnalysis.Binding;
+namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 internal abstract class BoundTreeRewriter : BoundTreeVisitor
 {
@@ -82,6 +80,15 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
     public override BoundNode VisitBoundContinueStatement(BoundContinueStatement boundContinueStatement)
         => boundContinueStatement;
+
+    public override BoundNode VisitBoundConversionExpression(BoundConversionExpression boundConversionExpression)
+    {
+        var operand = VisitBoundExpression(boundConversionExpression.Operand);
+
+        return operand == boundConversionExpression.Operand
+            ? boundConversionExpression
+            : BoundNodeFactory.CreateBoundConversionExpression(boundConversionExpression.SyntaxNode, operand, boundConversionExpression.TargetType, boundConversionExpression.ConversionKind);
+    }
 
     public override BoundNode VisitBoundEntryPointTypeDefinition(BoundEntryPointTypeDefinition boundEntryPointTypeDefinition)
     {
