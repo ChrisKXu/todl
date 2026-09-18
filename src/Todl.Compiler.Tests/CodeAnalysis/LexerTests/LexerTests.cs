@@ -63,7 +63,8 @@ public sealed partial class LexerTests
             SyntaxKind.IdentifierToken,
             SyntaxKind.WhitespaceTrivia,
             SyntaxKind.LineBreakTrivia,
-            SyntaxKind.SingleLineCommentTrivia
+            SyntaxKind.SingleLineCommentTrivia,
+            SyntaxKind.DelimitedCommentTrivia
         }.ToHashSet();
 
         var uncoveredKinds = Enum.GetValues<SyntaxKind>().Except(actualTokenKinds.Union(exemptions));
@@ -182,6 +183,86 @@ public sealed partial class LexerTests
         var b = commaToken.TrailingTrivia[1];
         b.Kind.Should().Be(SyntaxKind.SingleLineCommentTrivia);
         b.Text.ToString().Should().Be("//B");
+    }
+
+    [Fact]
+    public void TestDelimitedCommentSimple()
+    {
+        var text = "/* comment */";
+        var tokens = Lex(text);
+        tokens.Length.Should().Be(1); // eof
+
+        var eof = tokens[0];
+        eof.Kind.Should().Be(SyntaxKind.EndOfFileToken);
+        eof.LeadingTrivia.Length.Should().Be(1);
+        eof.LeadingTrivia.Should().Contain(t => t.Kind == SyntaxKind.DelimitedCommentTrivia
+            && t.Text.ToString() == text);
+    }
+
+    [Fact]
+    public void TestDelimitedCommentSpansMultipleLines()
+    {
+        var text = "/* line one\n   line two\n*/";
+        var tokens = Lex(text);
+        tokens.Length.Should().Be(1); // eof
+
+        var eof = tokens[0];
+        eof.LeadingTrivia.Length.Should().Be(1);
+        eof.LeadingTrivia.Should().Contain(t => t.Kind == SyntaxKind.DelimitedCommentTrivia
+            && t.Text.ToString() == text);
+    }
+
+    [Fact]
+    public void TestDelimitedCommentsWithTokens()
+    {
+        var text = "/*A*/\nreturn 0; /*B*/";
+        var tokens = Lex(text);
+        tokens.Length.Should().Be(4); // return, 0, ;, eof
+
+        var returnToken = tokens[0];
+        returnToken.Kind.Should().Be(SyntaxKind.ReturnKeywordToken);
+        returnToken.LeadingTrivia.Length.Should().Be(2); // comment, line break
+
+        var a = returnToken.LeadingTrivia[0];
+        a.Kind.Should().Be(SyntaxKind.DelimitedCommentTrivia);
+        a.Text.ToString().Should().Be("/*A*/");
+
+        var commaToken = tokens[2];
+        commaToken.TrailingTrivia.Length.Should().Be(2); // whitespace, comment
+
+        var b = commaToken.TrailingTrivia[1];
+        b.Kind.Should().Be(SyntaxKind.DelimitedCommentTrivia);
+        b.Text.ToString().Should().Be("/*B*/");
+    }
+
+    [Fact]
+    public void TestDelimitedCommentsDoNotNestAndIgnoreSingleLineCommentMarkers()
+    {
+        // comments do not nest; '//' has no meaning inside a delimited comment
+        var text = "/* A // B */ C();";
+        var tokens = Lex(text);
+        tokens.Length.Should().Be(5); // C, (, ), ;, eof
+
+        var c = tokens[0];
+        c.Kind.Should().Be(SyntaxKind.IdentifierToken);
+        c.LeadingTrivia.Length.Should().Be(2); // comment, whitespace
+
+        var comment = c.LeadingTrivia[0];
+        comment.Kind.Should().Be(SyntaxKind.DelimitedCommentTrivia);
+        comment.Text.ToString().Should().Be("/* A // B */");
+    }
+
+    [Fact]
+    public void TestUnterminatedDelimitedCommentConsumesToEndOfFile()
+    {
+        var text = "/* unterminated";
+        var tokens = Lex(text);
+        tokens.Length.Should().Be(1); // eof
+
+        var eof = tokens[0];
+        eof.LeadingTrivia.Length.Should().Be(1);
+        eof.LeadingTrivia.Should().Contain(t => t.Kind == SyntaxKind.DelimitedCommentTrivia
+            && t.Text.ToString() == text);
     }
 
     [Fact]
