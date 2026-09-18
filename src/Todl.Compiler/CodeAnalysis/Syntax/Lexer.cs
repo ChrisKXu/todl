@@ -68,6 +68,11 @@ internal sealed class Lexer
                         kind = SyntaxKind.SingleLineCommentTrivia;
                         ReadSingleLineComment();
                     }
+                    else if (Peak == '*')
+                    {
+                        kind = SyntaxKind.DelimitedCommentTrivia;
+                        ReadDelimitedComment();
+                    }
                     else
                     {
                         done = true;
@@ -122,6 +127,21 @@ internal sealed class Lexer
         position += 2; // '//'
         while (Current != '\r' && Current != '\n' && Current != '\0')
         {
+            ++position;
+        }
+    }
+
+    private void ReadDelimitedComment()
+    {
+        position += 2; // '/*'
+        while (Current != '\0')
+        {
+            if (Current == '*' && Peak == '/')
+            {
+                position += 2;
+                break;
+            }
+
             ++position;
         }
     }
@@ -352,6 +372,11 @@ internal sealed class Lexer
                 {
                     // We always process SingleLineCommentTrivia
                     // at the end of a token
+                    break;
+                }
+                else if (Peak == '*')
+                {
+                    // processed as DelimitedCommentTrivia
                     break;
                 }
                 else
