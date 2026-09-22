@@ -8,10 +8,11 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 internal sealed class BoundReturnStatement : BoundStatement
 {
     public BoundExpression BoundReturnValueExpression { get; internal init; }
+    public ClrTypeCache ClrTypeCache { get; internal init; }
 
     public TypeSymbol ReturnType
         => BoundReturnValueExpression?.ResultType
-        ?? SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Void;
+        ?? ClrTypeCache.BuiltInTypes.Void;
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundReturnStatement(this);
 }
@@ -28,7 +29,8 @@ public partial class Binder
 
         var boundReturnStatement = BoundNodeFactory.CreateBoundReturnStatement(
             syntaxNode: returnStatement,
-            boundReturnValueExpression: boundReturnValueExpression);
+            boundReturnValueExpression: boundReturnValueExpression,
+            clrTypeCache: ClrTypeCache);
 
         if (!IsInFunction)
         {

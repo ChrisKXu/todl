@@ -22,11 +22,12 @@ internal sealed class BoundClrFieldAccessExpression : BoundMemberAccessExpressio
 {
     public override BoundExpression BoundBaseExpression { get; internal init; }
     public FieldInfo FieldInfo { get; internal init; }
+    public ClrTypeCache ClrTypeCache { get; internal init; }
     public override string MemberName => FieldInfo.Name;
     public override bool IsStatic => FieldInfo.IsStatic;
 
     public override TypeSymbol ResultType
-        => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(FieldInfo.FieldType);
+        => ClrTypeCache.Resolve(FieldInfo.FieldType);
 
     public override bool Constant => FieldInfo.IsLiteral;
     public override bool ReadOnly => Constant || FieldInfo.IsInitOnly;
@@ -40,11 +41,12 @@ internal sealed class BoundClrPropertyAccessExpression : BoundMemberAccessExpres
 {
     public override BoundExpression BoundBaseExpression { get; internal init; }
     public PropertyInfo PropertyInfo { get; internal init; }
+    public ClrTypeCache ClrTypeCache { get; internal init; }
     public override string MemberName => PropertyInfo.Name;
     public override bool IsStatic => PropertyInfo.GetAccessors().Any(a => a.IsStatic);
 
     public override TypeSymbol ResultType
-        => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(PropertyInfo.PropertyType);
+        => ClrTypeCache.Resolve(PropertyInfo.PropertyType);
 
     public override bool ReadOnly => PropertyInfo.GetSetMethod() is null;
     public override bool IsPublic => PropertyInfo.GetAccessors().Any(a => a.IsPublic);
@@ -88,7 +90,8 @@ public partial class Binder
                 var boundFieldAccessExpression = BoundNodeFactory.CreateBoundClrFieldAccessExpression(
                     syntaxNode: memberAccessExpression,
                     boundBaseExpression: boundBaseExpression,
-                    fieldInfo: fieldInfo);
+                    fieldInfo: fieldInfo,
+                    clrTypeCache: ClrTypeCache);
 
                 if (!boundFieldAccessExpression.IsPublic)
                 {
@@ -100,7 +103,8 @@ public partial class Binder
                 var boundPropertyAccessExpression = BoundNodeFactory.CreateBoundClrPropertyAccessExpression(
                     syntaxNode: memberAccessExpression,
                     boundBaseExpression: boundBaseExpression,
-                    propertyInfo: propertyInfo);
+                    propertyInfo: propertyInfo,
+                    clrTypeCache: ClrTypeCache);
 
                 if (!boundPropertyAccessExpression.IsPublic)
                 {

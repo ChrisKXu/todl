@@ -39,7 +39,8 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
             syntaxNode: boundBinaryExpression.SyntaxNode,
             @operator: boundBinaryExpression.Operator,
             left: left,
-            right: right);
+            right: right,
+            clrTypeCache: boundBinaryExpression.ClrTypeCache);
     }
 
     private BoundExpression FoldBinaryConstant(BoundConstant left, BoundConstant right, BoundBinaryExpression boundBinaryExpression)
@@ -167,7 +168,8 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
         return BoundNodeFactory.CreateBoundUnaryExpression(
             syntaxNode: boundUnaryExpression.SyntaxNode,
             @operator: boundUnaryExpression.Operator,
-            operand: visitedOperand);
+            operand: visitedOperand,
+            clrTypeCache: boundUnaryExpression.ClrTypeCache);
     }
 
     public override BoundNode VisitBoundVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)
@@ -205,7 +207,8 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
 
         return BoundNodeFactory.CreateBoundReturnStatement(
             syntaxNode: boundReturnStatement.SyntaxNode,
-            boundReturnValueExpression: boundReturnValueExpression);
+            boundReturnValueExpression: boundReturnValueExpression,
+            clrTypeCache: boundReturnStatement.ClrTypeCache);
     }
 
     public override BoundNode VisitBoundVariableExpression(BoundVariableExpression boundVariableExpression)

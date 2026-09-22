@@ -50,7 +50,7 @@ public sealed class Compilation : IDisposable, IDiagnosable
 
         ClrTypeCache = ClrTypeCache.FromAssemblies(metadataLoadContext.GetAssemblies(), metadataLoadContext.CoreAssembly);
 
-        var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, ClrTypeCache, diagnosticBuilder));
+        var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, diagnosticBuilder));
         MainModule = BoundModule.Create(ClrTypeCache, syntaxTrees.ToImmutableList(), diagnosticBuilder);
 
         if (MainModule.EntryPoint is null)
@@ -95,7 +95,7 @@ public sealed class Compilation : IDisposable, IDiagnosable
         ClrTypeCache = clrTypeCache;
         // metadataLoadContext remains null - caller owns it
 
-        var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, ClrTypeCache, diagnosticBuilder));
+        var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, diagnosticBuilder));
         MainModule = BoundModule.Create(ClrTypeCache, syntaxTrees.ToImmutableList(), diagnosticBuilder);
 
         if (MainModule.EntryPoint is null)

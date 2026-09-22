@@ -33,7 +33,7 @@ internal sealed class StringConcatenationLoweringBoundTreeRewriter : BoundTreeRe
         AppendOperand(boundBinaryExpression.Left, operands);
         AppendOperand(boundBinaryExpression.Right, operands);
 
-        return CreateConcatCall(boundBinaryExpression.SyntaxNode, operands);
+        return CreateConcatCall(boundBinaryExpression.SyntaxNode, operands, boundBinaryExpression.ClrTypeCache);
     }
 
     // Flattens a StringConcatenation chain into leaf operands, left to right.
@@ -65,30 +65,31 @@ internal sealed class StringConcatenationLoweringBoundTreeRewriter : BoundTreeRe
         operands.Add(operand);
     }
 
-    private static BoundExpression CreateConcatCall(SyntaxNode syntaxNode, IReadOnlyList<BoundExpression> operands)
+    private static BoundExpression CreateConcatCall(SyntaxNode syntaxNode, IReadOnlyList<BoundExpression> operands, ClrTypeCache clrTypeCache)
     {
         if (operands.Count <= 4)
         {
-            return CreateCall(syntaxNode, GetConcatMethod(operands.Count), operands);
+            return CreateCall(syntaxNode, GetConcatMethod(operands.Count), operands, clrTypeCache);
         }
 
         // No array-creation bound node exists for Concat(string[]); fold left-to-right instead.
-        var result = CreateCall(syntaxNode, concat4Method, operands.Take(4).ToArray());
+        var result = CreateCall(syntaxNode, concat4Method, operands.Take(4).ToArray(), clrTypeCache);
 
         for (var i = 4; i < operands.Count; i++)
         {
-            result = CreateCall(syntaxNode, concat2Method, new[] { result, operands[i] });
+            result = CreateCall(syntaxNode, concat2Method, new[] { result, operands[i] }, clrTypeCache);
         }
 
         return result;
     }
 
-    private static BoundExpression CreateCall(SyntaxNode syntaxNode, MethodInfo methodInfo, IReadOnlyList<BoundExpression> arguments)
+    private static BoundExpression CreateCall(SyntaxNode syntaxNode, MethodInfo methodInfo, IReadOnlyList<BoundExpression> arguments, ClrTypeCache clrTypeCache)
         => BoundNodeFactory.CreateBoundClrFunctionCallExpression(
             syntaxNode: syntaxNode,
             boundBaseExpression: arguments[0],
             methodInfo: methodInfo,
-            boundArguments: arguments.ToImmutableArray());
+            boundArguments: arguments.ToImmutableArray(),
+            clrTypeCache: clrTypeCache);
 
     private static MethodInfo GetConcatMethod(int operandCount)
         => operandCount switch

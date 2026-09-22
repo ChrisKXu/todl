@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿﻿using System.Collections.Generic;
+using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
@@ -37,6 +38,9 @@ public partial class Binder
         => Parent?.DiagnosticBuilder;
 
     public bool IsInFunction => FunctionSymbol is not null;
+
+    internal ClrTypeCacheView GetClrTypeCacheView(SyntaxTree syntaxTree)
+        => ClrTypeCache.CreateView(syntaxTree.Directives.OfType<ImportDirective>());
 
     public Binder CreateBlockStatementBinder()
         => new()

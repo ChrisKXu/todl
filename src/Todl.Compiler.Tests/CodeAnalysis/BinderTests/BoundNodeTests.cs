@@ -125,7 +125,7 @@ public sealed class BoundNodeTests
 
         foreach (var inputText in testExpressions)
         {
-            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), diagnosticBuilder);
             var binder = Binder.CreateScriptBinder(TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
             yield return new object[] { expression, binder.BindExpression(expression) };
         }
@@ -133,7 +133,7 @@ public sealed class BoundNodeTests
         // BoundVariableExpression requires special logic to work
         {
             var sourceText = SourceText.FromString("{ const a = 5; a; }");
-            var blockStatement = SyntaxTree.ParseStatement(sourceText, TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+            var blockStatement = SyntaxTree.ParseStatement(sourceText, diagnosticBuilder);
             var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, TestDefaults.ConstantValueFactory, diagnosticBuilder);
             var boundBlockStatement =
                 binder.BindStatement(blockStatement).As<BoundBlockStatement>();
@@ -145,19 +145,19 @@ public sealed class BoundNodeTests
 
         foreach (var inputText in testStatements)
         {
-            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), diagnosticBuilder);
             var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, TestDefaults.ConstantValueFactory, diagnosticBuilder);
             yield return new object[] { statement, binder.BindStatement(statement) };
         }
 
         foreach (var inputText in testMembers)
         {
-            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), diagnosticBuilder);
             var member = syntaxTree.Members[0];
             var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, TestDefaults.ConstantValueFactory, diagnosticBuilder);
             if (member is FunctionDeclarationMember functionDeclarationMember)
             {
-                binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember));
+                binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember, binder.GetClrTypeCacheView(syntaxTree)));
             }
 
             yield return new object[] { member, binder.BindMember(member) };
