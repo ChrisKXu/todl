@@ -36,16 +36,14 @@ public partial class Binder
 {
     private BoundExpression BindInvocationExpression(InvocationExpression invocationExpression)
     {
-        if (invocationExpression.Expression is MemberAccessExpression memberAccessExpression)
+        var memberAccessExpression = invocationExpression.Expression as MemberAccessExpression;
+        var boundBaseExpression = memberAccessExpression is null
+            ? null
+            : BindExpression(memberAccessExpression.BaseExpression);
+
+        if (memberAccessExpression is not null && boundBaseExpression.ResultType.IsNative)
         {
-            var boundBaseExpression = BindExpression(memberAccessExpression.BaseExpression);
-
-            if (boundBaseExpression.ResultType is ClrTypeSymbol)
-            {
-                return BindClrInvocationExpression(invocationExpression, memberAccessExpression, boundBaseExpression);
-            }
-
-            return BindInvalidInvocationExpression(invocationExpression, boundBaseExpression);
+            return BindClrInvocationExpression(invocationExpression, memberAccessExpression, boundBaseExpression);
         }
 
         if (invocationExpression.Expression is SimpleNameExpression simpleNameExpression)
@@ -53,7 +51,7 @@ public partial class Binder
             return BindTodlInvocationExpression(invocationExpression, simpleNameExpression);
         }
 
-        return BindInvalidInvocationExpression(invocationExpression, boundBaseExpression: null);
+        return BindInvalidInvocationExpression(invocationExpression, boundBaseExpression);
     }
 
     private BoundExpression BindInvalidInvocationExpression(
