@@ -15,6 +15,7 @@ internal sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
 
     public override bool IsGeneratedType => true;
     public override bool IsStatic => true;
+    public ClrTypeCache ClrTypeCache { get; internal init; }
 
     public BoundFunctionMember EntryPointFunctionMember
         => Functions.FirstOrDefault(IsEntryPointCandidate);
@@ -28,7 +29,7 @@ internal sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
         }
 
         // entry point function should either return "void" or "int"
-        var builtInTypes = f.SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes;
+        var builtInTypes = ClrTypeCache.BuiltInTypes;
         if (f.ReturnType.SpecialType != SpecialType.ClrVoid
             && f.ReturnType.SpecialType != SpecialType.ClrInt32)
         {
@@ -68,7 +69,7 @@ public partial class Binder
         var members = syntaxTrees.SelectMany(tree => tree.Members);
         foreach (var functionDeclarationMember in members.OfType<FunctionDeclarationMember>())
         {
-            var function = FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember);
+            var function = FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember, GetClrTypeCacheView(functionDeclarationMember.SyntaxTree));
             if (typeBinder.Scope.DeclareFunction(function) != function)
             {
                 ReportDiagnostic(new Diagnostic()
@@ -87,7 +88,8 @@ public partial class Binder
         return new()
         {
             SyntaxNode = null,
-            BoundMembers = boundMembers.ToImmutableArray()
+            BoundMembers = boundMembers.ToImmutableArray(),
+            ClrTypeCache = ClrTypeCache
         };
     }
 }

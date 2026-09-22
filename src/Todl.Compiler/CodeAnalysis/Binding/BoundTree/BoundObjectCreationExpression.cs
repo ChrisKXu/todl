@@ -14,8 +14,9 @@ internal sealed class BoundObjectCreationExpression : BoundExpression
 {
     public ConstructorInfo ConstructorInfo { get; internal init; }
     public ImmutableArray<BoundExpression> BoundArguments { get; internal init; }
+    public ClrTypeCache ClrTypeCache { get; internal init; }
     public override TypeSymbol ResultType
-        => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(ConstructorInfo.DeclaringType);
+        => ClrTypeCache.Resolve(ConstructorInfo.DeclaringType);
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundObjectCreationExpression(this);
 }
@@ -86,6 +87,7 @@ public partial class Binder
             SyntaxNode = newExpression,
             ConstructorInfo = constructorInfo,
             BoundArguments = boundArguments,
+            ClrTypeCache = ClrTypeCache,
         };
     }
 
@@ -126,6 +128,7 @@ public partial class Binder
             SyntaxNode = newExpression,
             ConstructorInfo = constructorInfo,
             BoundArguments = boundArguments.ToImmutableArray(),
+            ClrTypeCache = ClrTypeCache,
         };
     }
 

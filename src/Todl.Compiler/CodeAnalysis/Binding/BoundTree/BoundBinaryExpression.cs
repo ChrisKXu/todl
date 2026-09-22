@@ -15,8 +15,9 @@ internal sealed class BoundBinaryExpression : BoundExpression
     public BoundBinaryOperator Operator { get; internal init; }
     public BoundExpression Left { get; internal init; }
     public BoundExpression Right { get; internal init; }
+    public ClrTypeCache ClrTypeCache { get; internal init; }
 
-    public override TypeSymbol ResultType => Left.SyntaxNode.SyntaxTree.ClrTypeCache.ResolveSpecialType(Operator.ResultType);
+    public override TypeSymbol ResultType => ClrTypeCache.ResolveSpecialType(Operator.ResultType);
     public override bool Constant => Left.Constant && Right.Constant;
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundBinaryExpression(this);
@@ -126,19 +127,20 @@ public partial class Binder
         }
         else if (boundBinaryOperator.BoundBinaryOperatorKind == BoundBinaryOperatorKind.StringConcatenation)
         {
-            boundLeft = ConvertToStringOperand(boundLeft);
-            boundRight = ConvertToStringOperand(boundRight);
+            boundLeft = ConvertToStringOperand(boundLeft, ClrTypeCache);
+            boundRight = ConvertToStringOperand(boundRight, ClrTypeCache);
         }
 
         return BoundNodeFactory.CreateBoundBinaryExpression(
             syntaxNode: binaryExpression,
             left: boundLeft,
             right: boundRight,
-            @operator: boundBinaryOperator);
+            @operator: boundBinaryOperator,
+            clrTypeCache: ClrTypeCache);
     }
 
     // Reference-typed operands: no null-conditional support to guard a null ToString() receiver.
-    private static BoundExpression ConvertToStringOperand(BoundExpression operand)
+    private static BoundExpression ConvertToStringOperand(BoundExpression operand, ClrTypeCache clrTypeCache)
     {
         if (operand.ResultType.SpecialType == SpecialType.ClrString)
         {
@@ -152,6 +154,7 @@ public partial class Binder
             syntaxNode: operand.SyntaxNode,
             boundBaseExpression: operand,
             methodInfo: toStringMethod,
-            boundArguments: ImmutableArray<BoundExpression>.Empty);
+            boundArguments: ImmutableArray<BoundExpression>.Empty,
+            clrTypeCache: clrTypeCache);
     }
 }

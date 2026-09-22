@@ -26,7 +26,7 @@ public partial class Binder
         var name = simpleNameExpression.CanonicalName;
 
         // First check if it's a type (imported or built-in)
-        var type = simpleNameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(simpleNameExpression);
+        var type = GetClrTypeCacheView(simpleNameExpression.SyntaxTree).ResolveType(simpleNameExpression);
         if (type != null)
         {
             return BoundNodeFactory.CreateBoundTypeExpression(
@@ -60,7 +60,7 @@ public partial class Binder
     /// </summary>
     private BoundExpression BindNamespaceQualifiedNameExpression(NamespaceQualifiedNameExpression NamespaceQualifiedNameExpression)
     {
-        var type = NamespaceQualifiedNameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(NamespaceQualifiedNameExpression);
+        var type = GetClrTypeCacheView(NamespaceQualifiedNameExpression.SyntaxTree).ResolveType(NamespaceQualifiedNameExpression);
 
         if (type == null)
         {

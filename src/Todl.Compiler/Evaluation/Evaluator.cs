@@ -33,7 +33,7 @@ namespace Todl.Compiler.Evaluation
         public EvaluatorResult Evaluate(SourceText sourceText)
         {
             var diagnosticBuilder = new DiagnosticBag.Builder();
-            var expression = SyntaxTree.ParseExpression(sourceText, clrTypeCache, diagnosticBuilder);
+            var expression = SyntaxTree.ParseExpression(sourceText, diagnosticBuilder);
             var diagnostics = diagnosticBuilder.Build();
 
             if (diagnostics.Any())

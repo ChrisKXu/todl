@@ -98,25 +98,25 @@ public sealed class SyntaxNodeTests
 
         foreach (var inputText in testExpressions)
         {
-            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+            var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), diagnosticBuilder);
             yield return new object[] { inputText, expression };
         }
 
         foreach (var inputText in testStatements)
         {
-            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+            var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), diagnosticBuilder);
             yield return new object[] { inputText, statement };
         }
 
         foreach (var inputText in testDirectives)
         {
-            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), diagnosticBuilder);
             yield return new object[] { inputText, syntaxTree.Directives[0] };
         }
 
         foreach (var inputText in testMembers)
         {
-            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+            var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), diagnosticBuilder);
             yield return new object[] { inputText, syntaxTree.Members[0] };
         }
     }

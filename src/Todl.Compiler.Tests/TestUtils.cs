@@ -25,7 +25,7 @@ internal static class TestUtils
         string inputText, DiagnosticBag.Builder diagnosticBuilder)
         where TBoundExpression : BoundExpression
     {
-        var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+        var expression = SyntaxTree.ParseExpression(SourceText.FromString(inputText), diagnosticBuilder);
         var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, TestDefaults.ConstantValueFactory, diagnosticBuilder);
         return binder.BindExpression(expression).As<TBoundExpression>();
     }
@@ -43,7 +43,7 @@ internal static class TestUtils
         string inputText, DiagnosticBag.Builder diagnosticBuilder)
         where TBoundStatement : BoundStatement
     {
-        var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+        var statement = SyntaxTree.ParseStatement(SourceText.FromString(inputText), diagnosticBuilder);
         var binder = Binder.CreateModuleBinder(TestDefaults.DefaultClrTypeCache, TestDefaults.ConstantValueFactory, diagnosticBuilder);
         return binder.BindStatement(statement).As<TBoundStatement>();
     }
@@ -67,7 +67,7 @@ internal static class TestUtils
 
         if (member is FunctionDeclarationMember functionDeclarationMember)
         {
-            binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember));
+            binder.Scope.DeclareFunction(FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember, binder.GetClrTypeCacheView(syntaxTree)));
         }
 
         return binder.BindMember(member).As<TBoundMember>();
@@ -143,7 +143,7 @@ internal static class TestUtils
     }
 
     internal static SyntaxTree ParseSyntaxTree(string inputText, DiagnosticBag.Builder diagnosticBuilder)
-        => SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache, diagnosticBuilder);
+        => SyntaxTree.Parse(SourceText.FromString(inputText), diagnosticBuilder);
 
     internal static SyntaxTree ParseSyntaxTree(string inputText)
     {
@@ -157,7 +157,6 @@ internal static class TestUtils
         where TExpression : Expression
         => SyntaxTree.ParseExpression(
             SourceText.FromString(sourceText),
-            TestDefaults.DefaultClrTypeCache,
             diagnosticBuilder).As<TExpression>();
 
     internal static TExpression ParseExpression<TExpression>(string sourceText)
@@ -173,7 +172,6 @@ internal static class TestUtils
         where TStatement : Statement
         => SyntaxTree.ParseStatement(
             SourceText.FromString(sourceText),
-            TestDefaults.DefaultClrTypeCache,
             diagnosticBuilder).As<TStatement>();
 
     internal static TStatement ParseStatement<TStatement>(string sourceText)
@@ -189,7 +187,6 @@ internal static class TestUtils
         where TDirective : Directive
         => SyntaxTree.Parse(
             SourceText.FromString(sourceText),
-            TestDefaults.DefaultClrTypeCache,
             diagnosticBuilder).Directives[0].As<TDirective>();
 
     internal static TDirective ParseDirective<TDirective>(string sourceText)
@@ -205,7 +202,6 @@ internal static class TestUtils
         where TMember : Member
         => SyntaxTree.Parse(
             SourceText.FromString(sourceText),
-            TestDefaults.DefaultClrTypeCache,
             diagnosticBuilder).Members[0].As<TMember>();
 
     internal static TMember ParseMember<TMember>(string sourceText)

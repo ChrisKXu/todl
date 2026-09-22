@@ -54,7 +54,8 @@ public partial class Binder
             {
                 var returnStatement = BoundNodeFactory.CreateBoundReturnStatement(
                     syntaxNode: null,
-                    boundReturnValueExpression: null);
+                    boundReturnValueExpression: null,
+                    clrTypeCache: ClrTypeCache);
 
                 body = BoundNodeFactory.CreateBoundBlockStatement(
                     syntaxNode: body.SyntaxNode,

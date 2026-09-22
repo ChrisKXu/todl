@@ -18,7 +18,7 @@ public partial class Binder
 {
     private BoundTypeExpression BindTypeExpression(NameExpression nameExpression)
     {
-        var type = nameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(nameExpression);
+        var type = GetClrTypeCacheView(nameExpression.SyntaxTree).ResolveType(nameExpression);
 
         if (type is null)
         {
