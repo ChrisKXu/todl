@@ -15,8 +15,6 @@ internal sealed class BoundClrInvocationExpression : BoundExpression
     public BoundExpression BoundBaseExpression { get; internal init; }
     public MethodInfo MethodInfo { get; internal init; }
     public ImmutableArray<BoundExpression> BoundArguments { get; internal init; }
-    public ClrTypeCache ClrTypeCache { get; internal init; }
-    public override TypeSymbol ResultType => ClrTypeCache.Resolve(MethodInfo.ReturnType);
     public bool IsStatic => MethodInfo.IsStatic;
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundClrInvocationExpression(this);
@@ -147,7 +145,7 @@ public partial class Binder
             boundBaseExpression: boundBaseExpression,
             methodInfo: candidate,
             boundArguments: boundArguments.ToImmutableArray(),
-            clrTypeCache: ClrTypeCache);
+            resultType: ClrTypeCache.Resolve(candidate.ReturnType));
     }
 
     private BoundExpression BindInvocationWithPositionalArgumentsInternal(
@@ -182,7 +180,7 @@ public partial class Binder
             boundBaseExpression: boundBaseExpression,
             methodInfo: candidate,
             boundArguments: boundArguments,
-            clrTypeCache: ClrTypeCache);
+            resultType: ClrTypeCache.Resolve(candidate.ReturnType));
     }
 
     private void ReportNoMatchingFunctionCandidate(

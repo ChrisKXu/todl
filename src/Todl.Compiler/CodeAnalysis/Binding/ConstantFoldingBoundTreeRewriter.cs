@@ -40,7 +40,7 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
             @operator: boundBinaryExpression.Operator,
             left: left,
             right: right,
-            clrTypeCache: boundBinaryExpression.ClrTypeCache);
+            resultType: boundBinaryExpression.ResultType);
     }
 
     private BoundExpression FoldBinaryConstant(BoundConstant left, BoundConstant right, BoundBinaryExpression boundBinaryExpression)
@@ -110,7 +110,8 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
 
         return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: boundBinaryExpression.SyntaxNode,
-            value: value);
+            value: value,
+            resultType: value.ResultType);
     }
 
     public override BoundNode VisitBoundUnaryExpression(BoundUnaryExpression boundUnaryExpression)
@@ -157,7 +158,8 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
 
             return BoundNodeFactory.CreateBoundConstant(
                 syntaxNode: boundUnaryExpression.SyntaxNode,
-                value: value);
+                value: value,
+                resultType: value.ResultType);
         }
 
         if (visitedOperand == boundUnaryExpression.Operand)
@@ -169,7 +171,7 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
             syntaxNode: boundUnaryExpression.SyntaxNode,
             @operator: boundUnaryExpression.Operator,
             operand: visitedOperand,
-            clrTypeCache: boundUnaryExpression.ClrTypeCache);
+            resultType: boundUnaryExpression.ResultType);
     }
 
     public override BoundNode VisitBoundVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)
@@ -208,7 +210,7 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
         return BoundNodeFactory.CreateBoundReturnStatement(
             syntaxNode: boundReturnStatement.SyntaxNode,
             boundReturnValueExpression: boundReturnValueExpression,
-            clrTypeCache: boundReturnStatement.ClrTypeCache);
+            returnType: boundReturnStatement.ReturnType);
     }
 
     public override BoundNode VisitBoundVariableExpression(BoundVariableExpression boundVariableExpression)

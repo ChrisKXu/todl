@@ -11,8 +11,6 @@ internal sealed class BoundConstant : BoundExpression
 {
     public ConstantValue Value { get; internal init; }
 
-    public override TypeSymbol ResultType => Value.ResultType;
-
     public override bool Constant => true;
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundConstant(this);
@@ -97,7 +95,8 @@ public partial class Binder
 
         return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: literalExpression,
-            value: value);
+            value: value,
+            resultType: value.ResultType);
     }
 
     private BoundConstant BindStringConstant(LiteralExpression literalExpression)
@@ -138,15 +137,21 @@ public partial class Binder
             }
         }
 
+        var stringValue = ConstantValueFactory.Create(builder.ToString());
         return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: literalExpression,
-            value: ConstantValueFactory.Create(builder.ToString()));
+            value: stringValue,
+            resultType: stringValue.ResultType);
     }
 
     private BoundConstant BindBooleanConstant(LiteralExpression literalExpression)
-        => BoundNodeFactory.CreateBoundConstant(
+    {
+        var value = ConstantValueFactory.Create(literalExpression.LiteralToken.Kind == SyntaxKind.TrueKeywordToken);
+        return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: literalExpression,
-            value: ConstantValueFactory.Create(literalExpression.LiteralToken.Kind == SyntaxKind.TrueKeywordToken));
+            value: value,
+            resultType: value.ResultType);
+    }
 
     private BoundConstant ReportUnsupportedLiteral(LiteralExpression literalExpression)
     {
@@ -161,6 +166,7 @@ public partial class Binder
 
         return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: literalExpression,
-            value: ConstantValueFactory.Null);
+            value: ConstantValueFactory.Null,
+            resultType: ConstantValueFactory.Null.ResultType);
     }
 }

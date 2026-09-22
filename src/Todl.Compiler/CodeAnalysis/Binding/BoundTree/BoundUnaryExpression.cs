@@ -12,10 +12,6 @@ internal sealed class BoundUnaryExpression : BoundExpression
 {
     public BoundUnaryOperator Operator { get; internal init; }
     public BoundExpression Operand { get; internal init; }
-    public ClrTypeCache ClrTypeCache { get; internal init; }
-
-    public override TypeSymbol ResultType
-        => ClrTypeCache.ResolveSpecialType(Operator.ResultType);
 
     public override bool Constant => Operand.Constant;
 
@@ -171,6 +167,6 @@ public partial class Binder
             syntaxNode: unaryExpression,
             operand: boundOperand,
             @operator: boundUnaryOperator,
-            clrTypeCache: ClrTypeCache);
+            resultType: boundUnaryOperator is null ? null : ClrTypeCache.ResolveSpecialType(boundUnaryOperator.ResultType));
     }
 }

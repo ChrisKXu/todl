@@ -33,7 +33,7 @@ internal sealed class StringConcatenationLoweringBoundTreeRewriter : BoundTreeRe
         AppendOperand(boundBinaryExpression.Left, operands);
         AppendOperand(boundBinaryExpression.Right, operands);
 
-        return CreateConcatCall(boundBinaryExpression.SyntaxNode, operands, boundBinaryExpression.ClrTypeCache);
+        return CreateConcatCall(boundBinaryExpression.SyntaxNode, operands);
     }
 
     // Flattens a StringConcatenation chain into leaf operands, left to right.
@@ -56,40 +56,43 @@ internal sealed class StringConcatenationLoweringBoundTreeRewriter : BoundTreeRe
             && operands.Count > 0
             && operands[^1] is BoundConstant { Value: ConstantStringValue previousValue } previousConstant)
         {
+            var mergedValue = constantValueFactory.Create(previousValue.Value + currentValue.Value);
             operands[^1] = BoundNodeFactory.CreateBoundConstant(
                 syntaxNode: previousConstant.SyntaxNode,
-                value: constantValueFactory.Create(previousValue.Value + currentValue.Value));
+                value: mergedValue,
+                resultType: mergedValue.ResultType);
             return;
         }
 
         operands.Add(operand);
     }
 
-    private static BoundExpression CreateConcatCall(SyntaxNode syntaxNode, IReadOnlyList<BoundExpression> operands, ClrTypeCache clrTypeCache)
+    private static BoundExpression CreateConcatCall(SyntaxNode syntaxNode, IReadOnlyList<BoundExpression> operands)
     {
         if (operands.Count <= 4)
         {
-            return CreateCall(syntaxNode, GetConcatMethod(operands.Count), operands, clrTypeCache);
+            return CreateCall(syntaxNode, GetConcatMethod(operands.Count), operands);
         }
 
         // No array-creation bound node exists for Concat(string[]); fold left-to-right instead.
-        var result = CreateCall(syntaxNode, concat4Method, operands.Take(4).ToArray(), clrTypeCache);
+        var result = CreateCall(syntaxNode, concat4Method, operands.Take(4).ToArray());
 
         for (var i = 4; i < operands.Count; i++)
         {
-            result = CreateCall(syntaxNode, concat2Method, new[] { result, operands[i] }, clrTypeCache);
+            result = CreateCall(syntaxNode, concat2Method, new[] { result, operands[i] });
         }
 
         return result;
     }
 
-    private static BoundExpression CreateCall(SyntaxNode syntaxNode, MethodInfo methodInfo, IReadOnlyList<BoundExpression> arguments, ClrTypeCache clrTypeCache)
+    // Concat always returns string; reuse an operand's already-resolved type.
+    private static BoundExpression CreateCall(SyntaxNode syntaxNode, MethodInfo methodInfo, IReadOnlyList<BoundExpression> arguments)
         => BoundNodeFactory.CreateBoundClrInvocationExpression(
             syntaxNode: syntaxNode,
             boundBaseExpression: arguments[0],
             methodInfo: methodInfo,
             boundArguments: arguments.ToImmutableArray(),
-            clrTypeCache: clrTypeCache);
+            resultType: arguments[0].ResultType);
 
     private static MethodInfo GetConcatMethod(int operandCount)
         => operandCount switch

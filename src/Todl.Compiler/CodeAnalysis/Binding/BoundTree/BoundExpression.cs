@@ -6,7 +6,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 internal abstract class BoundExpression : BoundNode
 {
-    public virtual TypeSymbol ResultType { get; }
+    public virtual TypeSymbol ResultType { get; internal init; }
     public virtual bool LValue => false;
     public virtual bool Constant => false;
     public virtual bool ReadOnly => true;

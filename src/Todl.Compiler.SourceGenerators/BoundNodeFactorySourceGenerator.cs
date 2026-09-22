@@ -82,24 +82,43 @@ internal sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
 
         public string ClassName => context.TargetSymbol.Name;
 
-        public IEnumerable<(string Name, IPropertySymbol Property)> Properties { get; }
+        public IEnumerable<(string Name, IPropertySymbol Property, bool IsOwn)> Properties { get; }
 
         public BoundNodeMetadata(GeneratorAttributeSyntaxContext context)
         {
             this.context = context;
 
             var boundNodeClass = context.TargetSymbol as INamedTypeSymbol;
+            var boundNodeType = context.SemanticModel.Compilation.GetTypeByMetadataName(BoundNodeTypeName);
 
-            Properties = boundNodeClass
-                .GetMembers()
-                .OfType<IPropertySymbol>()
-                .Where(p => !p.IsReadOnly)
-                .Select(p => (p.GetPropertyTypeName(), p));
+            // Walk own type then base types (stopping before BoundNode); own properties are required, inherited ones default to unset.
+            var seenNames = new HashSet<string>();
+            var properties = new List<(string, IPropertySymbol, bool)>();
+            var isOwn = true;
+
+            for (var type = boundNodeClass; type is not null && !SymbolEqualityComparer.Default.Equals(type, boundNodeType); type = type.BaseType)
+            {
+                foreach (var property in type.GetMembers().OfType<IPropertySymbol>().Where(p => !p.IsReadOnly))
+                {
+                    if (seenNames.Add(property.Name))
+                    {
+                        properties.Add((property.GetPropertyTypeName(), property, isOwn));
+                    }
+                }
+
+                isOwn = false;
+            }
+
+            Properties = properties;
         }
 
         public string WriteParameters()
         {
-            var properties = Properties.Select(p => $"{p.Name} {p.Property.CamelCasedName()}").ToList();
+            var properties = Properties
+                .Select(p => p.IsOwn
+                    ? $"{p.Name} {p.Property.CamelCasedName()}"
+                    : $"{p.Name} {p.Property.CamelCasedName()} = default")
+                .ToList();
             properties.Insert(0, "SyntaxNode syntaxNode");
             return string.Join(",\n", properties);
         }

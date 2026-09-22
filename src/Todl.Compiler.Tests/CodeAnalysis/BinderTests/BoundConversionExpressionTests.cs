@@ -18,7 +18,7 @@ public sealed class BoundConversionExpressionTests
         var boundConversionExpression = BoundNodeFactory.CreateBoundConversionExpression(
             syntaxNode: operand.SyntaxNode,
             operand: operand,
-            targetType: targetType,
+            resultType: targetType,
             conversionKind: ConversionKind.ImplicitNumeric);
 
         boundConversionExpression.ResultType.Should().Be(targetType);
@@ -36,7 +36,7 @@ public sealed class BoundConversionExpressionTests
         var boundConversionExpression = BoundNodeFactory.CreateBoundConversionExpression(
             syntaxNode: operand.SyntaxNode,
             operand: operand,
-            targetType: TestDefaults.DefaultClrTypeCache.BuiltInTypes.Int64,
+            resultType: TestDefaults.DefaultClrTypeCache.BuiltInTypes.Int64,
             conversionKind: ConversionKind.ImplicitNumeric);
 
         boundConversionExpression.Constant.Should().BeFalse();
@@ -49,7 +49,7 @@ public sealed class BoundConversionExpressionTests
         var boundConversionExpression = BoundNodeFactory.CreateBoundConversionExpression(
             syntaxNode: operand.SyntaxNode,
             operand: operand,
-            targetType: TestDefaults.DefaultClrTypeCache.BuiltInTypes.Int64,
+            resultType: TestDefaults.DefaultClrTypeCache.BuiltInTypes.Int64,
             conversionKind: ConversionKind.ImplicitNumeric);
 
         var walker = new RecordingBoundTreeWalker();
@@ -68,7 +68,7 @@ public sealed class BoundConversionExpressionTests
         var boundConversionExpression = BoundNodeFactory.CreateBoundConversionExpression(
             syntaxNode: operand.SyntaxNode,
             operand: operand,
-            targetType: targetType,
+            resultType: targetType,
             conversionKind: ConversionKind.ImplicitNumeric);
 
         var rewriter = new ReplacingBoundTreeRewriter(operand, replacement);
@@ -76,7 +76,7 @@ public sealed class BoundConversionExpressionTests
 
         result.Should().NotBeSameAs(boundConversionExpression);
         result.Operand.Should().BeSameAs(replacement);
-        result.TargetType.Should().Be(targetType);
+        result.ResultType.Should().Be(targetType);
         result.ConversionKind.Should().Be(ConversionKind.ImplicitNumeric);
     }
 
@@ -87,7 +87,7 @@ public sealed class BoundConversionExpressionTests
         var boundConversionExpression = BoundNodeFactory.CreateBoundConversionExpression(
             syntaxNode: operand.SyntaxNode,
             operand: operand,
-            targetType: TestDefaults.DefaultClrTypeCache.BuiltInTypes.Int64,
+            resultType: TestDefaults.DefaultClrTypeCache.BuiltInTypes.Int64,
             conversionKind: ConversionKind.ImplicitNumeric);
 
         var rewriter = new ReplacingBoundTreeRewriter(from: null, to: null);
