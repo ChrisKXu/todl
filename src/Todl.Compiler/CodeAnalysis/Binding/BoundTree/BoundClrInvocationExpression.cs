@@ -38,7 +38,14 @@ public partial class Binder
     {
         if (invocationExpression.Expression is MemberAccessExpression memberAccessExpression)
         {
-            return BindClrInvocationExpression(invocationExpression, memberAccessExpression);
+            var boundBaseExpression = BindExpression(memberAccessExpression.BaseExpression);
+
+            if (boundBaseExpression.ResultType is ClrTypeSymbol)
+            {
+                return BindClrInvocationExpression(invocationExpression, memberAccessExpression, boundBaseExpression);
+            }
+
+            return BindInvalidInvocationExpression(invocationExpression, boundBaseExpression);
         }
 
         if (invocationExpression.Expression is SimpleNameExpression simpleNameExpression)
@@ -46,10 +53,12 @@ public partial class Binder
             return BindTodlInvocationExpression(invocationExpression, simpleNameExpression);
         }
 
-        return BindInvalidInvocationExpression(invocationExpression);
+        return BindInvalidInvocationExpression(invocationExpression, boundBaseExpression: null);
     }
 
-    private BoundExpression BindInvalidInvocationExpression(InvocationExpression invocationExpression)
+    private BoundExpression BindInvalidInvocationExpression(
+        InvocationExpression invocationExpression,
+        BoundExpression boundBaseExpression)
     {
         ReportDiagnostic(
             new Diagnostic()
@@ -62,7 +71,7 @@ public partial class Binder
 
         return BoundNodeFactory.CreateBoundInvalidInvocationExpression(
             syntaxNode: invocationExpression,
-            boundBaseExpression: BindExpression(invocationExpression.Expression),
+            boundBaseExpression: boundBaseExpression ?? BindExpression(invocationExpression.Expression),
             boundArguments: invocationExpression.Arguments.Items
                 .Select(a => BindExpression(a.Expression))
                 .ToImmutableArray());
@@ -70,9 +79,9 @@ public partial class Binder
 
     private BoundExpression BindClrInvocationExpression(
         InvocationExpression invocationExpression,
-        MemberAccessExpression memberAccessExpression)
+        MemberAccessExpression memberAccessExpression,
+        BoundExpression boundBaseExpression)
     {
-        var boundBaseExpression = BindExpression(memberAccessExpression.BaseExpression);
         var nameToken = memberAccessExpression.MemberIdentifierToken;
 
         // Since all or none of the arguments of an InvocationExpression needs to be named,
