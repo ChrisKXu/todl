@@ -63,7 +63,7 @@ public sealed class BoundBinaryExpressionTests
         var convertedOperand = leftIsValueType ? boundBinaryExpression.Left : boundBinaryExpression.Right;
         var stringOperand = leftIsValueType ? boundBinaryExpression.Right : boundBinaryExpression.Left;
 
-        var toStringCall = convertedOperand.Should().BeOfType<BoundClrFunctionCallExpression>().Subject;
+        var toStringCall = convertedOperand.Should().BeOfType<BoundClrInvocationExpression>().Subject;
         toStringCall.MethodInfo.Name.Should().Be("ToString");
         toStringCall.MethodInfo.GetParameters().Should().BeEmpty();
         toStringCall.IsStatic.Should().BeFalse();

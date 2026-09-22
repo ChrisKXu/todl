@@ -80,11 +80,11 @@ internal partial class Emitter
         return AssemblyDefinition.MainModule.ImportReference(clrType);
     }
 
-    private MethodReference ResolveMethodReference(BoundClrFunctionCallExpression boundClrFunctionCallExpression)
+    private MethodReference ResolveMethodReference(BoundClrInvocationExpression boundClrInvocationExpression)
     {
-        var methodInfo = boundClrFunctionCallExpression.MethodInfo;
+        var methodInfo = boundClrInvocationExpression.MethodInfo;
         var methodReference = AssemblyDefinition.MainModule.ImportReference(methodInfo);
-        methodReference.ReturnType = ResolveTypeReference(boundClrFunctionCallExpression.ResultType as ClrTypeSymbol);
+        methodReference.ReturnType = ResolveTypeReference(boundClrInvocationExpression.ResultType as ClrTypeSymbol);
 
         var parameters = methodInfo.GetParameters();
         for (var i = 0; i != methodReference.Parameters.Count; ++i)
@@ -111,9 +111,9 @@ internal partial class Emitter
         return methodReference;
     }
 
-    protected virtual MethodReference ResolveMethodReference(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
+    protected virtual MethodReference ResolveMethodReference(BoundTodlInvocationExpression boundTodlInvocationExpression)
     {
-        return Parent.ResolveMethodReference(boundTodlFunctionCallExpression);
+        return Parent.ResolveMethodReference(boundTodlInvocationExpression);
     }
 
     public static AssemblyEmitter CreateAssemblyEmitter(Compilation compilation)
@@ -223,8 +223,8 @@ internal partial class Emitter
         public FunctionEmitter CreateFunctionEmitter(BoundFunctionMember boundFunctionMember)
             => new(this, boundFunctionMember);
 
-        protected override MethodReference ResolveMethodReference(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
-            => methodReferences[boundTodlFunctionCallExpression.FunctionSymbol];
+        protected override MethodReference ResolveMethodReference(BoundTodlInvocationExpression boundTodlInvocationExpression)
+            => methodReferences[boundTodlInvocationExpression.FunctionSymbol];
     }
 
     internal abstract partial class InstructionEmitter : Emitter

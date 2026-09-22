@@ -25,7 +25,7 @@ public partial class Binder
             SimpleNameExpression simpleNameExpression => BindSimpleNameExpression(simpleNameExpression),
             NamespaceQualifiedNameExpression NamespaceQualifiedNameExpression => BindNamespaceQualifiedNameExpression(NamespaceQualifiedNameExpression),
             MemberAccessExpression memberAccessExpression => BindMemberAccessExpression(memberAccessExpression),
-            FunctionCallExpression functionCallExpression => BindFunctionCallExpression(functionCallExpression),
+            InvocationExpression invocationExpression => BindInvocationExpression(invocationExpression),
             NewExpression newExpression => BindNewExpression(newExpression),
             _ => throw new NotSupportedException() // keep compiler happy, this shouldn't happen as guarded by test cases
         };

@@ -175,9 +175,9 @@ public sealed class IfUnlessStatementTests
             .As<BinaryExpression>()
             .Invoking(right =>
         {
-            right.Left.As<FunctionCallExpression>().Should().NotBeNull();
+            right.Left.As<InvocationExpression>().Should().NotBeNull();
             right.Operator.Kind.Should().Be(SyntaxKind.PipePipeToken);
-            right.Right.As<FunctionCallExpression>().Should().NotBeNull();
+            right.Right.As<InvocationExpression>().Should().NotBeNull();
         }).Should().NotThrow();
     }
 }

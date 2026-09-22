@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.ExecutionTests;
 
-public sealed class BoundTodlFunctionCallExpressionTests
+public sealed class BoundTodlInvocationExpressionTests
 {
     [Fact]
     public void FunctionWithFiveOrMoreLocalsShouldEmitAndRunSuccessfully()
@@ -39,7 +39,7 @@ int Run() {
     }
 
     [Fact]
-    public void MultiParameterFunctionCallShouldPassArgumentsInDeclaredOrder()
+    public void MultiParameterInvocationShouldPassArgumentsInDeclaredOrder()
     {
         // Regression test: call arguments were emitted in the hash-iteration order of the
         // name-keyed BoundArguments dictionary rather than the function's declared parameter

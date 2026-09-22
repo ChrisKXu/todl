@@ -23,11 +23,11 @@ internal partial class Emitter
                 case BoundAssignmentExpression boundAssignmentExpression:
                     EmitAssignmentExpression(boundAssignmentExpression);
                     return;
-                case BoundClrFunctionCallExpression boundClrFunctionCallExpression:
-                    EmitClrFunctionCallExpression(boundClrFunctionCallExpression);
+                case BoundClrInvocationExpression boundClrInvocationExpression:
+                    EmitClrInvocationExpression(boundClrInvocationExpression);
                     return;
-                case BoundTodlFunctionCallExpression boundTodlFunctionCallExpression:
-                    EmitTodlFunctionCallExpression(boundTodlFunctionCallExpression);
+                case BoundTodlInvocationExpression boundTodlInvocationExpression:
+                    EmitTodlInvocationExpression(boundTodlInvocationExpression);
                     return;
                 case BoundObjectCreationExpression boundObjectCreationExpression:
                     EmitObjectCreationExpression(boundObjectCreationExpression);
@@ -140,21 +140,21 @@ internal partial class Emitter
             ILProcessor.Emit(OpCodes.Ldc_R8, doubleValue);
         }
 
-        private void EmitClrFunctionCallExpression(BoundClrFunctionCallExpression boundClrFunctionCallExpression)
+        private void EmitClrInvocationExpression(BoundClrInvocationExpression boundClrInvocationExpression)
         {
             // The "this" reference must be on the stack ahead of the arguments for an
             // instance call - pushing arguments first leaves an invalid evaluation stack.
-            if (!boundClrFunctionCallExpression.IsStatic)
+            if (!boundClrInvocationExpression.IsStatic)
             {
-                EmitInstanceCallReceiver(boundClrFunctionCallExpression.BoundBaseExpression);
+                EmitInstanceCallReceiver(boundClrInvocationExpression.BoundBaseExpression);
             }
 
-            foreach (var argument in boundClrFunctionCallExpression.BoundArguments)
+            foreach (var argument in boundClrInvocationExpression.BoundArguments)
             {
                 EmitExpression(argument);
             }
 
-            var methodReference = ResolveMethodReference(boundClrFunctionCallExpression);
+            var methodReference = ResolveMethodReference(boundClrInvocationExpression);
             ILProcessor.Emit(OpCodes.Call, methodReference);
         }
 
@@ -356,17 +356,17 @@ internal partial class Emitter
             }
         }
 
-        private void EmitTodlFunctionCallExpression(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
+        private void EmitTodlInvocationExpression(BoundTodlInvocationExpression boundTodlInvocationExpression)
         {
             // BoundArguments is a name-keyed dictionary; its enumeration order is not guaranteed
             // to match declaration order, but positional argument pushes onto the stack must -
             // walk the function's declared parameter order instead of the dictionary's.
-            foreach (var parameterName in boundTodlFunctionCallExpression.FunctionSymbol.OrderedParameterNames)
+            foreach (var parameterName in boundTodlInvocationExpression.FunctionSymbol.OrderedParameterNames)
             {
-                EmitExpression(boundTodlFunctionCallExpression.BoundArguments[parameterName]);
+                EmitExpression(boundTodlInvocationExpression.BoundArguments[parameterName]);
             }
 
-            var methodReference = ResolveMethodReference(boundTodlFunctionCallExpression);
+            var methodReference = ResolveMethodReference(boundTodlInvocationExpression);
             ILProcessor.Emit(OpCodes.Call, methodReference);
         }
 

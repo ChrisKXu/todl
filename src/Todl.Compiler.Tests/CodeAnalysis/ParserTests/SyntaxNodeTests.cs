@@ -63,7 +63,7 @@ public sealed class SyntaxNodeTests
         "(a == b)", // ParameterizedExpression
         "-a", // UnaryExpression
         "a + 10", // BinaryExpression
-        "System::Console.WriteLine(\"Hello World!\")", // FunctionCallExpression
+        "System::Console.WriteLine(\"Hello World!\")", // InvocationExpression
         "\"Hello World!\"", // LiteralExpression
         "\"abc\".Length", // MemberAccessExpression
         "new object()" // NewExpression

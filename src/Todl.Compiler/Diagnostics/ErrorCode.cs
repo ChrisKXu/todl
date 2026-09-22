@@ -24,6 +24,7 @@
         UnsupportedOperator,
         UnsupportedLiteral,
         NoMatchingCandidate,
+        ExpressionNotInvocable,
         MemberNotFound,
         MemberNotAccessible,
         TypeNotFound,

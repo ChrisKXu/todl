@@ -150,7 +150,7 @@ public partial class Binder
         var clrType = (operand.ResultType as ClrTypeSymbol).ClrType;
         var toStringMethod = clrType.GetMethod(nameof(ToString), Type.EmptyTypes);
 
-        return BoundNodeFactory.CreateBoundClrFunctionCallExpression(
+        return BoundNodeFactory.CreateBoundClrInvocationExpression(
             syntaxNode: operand.SyntaxNode,
             boundBaseExpression: operand,
             methodInfo: toStringMethod,
