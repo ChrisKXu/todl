@@ -9,9 +9,7 @@ public sealed class FunctionCallExpressionTests
 {
     private void PerformBasicValidationForFunctionCallExpression(FunctionCallExpression functionCallExpression)
     {
-        functionCallExpression.DotToken.Text.ToString().Should().Be(".");
-        functionCallExpression.DotToken.Kind.Should().Be(SyntaxKind.DotToken);
-        functionCallExpression.NameToken.Kind.Should().Be(SyntaxKind.IdentifierToken);
+        functionCallExpression.Expression.Should().BeOfType<MemberAccessExpression>();
 
         functionCallExpression.Arguments.OpenParenthesisToken.Text.ToString().Should().Be("(");
         functionCallExpression.Arguments.OpenParenthesisToken.Kind.Should().Be(SyntaxKind.OpenParenthesisToken);
@@ -27,8 +25,9 @@ public sealed class FunctionCallExpressionTests
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.BaseExpression.As<SimpleNameExpression>().GetText().Should().Be("a");
-        functionCallExpression.NameToken.Text.ToString().Should().Be("ToString");
+        var memberAccessExpression = functionCallExpression.Expression.As<MemberAccessExpression>();
+        memberAccessExpression.BaseExpression.As<SimpleNameExpression>().GetText().Should().Be("a");
+        memberAccessExpression.MemberIdentifierToken.Text.ToString().Should().Be("ToString");
         functionCallExpression.Arguments.Items.Should().BeEmpty();
     }
 
@@ -40,8 +39,9 @@ public sealed class FunctionCallExpressionTests
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.BaseExpression.As<NamespaceQualifiedNameExpression>().GetText().Should().Be("System::Int32");
-        functionCallExpression.NameToken.Text.ToString().Should().Be("Parse");
+        var memberAccessExpression = functionCallExpression.Expression.As<MemberAccessExpression>();
+        memberAccessExpression.BaseExpression.As<NamespaceQualifiedNameExpression>().GetText().Should().Be("System::Int32");
+        memberAccessExpression.MemberIdentifierToken.Text.ToString().Should().Be("Parse");
 
         functionCallExpression.Arguments.Items.Should().NotBeEmpty();
         functionCallExpression.Arguments.Items.Should().SatisfyRespectively(argument =>
@@ -59,8 +59,9 @@ public sealed class FunctionCallExpressionTests
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.BaseExpression.As<NamespaceQualifiedNameExpression>().GetText().Should().Be("System::Int32");
-        functionCallExpression.NameToken.Text.ToString().Should().Be("Parse");
+        var memberAccessExpression = functionCallExpression.Expression.As<MemberAccessExpression>();
+        memberAccessExpression.BaseExpression.As<NamespaceQualifiedNameExpression>().GetText().Should().Be("System::Int32");
+        memberAccessExpression.MemberIdentifierToken.Text.ToString().Should().Be("Parse");
 
         functionCallExpression.Arguments.Items.Should().NotBeEmpty();
         functionCallExpression.Arguments.Items.Should().SatisfyRespectively(argument =>
@@ -92,7 +93,7 @@ public sealed class FunctionCallExpressionTests
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.NameToken.Text.ToString().Should().Be("Format");
+        functionCallExpression.Expression.As<MemberAccessExpression>().MemberIdentifierToken.Text.ToString().Should().Be("Format");
         functionCallExpression.Arguments.Items.Should().HaveCount(4);
 
         functionCallExpression.Arguments.Items.Should().SatisfyRespectively(
@@ -126,7 +127,7 @@ public sealed class FunctionCallExpressionTests
 
         PerformBasicValidationForFunctionCallExpression(functionCallExpression);
 
-        functionCallExpression.NameToken.Text.ToString().Should().Be("Method");
+        functionCallExpression.Expression.As<MemberAccessExpression>().MemberIdentifierToken.Text.ToString().Should().Be("Method");
         functionCallExpression.Arguments.Items.Should().HaveCount(3);
 
         functionCallExpression.Arguments.Items.Should().SatisfyRespectively(
@@ -154,7 +155,7 @@ public sealed class FunctionCallExpressionTests
         var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         functionCallExpression.Should().NotBeNull();
-        functionCallExpression.NameToken.Text.ToString().Should().Be("Max");
+        functionCallExpression.Expression.As<MemberAccessExpression>().MemberIdentifierToken.Text.ToString().Should().Be("Max");
         functionCallExpression.Arguments.Items.Should().HaveCount(2);
 
         functionCallExpression.Arguments.Items[0].Expression.Should().BeOfType<BinaryExpression>();
@@ -168,13 +169,15 @@ public sealed class FunctionCallExpressionTests
         var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         functionCallExpression.Should().NotBeNull();
-        functionCallExpression.NameToken.Text.ToString().Should().Be("ToUpper");
+        var outerMemberAccess = functionCallExpression.Expression.As<MemberAccessExpression>();
+        outerMemberAccess.MemberIdentifierToken.Text.ToString().Should().Be("ToUpper");
         functionCallExpression.Arguments.Items.Should().BeEmpty();
 
-        var innerCall = functionCallExpression.BaseExpression.As<FunctionCallExpression>();
+        var innerCall = outerMemberAccess.BaseExpression.As<FunctionCallExpression>();
         innerCall.Should().NotBeNull();
-        innerCall.NameToken.Text.ToString().Should().Be("ToString");
-        innerCall.BaseExpression.As<SimpleNameExpression>().GetText().Should().Be("a");
+        var innerMemberAccess = innerCall.Expression.As<MemberAccessExpression>();
+        innerMemberAccess.MemberIdentifierToken.Text.ToString().Should().Be("ToString");
+        innerMemberAccess.BaseExpression.As<SimpleNameExpression>().GetText().Should().Be("a");
     }
 
     [Fact]
@@ -184,15 +187,15 @@ public sealed class FunctionCallExpressionTests
         var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         functionCallExpression.Should().NotBeNull();
-        functionCallExpression.NameToken.Text.ToString().Should().Be("Third");
+        functionCallExpression.Expression.As<MemberAccessExpression>().MemberIdentifierToken.Text.ToString().Should().Be("Third");
 
-        var second = functionCallExpression.BaseExpression.As<FunctionCallExpression>();
-        second.NameToken.Text.ToString().Should().Be("Second");
+        var second = functionCallExpression.Expression.As<MemberAccessExpression>().BaseExpression.As<FunctionCallExpression>();
+        second.Expression.As<MemberAccessExpression>().MemberIdentifierToken.Text.ToString().Should().Be("Second");
 
-        var first = second.BaseExpression.As<FunctionCallExpression>();
-        first.NameToken.Text.ToString().Should().Be("First");
+        var first = second.Expression.As<MemberAccessExpression>().BaseExpression.As<FunctionCallExpression>();
+        first.Expression.As<MemberAccessExpression>().MemberIdentifierToken.Text.ToString().Should().Be("First");
 
-        first.BaseExpression.As<SimpleNameExpression>().GetText().Should().Be("a");
+        first.Expression.As<MemberAccessExpression>().BaseExpression.As<SimpleNameExpression>().GetText().Should().Be("a");
     }
 
     [Fact]
@@ -202,11 +205,11 @@ public sealed class FunctionCallExpressionTests
         var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         functionCallExpression.Should().NotBeNull();
-        functionCallExpression.NameToken.Text.ToString().Should().Be("Call");
+        functionCallExpression.Expression.As<MemberAccessExpression>().MemberIdentifierToken.Text.ToString().Should().Be("Call");
         functionCallExpression.Arguments.Items.Should().HaveCount(1);
 
         var innerCall = functionCallExpression.Arguments.Items[0].Expression.As<FunctionCallExpression>();
-        innerCall.NameToken.Text.ToString().Should().Be("GetValue");
+        innerCall.Expression.As<MemberAccessExpression>().MemberIdentifierToken.Text.ToString().Should().Be("GetValue");
     }
 
     [Fact]
@@ -216,8 +219,9 @@ public sealed class FunctionCallExpressionTests
         var functionCallExpression = TestUtils.ParseExpression<FunctionCallExpression>(inputText);
 
         functionCallExpression.Should().NotBeNull();
-        functionCallExpression.NameToken.Text.ToString().Should().Be("Abs");
-        functionCallExpression.BaseExpression.Should().BeOfType<NamespaceQualifiedNameExpression>();
+        var memberAccessExpression = functionCallExpression.Expression.As<MemberAccessExpression>();
+        memberAccessExpression.MemberIdentifierToken.Text.ToString().Should().Be("Abs");
+        memberAccessExpression.BaseExpression.Should().BeOfType<NamespaceQualifiedNameExpression>();
         functionCallExpression.Arguments.Items.Should().HaveCount(1);
     }
 

@@ -127,6 +127,20 @@ public sealed class BoundFunctionCallExpressionTests
     }
 
     [Fact]
+    public void BindFunctionCallOnNonInvocableExpressionShouldReportDiagnosticAndReturnInvalidNode()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundExpression = TestUtils.BindExpression<BoundExpression>("\"abc\"(1)", diagnosticBuilder);
+
+        boundExpression.Should().BeOfType<BoundInvalidFunctionCallExpression>();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().ContainSingle();
+        diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
+        diagnostics.Single().ErrorCode.Should().Be(ErrorCode.ExpressionNotInvocable);
+    }
+
+    [Fact]
     public void TestBindTodlFunctionCallExpressionWithNoArguments()
     {
         var inputText = @"

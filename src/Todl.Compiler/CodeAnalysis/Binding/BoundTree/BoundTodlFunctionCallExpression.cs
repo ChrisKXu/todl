@@ -19,10 +19,13 @@ internal sealed class BoundTodlFunctionCallExpression : BoundExpression
 
 public partial class Binder
 {
-    private BoundTodlFunctionCallExpression BindTodlFunctionCallExpression(FunctionCallExpression functionCallExpression)
+    private BoundTodlFunctionCallExpression BindTodlFunctionCallExpression(
+        FunctionCallExpression functionCallExpression,
+        SimpleNameExpression simpleNameExpression)
     {
         FunctionSymbol functionSymbol = null;
         var boundArguments = ImmutableDictionary<string, BoundExpression>.Empty;
+        var nameToken = simpleNameExpression.IdentifierToken;
 
         var arguments = functionCallExpression.Arguments.Items;
 
@@ -33,7 +36,7 @@ public partial class Binder
                 argument => BindExpression(argument.Expression));
 
             functionSymbol = Scope.LookupFunctionSymbol(
-                name: functionCallExpression.NameToken.Text.ToString(),
+                name: nameToken.Text.ToString(),
                 namedArguments: boundArguments.ToDictionary(
                     item => item.Key,
                     item => item.Value.ResultType));
@@ -42,7 +45,7 @@ public partial class Binder
         {
             var positionalArguments = arguments.Select(argument => BindExpression(argument.Expression)).ToList();
             functionSymbol = Scope.LookupFunctionSymbol(
-                name: functionCallExpression.NameToken.Text.ToString(),
+                name: nameToken.Text.ToString(),
                 positionalArguments: positionalArguments.Select(a => a.ResultType));
 
             boundArguments = functionSymbol?.OrderedParameterNames
@@ -52,7 +55,7 @@ public partial class Binder
 
         if (functionSymbol == null)
         {
-            ReportNoMatchingFunctionCandidate(functionCallExpression);
+            ReportNoMatchingFunctionCandidate(functionCallExpression, nameToken);
         }
 
         return BoundNodeFactory.CreateBoundTodlFunctionCallExpression(

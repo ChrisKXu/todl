@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Linq;
+﻿using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
 
@@ -29,23 +28,11 @@ public sealed class Argument : SyntaxNode
 
 public sealed class FunctionCallExpression : Expression
 {
-    public Expression BaseExpression { get; internal init; }
-    public SyntaxToken DotToken { get; internal init; }
-    public SyntaxToken NameToken { get; internal init; }
+    public Expression Expression { get; internal init; }
     public CommaSeparatedSyntaxList<Argument> Arguments { get; internal init; }
 
     public override TextSpan Text
-    {
-        get
-        {
-            if (BaseExpression != null)
-            {
-                return TextSpan.FromBounds(BaseExpression.Text.Start, Arguments.Text.End);
-            }
-
-            return TextSpan.FromBounds(NameToken.Span.Start, Arguments.Text.End);
-        }
-    }
+        => TextSpan.FromBounds(Expression.Text.Start, Arguments.Text.End);
 }
 
 public sealed partial class Parser
@@ -86,25 +73,10 @@ public sealed partial class Parser
                 });
         }
 
-        if (baseExpression is MemberAccessExpression memberAccessExpression)
-        {
-            return new FunctionCallExpression()
-            {
-                SyntaxTree = syntaxTree,
-                BaseExpression = memberAccessExpression.BaseExpression,
-                DotToken = memberAccessExpression.DotToken,
-                NameToken = memberAccessExpression.MemberIdentifierToken,
-                Arguments = arguments
-            };
-        }
-
-        Debug.Assert(baseExpression is SimpleNameExpression);
-        var simpleNameExpression = (SimpleNameExpression)baseExpression;
-
         return new()
         {
             SyntaxTree = syntaxTree,
-            NameToken = simpleNameExpression.IdentifierToken,
+            Expression = baseExpression,
             Arguments = arguments
         };
     }
