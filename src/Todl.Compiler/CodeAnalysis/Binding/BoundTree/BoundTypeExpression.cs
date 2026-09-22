@@ -7,10 +7,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 [BoundNode]
 internal sealed class BoundTypeExpression : BoundExpression
 {
-    internal TypeSymbol TargetType { get; init; }
-
-    public override TypeSymbol ResultType => TargetType;
-
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundTypeExpression(this);
 }
 
@@ -34,6 +30,6 @@ public partial class Binder
 
         return BoundNodeFactory.CreateBoundTypeExpression(
             syntaxNode: nameExpression,
-            targetType: type);
+            resultType: type);
     }
 }

@@ -44,7 +44,6 @@ internal sealed class BoundAssignmentExpression : BoundExpression
     public BoundExpression Left { get; internal init; }
     public BoundAssignmentOperator Operator { get; internal init; }
     public BoundExpression Right { get; internal init; }
-    public override TypeSymbol ResultType => Right.ResultType;
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundAssignmentExpression(this);
 }
@@ -115,6 +114,7 @@ public partial class Binder
             syntaxNode: assignmentExpression,
             left: left,
             right: right,
-            @operator: boundAssignmentOperator);
+            @operator: boundAssignmentOperator,
+            resultType: right.ResultType);
     }
 }

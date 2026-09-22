@@ -7,10 +7,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 internal sealed class BoundConversionExpression : BoundExpression
 {
     public BoundExpression Operand { get; internal init; }
-    public TypeSymbol TargetType { get; internal init; }
     public ConversionKind ConversionKind { get; internal init; }
 
-    public override TypeSymbol ResultType => TargetType;
     public override bool Constant => Operand.Constant;
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundConversionExpression(this);

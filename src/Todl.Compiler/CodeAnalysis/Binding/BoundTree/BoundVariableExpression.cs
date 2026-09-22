@@ -8,7 +8,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 internal sealed class BoundVariableExpression : BoundExpression
 {
     public VariableSymbol Variable { get; internal init; }
-    public override TypeSymbol ResultType => Variable.Type;
     public override bool LValue => true;
     public override bool Constant => Variable.Constant;
     public override bool ReadOnly => Variable.ReadOnly;
@@ -31,7 +30,7 @@ public partial class Binder
         {
             return BoundNodeFactory.CreateBoundTypeExpression(
                 syntaxNode: simpleNameExpression,
-                targetType: type);
+                resultType: type);
         }
 
         // Then check if it's a variable
@@ -50,7 +49,8 @@ public partial class Binder
 
         return BoundNodeFactory.CreateBoundVariableExpression(
             syntaxNode: simpleNameExpression,
-            variable: variable);
+            variable: variable,
+            resultType: variable?.Type);
     }
 
     /// <summary>
@@ -76,6 +76,6 @@ public partial class Binder
 
         return BoundNodeFactory.CreateBoundTypeExpression(
             syntaxNode: NamespaceQualifiedNameExpression,
-            targetType: type);
+            resultType: type);
     }
 }

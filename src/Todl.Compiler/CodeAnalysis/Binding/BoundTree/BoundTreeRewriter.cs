@@ -11,7 +11,7 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
         return left == boundAssignmentExpression.Left && right == boundAssignmentExpression.Right
             ? boundAssignmentExpression
-            : BoundNodeFactory.CreateBoundAssignmentExpression(boundAssignmentExpression.SyntaxNode, left, boundAssignmentExpression.Operator, right);
+            : BoundNodeFactory.CreateBoundAssignmentExpression(boundAssignmentExpression.SyntaxNode, left, boundAssignmentExpression.Operator, right, boundAssignmentExpression.ResultType);
     }
 
     public override BoundNode VisitBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
@@ -21,7 +21,7 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
         return left == boundBinaryExpression.Left && right == boundBinaryExpression.Right
             ? boundBinaryExpression
-            : BoundNodeFactory.CreateBoundBinaryExpression(boundBinaryExpression.SyntaxNode, boundBinaryExpression.Operator, left, right, boundBinaryExpression.ClrTypeCache);
+            : BoundNodeFactory.CreateBoundBinaryExpression(boundBinaryExpression.SyntaxNode, boundBinaryExpression.Operator, left, right, boundBinaryExpression.ResultType);
     }
 
     public override BoundNode VisitBoundBlockStatement(BoundBlockStatement boundBlockStatement)
@@ -42,7 +42,7 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
         return baseExpression == boundClrFieldAccessExpression.BoundBaseExpression
             ? boundClrFieldAccessExpression
-            : BoundNodeFactory.CreateBoundClrFieldAccessExpression(boundClrFieldAccessExpression.SyntaxNode, baseExpression, boundClrFieldAccessExpression.FieldInfo, boundClrFieldAccessExpression.ClrTypeCache);
+            : BoundNodeFactory.CreateBoundClrFieldAccessExpression(boundClrFieldAccessExpression.SyntaxNode, baseExpression, boundClrFieldAccessExpression.FieldInfo, boundClrFieldAccessExpression.ResultType);
     }
 
     public override BoundNode VisitBoundClrInvocationExpression(BoundClrInvocationExpression boundClrInvocationExpression)
@@ -52,7 +52,7 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
         return baseExpression == boundClrInvocationExpression.BoundBaseExpression && arguments == boundClrInvocationExpression.BoundArguments
             ? boundClrInvocationExpression
-            : BoundNodeFactory.CreateBoundClrInvocationExpression(boundClrInvocationExpression.SyntaxNode, baseExpression, boundClrInvocationExpression.MethodInfo, arguments, boundClrInvocationExpression.ClrTypeCache);
+            : BoundNodeFactory.CreateBoundClrInvocationExpression(boundClrInvocationExpression.SyntaxNode, baseExpression, boundClrInvocationExpression.MethodInfo, arguments, boundClrInvocationExpression.ResultType);
     }
 
     public override BoundNode VisitBoundClrPropertyAccessExpression(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
@@ -61,7 +61,7 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
         return baseExpression == boundClrPropertyAccessExpression.BoundBaseExpression
             ? boundClrPropertyAccessExpression
-            : BoundNodeFactory.CreateBoundClrPropertyAccessExpression(boundClrPropertyAccessExpression.SyntaxNode, baseExpression, boundClrPropertyAccessExpression.PropertyInfo, boundClrPropertyAccessExpression.ClrTypeCache);
+            : BoundNodeFactory.CreateBoundClrPropertyAccessExpression(boundClrPropertyAccessExpression.SyntaxNode, baseExpression, boundClrPropertyAccessExpression.PropertyInfo, boundClrPropertyAccessExpression.ResultType);
     }
 
     public override BoundNode VisitBoundConditionalStatement(BoundConditionalStatement boundConditionalStatement)
@@ -87,7 +87,7 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
         return operand == boundConversionExpression.Operand
             ? boundConversionExpression
-            : BoundNodeFactory.CreateBoundConversionExpression(boundConversionExpression.SyntaxNode, operand, boundConversionExpression.TargetType, boundConversionExpression.ConversionKind);
+            : BoundNodeFactory.CreateBoundConversionExpression(boundConversionExpression.SyntaxNode, operand, boundConversionExpression.ConversionKind, boundConversionExpression.ResultType);
     }
 
     public override BoundNode VisitBoundEntryPointTypeDefinition(BoundEntryPointTypeDefinition boundEntryPointTypeDefinition)
@@ -99,7 +99,6 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
             {
                 SyntaxNode = boundEntryPointTypeDefinition.SyntaxNode,
                 BoundMembers = members,
-                ClrTypeCache = boundEntryPointTypeDefinition.ClrTypeCache
             };
     }
 
@@ -168,7 +167,7 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
         return arguments == boundObjectCreationExpression.BoundArguments
             ? boundObjectCreationExpression
-            : BoundNodeFactory.CreateBoundObjectCreationExpression(boundObjectCreationExpression.SyntaxNode, boundObjectCreationExpression.ConstructorInfo, arguments, boundObjectCreationExpression.ClrTypeCache);
+            : BoundNodeFactory.CreateBoundObjectCreationExpression(boundObjectCreationExpression.SyntaxNode, boundObjectCreationExpression.ConstructorInfo, arguments, boundObjectCreationExpression.ResultType);
     }
 
     public override BoundNode VisitBoundReturnStatement(BoundReturnStatement boundReturnStatement)
@@ -177,7 +176,7 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
         return returnValueExpression == boundReturnStatement.BoundReturnValueExpression
             ? boundReturnStatement
-            : BoundNodeFactory.CreateBoundReturnStatement(boundReturnStatement.SyntaxNode, returnValueExpression, boundReturnStatement.ClrTypeCache);
+            : BoundNodeFactory.CreateBoundReturnStatement(boundReturnStatement.SyntaxNode, returnValueExpression, boundReturnStatement.ReturnType);
     }
 
     public override BoundNode VisitBoundTodlInvocationExpression(BoundTodlInvocationExpression boundTodlInvocationExpression)
@@ -186,7 +185,7 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
         return arguments == boundTodlInvocationExpression.BoundArguments
             ? boundTodlInvocationExpression
-            : BoundNodeFactory.CreateBoundTodlInvocationExpression(boundTodlInvocationExpression.SyntaxNode, boundTodlInvocationExpression.FunctionSymbol, arguments);
+            : BoundNodeFactory.CreateBoundTodlInvocationExpression(boundTodlInvocationExpression.SyntaxNode, boundTodlInvocationExpression.FunctionSymbol, arguments, boundTodlInvocationExpression.ResultType);
     }
 
     public override BoundNode VisitBoundTypeExpression(BoundTypeExpression boundTypeExpression)
@@ -198,7 +197,7 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
         return operand == boundUnaryExpression.Operand
             ? boundUnaryExpression
-            : BoundNodeFactory.CreateBoundUnaryExpression(boundUnaryExpression.SyntaxNode, boundUnaryExpression.Operator, operand, boundUnaryExpression.ClrTypeCache);
+            : BoundNodeFactory.CreateBoundUnaryExpression(boundUnaryExpression.SyntaxNode, boundUnaryExpression.Operator, operand, boundUnaryExpression.ResultType);
     }
 
     public override BoundNode VisitBoundVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)

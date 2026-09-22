@@ -15,7 +15,6 @@ internal sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
 
     public override bool IsGeneratedType => true;
     public override bool IsStatic => true;
-    public ClrTypeCache ClrTypeCache { get; internal init; }
 
     public BoundFunctionMember EntryPointFunctionMember
         => Functions.FirstOrDefault(IsEntryPointCandidate);
@@ -29,7 +28,6 @@ internal sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
         }
 
         // entry point function should either return "void" or "int"
-        var builtInTypes = ClrTypeCache.BuiltInTypes;
         if (f.ReturnType.SpecialType != SpecialType.ClrVoid
             && f.ReturnType.SpecialType != SpecialType.ClrInt32)
         {
@@ -51,7 +49,7 @@ internal sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
                 return false;
             }
 
-            return clrTypeSymbol.ClrType.IsArray && clrTypeSymbol.ClrType.GetElementType().Equals(builtInTypes.String.ClrType);
+            return clrTypeSymbol.ClrType.IsArray && clrTypeSymbol.ClrType.GetElementType().FullName == typeof(string).FullName;
         }
 
         return true;
@@ -89,7 +87,6 @@ public partial class Binder
         {
             SyntaxNode = null,
             BoundMembers = boundMembers.ToImmutableArray(),
-            ClrTypeCache = ClrTypeCache
         };
     }
 }

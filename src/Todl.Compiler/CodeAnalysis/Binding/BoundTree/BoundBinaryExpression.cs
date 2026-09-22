@@ -15,9 +15,7 @@ internal sealed class BoundBinaryExpression : BoundExpression
     public BoundBinaryOperator Operator { get; internal init; }
     public BoundExpression Left { get; internal init; }
     public BoundExpression Right { get; internal init; }
-    public ClrTypeCache ClrTypeCache { get; internal init; }
 
-    public override TypeSymbol ResultType => ClrTypeCache.ResolveSpecialType(Operator.ResultType);
     public override bool Constant => Left.Constant && Right.Constant;
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundBinaryExpression(this);
@@ -136,7 +134,7 @@ public partial class Binder
             left: boundLeft,
             right: boundRight,
             @operator: boundBinaryOperator,
-            clrTypeCache: ClrTypeCache);
+            resultType: boundBinaryOperator is null ? null : ClrTypeCache.ResolveSpecialType(boundBinaryOperator.ResultType));
     }
 
     // Reference-typed operands: no null-conditional support to guard a null ToString() receiver.
@@ -155,6 +153,6 @@ public partial class Binder
             boundBaseExpression: operand,
             methodInfo: toStringMethod,
             boundArguments: ImmutableArray<BoundExpression>.Empty,
-            clrTypeCache: clrTypeCache);
+            resultType: clrTypeCache.Resolve(toStringMethod.ReturnType));
     }
 }

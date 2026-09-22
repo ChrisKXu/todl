@@ -11,9 +11,6 @@ internal sealed class BoundTodlInvocationExpression : BoundExpression
     public FunctionSymbol FunctionSymbol { get; internal set; }
     public ImmutableDictionary<string, BoundExpression> BoundArguments { get; internal init; }
 
-    public override TypeSymbol ResultType
-        => FunctionSymbol?.ReturnType ?? default; // TODO: we may need something like TypeSymbol.InvalidType for this
-
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundTodlInvocationExpression(this);
 }
 
@@ -61,6 +58,7 @@ public partial class Binder
         return BoundNodeFactory.CreateBoundTodlInvocationExpression(
             syntaxNode: invocationExpression,
             functionSymbol: functionSymbol,
-            boundArguments: boundArguments);
+            boundArguments: boundArguments,
+            resultType: functionSymbol?.ReturnType ?? default); // TODO: we may need something like TypeSymbol.InvalidType for this
     }
 }
