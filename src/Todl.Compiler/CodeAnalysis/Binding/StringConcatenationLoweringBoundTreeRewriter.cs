@@ -84,7 +84,7 @@ internal sealed class StringConcatenationLoweringBoundTreeRewriter : BoundTreeRe
     }
 
     private static BoundExpression CreateCall(SyntaxNode syntaxNode, MethodInfo methodInfo, IReadOnlyList<BoundExpression> arguments, ClrTypeCache clrTypeCache)
-        => BoundNodeFactory.CreateBoundClrFunctionCallExpression(
+        => BoundNodeFactory.CreateBoundClrInvocationExpression(
             syntaxNode: syntaxNode,
             boundBaseExpression: arguments[0],
             methodInfo: methodInfo,

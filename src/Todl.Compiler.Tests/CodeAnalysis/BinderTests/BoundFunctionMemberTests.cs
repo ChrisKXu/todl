@@ -40,7 +40,7 @@ public sealed class BoundFunctionMemberTests
         a.Name.Should().Be("a");
         function.FunctionScope.LookupVariable("a").Should().Be(a);
 
-        function.Body.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundClrFunctionCallExpression>().Should().NotBeNull();
+        function.Body.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundClrInvocationExpression>().Should().NotBeNull();
 
         function.ReturnType.SpecialType.Should().Be(SpecialType.ClrVoid);
         function.FunctionScope.BoundScopeKind.Should().Be(BoundScopeKind.Function);
@@ -58,7 +58,7 @@ public sealed class BoundFunctionMemberTests
         a.Type.SpecialType.Should().Be(SpecialType.ClrInt32);
 
         function.Body.Statements.Should().HaveCount(2);
-        function.Body.Statements[0].As<BoundExpressionStatement>().Expression.As<BoundClrFunctionCallExpression>().Should().NotBeNull();
+        function.Body.Statements[0].As<BoundExpressionStatement>().Expression.As<BoundClrInvocationExpression>().Should().NotBeNull();
 
         function.ReturnType.SpecialType.Should().Be(SpecialType.ClrVoid);
         function.FunctionScope.BoundScopeKind.Should().Be(BoundScopeKind.Function);

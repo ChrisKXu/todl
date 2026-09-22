@@ -6,7 +6,7 @@ using Todl.Compiler.CodeAnalysis.Syntax;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-internal sealed class BoundTodlFunctionCallExpression : BoundExpression
+internal sealed class BoundTodlInvocationExpression : BoundExpression
 {
     public FunctionSymbol FunctionSymbol { get; internal set; }
     public ImmutableDictionary<string, BoundExpression> BoundArguments { get; internal init; }
@@ -14,20 +14,20 @@ internal sealed class BoundTodlFunctionCallExpression : BoundExpression
     public override TypeSymbol ResultType
         => FunctionSymbol?.ReturnType ?? default; // TODO: we may need something like TypeSymbol.InvalidType for this
 
-    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundTodlFunctionCallExpression(this);
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundTodlInvocationExpression(this);
 }
 
 public partial class Binder
 {
-    private BoundTodlFunctionCallExpression BindTodlFunctionCallExpression(
-        FunctionCallExpression functionCallExpression,
+    private BoundTodlInvocationExpression BindTodlInvocationExpression(
+        InvocationExpression invocationExpression,
         SimpleNameExpression simpleNameExpression)
     {
         FunctionSymbol functionSymbol = null;
         var boundArguments = ImmutableDictionary<string, BoundExpression>.Empty;
         var nameToken = simpleNameExpression.IdentifierToken;
 
-        var arguments = functionCallExpression.Arguments.Items;
+        var arguments = invocationExpression.Arguments.Items;
 
         if (arguments.Any(a => a.IsNamedArgument))
         {
@@ -55,11 +55,11 @@ public partial class Binder
 
         if (functionSymbol == null)
         {
-            ReportNoMatchingFunctionCandidate(functionCallExpression, nameToken);
+            ReportNoMatchingFunctionCandidate(invocationExpression, nameToken);
         }
 
-        return BoundNodeFactory.CreateBoundTodlFunctionCallExpression(
-            syntaxNode: functionCallExpression,
+        return BoundNodeFactory.CreateBoundTodlInvocationExpression(
+            syntaxNode: invocationExpression,
             functionSymbol: functionSymbol,
             boundArguments: boundArguments);
     }

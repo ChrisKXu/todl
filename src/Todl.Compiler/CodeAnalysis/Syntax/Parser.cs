@@ -148,7 +148,7 @@ public sealed partial class Parser
             }
             else if (Current.Kind == SyntaxKind.OpenParenthesisToken)
             {
-                baseExpression = ParseFunctionCallExpression(baseExpression);
+                baseExpression = ParseInvocationExpression(baseExpression);
             }
             else
             {

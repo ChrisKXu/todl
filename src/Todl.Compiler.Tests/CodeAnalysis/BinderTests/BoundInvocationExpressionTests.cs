@@ -8,57 +8,57 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-public sealed class BoundFunctionCallExpressionTests
+public sealed class BoundInvocationExpressionTests
 {
     [Fact]
-    public void TestBindClrFunctionCallExpressionWithNoArguments()
+    public void TestBindClrInvocationExpressionWithNoArguments()
     {
-        var boundFunctionCallExpression = TestUtils.BindExpression<BoundClrFunctionCallExpression>("100.ToString()");
+        var boundInvocationExpression = TestUtils.BindExpression<BoundClrInvocationExpression>("100.ToString()");
 
-        boundFunctionCallExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
-        boundFunctionCallExpression.MethodInfo.Name.Should().Be("ToString");
-        boundFunctionCallExpression.IsStatic.Should().Be(false);
+        boundInvocationExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
+        boundInvocationExpression.MethodInfo.Name.Should().Be("ToString");
+        boundInvocationExpression.IsStatic.Should().Be(false);
     }
 
     [Fact]
-    public void TestBindClrFunctionCallExpressionWithOnePositionalArgument()
+    public void TestBindClrInvocationExpressionWithOnePositionalArgument()
     {
-        var boundFunctionCallExpression = TestUtils.BindExpression<BoundClrFunctionCallExpression>("System::Math.Abs(-10)");
+        var boundInvocationExpression = TestUtils.BindExpression<BoundClrInvocationExpression>("System::Math.Abs(-10)");
 
-        boundFunctionCallExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
-        boundFunctionCallExpression.MethodInfo.Name.Should().Be("Abs");
-        boundFunctionCallExpression.IsStatic.Should().Be(true);
-        boundFunctionCallExpression.BoundArguments.Should().HaveCount(1);
+        boundInvocationExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
+        boundInvocationExpression.MethodInfo.Name.Should().Be("Abs");
+        boundInvocationExpression.IsStatic.Should().Be(true);
+        boundInvocationExpression.BoundArguments.Should().HaveCount(1);
 
-        var argument = boundFunctionCallExpression.BoundArguments[0].As<BoundUnaryExpression>();
+        var argument = boundInvocationExpression.BoundArguments[0].As<BoundUnaryExpression>();
         argument.Operator.BoundUnaryOperatorKind.Should().Be(BoundUnaryOperatorKind.UnaryMinus | BoundUnaryOperatorKind.Int);
         argument.Operand.As<BoundConstant>().Value.Should().Be(10);
     }
 
     [Fact]
-    public void TestBindClrFunctionCallExpressionWithOneNamedArgument()
+    public void TestBindClrInvocationExpressionWithOneNamedArgument()
     {
-        var boundFunctionCallExpression = TestUtils.BindExpression<BoundClrFunctionCallExpression>("100.ToString(format: \"G\")");
+        var boundInvocationExpression = TestUtils.BindExpression<BoundClrInvocationExpression>("100.ToString(format: \"G\")");
 
-        boundFunctionCallExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
-        boundFunctionCallExpression.MethodInfo.Name.Should().Be("ToString");
-        boundFunctionCallExpression.IsStatic.Should().Be(false);
-        boundFunctionCallExpression.BoundArguments.Should().HaveCount(1);
+        boundInvocationExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
+        boundInvocationExpression.MethodInfo.Name.Should().Be("ToString");
+        boundInvocationExpression.IsStatic.Should().Be(false);
+        boundInvocationExpression.BoundArguments.Should().HaveCount(1);
 
-        var argument = boundFunctionCallExpression.BoundArguments[0].As<BoundConstant>();
+        var argument = boundInvocationExpression.BoundArguments[0].As<BoundConstant>();
         argument.Value.Should().Be("G");
     }
 
     [Fact]
-    public void TestBindClrFunctionCallExpressionWithMultiplePositionalArguments()
+    public void TestBindClrInvocationExpressionWithMultiplePositionalArguments()
     {
-        var boundFunctionCallExpression = TestUtils.BindExpression<BoundClrFunctionCallExpression>("\"abcde\".IndexOf(\"ab\", 1, 2)");
+        var boundInvocationExpression = TestUtils.BindExpression<BoundClrInvocationExpression>("\"abcde\".IndexOf(\"ab\", 1, 2)");
 
-        boundFunctionCallExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
-        boundFunctionCallExpression.MethodInfo.Name.Should().Be("IndexOf");
-        boundFunctionCallExpression.IsStatic.Should().Be(false);
+        boundInvocationExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
+        boundInvocationExpression.MethodInfo.Name.Should().Be("IndexOf");
+        boundInvocationExpression.IsStatic.Should().Be(false);
 
-        var boundArguments = boundFunctionCallExpression.BoundArguments;
+        var boundArguments = boundInvocationExpression.BoundArguments;
         boundArguments.Should().HaveCount(3);
         boundArguments[0].As<BoundConstant>().Value.Should().Be("ab");
         boundArguments[1].As<BoundConstant>().Value.Should().Be(1);
@@ -68,22 +68,22 @@ public sealed class BoundFunctionCallExpressionTests
     [Theory]
     [InlineData("\"abcde\".Substring(startIndex: 1, length: 2)")]
     [InlineData("\"abcde\".Substring(length: 2, startIndex: 1)")]
-    public void TestBindClrFunctionCallExpressionWithMultipleNamedArguments(string inputText)
+    public void TestBindClrInvocationExpressionWithMultipleNamedArguments(string inputText)
     {
-        var boundFunctionCallExpression = TestUtils.BindExpression<BoundClrFunctionCallExpression>(inputText);
+        var boundInvocationExpression = TestUtils.BindExpression<BoundClrInvocationExpression>(inputText);
 
-        boundFunctionCallExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
-        boundFunctionCallExpression.MethodInfo.Name.Should().Be("Substring");
-        boundFunctionCallExpression.IsStatic.Should().Be(false);
+        boundInvocationExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
+        boundInvocationExpression.MethodInfo.Name.Should().Be("Substring");
+        boundInvocationExpression.IsStatic.Should().Be(false);
 
-        var boundArguments = boundFunctionCallExpression.BoundArguments;
+        var boundArguments = boundInvocationExpression.BoundArguments;
         boundArguments.Should().HaveCount(2);
         boundArguments[0].As<BoundConstant>().Value.Should().Be(1);
         boundArguments[1].As<BoundConstant>().Value.Should().Be(2);
     }
 
     [Fact]
-    public void TestBindClrFunctionCallExpressionWithImportDirective()
+    public void TestBindClrInvocationExpressionWithImportDirective()
     {
         var inputText = @"
             import { Console } from System;
@@ -97,12 +97,12 @@ public sealed class BoundFunctionCallExpressionTests
     }
 
     [Fact]
-    public void BindFunctionCallWithNoMatchingPositionalOverloadShouldReportDiagnosticAndReturnInvalidNode()
+    public void BindInvocationWithNoMatchingPositionalOverloadShouldReportDiagnosticAndReturnInvalidNode()
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundExpression = TestUtils.BindExpression<BoundExpression>("100.ToString(1, 2, 3)", diagnosticBuilder);
 
-        boundExpression.Should().BeOfType<BoundInvalidFunctionCallExpression>();
+        boundExpression.Should().BeOfType<BoundInvalidInvocationExpression>();
         boundExpression.ResultType.Should().BeNull();
 
         var diagnostics = diagnosticBuilder.Build();
@@ -112,12 +112,12 @@ public sealed class BoundFunctionCallExpressionTests
     }
 
     [Fact]
-    public void BindFunctionCallWithNoMatchingNamedOverloadShouldReportDiagnosticAndReturnInvalidNode()
+    public void BindInvocationWithNoMatchingNamedOverloadShouldReportDiagnosticAndReturnInvalidNode()
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundExpression = TestUtils.BindExpression<BoundExpression>("100.ToString(format: \"G\", bogus: 1)", diagnosticBuilder);
 
-        boundExpression.Should().BeOfType<BoundInvalidFunctionCallExpression>();
+        boundExpression.Should().BeOfType<BoundInvalidInvocationExpression>();
         boundExpression.ResultType.Should().BeNull();
 
         var diagnostics = diagnosticBuilder.Build();
@@ -127,12 +127,12 @@ public sealed class BoundFunctionCallExpressionTests
     }
 
     [Fact]
-    public void BindFunctionCallOnNonInvocableExpressionShouldReportDiagnosticAndReturnInvalidNode()
+    public void BindInvocationOnNonInvocableExpressionShouldReportDiagnosticAndReturnInvalidNode()
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundExpression = TestUtils.BindExpression<BoundExpression>("\"abc\"(1)", diagnosticBuilder);
 
-        boundExpression.Should().BeOfType<BoundInvalidFunctionCallExpression>();
+        boundExpression.Should().BeOfType<BoundInvalidInvocationExpression>();
 
         var diagnostics = diagnosticBuilder.Build();
         diagnostics.Should().ContainSingle();
@@ -141,7 +141,7 @@ public sealed class BoundFunctionCallExpressionTests
     }
 
     [Fact]
-    public void TestBindTodlFunctionCallExpressionWithNoArguments()
+    public void TestBindTodlInvocationExpressionWithNoArguments()
     {
         var inputText = @"
             int func() {
@@ -159,7 +159,7 @@ public sealed class BoundFunctionCallExpressionTests
     }
 
     [Fact]
-    public void TestBindTodlFunctionCallExpressionWithOneNamedArguments()
+    public void TestBindTodlInvocationExpressionWithOneNamedArguments()
     {
         var inputText = @"
             int func(int input) {
@@ -177,7 +177,7 @@ public sealed class BoundFunctionCallExpressionTests
     }
 
     [Fact]
-    public void TestBindTodlFunctionCallExpressionWithMultipleNamedArguments()
+    public void TestBindTodlInvocationExpressionWithMultipleNamedArguments()
     {
         var inputText = @"
             int func(int a, string b) {

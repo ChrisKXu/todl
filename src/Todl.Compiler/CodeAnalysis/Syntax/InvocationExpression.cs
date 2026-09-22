@@ -26,7 +26,7 @@ public sealed class Argument : SyntaxNode
     }
 }
 
-public sealed class FunctionCallExpression : Expression
+public sealed class InvocationExpression : Expression
 {
     public Expression Expression { get; internal init; }
     public CommaSeparatedSyntaxList<Argument> Arguments { get; internal init; }
@@ -57,7 +57,7 @@ public sealed partial class Parser
         };
     }
 
-    private FunctionCallExpression ParseFunctionCallExpression(Expression baseExpression)
+    private InvocationExpression ParseInvocationExpression(Expression baseExpression)
     {
         var arguments = ParseCommaSeparatedSyntaxList(ParseArgument);
 

@@ -10,7 +10,7 @@ using Todl.Compiler.Diagnostics;
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 [BoundNode]
-internal sealed class BoundClrFunctionCallExpression : BoundExpression
+internal sealed class BoundClrInvocationExpression : BoundExpression
 {
     public BoundExpression BoundBaseExpression { get; internal init; }
     public MethodInfo MethodInfo { get; internal init; }
@@ -19,82 +19,82 @@ internal sealed class BoundClrFunctionCallExpression : BoundExpression
     public override TypeSymbol ResultType => ClrTypeCache.Resolve(MethodInfo.ReturnType);
     public bool IsStatic => MethodInfo.IsStatic;
 
-    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundClrFunctionCallExpression(this);
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundClrInvocationExpression(this);
 }
 
 // This is not emittable, just to place a node in the bound tree to indicate this is an error
 [BoundNode]
-internal sealed class BoundInvalidFunctionCallExpression : BoundExpression
+internal sealed class BoundInvalidInvocationExpression : BoundExpression
 {
     public BoundExpression BoundBaseExpression { get; internal init; }
     public ImmutableArray<BoundExpression> BoundArguments { get; internal init; }
 
-    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundInvalidFunctionCallExpression(this);
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundInvalidInvocationExpression(this);
 }
 
 public partial class Binder
 {
-    private BoundExpression BindFunctionCallExpression(FunctionCallExpression functionCallExpression)
+    private BoundExpression BindInvocationExpression(InvocationExpression invocationExpression)
     {
-        if (functionCallExpression.Expression is MemberAccessExpression memberAccessExpression)
+        if (invocationExpression.Expression is MemberAccessExpression memberAccessExpression)
         {
-            return BindClrFunctionCallExpression(functionCallExpression, memberAccessExpression);
+            return BindClrInvocationExpression(invocationExpression, memberAccessExpression);
         }
 
-        if (functionCallExpression.Expression is SimpleNameExpression simpleNameExpression)
+        if (invocationExpression.Expression is SimpleNameExpression simpleNameExpression)
         {
-            return BindTodlFunctionCallExpression(functionCallExpression, simpleNameExpression);
+            return BindTodlInvocationExpression(invocationExpression, simpleNameExpression);
         }
 
-        return BindInvalidFunctionCallExpression(functionCallExpression);
+        return BindInvalidInvocationExpression(invocationExpression);
     }
 
-    private BoundExpression BindInvalidFunctionCallExpression(FunctionCallExpression functionCallExpression)
+    private BoundExpression BindInvalidInvocationExpression(InvocationExpression invocationExpression)
     {
         ReportDiagnostic(
             new Diagnostic()
             {
-                Message = $"Expression '{functionCallExpression.Expression.GetText()}' is not invocable.",
+                Message = $"Expression '{invocationExpression.Expression.GetText()}' is not invocable.",
                 Level = DiagnosticLevel.Error,
-                TextLocation = functionCallExpression.Expression.GetTextLocation(),
+                TextLocation = invocationExpression.Expression.GetTextLocation(),
                 ErrorCode = ErrorCode.ExpressionNotInvocable
             });
 
-        return BoundNodeFactory.CreateBoundInvalidFunctionCallExpression(
-            syntaxNode: functionCallExpression,
-            boundBaseExpression: BindExpression(functionCallExpression.Expression),
-            boundArguments: functionCallExpression.Arguments.Items
+        return BoundNodeFactory.CreateBoundInvalidInvocationExpression(
+            syntaxNode: invocationExpression,
+            boundBaseExpression: BindExpression(invocationExpression.Expression),
+            boundArguments: invocationExpression.Arguments.Items
                 .Select(a => BindExpression(a.Expression))
                 .ToImmutableArray());
     }
 
-    private BoundExpression BindClrFunctionCallExpression(
-        FunctionCallExpression functionCallExpression,
+    private BoundExpression BindClrInvocationExpression(
+        InvocationExpression invocationExpression,
         MemberAccessExpression memberAccessExpression)
     {
         var boundBaseExpression = BindExpression(memberAccessExpression.BaseExpression);
         var nameToken = memberAccessExpression.MemberIdentifierToken;
 
-        // Since all or none of the arguments of a FunctionCallExpression needs to be named,
+        // Since all or none of the arguments of an InvocationExpression needs to be named,
         // we only need to check the first argument to see if it's a named argument to determine the others
-        if (functionCallExpression.Arguments.Items.Any(a => a.IsNamedArgument))
+        if (invocationExpression.Arguments.Items.Any(a => a.IsNamedArgument))
         {
-            return BindFunctionCallWithNamedArgumentsInternal(
+            return BindInvocationWithNamedArgumentsInternal(
                 boundBaseExpression: boundBaseExpression,
                 nameToken: nameToken,
-                functionCallExpression: functionCallExpression);
+                invocationExpression: invocationExpression);
         }
 
-        return BindFunctionCallWithPositionalArgumentsInternal(
+        return BindInvocationWithPositionalArgumentsInternal(
             boundBaseExpression: boundBaseExpression,
             nameToken: nameToken,
-            functionCallExpression: functionCallExpression);
+            invocationExpression: invocationExpression);
     }
 
-    private BoundExpression BindFunctionCallWithNamedArgumentsInternal(
+    private BoundExpression BindInvocationWithNamedArgumentsInternal(
         BoundExpression boundBaseExpression,
         SyntaxToken nameToken,
-        FunctionCallExpression functionCallExpression)
+        InvocationExpression invocationExpression)
     {
         Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
@@ -106,9 +106,9 @@ public partial class Binder
                 && m.IsStatic == isStatic
                 && !m.ContainsGenericParameters
                 && m.IsPublic
-                && m.GetParameters().Length == functionCallExpression.Arguments.Items.Length);
+                && m.GetParameters().Length == invocationExpression.Arguments.Items.Length);
 
-        var arguments = functionCallExpression.Arguments.Items.ToDictionary(
+        var arguments = invocationExpression.Arguments.Items.ToDictionary(
             keySelector: a => a.Identifier.Value.Text.ToString(),
             elementSelector: a => BindExpression(a.Expression));
 
@@ -122,10 +122,10 @@ public partial class Binder
 
         if (candidate is null)
         {
-            ReportNoMatchingFunctionCandidate(functionCallExpression, nameToken);
+            ReportNoMatchingFunctionCandidate(invocationExpression, nameToken);
 
-            return BoundNodeFactory.CreateBoundInvalidFunctionCallExpression(
-                syntaxNode: functionCallExpression,
+            return BoundNodeFactory.CreateBoundInvalidInvocationExpression(
+                syntaxNode: invocationExpression,
                 boundBaseExpression: boundBaseExpression,
                 boundArguments: arguments.Values.ToImmutableArray());
         }
@@ -135,22 +135,22 @@ public partial class Binder
             .OrderBy(p => p.Position)
             .Select(p => arguments[p.Name]);
 
-        return BoundNodeFactory.CreateBoundClrFunctionCallExpression(
-            syntaxNode: functionCallExpression,
+        return BoundNodeFactory.CreateBoundClrInvocationExpression(
+            syntaxNode: invocationExpression,
             boundBaseExpression: boundBaseExpression,
             methodInfo: candidate,
             boundArguments: boundArguments.ToImmutableArray(),
             clrTypeCache: ClrTypeCache);
     }
 
-    private BoundExpression BindFunctionCallWithPositionalArgumentsInternal(
+    private BoundExpression BindInvocationWithPositionalArgumentsInternal(
         BoundExpression boundBaseExpression,
         SyntaxToken nameToken,
-        FunctionCallExpression functionCallExpression)
+        InvocationExpression invocationExpression)
     {
         Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
-        var boundArguments = functionCallExpression.Arguments.Items.Select(a => BindExpression(a.Expression)).ToImmutableArray();
+        var boundArguments = invocationExpression.Arguments.Items.Select(a => BindExpression(a.Expression)).ToImmutableArray();
         var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
 
         var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
@@ -162,16 +162,16 @@ public partial class Binder
 
         if (candidate is null)
         {
-            ReportNoMatchingFunctionCandidate(functionCallExpression, nameToken);
+            ReportNoMatchingFunctionCandidate(invocationExpression, nameToken);
 
-            return BoundNodeFactory.CreateBoundInvalidFunctionCallExpression(
-                syntaxNode: functionCallExpression,
+            return BoundNodeFactory.CreateBoundInvalidInvocationExpression(
+                syntaxNode: invocationExpression,
                 boundBaseExpression: boundBaseExpression,
                 boundArguments: boundArguments);
         }
 
-        return BoundNodeFactory.CreateBoundClrFunctionCallExpression(
-            syntaxNode: functionCallExpression,
+        return BoundNodeFactory.CreateBoundClrInvocationExpression(
+            syntaxNode: invocationExpression,
             boundBaseExpression: boundBaseExpression,
             methodInfo: candidate,
             boundArguments: boundArguments,
@@ -179,7 +179,7 @@ public partial class Binder
     }
 
     private void ReportNoMatchingFunctionCandidate(
-        FunctionCallExpression functionCallExpression,
+        InvocationExpression invocationExpression,
         SyntaxToken nameToken)
     {
         ReportDiagnostic(
@@ -187,7 +187,7 @@ public partial class Binder
             {
                 Message = $"No matching function '{nameToken.Text}' found.",
                 Level = DiagnosticLevel.Error,
-                TextLocation = functionCallExpression.GetTextLocation(nameToken.Span),
+                TextLocation = invocationExpression.GetTextLocation(nameToken.Span),
                 ErrorCode = ErrorCode.NoMatchingCandidate
             });
     }

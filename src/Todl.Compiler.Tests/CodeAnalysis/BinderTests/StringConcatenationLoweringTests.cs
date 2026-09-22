@@ -23,7 +23,7 @@ public sealed class StringConcatenationLoweringTests
     {
         var initializer = LowerLastVariableInitializer("let a = \"x\"; let b = a + \"y\";");
 
-        var call = initializer.Should().BeOfType<BoundClrFunctionCallExpression>().Subject;
+        var call = initializer.Should().BeOfType<BoundClrInvocationExpression>().Subject;
         call.MethodInfo.GetParameters().Should().HaveCount(2);
         call.BoundArguments.Should().HaveCount(2);
         call.BoundArguments[0].Should().BeOfType<BoundVariableExpression>();
@@ -36,7 +36,7 @@ public sealed class StringConcatenationLoweringTests
         // "p" and "q" are not adjacent, so they cannot merge.
         var initializer = LowerLastVariableInitializer("let a = \"x\"; let b = \"p\" + a + \"q\";");
 
-        var call = initializer.Should().BeOfType<BoundClrFunctionCallExpression>().Subject;
+        var call = initializer.Should().BeOfType<BoundClrInvocationExpression>().Subject;
         call.MethodInfo.GetParameters().Should().HaveCount(3);
         call.BoundArguments.Should().HaveCount(3);
         call.BoundArguments[0].As<BoundConstant>().Value.Should().Be("p");
@@ -50,7 +50,7 @@ public sealed class StringConcatenationLoweringTests
         // "p" and "q" only become adjacent once the chain is flattened.
         var initializer = LowerLastVariableInitializer("let a = \"x\"; let b = a + \"p\" + \"q\";");
 
-        var call = initializer.Should().BeOfType<BoundClrFunctionCallExpression>().Subject;
+        var call = initializer.Should().BeOfType<BoundClrInvocationExpression>().Subject;
         call.MethodInfo.GetParameters().Should().HaveCount(2);
         call.BoundArguments.Should().HaveCount(2);
         call.BoundArguments[0].Should().BeOfType<BoundVariableExpression>();
@@ -64,11 +64,11 @@ public sealed class StringConcatenationLoweringTests
             "let a = \"1\"; let b = \"2\"; let c = \"3\"; let d = \"4\"; let e = \"5\"; let f = a + b + c + d + e;");
 
         // Falls back to a leading 4-arg call plus one 2-arg call for the remaining operand.
-        var outer = initializer.Should().BeOfType<BoundClrFunctionCallExpression>().Subject;
+        var outer = initializer.Should().BeOfType<BoundClrInvocationExpression>().Subject;
         outer.MethodInfo.GetParameters().Should().HaveCount(2);
         outer.BoundArguments.Should().HaveCount(2);
 
-        var inner = outer.BoundArguments[0].Should().BeOfType<BoundClrFunctionCallExpression>().Subject;
+        var inner = outer.BoundArguments[0].Should().BeOfType<BoundClrInvocationExpression>().Subject;
         inner.MethodInfo.GetParameters().Should().HaveCount(4);
         inner.BoundArguments.Should().HaveCount(4);
         inner.BoundArguments.Should().AllBeOfType<BoundVariableExpression>();

@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeGeneration;
 
-public sealed class EmitClrFunctionCallExpressionTests
+public sealed class EmitClrInvocationExpressionTests
 {
     [Fact]
     public void TestEmitCovariantOverloadMatch()

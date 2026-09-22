@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.ExecutionTests;
 
-public sealed class BoundClrFunctionCallExpressionTests
+public sealed class BoundClrInvocationExpressionTests
 {
     [Fact]
     public void CovariantOverloadMatchShouldEmitTheDeclaredParameterTypes()

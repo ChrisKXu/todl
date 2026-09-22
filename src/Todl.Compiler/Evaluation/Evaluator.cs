@@ -68,7 +68,7 @@ namespace Todl.Compiler.Evaluation
                 BoundVariableExpression boundVariableExpression => EvaluateBoundVariableExpression(boundVariableExpression),
                 BoundMemberAccessExpression boundMemberAccessExpression => EvaluateBoundMemberAccessExpression(boundMemberAccessExpression),
                 BoundTypeExpression boundTypeExpression => boundTypeExpression.ResultType.Name,
-                BoundClrFunctionCallExpression boundFunctionCallExpression => EvaluateBoundFunctionCallExpression(boundFunctionCallExpression),
+                BoundClrInvocationExpression boundInvocationExpression => EvaluateBoundInvocationExpression(boundInvocationExpression),
                 BoundObjectCreationExpression boundObjectCreationExpression => EvaluateBoundObjectCreationExpression(boundObjectCreationExpression),
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };
@@ -148,15 +148,15 @@ namespace Todl.Compiler.Evaluation
             };
         }
 
-        private object EvaluateBoundFunctionCallExpression(BoundClrFunctionCallExpression boundFunctionCallExpression)
+        private object EvaluateBoundInvocationExpression(BoundClrInvocationExpression boundInvocationExpression)
         {
-            var isStatic = boundFunctionCallExpression.MethodInfo.IsStatic;
-            var invokingObject = isStatic ? null : EvaluateBoundExpression(boundFunctionCallExpression.BoundBaseExpression);
+            var isStatic = boundInvocationExpression.MethodInfo.IsStatic;
+            var invokingObject = isStatic ? null : EvaluateBoundExpression(boundInvocationExpression.BoundBaseExpression);
 
-            var arguments = boundFunctionCallExpression.BoundArguments.Select(EvaluateBoundExpression).ToArray();
+            var arguments = boundInvocationExpression.BoundArguments.Select(EvaluateBoundExpression).ToArray();
 
             // assuming the BoundMemberAccessKind is Function since it's checked in Binder
-            return boundFunctionCallExpression.MethodInfo.Invoke(invokingObject, arguments);
+            return boundInvocationExpression.MethodInfo.Invoke(invokingObject, arguments);
         }
 
         private object EvaluateBoundObjectCreationExpression(BoundObjectCreationExpression boundObjectCreationExpression)

@@ -45,14 +45,14 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
             : BoundNodeFactory.CreateBoundClrFieldAccessExpression(boundClrFieldAccessExpression.SyntaxNode, baseExpression, boundClrFieldAccessExpression.FieldInfo, boundClrFieldAccessExpression.ClrTypeCache);
     }
 
-    public override BoundNode VisitBoundClrFunctionCallExpression(BoundClrFunctionCallExpression boundClrFunctionCallExpression)
+    public override BoundNode VisitBoundClrInvocationExpression(BoundClrInvocationExpression boundClrInvocationExpression)
     {
-        var baseExpression = VisitBoundExpression(boundClrFunctionCallExpression.BoundBaseExpression);
-        var arguments = VisitList(boundClrFunctionCallExpression.BoundArguments);
+        var baseExpression = VisitBoundExpression(boundClrInvocationExpression.BoundBaseExpression);
+        var arguments = VisitList(boundClrInvocationExpression.BoundArguments);
 
-        return baseExpression == boundClrFunctionCallExpression.BoundBaseExpression && arguments == boundClrFunctionCallExpression.BoundArguments
-            ? boundClrFunctionCallExpression
-            : BoundNodeFactory.CreateBoundClrFunctionCallExpression(boundClrFunctionCallExpression.SyntaxNode, baseExpression, boundClrFunctionCallExpression.MethodInfo, arguments, boundClrFunctionCallExpression.ClrTypeCache);
+        return baseExpression == boundClrInvocationExpression.BoundBaseExpression && arguments == boundClrInvocationExpression.BoundArguments
+            ? boundClrInvocationExpression
+            : BoundNodeFactory.CreateBoundClrInvocationExpression(boundClrInvocationExpression.SyntaxNode, baseExpression, boundClrInvocationExpression.MethodInfo, arguments, boundClrInvocationExpression.ClrTypeCache);
     }
 
     public override BoundNode VisitBoundClrPropertyAccessExpression(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
@@ -121,14 +121,14 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
             : BoundNodeFactory.CreateBoundFunctionMember(boundFunctionMember.SyntaxNode, boundFunctionMember.FunctionScope, body, boundFunctionMember.FunctionSymbol);
     }
 
-    public override BoundNode VisitBoundInvalidFunctionCallExpression(BoundInvalidFunctionCallExpression boundInvalidFunctionCallExpression)
+    public override BoundNode VisitBoundInvalidInvocationExpression(BoundInvalidInvocationExpression boundInvalidInvocationExpression)
     {
-        var baseExpression = VisitBoundExpression(boundInvalidFunctionCallExpression.BoundBaseExpression);
-        var arguments = VisitList(boundInvalidFunctionCallExpression.BoundArguments);
+        var baseExpression = VisitBoundExpression(boundInvalidInvocationExpression.BoundBaseExpression);
+        var arguments = VisitList(boundInvalidInvocationExpression.BoundArguments);
 
-        return baseExpression == boundInvalidFunctionCallExpression.BoundBaseExpression && arguments == boundInvalidFunctionCallExpression.BoundArguments
-            ? boundInvalidFunctionCallExpression
-            : BoundNodeFactory.CreateBoundInvalidFunctionCallExpression(boundInvalidFunctionCallExpression.SyntaxNode, baseExpression, arguments);
+        return baseExpression == boundInvalidInvocationExpression.BoundBaseExpression && arguments == boundInvalidInvocationExpression.BoundArguments
+            ? boundInvalidInvocationExpression
+            : BoundNodeFactory.CreateBoundInvalidInvocationExpression(boundInvalidInvocationExpression.SyntaxNode, baseExpression, arguments);
     }
 
     public override BoundNode VisitBoundInvalidMemberAccessExpression(BoundInvalidMemberAccessExpression boundInvalidMemberAccess)
@@ -180,13 +180,13 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
             : BoundNodeFactory.CreateBoundReturnStatement(boundReturnStatement.SyntaxNode, returnValueExpression, boundReturnStatement.ClrTypeCache);
     }
 
-    public override BoundNode VisitBoundTodlFunctionCallExpression(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
+    public override BoundNode VisitBoundTodlInvocationExpression(BoundTodlInvocationExpression boundTodlInvocationExpression)
     {
-        var arguments = VisitList(boundTodlFunctionCallExpression.BoundArguments);
+        var arguments = VisitList(boundTodlInvocationExpression.BoundArguments);
 
-        return arguments == boundTodlFunctionCallExpression.BoundArguments
-            ? boundTodlFunctionCallExpression
-            : BoundNodeFactory.CreateBoundTodlFunctionCallExpression(boundTodlFunctionCallExpression.SyntaxNode, boundTodlFunctionCallExpression.FunctionSymbol, arguments);
+        return arguments == boundTodlInvocationExpression.BoundArguments
+            ? boundTodlInvocationExpression
+            : BoundNodeFactory.CreateBoundTodlInvocationExpression(boundTodlInvocationExpression.SyntaxNode, boundTodlInvocationExpression.FunctionSymbol, arguments);
     }
 
     public override BoundNode VisitBoundTypeExpression(BoundTypeExpression boundTypeExpression)
