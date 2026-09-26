@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -65,5 +65,34 @@ public sealed class BoundMemberAccessExpressionTests
 
         boundClrFieldAccessExpression.MemberName.Should().Be("Empty");
         boundClrFieldAccessExpression.IsStatic.Should().Be(true);
+    }
+
+    [Fact]
+    public void TestBoundClrNestedTypeAccessExpression()
+    {
+        var boundTypeExpression = TestUtils.BindExpression<BoundTypeExpression>("System::Environment.SpecialFolder");
+
+        boundTypeExpression.ResultType.Should().BeOfType<ClrTypeSymbol>();
+        ((ClrTypeSymbol)boundTypeExpression.ResultType).ClrType.FullName.Should().Be("System.Environment+SpecialFolder");
+    }
+
+    [Fact]
+    public void TestBoundClrNestedTypeChainedFieldAccessExpression()
+    {
+        var boundClrFieldAccessExpression = TestUtils.BindExpression<BoundClrFieldAccessExpression>("System::Environment.SpecialFolder.ApplicationData");
+
+        boundClrFieldAccessExpression.MemberName.Should().Be("ApplicationData");
+        boundClrFieldAccessExpression.IsStatic.Should().Be(true);
+    }
+
+    [Fact]
+    public void TestBoundInvalidNestedTypeAccessOnInstanceExpression()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundExpression = TestUtils.BindExpression<BoundMemberAccessExpression>("\"abc\".SpecialFolder", diagnosticBuilder);
+
+        var diagnostic = diagnosticBuilder.Build().First();
+        diagnostic.Level.Should().Be(DiagnosticLevel.Error);
+        diagnostic.Message.Should().Be("Member 'SpecialFolder' does not exist in type 'System.String'");
     }
 }

@@ -84,4 +84,28 @@ int Run() {
             runMethod.Invoke(null, null).Should().Be(1);
         });
     }
+
+    // Note: this test intentionally does not invoke TestUtils.RunAssembly. Doing so hits an
+    // unrelated, pre-existing bug in Emitter.Expressions.cs (EmitClrFieldLoad/EmitClrFieldStore
+    // build a Mono.Cecil FieldReference via the two-argument constructor, which never sets
+    // DeclaringType), causing Mono.Cecil to fail at module-write time with "declared in another
+    // module and needs to be imported". This reproduces identically for already-working,
+    // non-nested static field access (e.g. plain "System::Int32.MaxValue") and is therefore
+    // orthogonal to nested-type binding; it is out of scope for this fix.
+    [Fact]
+    public void NestedClrTypeAccessShouldBindAndEmitSuccessfully()
+    {
+        var inputText = @"
+import { Environment } from System;
+
+void Main() {}
+int Run() {
+    let folder = Environment.SpecialFolder.ApplicationData;
+    return 1;
+}
+";
+        var (assemblyDefinition, diagnostics) = TestUtils.Compile(SourceText.FromString(inputText));
+        diagnostics.Should().BeEmpty();
+        assemblyDefinition.Should().NotBeNull();
+    }
 }
