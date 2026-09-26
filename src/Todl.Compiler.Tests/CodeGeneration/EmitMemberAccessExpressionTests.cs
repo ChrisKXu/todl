@@ -10,21 +10,21 @@ public sealed class EmitMemberAccessExpressionTests
     {
         TestUtils.EmitExpressionAndVerify(
             "Todl::Compiler::Tests::TestClass.PublicStaticIntField",
-            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 PublicStaticIntField"));
+            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 Todl.Compiler.Tests.TestClass::PublicStaticIntField"));
 
         TestUtils.EmitExpressionAndVerify(
             "Todl::Compiler::Tests::TestClass.PublicStaticStringField",
-            TestInstruction.Create(OpCodes.Ldsfld, "System.String PublicStaticStringField"));
+            TestInstruction.Create(OpCodes.Ldsfld, "System.String Todl.Compiler.Tests.TestClass::PublicStaticStringField"));
 
         TestUtils.EmitExpressionAndVerify(
             "Todl::Compiler::Tests::TestClass.Instance.PublicIntField",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
-            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 PublicIntField"));
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
+            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 Todl.Compiler.Tests.TestClass::PublicIntField"));
 
         TestUtils.EmitExpressionAndVerify(
             "Todl::Compiler::Tests::TestClass.Instance.PublicStringField",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
-            TestInstruction.Create(OpCodes.Ldfld, "System.String PublicStringField"));
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
+            TestInstruction.Create(OpCodes.Ldfld, "System.String Todl.Compiler.Tests.TestClass::PublicStringField"));
     }
 
     [Fact]
@@ -40,12 +40,12 @@ public sealed class EmitMemberAccessExpressionTests
 
         TestUtils.EmitExpressionAndVerify(
             "Todl::Compiler::Tests::TestClass.Instance.PublicIntProperty",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
             TestInstruction.Create(OpCodes.Callvirt, "System.Int32 Todl.Compiler.Tests.TestClass::get_PublicIntProperty()"));
 
         TestUtils.EmitExpressionAndVerify(
             "Todl::Compiler::Tests::TestClass.Instance.PublicStringProperty",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
             TestInstruction.Create(OpCodes.Callvirt, "System.String Todl.Compiler.Tests.TestClass::get_PublicStringProperty()"));
     }
 }

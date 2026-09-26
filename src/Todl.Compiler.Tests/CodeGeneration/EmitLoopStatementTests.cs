@@ -58,7 +58,7 @@ public sealed class EmitLoopStatementTests
             TestInstruction.Create(OpCodes.Nop),
             TestInstruction.Create(OpCodes.Call, "System.Void System.Console::WriteLine()"),
             TestInstruction.Create(OpCodes.Nop),
-            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 PublicStaticIntField"),
+            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 Todl.Compiler.Tests.TestClass::PublicStaticIntField"),
             TestInstruction.Create(OpCodes.Ldc_I4_0),
             TestInstruction.Create(OpCodes.Ceq),
             TestInstruction.Create(OpCodes.Ldc_I4_0),

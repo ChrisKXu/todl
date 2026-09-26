@@ -422,16 +422,18 @@ internal partial class Emitter
 
         private void EmitClrFieldLoad(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
         {
-            var baseType = ResolveTypeReference(boundClrFieldAccessExpression.ResultType as ClrTypeSymbol);
+            var fieldReference = AssemblyDefinition.MainModule.ImportReference(boundClrFieldAccessExpression.FieldInfo);
+            fieldReference.FieldType = ResolveTypeReference(boundClrFieldAccessExpression.ResultType as ClrTypeSymbol);
             var opCode = boundClrFieldAccessExpression.IsStatic ? OpCodes.Ldsfld : OpCodes.Ldfld;
-            ILProcessor.Emit(opCode, new FieldReference(boundClrFieldAccessExpression.MemberName, baseType));
+            ILProcessor.Emit(opCode, fieldReference);
         }
 
         private void EmitClrFieldStore(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
         {
-            var baseType = ResolveTypeReference(boundClrFieldAccessExpression.ResultType as ClrTypeSymbol);
+            var fieldReference = AssemblyDefinition.MainModule.ImportReference(boundClrFieldAccessExpression.FieldInfo);
+            fieldReference.FieldType = ResolveTypeReference(boundClrFieldAccessExpression.ResultType as ClrTypeSymbol);
             var opCode = boundClrFieldAccessExpression.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld;
-            ILProcessor.Emit(opCode, new FieldReference(boundClrFieldAccessExpression.MemberName, baseType));
+            ILProcessor.Emit(opCode, fieldReference);
         }
 
         private void EmitClrPropertyLoad(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)

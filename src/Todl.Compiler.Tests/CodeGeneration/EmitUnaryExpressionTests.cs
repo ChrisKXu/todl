@@ -155,26 +155,26 @@ public sealed class EmitUnaryExpressionTests
     {
         TestUtils.EmitExpressionAndVerify(
             "+Todl::Compiler::Tests::TestClass.Instance.PublicIntField",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
-            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 PublicIntField"));
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
+            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 Todl.Compiler.Tests.TestClass::PublicIntField"));
 
         TestUtils.EmitExpressionAndVerify(
             "-Todl::Compiler::Tests::TestClass.Instance.PublicIntField",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
-            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 PublicIntField"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
+            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 Todl.Compiler.Tests.TestClass::PublicIntField"),
             TestInstruction.Create(OpCodes.Neg));
 
         TestUtils.EmitExpressionAndVerify(
             "!Todl::Compiler::Tests::TestClass.Instance.PublicBoolField",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
-            TestInstruction.Create(OpCodes.Ldfld, "System.Boolean PublicBoolField"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
+            TestInstruction.Create(OpCodes.Ldfld, "System.Boolean Todl.Compiler.Tests.TestClass::PublicBoolField"),
             TestInstruction.Create(OpCodes.Ldc_I4_0),
             TestInstruction.Create(OpCodes.Ceq));
 
         TestUtils.EmitExpressionAndVerify(
             "~Todl::Compiler::Tests::TestClass.Instance.PublicIntField",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
-            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 PublicIntField"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
+            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 Todl.Compiler.Tests.TestClass::PublicIntField"),
             TestInstruction.Create(OpCodes.Not));
     }
 
@@ -183,22 +183,22 @@ public sealed class EmitUnaryExpressionTests
     {
         TestUtils.EmitExpressionAndVerify(
             "+Todl::Compiler::Tests::TestClass.PublicStaticIntField",
-            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 PublicStaticIntField"));
+            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 Todl.Compiler.Tests.TestClass::PublicStaticIntField"));
 
         TestUtils.EmitExpressionAndVerify(
             "-Todl::Compiler::Tests::TestClass.PublicStaticIntField",
-            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 PublicStaticIntField"),
+            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 Todl.Compiler.Tests.TestClass::PublicStaticIntField"),
             TestInstruction.Create(OpCodes.Neg));
 
         TestUtils.EmitExpressionAndVerify(
             "!Todl::Compiler::Tests::TestClass.PublicStaticBoolField",
-            TestInstruction.Create(OpCodes.Ldsfld, "System.Boolean PublicStaticBoolField"),
+            TestInstruction.Create(OpCodes.Ldsfld, "System.Boolean Todl.Compiler.Tests.TestClass::PublicStaticBoolField"),
             TestInstruction.Create(OpCodes.Ldc_I4_0),
             TestInstruction.Create(OpCodes.Ceq));
 
         TestUtils.EmitExpressionAndVerify(
             "~Todl::Compiler::Tests::TestClass.PublicStaticIntField",
-            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 PublicStaticIntField"),
+            TestInstruction.Create(OpCodes.Ldsfld, "System.Int32 Todl.Compiler.Tests.TestClass::PublicStaticIntField"),
             TestInstruction.Create(OpCodes.Not));
     }
 
@@ -207,25 +207,25 @@ public sealed class EmitUnaryExpressionTests
     {
         TestUtils.EmitExpressionAndVerify(
             "+Todl::Compiler::Tests::TestClass.Instance.PublicIntProperty",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
             TestInstruction.Create(OpCodes.Callvirt, "System.Int32 Todl.Compiler.Tests.TestClass::get_PublicIntProperty()"));
 
         TestUtils.EmitExpressionAndVerify(
             "-Todl::Compiler::Tests::TestClass.Instance.PublicIntProperty",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
             TestInstruction.Create(OpCodes.Callvirt, "System.Int32 Todl.Compiler.Tests.TestClass::get_PublicIntProperty()"),
             TestInstruction.Create(OpCodes.Neg));
 
         TestUtils.EmitExpressionAndVerify(
             "!Todl::Compiler::Tests::TestClass.Instance.PublicBoolProperty",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
             TestInstruction.Create(OpCodes.Callvirt, "System.Boolean Todl.Compiler.Tests.TestClass::get_PublicBoolProperty()"),
             TestInstruction.Create(OpCodes.Ldc_I4_0),
             TestInstruction.Create(OpCodes.Ceq));
 
         TestUtils.EmitExpressionAndVerify(
             "~Todl::Compiler::Tests::TestClass.Instance.PublicIntProperty",
-            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Instance"),
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
             TestInstruction.Create(OpCodes.Callvirt, "System.Int32 Todl.Compiler.Tests.TestClass::get_PublicIntProperty()"),
             TestInstruction.Create(OpCodes.Not));
     }

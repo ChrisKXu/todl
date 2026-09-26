@@ -85,13 +85,34 @@ int Run() {
         });
     }
 
-    // Note: this test intentionally does not invoke TestUtils.RunAssembly. Doing so hits an
-    // unrelated, pre-existing bug in Emitter.Expressions.cs (EmitClrFieldLoad/EmitClrFieldStore
-    // build a Mono.Cecil FieldReference via the two-argument constructor, which never sets
-    // DeclaringType), causing Mono.Cecil to fail at module-write time with "declared in another
-    // module and needs to be imported". This reproduces identically for already-working,
-    // non-nested static field access (e.g. plain "System::Int32.MaxValue") and is therefore
-    // orthogonal to nested-type binding; it is out of scope for this fix.
+    [Fact]
+    public void StaticClrFieldAccessShouldBindAndExecuteSuccessfully()
+    {
+        var inputText = @"
+void Main() {}
+string Run() {
+    return System::String.Empty;
+}
+";
+        var (assemblyDefinition, diagnostics) = TestUtils.Compile(SourceText.FromString(inputText));
+        diagnostics.Should().BeEmpty();
+        assemblyDefinition.Should().NotBeNull();
+
+        TestUtils.RunAssembly(assemblyDefinition, assembly =>
+        {
+            var runMethod = assembly.EntryPoint.DeclaringType?.GetMethod("Run");
+            runMethod.Should().NotBeNull();
+
+            runMethod.Invoke(null, null).Should().Be(string.Empty);
+        });
+    }
+
+    // Note: this test intentionally does not invoke Run() via TestUtils.RunAssembly.
+    // SpecialFolder.ApplicationData is a literal/const enum field with no runtime storage slot
+    // (ECMA-335); executing it requires constant-folding CLR literal fields, a separate
+    // pre-existing gap (FieldInfo.IsLiteral is never checked in EmitClrFieldLoad) - not in scope
+    // here. Assembly write succeeding proves the DeclaringType/nested-type fix works; invoking
+    // Run() is deferred to that follow-up.
     [Fact]
     public void NestedClrTypeAccessShouldBindAndEmitSuccessfully()
     {
@@ -107,5 +128,9 @@ int Run() {
         var (assemblyDefinition, diagnostics) = TestUtils.Compile(SourceText.FromString(inputText));
         diagnostics.Should().BeEmpty();
         assemblyDefinition.Should().NotBeNull();
+
+        using var memoryStream = new System.IO.MemoryStream();
+        var write = () => assemblyDefinition.Write(memoryStream);
+        write.Should().NotThrow();
     }
 }
