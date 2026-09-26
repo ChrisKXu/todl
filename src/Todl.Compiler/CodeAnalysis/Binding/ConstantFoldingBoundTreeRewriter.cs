@@ -213,6 +213,23 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
             returnType: boundReturnStatement.ReturnType);
     }
 
+    public override BoundNode VisitBoundClrFieldAccessExpression(BoundClrFieldAccessExpression boundClrFieldAccessExpression)
+    {
+        if (boundClrFieldAccessExpression.Constant)
+        {
+            var constantValue = constantValueFactory.Create(boundClrFieldAccessExpression.FieldInfo.GetRawConstantValue());
+            if (constantValue is not null)
+            {
+                return BoundNodeFactory.CreateBoundConstant(
+                    syntaxNode: boundClrFieldAccessExpression.SyntaxNode,
+                    value: constantValue,
+                    resultType: boundClrFieldAccessExpression.ResultType);
+            }
+        }
+
+        return base.VisitBoundClrFieldAccessExpression(boundClrFieldAccessExpression);
+    }
+
     public override BoundNode VisitBoundVariableExpression(BoundVariableExpression boundVariableExpression)
     {
         if (boundVariableExpression.Constant)

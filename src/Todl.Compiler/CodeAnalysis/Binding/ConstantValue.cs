@@ -93,6 +93,24 @@ public sealed class ConstantValueFactory
             Value = value,
             ResultType = builtInTypes.UInt64
         };
+
+    // Dispatches an arbitrary raw CLR value (e.g. FieldInfo.GetRawConstantValue()) to the matching
+    // Create overload. Narrow integer/char values widen to Int32 - there is no sub-int32 ConstantValue.
+    public ConstantValue Create(object rawValue)
+        => rawValue switch
+        {
+            null => Null,
+            bool boolValue => Create(boolValue),
+            string stringValue => Create(stringValue),
+            float floatValue => Create(floatValue),
+            double doubleValue => Create(doubleValue),
+            uint uint32Value => Create(uint32Value),
+            long int64Value => Create(int64Value),
+            ulong uint64Value => Create(uint64Value),
+            byte or sbyte or short or ushort or char or int
+                => Create(Convert.ToInt32(rawValue)),
+            _ => null
+        };
 }
 
 #pragma warning disable 0659
