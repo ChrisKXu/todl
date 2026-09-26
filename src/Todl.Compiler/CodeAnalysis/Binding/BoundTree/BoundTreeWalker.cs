@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
@@ -40,12 +40,12 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         return boundClrFieldAccessExpression;
     }
 
-    public override BoundNode VisitBoundClrFunctionCallExpression(BoundClrFunctionCallExpression boundClrFunctionCallExpression)
+    public override BoundNode VisitBoundClrInvocationExpression(BoundClrInvocationExpression boundClrInvocationExpression)
     {
-        Visit(boundClrFunctionCallExpression.BoundBaseExpression);
-        VisitList(boundClrFunctionCallExpression.BoundArguments);
+        Visit(boundClrInvocationExpression.BoundBaseExpression);
+        VisitList(boundClrInvocationExpression.BoundArguments);
 
-        return boundClrFunctionCallExpression;
+        return boundClrInvocationExpression;
     }
 
     public override BoundNode VisitBoundClrPropertyAccessExpression(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
@@ -70,6 +70,13 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
     public override BoundNode VisitBoundContinueStatement(BoundContinueStatement boundContinueStatement)
         => boundContinueStatement;
 
+    public override BoundNode VisitBoundConversionExpression(BoundConversionExpression boundConversionExpression)
+    {
+        Visit(boundConversionExpression.Operand);
+
+        return boundConversionExpression;
+    }
+
     public override BoundNode VisitBoundEntryPointTypeDefinition(BoundEntryPointTypeDefinition boundEntryPointTypeDefinition)
     {
         VisitList(boundEntryPointTypeDefinition.BoundMembers);
@@ -91,11 +98,26 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         return boundFunctionMember;
     }
 
+    public override BoundNode VisitBoundInvalidInvocationExpression(BoundInvalidInvocationExpression boundInvalidInvocationExpression)
+    {
+        Visit(boundInvalidInvocationExpression.BoundBaseExpression);
+        VisitList(boundInvalidInvocationExpression.BoundArguments);
+
+        return boundInvalidInvocationExpression;
+    }
+
     public override BoundNode VisitBoundInvalidMemberAccessExpression(BoundInvalidMemberAccessExpression boundInvalidMemberAccess)
     {
         Visit(boundInvalidMemberAccess.BoundBaseExpression);
 
         return boundInvalidMemberAccess;
+    }
+
+    public override BoundNode VisitBoundInvalidObjectCreationExpression(BoundInvalidObjectCreationExpression boundInvalidObjectCreationExpression)
+    {
+        VisitList(boundInvalidObjectCreationExpression.BoundArguments);
+
+        return boundInvalidObjectCreationExpression;
     }
 
     public override BoundNode VisitBoundLoopStatement(BoundLoopStatement boundLoopStatement)
@@ -123,11 +145,11 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         return boundReturnStatement;
     }
 
-    public override BoundNode VisitBoundTodlFunctionCallExpression(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
+    public override BoundNode VisitBoundTodlInvocationExpression(BoundTodlInvocationExpression boundTodlInvocationExpression)
     {
-        VisitList(boundTodlFunctionCallExpression.BoundArguments.Values);
+        VisitList(boundTodlInvocationExpression.BoundArguments);
 
-        return boundTodlFunctionCallExpression;
+        return boundTodlInvocationExpression;
     }
 
     public override BoundNode VisitBoundTypeExpression(BoundTypeExpression boundTypeExpression)
@@ -157,14 +179,27 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         return boundVariableMember;
     }
 
-    private void VisitList<TBoundNode>(IEnumerable<TBoundNode> list) where TBoundNode : BoundNode
+    private void VisitList<TBoundNode>(ImmutableArray<TBoundNode> list) where TBoundNode : BoundNode
     {
-        if (list is null)
+        if (list.IsEmpty)
         {
             return;
         }
 
         foreach (var node in list)
+        {
+            Visit(node);
+        }
+    }
+
+    private void VisitList<TKey, TBoundNode>(ImmutableDictionary<TKey, TBoundNode> list) where TBoundNode : BoundNode
+    {
+        if (list is null || list.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (var node in list.Values)
         {
             Visit(node);
         }

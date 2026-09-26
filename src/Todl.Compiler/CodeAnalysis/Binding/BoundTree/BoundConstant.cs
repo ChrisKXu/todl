@@ -11,8 +11,6 @@ internal sealed class BoundConstant : BoundExpression
 {
     public ConstantValue Value { get; internal init; }
 
-    public override TypeSymbol ResultType => Value.ResultType;
-
     public override bool Constant => true;
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundConstant(this);
@@ -57,7 +55,7 @@ public partial class Binder
 
     private BoundConstant BindNumericConstant(LiteralExpression literalExpression)
     {
-        var text = literalExpression.LiteralToken.Text.ToReadOnlyTextSpan();
+        var text = literalExpression.LiteralToken.Text.Span;
 
         var @base = 10;
         var startIndex = 0;
@@ -97,12 +95,13 @@ public partial class Binder
 
         return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: literalExpression,
-            value: value);
+            value: value,
+            resultType: value.ResultType);
     }
 
     private BoundConstant BindStringConstant(LiteralExpression literalExpression)
     {
-        var text = literalExpression.LiteralToken.Text.ToReadOnlyTextSpan();
+        var text = literalExpression.LiteralToken.Text.Span;
         var escape = text[0] != '@';
         var builder = new StringBuilder();
 
@@ -138,31 +137,36 @@ public partial class Binder
             }
         }
 
+        var stringValue = ConstantValueFactory.Create(builder.ToString());
         return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: literalExpression,
-            value: ConstantValueFactory.Create(builder.ToString()));
+            value: stringValue,
+            resultType: stringValue.ResultType);
     }
 
     private BoundConstant BindBooleanConstant(LiteralExpression literalExpression)
-        => BoundNodeFactory.CreateBoundConstant(
+    {
+        var value = ConstantValueFactory.Create(literalExpression.LiteralToken.Kind == SyntaxKind.TrueKeywordToken);
+        return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: literalExpression,
-            value: ConstantValueFactory.Create(literalExpression.LiteralToken.Kind == SyntaxKind.TrueKeywordToken));
+            value: value,
+            resultType: value.ResultType);
+    }
 
     private BoundConstant ReportUnsupportedLiteral(LiteralExpression literalExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
-        diagnosticBuilder.Add(
+        ReportDiagnostic(
             new Diagnostic()
             {
-                Message = $"Literal value {literalExpression.Text} is not supported",
+                Message = $"Literal value {literalExpression.GetText()} is not supported",
                 Level = DiagnosticLevel.Error,
-                TextLocation = literalExpression.LiteralToken.GetTextLocation(),
+                TextLocation = literalExpression.GetTextLocation(),
                 ErrorCode = ErrorCode.UnsupportedLiteral
             });
 
         return BoundNodeFactory.CreateBoundConstant(
             syntaxNode: literalExpression,
             value: ConstantValueFactory.Null,
-            diagnosticBuilder: diagnosticBuilder);
+            resultType: ConstantValueFactory.Null.ResultType);
     }
 }

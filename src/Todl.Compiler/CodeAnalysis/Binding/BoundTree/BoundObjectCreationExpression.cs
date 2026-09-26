@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -13,67 +13,82 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 internal sealed class BoundObjectCreationExpression : BoundExpression
 {
     public ConstructorInfo ConstructorInfo { get; internal init; }
-    public IReadOnlyList<BoundExpression> BoundArguments { get; internal init; }
-    public override TypeSymbol ResultType
-        => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(ConstructorInfo.DeclaringType);
+    public ImmutableArray<BoundExpression> BoundArguments { get; internal init; }
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundObjectCreationExpression(this);
 }
 
+// This is not emittable, just to place a node in the bound tree to indicate this is an error
+[BoundNode]
+internal sealed class BoundInvalidObjectCreationExpression : BoundExpression
+{
+    public ImmutableArray<BoundExpression> BoundArguments { get; internal init; }
+
+    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundInvalidObjectCreationExpression(this);
+}
+
 public partial class Binder
 {
-    private BoundObjectCreationExpression BindNewExpression(NewExpression newExpression)
+    private BoundExpression BindNewExpression(NewExpression newExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundTypeExpression = BindTypeExpression(newExpression.TypeNameExpression);
-        diagnosticBuilder.Add(boundTypeExpression);
+
+        // Type unresolved (already reported); still bind args, then bail out.
+        if (boundTypeExpression.ResultType is null)
+        {
+            var invalidBoundArguments = newExpression.Arguments.Items
+                .Select(a => BindExpression(a.Expression))
+                .ToImmutableArray();
+
+            return BoundNodeFactory.CreateBoundInvalidObjectCreationExpression(
+                syntaxNode: newExpression,
+                boundArguments: invalidBoundArguments);
+        }
 
         // Treating no arguments as the same way of positional arguments
-        if (!newExpression.Arguments.Items.Any() || !newExpression.Arguments.Items[0].IsNamedArgument)
+        if (newExpression.Arguments.Items.IsEmpty || !newExpression.Arguments.Items[0].IsNamedArgument)
         {
             return BindNewExpressionWithPositionalArgumentsInternal(
-                diagnosticBuilder: diagnosticBuilder,
                 targetType: boundTypeExpression.ResultType,
                 newExpression: newExpression);
         }
 
         return BindNewExpressionWithNamedArgumentsInternal(
-            diagnosticBuilder: diagnosticBuilder,
             targetType: boundTypeExpression.ResultType,
             newExpression: newExpression);
     }
 
-    private BoundObjectCreationExpression BindNewExpressionWithPositionalArgumentsInternal(
-        DiagnosticBag.Builder diagnosticBuilder,
+    private BoundExpression BindNewExpressionWithPositionalArgumentsInternal(
         TypeSymbol targetType,
         NewExpression newExpression)
     {
         Debug.Assert(targetType.IsNative);
 
         var clrType = (targetType as ClrTypeSymbol).ClrType;
-        var boundArguments = newExpression.Arguments.Items.Select(a => BindExpression(a.Expression));
+        var boundArguments = newExpression.Arguments.Items.Select(a => BindExpression(a.Expression)).ToImmutableArray();
         var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
 
         var constructorInfo = clrType.GetConstructor(argumentTypes);
 
         if (constructorInfo is null)
         {
-            ReportNoMatchingConstructorCandidate(diagnosticBuilder, newExpression);
+            ReportNoMatchingConstructorCandidate(newExpression);
+
+            return BoundNodeFactory.CreateBoundInvalidObjectCreationExpression(
+                syntaxNode: newExpression,
+                boundArguments: boundArguments);
         }
 
-        diagnosticBuilder.AddRange(boundArguments);
-
-        return new()
+        return new BoundObjectCreationExpression()
         {
             SyntaxNode = newExpression,
             ConstructorInfo = constructorInfo,
-            BoundArguments = boundArguments.ToList(),
-            DiagnosticBuilder = diagnosticBuilder
+            BoundArguments = boundArguments,
+            ResultType = ClrTypeCache.Resolve(constructorInfo.DeclaringType),
         };
     }
 
-    private BoundObjectCreationExpression BindNewExpressionWithNamedArgumentsInternal(
-        DiagnosticBag.Builder diagnosticBuilder,
+    private BoundExpression BindNewExpressionWithNamedArgumentsInternal(
         TypeSymbol targetType,
         NewExpression newExpression)
     {
@@ -82,7 +97,7 @@ public partial class Binder
         var clrType = (targetType as ClrTypeSymbol).ClrType;
         var arguments = newExpression.Arguments;
         var candidates = clrType.GetConstructors()
-            .Where(c => c.IsPublic && c.GetParameters().Length == arguments.Items.Count);
+            .Where(c => c.IsPublic && c.GetParameters().Length == arguments.Items.Length);
         var argumentsDictionary = arguments.Items.ToDictionary(
             keySelector: a => a.Identifier.Value.Text.ToString(),
             elementSelector: a => BindExpression(a.Expression));
@@ -96,37 +111,33 @@ public partial class Binder
 
         if (constructorInfo is null)
         {
-            ReportNoMatchingConstructorCandidate(diagnosticBuilder, newExpression);
+            ReportNoMatchingConstructorCandidate(newExpression);
 
-            return new()
-            {
-                SyntaxNode = newExpression,
-                DiagnosticBuilder = diagnosticBuilder
-            };
+            return BoundNodeFactory.CreateBoundInvalidObjectCreationExpression(
+                syntaxNode: newExpression,
+                boundArguments: argumentsDictionary.Values.ToImmutableArray());
         }
 
         var boundArguments = constructorInfo.GetParameters().OrderBy(p => p.Position).Select(p => argumentsDictionary[p.Name]).ToList();
-        diagnosticBuilder.AddRange(boundArguments);
 
-        return new()
+        return new BoundObjectCreationExpression()
         {
             SyntaxNode = newExpression,
             ConstructorInfo = constructorInfo,
-            BoundArguments = boundArguments.ToList(),
-            DiagnosticBuilder = diagnosticBuilder
+            BoundArguments = boundArguments.ToImmutableArray(),
+            ResultType = ClrTypeCache.Resolve(constructorInfo.DeclaringType),
         };
     }
 
     private void ReportNoMatchingConstructorCandidate(
-        DiagnosticBag.Builder diagnosticBuilder,
         NewExpression newExpression)
     {
-        diagnosticBuilder.Add(
+        ReportDiagnostic(
             new Diagnostic()
             {
-                Message = $"No matching constructor {newExpression.TypeNameExpression.Text} found.",
+                Message = $"No matching constructor {newExpression.TypeNameExpression.GetText()} found.",
                 Level = DiagnosticLevel.Error,
-                TextLocation = newExpression.TypeNameExpression.Text.GetTextLocation(),
+                TextLocation = newExpression.TypeNameExpression.GetTextLocation(),
                 ErrorCode = ErrorCode.NoMatchingCandidate
             });
     }

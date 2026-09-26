@@ -1,10 +1,9 @@
-﻿namespace Todl.Compiler.CodeAnalysis.Syntax
-{
-    public abstract class Directive : SyntaxNode { }
+﻿namespace Todl.Compiler.CodeAnalysis.Syntax;
 
-    public sealed partial class Parser
-    {
-        private Directive ParseDirective()
-            => ParseImportDirective();
-    }
+public abstract class Directive : SyntaxNode { }
+
+public sealed partial class Parser
+{
+    private Directive ParseDirective()
+        => ParseImportDirective();
 }

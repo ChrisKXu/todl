@@ -1,24 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System.Diagnostics;
 using Todl.Compiler.CodeAnalysis.Syntax;
-using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-internal abstract class BoundNode : IDiagnosable
+[DebuggerDisplay($"{nameof(GetDebuggerDisplay)}(),nq")]
+internal abstract class BoundNode
 {
     public SyntaxNode SyntaxNode { get; internal init; }
-    public DiagnosticBag.Builder DiagnosticBuilder { get; internal init; }
 
     public abstract BoundNode Accept(BoundTreeVisitor visitor);
 
-    public virtual IEnumerable<Diagnostic> GetDiagnostics()
+    private string GetDebuggerDisplay()
     {
-        if (DiagnosticBuilder == null)
-        {
-            return DiagnosticBag.Empty;
-
-        }
-
-        return DiagnosticBuilder.Build();
+        return SyntaxNode == null ? GetType().Name : SyntaxNode.GetText();
     }
 }

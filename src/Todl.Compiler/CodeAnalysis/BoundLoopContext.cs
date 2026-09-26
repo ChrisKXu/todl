@@ -1,4 +1,6 @@
-﻿namespace Todl.Compiler.CodeAnalysis;
+﻿using Todl.Compiler.CodeAnalysis.Syntax;
+
+namespace Todl.Compiler.CodeAnalysis;
 
 /// <summary>
 /// The BoundLoopContext is used to help identify information related to a loop structure, such as nested loops
@@ -7,11 +9,14 @@ public sealed class BoundLoopContext
 {
     public BoundLoopContext Parent { get; internal init; }
 
-    public BoundLoopContext CreateChildContext()
+    public LoopLabel LoopLabel { get; internal init; }
+
+    public BoundLoopContext CreateChildContext(LoopLabel loopLabel)
     {
         return new BoundLoopContext()
         {
-            Parent = this
+            Parent = this,
+            LoopLabel = loopLabel
         };
     }
 }

@@ -7,9 +7,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         public static readonly IReadOnlyDictionary<SyntaxKind, int> UnaryOperatorPrecedence = new Dictionary<SyntaxKind, int>()
         {
             { SyntaxKind.PlusToken, 6 },
-            { SyntaxKind.PlusPlusToken, 6 },
             { SyntaxKind.MinusToken, 6 },
-            { SyntaxKind.MinusMinusToken, 6 },
             { SyntaxKind.BangToken, 6 },
             { SyntaxKind.TildeToken, 6 },
         };

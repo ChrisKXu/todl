@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -47,27 +49,71 @@ internal partial class Emitter
             SpecialType.ClrUInt64 => typeSystem.UInt64,
             SpecialType.ClrFloat => typeSystem.Single,
             SpecialType.ClrDouble => typeSystem.Double,
-            _ => AssemblyDefinition.MainModule.ImportReference(clrTypeSymbol.ClrType)
+            _ => ResolveComplexTypeReference(clrTypeSymbol.ClrType)
         };
     }
 
-    private MethodReference ResolveMethodReference(BoundClrFunctionCallExpression boundClrFunctionCallExpression)
+    // MetadataLoadContext-sourced primitives import as CLASS<TypeRef> instead of intrinsic
+    // element types, which the runtime rejects; route composite constituents back through
+    // ResolveTypeReference so primitives hit the SpecialType fast path.
+    private TypeReference ResolveComplexTypeReference(Type clrType)
     {
-        var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrFunctionCallExpression.MethodInfo);
-        methodReference.ReturnType = ResolveTypeReference(boundClrFunctionCallExpression.ResultType as ClrTypeSymbol);
+        if (clrType.IsArray)
+        {
+            var elementType = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(clrType.GetElementType()));
+            return clrType.IsSZArray ? new ArrayType(elementType) : new ArrayType(elementType, clrType.GetArrayRank());
+        }
 
+        if (clrType.IsConstructedGenericType)
+        {
+            var openTypeReference = AssemblyDefinition.MainModule.ImportReference(clrType.GetGenericTypeDefinition());
+            var genericInstanceType = new GenericInstanceType(openTypeReference);
+
+            foreach (var typeArgument in clrType.GetGenericArguments())
+            {
+                genericInstanceType.GenericArguments.Add(ResolveTypeReference(Compilation.ClrTypeCache.Resolve(typeArgument)));
+            }
+
+            return genericInstanceType;
+        }
+
+        return AssemblyDefinition.MainModule.ImportReference(clrType);
+    }
+
+    private MethodReference ResolveMethodReference(BoundClrInvocationExpression boundClrInvocationExpression)
+    {
+        var methodInfo = boundClrInvocationExpression.MethodInfo;
+        var methodReference = AssemblyDefinition.MainModule.ImportReference(methodInfo);
+        methodReference.ReturnType = ResolveTypeReference(boundClrInvocationExpression.ResultType as ClrTypeSymbol);
+
+        var parameters = methodInfo.GetParameters();
         for (var i = 0; i != methodReference.Parameters.Count; ++i)
         {
             methodReference.Parameters[i].ParameterType
-                = ResolveTypeReference(boundClrFunctionCallExpression.BoundArguments[i].ResultType as ClrTypeSymbol);
+                = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(parameters[i].ParameterType));
         }
 
         return methodReference;
     }
 
-    protected virtual MethodReference ResolveMethodReference(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
+    private MethodReference ResolveMethodReference(BoundObjectCreationExpression boundObjectCreationExpression)
     {
-        return Parent.ResolveMethodReference(boundTodlFunctionCallExpression);
+        var constructorInfo = boundObjectCreationExpression.ConstructorInfo;
+        var methodReference = AssemblyDefinition.MainModule.ImportReference(constructorInfo);
+
+        var parameters = constructorInfo.GetParameters();
+        for (var i = 0; i != methodReference.Parameters.Count; ++i)
+        {
+            methodReference.Parameters[i].ParameterType
+                = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(parameters[i].ParameterType));
+        }
+
+        return methodReference;
+    }
+
+    protected virtual MethodReference ResolveMethodReference(BoundTodlInvocationExpression boundTodlInvocationExpression)
+    {
+        return Parent.ResolveMethodReference(boundTodlInvocationExpression);
     }
 
     public static AssemblyEmitter CreateAssemblyEmitter(Compilation compilation)
@@ -86,7 +132,28 @@ internal partial class Emitter
             this.compilation = compilation;
 
             var assemblyName = new AssemblyNameDefinition(compilation.AssemblyName, compilation.Version);
-            assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, compilation.AssemblyName, ModuleKind.Console);
+            var moduleParameters = new ModuleParameters
+            {
+                Kind = ModuleKind.Console,
+                AssemblyResolver = CreateAssemblyResolver(compilation)
+            };
+            assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, compilation.AssemblyName, moduleParameters);
+        }
+
+        private static DefaultAssemblyResolver CreateAssemblyResolver(Compilation compilation)
+        {
+            var resolver = new DefaultAssemblyResolver();
+            var directories = compilation.ClrTypeCache.Assemblies
+                .Select(assembly => Path.GetDirectoryName(assembly.Location))
+                .Where(directory => !string.IsNullOrEmpty(directory))
+                .Distinct();
+
+            foreach (var directory in directories)
+            {
+                resolver.AddSearchDirectory(directory);
+            }
+
+            return resolver;
         }
 
         public override Compilation Compilation => compilation;
@@ -94,9 +161,13 @@ internal partial class Emitter
 
         public AssemblyDefinition Emit()
         {
-            var typeEmitter = CreateTypeEmitter(Compilation.MainModule.EntryPointType);
-            var entryPointType = typeEmitter.Emit();
-            AssemblyDefinition.MainModule.Types.Add(entryPointType);
+            foreach (var boundTodlTypeDefinition in Compilation.MainModule.Types)
+            {
+                var typeEmitter = CreateTypeEmitter(boundTodlTypeDefinition);
+                var typeDefinition = typeEmitter.Emit();
+                AssemblyDefinition.MainModule.Types.Add(typeDefinition);
+            }
+
             return AssemblyDefinition;
         }
     }
@@ -152,8 +223,8 @@ internal partial class Emitter
         public FunctionEmitter CreateFunctionEmitter(BoundFunctionMember boundFunctionMember)
             => new(this, boundFunctionMember);
 
-        protected override MethodReference ResolveMethodReference(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
-            => methodReferences[boundTodlFunctionCallExpression.FunctionSymbol];
+        protected override MethodReference ResolveMethodReference(BoundTodlInvocationExpression boundTodlInvocationExpression)
+            => methodReferences[boundTodlInvocationExpression.FunctionSymbol];
     }
 
     internal abstract partial class InstructionEmitter : Emitter

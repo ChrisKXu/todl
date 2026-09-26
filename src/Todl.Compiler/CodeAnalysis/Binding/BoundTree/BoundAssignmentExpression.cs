@@ -44,7 +44,6 @@ internal sealed class BoundAssignmentExpression : BoundExpression
     public BoundExpression Left { get; internal init; }
     public BoundAssignmentOperator Operator { get; internal init; }
     public BoundExpression Right { get; internal init; }
-    public override TypeSymbol ResultType => Right.ResultType;
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundAssignmentExpression(this);
 }
@@ -53,13 +52,12 @@ public partial class Binder
 {
     private BoundAssignmentExpression BindAssignmentExpression(AssignmentExpression assignmentExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
         var right = BindExpression(assignmentExpression.Right);
 
-        if (assignmentExpression.Left is NameExpression nameExpression)
+        if (assignmentExpression.Left is SimpleNameExpression simpleNameExpression)
         {
-            var variableName = nameExpression.Text.ToString();
+            var variableName = simpleNameExpression.CanonicalName;
             var variable = Scope.LookupVariable(variableName);
 
             if (variable == null)
@@ -77,23 +75,23 @@ public partial class Binder
             }
             else if (variable.ReadOnly)
             {
-                diagnosticBuilder.Add(
+                ReportDiagnostic(
                     new Diagnostic()
                     {
                         Message = $"Variable {variableName} is read-only",
                         Level = DiagnosticLevel.Error,
-                        TextLocation = nameExpression.SyntaxTokens[0].GetTextLocation(),
+                        TextLocation = simpleNameExpression.GetTextLocation(),
                         ErrorCode = ErrorCode.ReadOnlyVariable
                     });
             }
             else if (!variable.Type.Equals(right.ResultType))
             {
-                diagnosticBuilder.Add(
+                ReportDiagnostic(
                     new Diagnostic()
                     {
                         Message = $"Variable {variableName} cannot be assigned to type {right.ResultType}",
                         Level = DiagnosticLevel.Error,
-                        TextLocation = nameExpression.SyntaxTokens[0].GetTextLocation(),
+                        TextLocation = simpleNameExpression.GetTextLocation(),
                         ErrorCode = ErrorCode.TypeMismatch
                     });
             }
@@ -102,7 +100,7 @@ public partial class Binder
         var left = BindExpression(assignmentExpression.Left);
         if (!left.LValue)
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
                     Message = $"The left-hand side of an assignment must be a variable, property or indexer",
@@ -117,6 +115,6 @@ public partial class Binder
             left: left,
             right: right,
             @operator: boundAssignmentOperator,
-            diagnosticBuilder: diagnosticBuilder);
+            resultType: right.ResultType);
     }
 }

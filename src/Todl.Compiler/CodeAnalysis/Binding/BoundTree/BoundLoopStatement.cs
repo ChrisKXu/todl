@@ -18,19 +18,18 @@ public partial class Binder
 {
     private BoundLoopStatement BindWhileUntilStatement(WhileUntilStatement whileUntilStatement)
     {
-        var loopBinder = CreateLoopBinder();
+        var loopBinder = CreateLoopBinder(whileUntilStatement.LoopLabel);
         var condition = loopBinder.BindExpression(whileUntilStatement.ConditionExpression);
         var body = loopBinder.BindBlockStatementInScope(whileUntilStatement.BlockStatement);
         var negated = whileUntilStatement.WhileOrUntilToken.Kind == SyntaxKind.UntilKeywordToken;
-        var diagnosticBuilder = new DiagnosticBag.Builder();
 
         if (condition.ResultType.SpecialType != Symbols.SpecialType.ClrBoolean)
         {
-            diagnosticBuilder.Add(new Diagnostic()
+            ReportDiagnostic(new Diagnostic()
             {
                 ErrorCode = ErrorCode.TypeMismatch,
                 Level = DiagnosticLevel.Error,
-                TextLocation = whileUntilStatement.ConditionExpression.Text.GetTextLocation(),
+                TextLocation = whileUntilStatement.ConditionExpression.GetTextLocation(),
                 Message = "Condition must be of boolean type."
             });
         }
@@ -40,7 +39,6 @@ public partial class Binder
             condition: condition,
             conditionNegated: negated,
             body: body,
-            boundLoopContext: loopBinder.BoundLoopContext,
-            diagnosticBuilder: diagnosticBuilder);
+            boundLoopContext: loopBinder.BoundLoopContext);
     }
 }

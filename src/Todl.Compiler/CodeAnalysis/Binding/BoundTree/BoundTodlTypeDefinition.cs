@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Immutable;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 internal abstract class BoundTodlTypeDefinition : BoundNode
 {
     public string Name { get; internal init; }
-    public IReadOnlyList<BoundMember> BoundMembers { get; internal init; }
+    public ImmutableArray<BoundMember> BoundMembers { get; internal init; }
     public virtual bool IsStatic => false;
     public virtual bool IsGeneratedType => false;
 

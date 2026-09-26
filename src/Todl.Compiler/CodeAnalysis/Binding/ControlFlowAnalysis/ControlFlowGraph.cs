@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
@@ -10,8 +10,8 @@ internal sealed class ControlFlowGraph
 {
     public BasicBlock StartBlock => Blocks.First();
     public BasicBlock EndBlock => Blocks.Last();
-    public IReadOnlyCollection<BasicBlock> Blocks { get; private init; }
-    public IReadOnlyCollection<BasicBlockBranch> Branches { get; private init; }
+    public ImmutableArray<BasicBlock> Blocks { get; private init; }
+    public ImmutableArray<BasicBlockBranch> Branches { get; private init; }
 
     internal static ControlFlowGraph Create(BoundFunctionMember boundFunctionMember)
     {
@@ -23,13 +23,13 @@ internal sealed class ControlFlowGraph
 
     private sealed class Builder : BoundTreeWalker
     {
-        private readonly List<BasicBlock> blocks = new();
-        private readonly List<BasicBlockBranch> branches = new();
+        private readonly ImmutableArray<BasicBlock>.Builder blocks = ImmutableArray.CreateBuilder<BasicBlock>();
+        private readonly ImmutableArray<BasicBlockBranch>.Builder branches = ImmutableArray.CreateBuilder<BasicBlockBranch>();
         private readonly BasicBlock startBlock = new();
         private readonly BasicBlock endBlock = new();
 
-        // this helps to keep track of begin and end blocks for a given loop
-        private readonly Dictionary<BoundLoopContext, (BasicBlock, BasicBlock)> loopBlocks = new();
+        // this helps to keep track of header and exit blocks for a given loop
+        private readonly Dictionary<BoundLoopContext, (BasicBlock Header, BasicBlock Exit)> loopBlocks = new();
 
         private BasicBlock current = new();
 
@@ -51,9 +51,17 @@ internal sealed class ControlFlowGraph
             return boundReturnStatement;
         }
 
+        public override BoundNode VisitBoundVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)
+        {
+            // BoundTreeWalker's own override only recurses into the initializer and never
+            // reaches DefaultVisit, so declarations would otherwise be invisible to the CFG.
+            current.Statements.Add(boundVariableDeclarationStatement);
+            return boundVariableDeclarationStatement;
+        }
+
         public override BoundNode VisitBoundBlockStatement(BoundBlockStatement boundBlockStatement)
         {
-            if (!boundBlockStatement.Statements.Any())
+            if (boundBlockStatement.Statements.IsEmpty)
             {
                 current.Statements.Add(new BoundNoOpStatement());
                 return boundBlockStatement;
@@ -66,47 +74,108 @@ internal sealed class ControlFlowGraph
         {
             var begin = current;
 
-            StartNewBlock(endBlock);
-            Connect(begin, current);
-            Visit(boundConditionalStatement.Consequence);
-            var consequence = current;
-
-            StartNewBlock(endBlock);
-            Connect(begin, current);
-            Visit(boundConditionalStatement.Alternative);
-            var alternative = current;
-
-            StartNewBlock(endBlock);
-            Connect(consequence, current);
-            Connect(alternative, current);
-
-            if (boundConditionalStatement.Consequence is BoundNoOpStatement || boundConditionalStatement.Alternative is BoundNoOpStatement)
+            // Ensure begin is a proper block so branches can't absorb it
+            if (!begin.Statements.Any())
             {
-                current.Statements.Add(new BoundNoOpStatement());
+                begin.Statements.Add(new BoundNoOpStatement());
             }
+            blocks.Add(begin);
+
+            var consequenceEnd = VisitBranch(boundConditionalStatement.Consequence, begin);
+            var alternativeEnd = VisitBranch(boundConditionalStatement.Alternative, begin);
+
+            // Merge block - only connect branches with live, non-terminal flow. The merge
+            // is kept even if it stays empty here: StartNewBlock/Build preserve any block
+            // that already has an incoming edge instead of silently dropping it.
+            current = new BasicBlock();
+            ConnectToMerge(consequenceEnd, current);
+            ConnectToMerge(alternativeEnd, current);
 
             return boundConditionalStatement;
         }
 
+        private BasicBlock VisitBranch(BoundStatement branch, BasicBlock from)
+        {
+            current = new BasicBlock();
+            Connect(from, current);
+            Visit(branch);
+
+            var end = current;
+            if (ShouldPreserve(end))
+            {
+                blocks.Add(end);
+            }
+
+            return end;
+        }
+
+        private void ConnectToMerge(BasicBlock branchEnd, BasicBlock merge)
+        {
+            if (branchEnd.Incoming.Any() && !branchEnd.IsTerminal)
+            {
+                Connect(branchEnd, merge);
+            }
+        }
+
         public override BoundNode VisitBoundLoopStatement(BoundLoopStatement boundLoopStatement)
         {
-            var begin = current;
+            // Close off whatever preceded the loop as its own block, distinct from the
+            // header, so a `continue` back edge never re-executes pre-loop code.
+            var preHeader = current;
+            if (!preHeader.Statements.Any())
+            {
+                preHeader.Statements.Add(new BoundNoOpStatement());
+            }
+            blocks.Add(preHeader);
 
-            StartNewBlock(endBlock);
-            Connect(begin, current);
+            // The header is a synthetic branch point standing in for condition evaluation:
+            // it either enters the body or falls through to the exit. It is always reachable
+            // (from preHeader, or later from the body's back edge), so it is always kept.
+            var header = new BasicBlock();
+            header.Statements.Add(new BoundNoOpStatement());
+            blocks.Add(header);
+            Connect(preHeader, header);
 
-            var end = new BasicBlock();
-            Connect(begin, end);
-            loopBlocks[boundLoopStatement.BoundLoopContext] = (begin, end);
+            // Constant folding runs after control flow analysis, so a literal condition is
+            // only visible here as a direct BoundConstant. When it is, drop the edge that a
+            // constant condition makes impossible instead of always modeling both outcomes.
+            var constantCondition = EvaluateConstantCondition(boundLoopStatement);
+
+            // The exit represents "after the loop". Unlike header it is only kept if
+            // something actually reaches it (fallthrough or a break); a `while true` loop
+            // with no break has no textual code after it and should not manufacture one.
+            var exit = new BasicBlock();
+            if (constantCondition != true)
+            {
+                Connect(header, exit);
+            }
+
+            // Registered before visiting the body so nested break/continue statements -
+            // including ones belonging to this exact loop - resolve correctly.
+            loopBlocks[boundLoopStatement.BoundLoopContext] = (header, exit);
+
+            current = new BasicBlock();
+            if (constantCondition != false)
+            {
+                Connect(header, current);
+            }
 
             Visit(boundLoopStatement.Body);
-            var body = current;
 
-            StartNewBlock(end);
-            Connect(body, current);
-            Connect(begin, current);
+            var bodyEnd = current;
+            if (ShouldPreserve(bodyEnd))
+            {
+                blocks.Add(bodyEnd);
+                if (!bodyEnd.IsTerminal)
+                {
+                    // Falling off the end of the body re-checks the condition. This is the
+                    // loop's back edge; return/break/continue each wire their own exit and
+                    // leave `current` as a fresh, empty, unconnected block instead.
+                    Connect(bodyEnd, header);
+                }
+            }
 
-            current = end;
+            current = exit;
 
             return boundLoopStatement;
         }
@@ -114,9 +183,15 @@ internal sealed class ControlFlowGraph
         public override BoundNode VisitBoundBreakStatement(BoundBreakStatement boundBreakStatement)
         {
             current.Statements.Add(boundBreakStatement);
-            var (_, end) = loopBlocks[boundBreakStatement.BoundLoopContext];
 
-            StartNewBlock(end);
+            if (boundBreakStatement.BoundLoopContext is null)
+            {
+                // Already reported as NoEnclosingLoop during binding; nothing to wire.
+                return boundBreakStatement;
+            }
+
+            var (_, exit) = loopBlocks[boundBreakStatement.BoundLoopContext];
+            StartNewBlock(exit);
 
             return boundBreakStatement;
         }
@@ -124,10 +199,20 @@ internal sealed class ControlFlowGraph
         public override BoundNode VisitBoundContinueStatement(BoundContinueStatement boundContinueStatement)
         {
             current.Statements.Add(boundContinueStatement);
-            var (begin, end) = loopBlocks[boundContinueStatement.BoundLoopContext];
 
-            Connect(current, begin);
-            StartNewBlock(end);
+            if (boundContinueStatement.BoundLoopContext is null)
+            {
+                // Already reported as NoEnclosingLoop during binding; nothing to wire.
+                return boundContinueStatement;
+            }
+
+            var (header, _) = loopBlocks[boundContinueStatement.BoundLoopContext];
+
+            // continue re-checks the condition, so it targets the header directly - not the
+            // loop's exit. FlushCurrentBlock (unlike StartNewBlock) adds no implicit edge,
+            // since the edge above is already the block's one and only outgoing edge.
+            Connect(current, header);
+            FlushCurrentBlock();
 
             return boundContinueStatement;
         }
@@ -137,6 +222,30 @@ internal sealed class ControlFlowGraph
             current.Statements.Add(boundExpressionStatement);
             return boundExpressionStatement;
         }
+
+        /// <summary>
+        /// Returns the loop's condition as a constant boolean, accounting for `until`
+        /// negation, or null when it is not known to be constant at this point.
+        /// </summary>
+        private static bool? EvaluateConstantCondition(BoundLoopStatement boundLoopStatement)
+        {
+            if (boundLoopStatement.Condition is not BoundConstant { Value: ConstantBooleanValue constantBooleanValue })
+            {
+                return null;
+            }
+
+            return boundLoopStatement.ConditionNegated
+                ? !constantBooleanValue.BooleanValue
+                : constantBooleanValue.BooleanValue;
+        }
+
+        // A block must be kept once it is wired into the graph (has an incoming edge) or
+        // holds real statements. Otherwise it is a scratch object nothing ever reaches -
+        // e.g. the fresh block created right after a return/break/continue when no further
+        // statements follow - and can be safely discarded instead of becoming an orphan
+        // that Branches references but Blocks does not contain.
+        private static bool ShouldPreserve(BasicBlock block)
+            => block.Statements.Any() || block.Incoming.Any();
 
         private void Connect(BasicBlock from, BasicBlock to)
         {
@@ -153,7 +262,7 @@ internal sealed class ControlFlowGraph
 
         private void StartNewBlock(BasicBlock end)
         {
-            if (!current.Statements.Any())
+            if (!ShouldPreserve(current))
             {
                 return;
             }
@@ -161,7 +270,7 @@ internal sealed class ControlFlowGraph
             blocks.Add(current);
             var next = new BasicBlock();
 
-            if (current.IsTeminal)
+            if (current.IsTerminal)
             {
                 Connect(current, end);
             }
@@ -173,11 +282,26 @@ internal sealed class ControlFlowGraph
             current = next;
         }
 
+        /// <summary>
+        /// Flushes `current` into the graph without adding an implicit outgoing edge, for
+        /// statements (namely `continue`) that already wired their own outgoing edge.
+        /// </summary>
+        private void FlushCurrentBlock()
+        {
+            if (!ShouldPreserve(current))
+            {
+                return;
+            }
+
+            blocks.Add(current);
+            current = new BasicBlock();
+        }
+
         public ControlFlowGraph Build()
         {
-            if (blocks.LastOrDefault() != current)
+            if (blocks.LastOrDefault() != current && ShouldPreserve(current))
             {
-                StartNewBlock(endBlock);
+                blocks.Add(current);
             }
 
             blocks.Insert(0, startBlock);
@@ -185,15 +309,15 @@ internal sealed class ControlFlowGraph
 
             Connect(startBlock, blocks[1]);
 
-            if (blocks.Count > 2)
+            if (blocks.Count > 2 && !blocks[^2].IsTerminal)
             {
                 Connect(blocks[^2], endBlock);
             }
 
             return new()
             {
-                Blocks = blocks,
-                Branches = branches
+                Blocks = blocks.ToImmutable(),
+                Branches = branches.ToImmutable()
             };
         }
     }
@@ -205,7 +329,7 @@ internal sealed class ControlFlowGraph
         public List<BasicBlockBranch> Incoming { get; } = new();
         public List<BasicBlockBranch> Outgoing { get; } = new();
 
-        public bool IsTeminal
+        public bool IsTerminal
         {
             get
             {
@@ -240,7 +364,7 @@ internal sealed class ControlFlowGraph
                 return "[Empty]";
             }
 
-            return Statements[0].SyntaxNode.Text.ToString();
+            return Statements[0].SyntaxNode.GetText();
         }
     }
 

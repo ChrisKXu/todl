@@ -17,4 +17,8 @@
     <PublishDir>$(OutDir)\Published</PublishDir>
     <PackageOutputPath>$(OutputRoot)\Packages</PackageOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="5.3.0" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

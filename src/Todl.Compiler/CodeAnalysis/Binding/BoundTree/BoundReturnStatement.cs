@@ -8,10 +8,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 internal sealed class BoundReturnStatement : BoundStatement
 {
     public BoundExpression BoundReturnValueExpression { get; internal init; }
-
-    public TypeSymbol ReturnType
-        => BoundReturnValueExpression?.ResultType
-        ?? SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes.Void;
+    public TypeSymbol ReturnType { get; internal init; }
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundReturnStatement(this);
 }
@@ -28,25 +25,26 @@ public partial class Binder
 
         var boundReturnStatement = BoundNodeFactory.CreateBoundReturnStatement(
             syntaxNode: returnStatement,
-            boundReturnValueExpression: boundReturnValueExpression);
+            boundReturnValueExpression: boundReturnValueExpression,
+            returnType: boundReturnValueExpression?.ResultType ?? ClrTypeCache.BuiltInTypes.Void);
 
         if (!IsInFunction)
         {
-            boundReturnStatement.DiagnosticBuilder.Add(new Diagnostic()
+            ReportDiagnostic(new Diagnostic()
             {
                 Message = "Return statements are only valid within a function declaration.",
                 ErrorCode = ErrorCode.UnexpectedStatement,
-                TextLocation = returnStatement.Text.GetTextLocation(),
+                TextLocation = returnStatement.GetTextLocation(),
                 Level = DiagnosticLevel.Error
             });
         }
         else if (!boundReturnStatement.ReturnType.Equals(FunctionSymbol.ReturnType))
         {
-            boundReturnStatement.DiagnosticBuilder.Add(new Diagnostic()
+            ReportDiagnostic(new Diagnostic()
             {
                 Message = $"The function expects a return type of {FunctionSymbol.ReturnType} but {boundReturnStatement.ReturnType} is returned.",
                 ErrorCode = ErrorCode.TypeMismatch,
-                TextLocation = returnStatement.Text.GetTextLocation(),
+                TextLocation = returnStatement.GetTextLocation(),
                 Level = DiagnosticLevel.Error
             });
         }

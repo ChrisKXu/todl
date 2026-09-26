@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.Diagnostics;
@@ -16,19 +16,21 @@ public sealed class BoundLoopStatementTests
     public void BoundLoopStatementsCanHaveBody(string inputText, bool negated, int expectedBodyStatementsCount)
     {
         var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>(inputText);
-        boundLoopStatement.GetDiagnostics().Should().BeEmpty();
         boundLoopStatement.ConditionNegated.Should().Be(negated);
-        boundLoopStatement.Body.As<BoundBlockStatement>().Statements.Count.Should().Be(expectedBodyStatementsCount);
+        boundLoopStatement.Body.As<BoundBlockStatement>().Statements.Should().HaveCount(expectedBodyStatementsCount);
         boundLoopStatement.BoundLoopContext.Should().NotBeNull();
     }
 
     [Fact]
     public void BoundLoopStatementsShouldHaveBooleanConditions()
     {
-        var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>("while 1 { }");
-        boundLoopStatement.GetDiagnostics().Count().Should().Be(1);
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>("while 1 { }", diagnosticBuilder);
+        boundLoopStatement.Should().NotBeNull();
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Count().Should().Be(1);
 
-        var diagnostic = boundLoopStatement.GetDiagnostics().First();
+        var diagnostic = diagnostics.First();
         diagnostic.Level.Should().Be(DiagnosticLevel.Error);
         diagnostic.ErrorCode.Should().Be(ErrorCode.TypeMismatch);
         diagnostic.Message.Should().Be("Condition must be of boolean type.");
@@ -40,8 +42,85 @@ public sealed class BoundLoopStatementTests
     [InlineData("while 0 < 1 { if 1 < 2 { break; } else { continue; } }")]
     public void BoundLoopStatementsCanHaveBreakOrContinueStatements(string inputText)
     {
-        var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>(inputText);
-        boundLoopStatement.GetDiagnostics().Should().BeEmpty();
+        TestUtils.BindStatement<BoundLoopStatement>(inputText).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void BoundLoopStatementsCanHaveNamedLoopContext()
+    {
+        var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>("while true: loop { }");
+        boundLoopStatement.Should().NotBeNull();
+        boundLoopStatement.BoundLoopContext.Should().NotBeNull();
+        boundLoopStatement.BoundLoopContext.LoopLabel.Label.GetText().Should().Be("loop");
+    }
+
+    [Fact]
+    public void LoopContextCanBeStacked()
+    {
+        // This test makes sure that
+        // 1. loop labels can be stacked
+        // 2. loop labels can be reused in different scopes
+        // 3. we can have mixed loop labels and unnamed loops
+        var loops = TestUtils.BindStatement<BoundBlockStatement>(
+            @"{
+                while true: loop1 { 
+                    while true: loop2 { 
+                        while true: loop3 { } 
+                    } 
+                }
+
+                while true: loop2 { 
+                    while true: loop3 { }
+                }
+
+                while true {
+                    while true: inner { }
+                }
+            }");
+
+        loops.Should().NotBeNull();
+
+        var loop1_1 = loops.Statements[0].As<BoundLoopStatement>();
+        loop1_1.BoundLoopContext.LoopLabel.Label.GetText().Should().Be("loop1");
+        loop1_1.BoundLoopContext.Parent.Should().BeNull();
+        var loop1_2 = loop1_1.Body.As<BoundBlockStatement>().Statements[0].As<BoundLoopStatement>();
+        loop1_2.BoundLoopContext.LoopLabel.Label.GetText().Should().Be("loop2");
+        loop1_2.BoundLoopContext.Parent.Should().Be(loop1_1.BoundLoopContext);
+        var loop1_3 = loop1_2.Body.As<BoundBlockStatement>().Statements[0].As<BoundLoopStatement>();
+        loop1_3.BoundLoopContext.LoopLabel.Label.GetText().Should().Be("loop3");
+        loop1_3.BoundLoopContext.Parent.Should().Be(loop1_2.BoundLoopContext);
+
+        var loop2_1 = loops.Statements[1].As<BoundLoopStatement>();
+        loop2_1.BoundLoopContext.LoopLabel.Label.GetText().Should().Be("loop2");
+        loop2_1.BoundLoopContext.Parent.Should().BeNull();
+        var loop2_2 = loop2_1.Body.As<BoundBlockStatement>().Statements[0].As<BoundLoopStatement>();
+        loop2_2.BoundLoopContext.LoopLabel.Label.GetText().Should().Be("loop3");
+        loop2_2.BoundLoopContext.Parent.Should().Be(loop2_1.BoundLoopContext);
+
+        var loop3_1 = loops.Statements[2].As<BoundLoopStatement>();
+        loop3_1.BoundLoopContext.LoopLabel.Should().BeNull();
+        loop3_1.BoundLoopContext.Parent.Should().BeNull();
+        var loop3_2 = loop3_1.Body.As<BoundBlockStatement>().Statements[0].As<BoundLoopStatement>();
+        loop3_2.BoundLoopContext.LoopLabel.Label.GetText().Should().Be("inner");
+        loop3_2.BoundLoopContext.Parent.Should().Be(loop3_1.BoundLoopContext);
+    }
+
+    [Fact]
+    public void LoopLabelsCannotBeReusedInSameScope()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundLoopStatement = TestUtils.BindStatement<BoundBlockStatement>(
+            @"{
+                while true: loop { while true: loop { } }
+            }", diagnosticBuilder);
+        boundLoopStatement.Should().NotBeNull();
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Count().Should().Be(1);
+
+        var diagnostic = diagnostics.First();
+        diagnostic.Level.Should().Be(DiagnosticLevel.Error);
+        diagnostic.ErrorCode.Should().Be(ErrorCode.DuplicateLoopLabel);
+        diagnostic.Message.Should().Be("Duplicate loop label 'loop'");
     }
 
     [Theory]
@@ -49,13 +128,120 @@ public sealed class BoundLoopStatementTests
     [InlineData("continue;")]
     public void BreakOrContinueStatementsCanOnlyAppearInLoops(string inputText)
     {
-        var boundStatement = TestUtils.BindStatement<BoundStatement>(inputText);
-        var diagnostics = boundStatement.GetDiagnostics();
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundStatement = TestUtils.BindStatement<BoundStatement>(inputText, diagnosticBuilder);
+        boundStatement.Should().NotBeNull();
+        var diagnostics = diagnosticBuilder.Build();
         diagnostics.Should().NotBeEmpty();
 
         var noEnclosingLoop = diagnostics.First();
         noEnclosingLoop.Level.Should().Be(DiagnosticLevel.Error);
         noEnclosingLoop.ErrorCode.Should().Be(ErrorCode.NoEnclosingLoop);
         noEnclosingLoop.Message.Should().Be("No enclosing loop out of which to break or continue.");
+    }
+
+    [Fact]
+    public void BreakCanTargetLabeledOuterLoop()
+    {
+        var outerLoop = TestUtils.BindStatement<BoundLoopStatement>(
+            "while true : outer { while true { break outer; } }");
+        outerLoop.Should().NotBeNull();
+
+        var innerLoop = outerLoop.Body.As<BoundBlockStatement>().Statements[0].As<BoundLoopStatement>();
+        var breakStatement = innerLoop.Body.As<BoundBlockStatement>().Statements[0].As<BoundBreakStatement>();
+
+        breakStatement.BoundLoopContext.Should().BeSameAs(outerLoop.BoundLoopContext);
+        breakStatement.BoundLoopContext.Should().NotBeSameAs(innerLoop.BoundLoopContext);
+    }
+
+    [Fact]
+    public void ContinueCanTargetLabeledOuterLoop()
+    {
+        var outerLoop = TestUtils.BindStatement<BoundLoopStatement>(
+            "while true : outer { while true { continue outer; } }");
+        outerLoop.Should().NotBeNull();
+
+        var innerLoop = outerLoop.Body.As<BoundBlockStatement>().Statements[0].As<BoundLoopStatement>();
+        var continueStatement = innerLoop.Body.As<BoundBlockStatement>().Statements[0].As<BoundContinueStatement>();
+
+        continueStatement.BoundLoopContext.Should().BeSameAs(outerLoop.BoundLoopContext);
+        continueStatement.BoundLoopContext.Should().NotBeSameAs(innerLoop.BoundLoopContext);
+    }
+
+    [Theory]
+    [InlineData("while true : outer { break outer; }")]
+    [InlineData("while true : outer { continue outer; }")]
+    public void BreakOrContinueCanTargetSelfLabeledLoop(string inputText)
+    {
+        var loop = TestUtils.BindStatement<BoundLoopStatement>(inputText);
+        loop.Should().NotBeNull();
+
+        var boundLoopContext = loop.Body.As<BoundBlockStatement>().Statements[0] switch
+        {
+            BoundBreakStatement breakStatement => breakStatement.BoundLoopContext,
+            BoundContinueStatement continueStatement => continueStatement.BoundLoopContext,
+            _ => null
+        };
+
+        boundLoopContext.Should().BeSameAs(loop.BoundLoopContext);
+    }
+
+    [Theory]
+    [InlineData("while true { break outer; }")]
+    [InlineData("while true { continue outer; }")]
+    public void UndefinedLoopLabelProducesDiagnostic(string inputText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundLoopStatement = TestUtils.BindStatement<BoundLoopStatement>(inputText, diagnosticBuilder);
+        boundLoopStatement.Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Count().Should().Be(1);
+
+        var diagnostic = diagnostics.First();
+        diagnostic.Level.Should().Be(DiagnosticLevel.Error);
+        diagnostic.ErrorCode.Should().Be(ErrorCode.UndefinedLoopLabel);
+        diagnostic.Message.Should().Be("No enclosing loop is labeled 'outer'.");
+    }
+
+    [Fact]
+    public void LoopLabelIsNotVisibleFromSiblingScope()
+    {
+        // "sibling" is declared on a loop that has already finished binding (not an
+        // ancestor of the break below), so it must not resolve even though the name matches.
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var block = TestUtils.BindStatement<BoundBlockStatement>(
+            @"{
+                while true : sibling { }
+                while true { break sibling; }
+            }", diagnosticBuilder);
+        block.Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Count().Should().Be(1);
+
+        var diagnostic = diagnostics.First();
+        diagnostic.Level.Should().Be(DiagnosticLevel.Error);
+        diagnostic.ErrorCode.Should().Be(ErrorCode.UndefinedLoopLabel);
+        diagnostic.Message.Should().Be("No enclosing loop is labeled 'sibling'.");
+    }
+
+    [Theory]
+    [InlineData("break outer;")]
+    [InlineData("continue outer;")]
+    public void BreakOrContinueWithLabelStillRequiresEnclosingLoop(string inputText)
+    {
+        // No enclosing loop at all takes priority over resolving the label.
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundStatement = TestUtils.BindStatement<BoundStatement>(inputText, diagnosticBuilder);
+        boundStatement.Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Count().Should().Be(1);
+
+        var diagnostic = diagnostics.First();
+        diagnostic.Level.Should().Be(DiagnosticLevel.Error);
+        diagnostic.ErrorCode.Should().Be(ErrorCode.NoEnclosingLoop);
+        diagnostic.Message.Should().Be("No enclosing loop out of which to break or continue.");
     }
 }

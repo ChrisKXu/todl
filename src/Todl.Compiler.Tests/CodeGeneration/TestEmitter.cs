@@ -3,6 +3,7 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
+using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.CodeGeneration;
 
 namespace Todl.Compiler.Tests.CodeGeneration;
@@ -22,6 +23,7 @@ internal sealed class TestEmitter : Emitter.InstructionEmitter
     {
         var assemblyNameDefinition = new AssemblyNameDefinition("test", new Version(1, 0));
         AssemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyNameDefinition, "default", ModuleKind.Console);
+        Compilation = new Compilation("test", new Version(1, 0), Array.Empty<SourceText>(), TestDefaults.DefaultClrTypeCache);
 
         var attributes = MethodAttributes.Static;
         attributes |= MethodAttributes.Public;

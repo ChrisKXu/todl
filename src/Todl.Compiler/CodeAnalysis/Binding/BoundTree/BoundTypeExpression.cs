@@ -7,10 +7,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 [BoundNode]
 internal sealed class BoundTypeExpression : BoundExpression
 {
-    internal TypeSymbol TargetType { get; init; }
-
-    public override TypeSymbol ResultType => TargetType;
-
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundTypeExpression(this);
 }
 
@@ -18,23 +14,22 @@ public partial class Binder
 {
     private BoundTypeExpression BindTypeExpression(NameExpression nameExpression)
     {
-        var type = nameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(nameExpression);
-        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var type = GetClrTypeCacheView(nameExpression.SyntaxTree).ResolveType(nameExpression);
 
         if (type is null)
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
-                    Message = $"Type {nameExpression.Text} is invalid",
+                    Message = $"Type {nameExpression.GetText()} is invalid",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = nameExpression.Text.GetTextLocation(),
+                    TextLocation = nameExpression.GetTextLocation(),
                     ErrorCode = ErrorCode.TypeNotFound
                 });
         }
 
         return BoundNodeFactory.CreateBoundTypeExpression(
             syntaxNode: nameExpression,
-            targetType: type);
+            resultType: type);
     }
 }

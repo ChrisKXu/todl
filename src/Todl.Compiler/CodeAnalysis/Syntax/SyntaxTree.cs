@@ -1,72 +1,71 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿﻿using System.Collections.Immutable;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 
-namespace Todl.Compiler.CodeAnalysis.Syntax
+namespace Todl.Compiler.CodeAnalysis.Syntax;
+
+public sealed class SyntaxTree
 {
-    public sealed class SyntaxTree
+    private readonly Lexer lexer;
+    private readonly Parser parser;
+
+    public SourceText SourceText { get; }
+
+    public ImmutableArray<SyntaxToken> SyntaxTokens => lexer.SyntaxTokens;
+    public ImmutableArray<Directive> Directives => parser.Directives;
+    public ImmutableArray<Member> Members => parser.Members;
+
+    internal SyntaxTree(
+        SourceText sourceText,
+        DiagnosticBag.Builder diagnosticBuilder)
     {
-        private readonly Lexer lexer;
-        private readonly Parser parser;
+        lexer = new Lexer() { SourceText = sourceText };
+        parser = new Parser(this, diagnosticBuilder);
 
-        public SourceText SourceText { get; }
-        public ClrTypeCache ClrTypeCache { get; }
+        SourceText = sourceText;
+    }
 
-        public IReadOnlyList<SyntaxToken> SyntaxTokens => lexer.SyntaxTokens;
-        public IReadOnlyList<Directive> Directives => parser.Directives;
-        public IReadOnlyList<Member> Members => parser.Members;
-        public ClrTypeCacheView ClrTypeCacheView { get; private set; }
+    private Expression ParseExpression()
+    {
+        lexer.Lex();
+        return parser.ParseExpression();
+    }
 
-        internal SyntaxTree(SourceText sourceText, ClrTypeCache clrTypeCache)
-        {
-            lexer = new Lexer() { SourceText = sourceText };
-            parser = new Parser(this);
+    private Statement ParseStatement()
+    {
+        lexer.Lex();
+        return parser.ParseStatement();
+    }
 
-            SourceText = sourceText;
-            ClrTypeCache = clrTypeCache;
-        }
+    private void Parse()
+    {
+        lexer.Lex();
+        parser.Parse();
+    }
 
-        private Expression ParseExpression()
-        {
-            lexer.Lex();
-            ClrTypeCacheView = ClrTypeCache.CreateView(Array.Empty<ImportDirective>());
-            return parser.ParseExpression();
-        }
+    public static SyntaxTree Parse(
+        SourceText sourceText,
+        DiagnosticBag.Builder diagnosticBuilder)
+    {
+        var syntaxTree = new SyntaxTree(sourceText, diagnosticBuilder);
+        syntaxTree.Parse();
+        return syntaxTree;
+    }
 
-        private Statement ParseStatement()
-        {
-            lexer.Lex();
-            ClrTypeCacheView = ClrTypeCache.CreateView(Array.Empty<ImportDirective>());
-            return parser.ParseStatement();
-        }
+    // temporarily make available for tests and evaluator
+    internal static Expression ParseExpression(
+        SourceText sourceText,
+        DiagnosticBag.Builder diagnosticBuilder)
+    {
+        var syntaxTree = new SyntaxTree(sourceText, diagnosticBuilder);
+        return syntaxTree.ParseExpression();
+    }
 
-        private void Parse()
-        {
-            lexer.Lex();
-            parser.Parse();
-
-            ClrTypeCacheView = ClrTypeCache.CreateView(Directives.OfType<ImportDirective>());
-        }
-
-        public static SyntaxTree Parse(SourceText sourceText, ClrTypeCache clrTypeCache)
-        {
-            var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
-            syntaxTree.Parse();
-            return syntaxTree;
-        }
-
-        // temporarily make available for tests and evaluator
-        internal static Expression ParseExpression(SourceText sourceText, ClrTypeCache clrTypeCache)
-        {
-            var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
-            return syntaxTree.ParseExpression();
-        }
-
-        internal static Statement ParseStatement(SourceText sourceText, ClrTypeCache clrTypeCache)
-        {
-            var syntaxTree = new SyntaxTree(sourceText, clrTypeCache);
-            return syntaxTree.ParseStatement();
-        }
+    internal static Statement ParseStatement(
+        SourceText sourceText,
+        DiagnosticBag.Builder diagnosticBuilder)
+    {
+        var syntaxTree = new SyntaxTree(sourceText, diagnosticBuilder);
+        return syntaxTree.ParseStatement();
     }
 }

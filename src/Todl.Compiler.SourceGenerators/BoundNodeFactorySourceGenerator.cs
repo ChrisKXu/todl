@@ -34,6 +34,7 @@ internal sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
                 using System;
                 using System.CodeDom.Compiler;
                 using System.Collections.Generic;
+                using System.Collections.Immutable;
                 using System.Reflection;
                 using Todl.Compiler.CodeAnalysis.Symbols;
                 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -45,19 +46,11 @@ internal sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
                 {
                     [GeneratedCode("{{nameof(BoundNodeFactorySourceGenerator)}}", "1.0.0.0")]
                     internal static {{className}} Create{{className}}(
-                        SyntaxNode syntaxNode,
-                        {{boundNodeMetadata.WriteParameters()}}
-                        DiagnosticBag.Builder diagnosticBuilder = null)
+                        {{boundNodeMetadata.WriteParameters()}})
                     {
-                        diagnosticBuilder ??= new();
-
-                        {{boundNodeMetadata.WriteDiagnostics()}}
-
                         return new {{className}}()
                         {
-                            SyntaxNode = syntaxNode,
                             {{boundNodeMetadata.WriteInitializers()}}
-                            DiagnosticBuilder = diagnosticBuilder
                         };
                     }
                 }
@@ -89,45 +82,52 @@ internal sealed class BoundNodeFactorySourceGenerator : IIncrementalGenerator
 
         public string ClassName => context.TargetSymbol.Name;
 
-        public IEnumerable<(string Name, IPropertySymbol Property)> Properties { get; }
+        public IEnumerable<(string Name, IPropertySymbol Property, bool IsOwn)> Properties { get; }
 
         public BoundNodeMetadata(GeneratorAttributeSyntaxContext context)
         {
             this.context = context;
 
             var boundNodeClass = context.TargetSymbol as INamedTypeSymbol;
+            var boundNodeType = context.SemanticModel.Compilation.GetTypeByMetadataName(BoundNodeTypeName);
 
-            Properties = boundNodeClass
-                .GetMembers()
-                .OfType<IPropertySymbol>()
-                .Where(p => !p.IsReadOnly)
-                .Select(p => (p.GetPropertyTypeName(), p));
+            // Walk own type then base types (stopping before BoundNode); own properties are required, inherited ones default to unset.
+            var seenNames = new HashSet<string>();
+            var properties = new List<(string, IPropertySymbol, bool)>();
+            var isOwn = true;
+
+            for (var type = boundNodeClass; type is not null && !SymbolEqualityComparer.Default.Equals(type, boundNodeType); type = type.BaseType)
+            {
+                foreach (var property in type.GetMembers().OfType<IPropertySymbol>().Where(p => !p.IsReadOnly))
+                {
+                    if (seenNames.Add(property.Name))
+                    {
+                        properties.Add((property.GetPropertyTypeName(), property, isOwn));
+                    }
+                }
+
+                isOwn = false;
+            }
+
+            Properties = properties;
         }
 
         public string WriteParameters()
-            => string.Join("\n", Properties.Select(p => $"{p.Name} {p.Property.CamelCasedName()},"));
-
-        public string WriteDiagnostics()
         {
-            var statements = new List<string>();
-            var boundNodeType = context.SemanticModel.Compilation.GetTypeByMetadataName(BoundNodeTypeName);
-
-            statements.AddRange(
-                Properties
-                    .Where(p => p.Property.Type.IsDerivedFrom(boundNodeType))
-                    .Select(p => $"diagnosticBuilder.Add({p.Property.CamelCasedName()});"));
-
-            statements.AddRange(
-                Properties
-                    .Where(p => p.Property.Type is INamedTypeSymbol t
-                        && t.IsGenericType
-                        && t.TypeArguments.Any(t => t.IsDerivedFrom(boundNodeType)))
-                    .Select(p => $"diagnosticBuilder.AddRange({p.Property.CamelCasedName()});"));
-
-            return string.Join("\n", statements);
+            var properties = Properties
+                .Select(p => p.IsOwn
+                    ? $"{p.Name} {p.Property.CamelCasedName()}"
+                    : $"{p.Name} {p.Property.CamelCasedName()} = default")
+                .ToList();
+            properties.Insert(0, "SyntaxNode syntaxNode");
+            return string.Join(",\n", properties);
         }
 
         public string WriteInitializers()
-            => string.Join("\n", Properties.Select(p => $"{p.Property.Name} = {p.Property.CamelCasedName()},"));
+        {
+            var properties = Properties.Select(p => $"{p.Property.Name} = {p.Property.CamelCasedName()}").ToList();
+            properties.Insert(0, "SyntaxNode = syntaxNode");
+            return string.Join(",\n", properties);
+        }
     }
 }

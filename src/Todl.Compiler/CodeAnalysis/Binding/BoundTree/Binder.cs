@@ -1,4 +1,9 @@
-﻿using Todl.Compiler.CodeAnalysis.Symbols;
+﻿﻿using System.Collections.Generic;
+using System.Linq;
+using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
@@ -29,7 +34,13 @@ public partial class Binder
     public virtual BoundLoopContext BoundLoopContext
         => Parent?.BoundLoopContext;
 
+    public virtual DiagnosticBag.Builder DiagnosticBuilder
+        => Parent?.DiagnosticBuilder;
+
     public bool IsInFunction => FunctionSymbol is not null;
+
+    internal ClrTypeCacheView GetClrTypeCacheView(SyntaxTree syntaxTree)
+        => ClrTypeCache.CreateView(syntaxTree.Directives.OfType<ImportDirective>());
 
     public Binder CreateBlockStatementBinder()
         => new()
@@ -45,14 +56,14 @@ public partial class Binder
             Scope = Scope.CreateChildScope(BoundScopeKind.Function)
         };
 
-    public static Binder CreateScriptBinder(ClrTypeCache clrTypeCache)
-        => new ScriptBinder(clrTypeCache)
+    public static Binder CreateScriptBinder(ClrTypeCache clrTypeCache, DiagnosticBag.Builder diagnosticBuilder)
+        => new ScriptBinder(clrTypeCache, diagnosticBuilder)
         {
             Scope = BoundScope.GlobalScope
         };
 
-    public static Binder CreateModuleBinder(ClrTypeCache clrTypeCache)
-        => new ModuleBinder(clrTypeCache)
+    public static Binder CreateModuleBinder(ClrTypeCache clrTypeCache, ConstantValueFactory constantValueFactory, DiagnosticBag.Builder diagnosticBuilder)
+        => new ModuleBinder(clrTypeCache, constantValueFactory, diagnosticBuilder)
         {
             Scope = BoundScope.GlobalScope.CreateChildScope(BoundScopeKind.Module)
         };
@@ -64,41 +75,120 @@ public partial class Binder
             Scope = Scope.CreateChildScope(BoundScopeKind.Type)
         };
 
-    public Binder CreateLoopBinder()
-        => new LoopBinder(BoundLoopContext?.CreateChildContext() ?? new BoundLoopContext())
+    public Binder CreateLoopBinder(LoopLabel loopLabel)
+    {
+        var context = BoundLoopContext?.CreateChildContext(loopLabel) ?? new BoundLoopContext() { LoopLabel = loopLabel };
+
+        if (loopLabel is not null)
+        {
+            var parent = context.Parent;
+            while (parent is not null)
+            {
+                if (parent.LoopLabel is not null
+                    && parent.LoopLabel.Label.GetText().Equals(loopLabel.Label.GetText()))
+                {
+                    ReportDiagnostic(new Diagnostic()
+                    {
+                        ErrorCode = ErrorCode.DuplicateLoopLabel,
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = loopLabel.GetTextLocation(),
+                        Message = $"Duplicate loop label '{loopLabel.Label.GetText()}'"
+                    });
+                }
+
+                parent = parent.Parent;
+            }
+        }
+
+        return new LoopBinder(context)
         {
             Parent = this,
             Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
         };
+    }
+
+    /// <summary>
+    /// Resolves the <see cref="BoundLoopContext"/> that a <c>break</c>/<c>continue</c>
+    /// statement targets: the innermost enclosing loop when unlabeled, or the ancestor loop whose
+    /// declared label matches when labeled. Reports <see cref="ErrorCode.NoEnclosingLoop"/> when there
+    /// is no enclosing loop at all, or <see cref="ErrorCode.UndefinedLoopLabel"/> when a label doesn't
+    /// match any enclosing loop, and returns null in both cases.
+    /// </summary>
+    private BoundLoopContext ResolveLoopContext(NameExpression label, TextLocation statementTextLocation)
+    {
+        if (BoundLoopContext is null)
+        {
+            ReportDiagnostic(new Diagnostic()
+            {
+                Level = DiagnosticLevel.Error,
+                ErrorCode = ErrorCode.NoEnclosingLoop,
+                Message = "No enclosing loop out of which to break or continue.",
+                TextLocation = statementTextLocation
+            });
+
+            return null;
+        }
+
+        if (label is null)
+        {
+            return BoundLoopContext;
+        }
+
+        var labelText = label.GetText();
+        for (var context = BoundLoopContext; context is not null; context = context.Parent)
+        {
+            if (context.LoopLabel is not null && context.LoopLabel.Label.GetText().Equals(labelText))
+            {
+                return context;
+            }
+        }
+
+        ReportDiagnostic(new Diagnostic()
+        {
+            Level = DiagnosticLevel.Error,
+            ErrorCode = ErrorCode.UndefinedLoopLabel,
+            Message = $"No enclosing loop is labeled '{labelText}'.",
+            TextLocation = label.GetTextLocation()
+        });
+
+        return null;
+    }
+
+    protected void ReportDiagnostic(Diagnostic diagnostic)
+        => DiagnosticBuilder.Add(diagnostic);
 
     internal sealed class ScriptBinder : Binder
     {
-        public ScriptBinder(ClrTypeCache clrTypeCache)
+        public ScriptBinder(ClrTypeCache clrTypeCache, DiagnosticBag.Builder diagnosticBuilder)
         {
             ClrTypeCache = clrTypeCache;
-            BoundBinaryOperatorFactory = new(clrTypeCache);
+            BoundBinaryOperatorFactory = new();
             ConstantValueFactory = new(clrTypeCache.BuiltInTypes);
+            DiagnosticBuilder = diagnosticBuilder;
         }
 
         public override bool AllowVariableDeclarationInAssignment => true;
         public override ClrTypeCache ClrTypeCache { get; }
         public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
         public override ConstantValueFactory ConstantValueFactory { get; }
+        public override DiagnosticBag.Builder DiagnosticBuilder { get; }
     }
 
     internal sealed class ModuleBinder : Binder
     {
-        public ModuleBinder(ClrTypeCache clrTypeCache)
+        public ModuleBinder(ClrTypeCache clrTypeCache, ConstantValueFactory constantValueFactory, DiagnosticBag.Builder diagnosticBuilder)
         {
             ClrTypeCache = clrTypeCache;
-            BoundBinaryOperatorFactory = new(clrTypeCache);
-            ConstantValueFactory = new(clrTypeCache.BuiltInTypes);
+            BoundBinaryOperatorFactory = new();
+            ConstantValueFactory = constantValueFactory;
+            DiagnosticBuilder = diagnosticBuilder;
         }
 
         public override bool AllowVariableDeclarationInAssignment => false;
         public override ClrTypeCache ClrTypeCache { get; }
         public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
         public override ConstantValueFactory ConstantValueFactory { get; }
+        public override DiagnosticBag.Builder DiagnosticBuilder { get; }
     }
 
     internal sealed class TypeBinder : Binder

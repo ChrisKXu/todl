@@ -2,8 +2,6 @@
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
-using Todl.Compiler.CodeAnalysis.Syntax;
-using Todl.Compiler.CodeAnalysis.Text;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -30,14 +28,14 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = ~10UL;", ~10UL)]
     public void ConstantFoldingUnaryOperatorTest(string inputText, object expectedValue)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
-        module.GetDiagnostics().Should().BeEmpty();
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var boundVariableDeclarationStatement = TestUtils
+            .BindStatement<BoundVariableDeclarationStatement>(inputText)
+            .Accept(constantFoldingBoundNodeVisitor)
+            .As<BoundVariableDeclarationStatement>();
 
-        var variableMember = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>();
-        variableMember.BoundVariableDeclarationStatement.Variable.Constant.Should().Be(true);
-        var value = variableMember
-            .BoundVariableDeclarationStatement
+        boundVariableDeclarationStatement.Variable.Constant.Should().Be(true);
+        var value = boundVariableDeclarationStatement
             .InitializerExpression
             .As<BoundConstant>()
             .Value;
@@ -54,19 +52,22 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = -20;", -20)]
     public void BasicConstantFoldingTests(string inputText, object expectedValue)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
-        module.GetDiagnostics().Should().BeEmpty();
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var blockStatement = TestUtils
+            .BindStatement<BoundBlockStatement>("{ " + inputText + " }")
+            .Accept(constantFoldingBoundNodeVisitor)
+            .As<BoundBlockStatement>();
 
-        var variableMember = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>();
-        variableMember.BoundVariableDeclarationStatement.Variable.Constant.Should().Be(true);
-        var value = variableMember
-            .BoundVariableDeclarationStatement
+        var variableDeclarationStatements = blockStatement.Statements.Select(statement => statement.As<BoundVariableDeclarationStatement>());
+        variableDeclarationStatements.Count().Should().Be(blockStatement.Statements.Count());
+        variableDeclarationStatements.All(s => s.Variable.Constant).Should().BeTrue();
+        variableDeclarationStatements
+            .Last()
             .InitializerExpression
             .As<BoundConstant>()
-            .Value;
-
-        value.Should().Be(expectedValue);
+            .Value
+            .Should()
+            .Be(expectedValue);
     }
 
     [Theory]
@@ -76,25 +77,28 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = 10; let b = a + 10; const c = a + b;")]
     public void BasicConstantFoldingNegativeTests(string inputText)
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString(inputText), TestDefaults.DefaultClrTypeCache);
-        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
-        module.GetDiagnostics().Should().BeEmpty();
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var blockStatement = TestUtils
+            .BindStatement<BoundBlockStatement>("{ " + inputText + " }")
+            .Accept(constantFoldingBoundNodeVisitor)
+            .As<BoundBlockStatement>();
 
-        var variableMember = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>();
-        var boundVariableDeclarationStatement = variableMember.BoundVariableDeclarationStatement;
+        var boundVariableDeclarationStatement = blockStatement.Statements.Last().As<BoundVariableDeclarationStatement>();
         boundVariableDeclarationStatement.Variable.Constant.Should().Be(false);
     }
 
     [Fact]
     public void PartiallyFoldedConstantTests()
     {
-        var syntaxTree = SyntaxTree.Parse(SourceText.FromString("let a = 10 + 10;"), TestDefaults.DefaultClrTypeCache);
-        var module = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
-        module.GetDiagnostics().Should().BeEmpty();
+        var inputText = "let a = 10 + 10;";
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var boundVariableDeclarationStatement = TestUtils
+            .BindStatement<BoundVariableDeclarationStatement>(inputText)
+            .Accept(constantFoldingBoundNodeVisitor)
+            .As<BoundVariableDeclarationStatement>();
 
-        var statement = module.EntryPointType.Variables.ToList()[^1].As<BoundVariableMember>().BoundVariableDeclarationStatement;
-        statement.Variable.Constant.Should().Be(false);
-        statement.InitializerExpression.Constant.Should().Be(true);
-        statement.InitializerExpression.As<BoundConstant>().Value.Should().Be(20);
+        boundVariableDeclarationStatement.Variable.Constant.Should().Be(false);
+        boundVariableDeclarationStatement.InitializerExpression.Constant.Should().Be(true);
+        boundVariableDeclarationStatement.InitializerExpression.As<BoundConstant>().Value.Should().Be(20);
     }
 }

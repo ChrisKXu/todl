@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
@@ -16,10 +16,10 @@ public sealed class IfUnlessStatement : Statement
     public SyntaxToken IfOrUnlessToken { get; internal init; }
     public Expression ConditionExpression { get; internal init; }
     public BlockStatement BlockStatement { get; internal init; }
-    public IReadOnlyList<ElseClause> ElseClauses { get; internal init; }
+    public ImmutableArray<ElseClause> ElseClauses { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(IfOrUnlessToken.Text, BlockStatement.Text);
+        => TextSpan.FromBounds(IfOrUnlessToken.Span.Start, BlockStatement.Text.End);
 }
 
 public sealed class ElseClause : SyntaxNode
@@ -30,7 +30,7 @@ public sealed class ElseClause : SyntaxNode
     public BlockStatement BlockStatement { get; internal init; }
 
     public override TextSpan Text
-        => TextSpan.FromTextSpans(ElseToken.Text, BlockStatement.Text);
+        => TextSpan.FromBounds(ElseToken.Span.Start, BlockStatement.Text.End);
 
     public bool IsBareElseClause => IfOrUnlessToken is null;
 }
@@ -45,20 +45,19 @@ public sealed partial class Parser
                 : ExpectToken(SyntaxKind.UnlessKeywordToken);
         var conditionExpression = ParseExpression();
         var blockStatement = ParseBlockStatement();
-        var elseClauses = new List<ElseClause>();
-        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var elseClauses = ImmutableArray.CreateBuilder<ElseClause>();
 
         while (Current.Kind == SyntaxKind.ElseKeywordToken)
         {
             var elseClause = ParseElseClause();
             if (elseClause.IfOrUnlessToken.HasValue && elseClause.IfOrUnlessToken.Value.Kind != ifOrUnlessToken.Kind)
             {
-                diagnosticBuilder.Add(new Diagnostic()
+                ReportDiagnostic(new Diagnostic()
                 {
                     Message = "if/unless qualifier mismatch",
                     ErrorCode = ErrorCode.IfUnlessKeywordMismatch,
                     Level = DiagnosticLevel.Error,
-                    TextLocation = elseClause.IfOrUnlessToken.Value.GetTextLocation()
+                    TextLocation = elseClause.GetTextLocation(elseClause.IfOrUnlessToken.Value.Span)
                 });
             }
 
@@ -73,12 +72,12 @@ public sealed partial class Parser
             {
                 foreach (var b in bareElseClauses)
                 {
-                    diagnosticBuilder.Add(new Diagnostic()
+                    ReportDiagnostic(new Diagnostic()
                     {
                         Message = "bare else clauses must be after all other else clauses",
                         ErrorCode = ErrorCode.MisplacedBareElseClauses,
                         Level = DiagnosticLevel.Error,
-                        TextLocation = b.ElseToken.GetTextLocation()
+                        TextLocation = b.GetTextLocation(b.ElseToken.Span)
                     });
                 }
             }
@@ -87,12 +86,12 @@ public sealed partial class Parser
             {
                 foreach (var b in bareElseClauses)
                 {
-                    diagnosticBuilder.Add(new Diagnostic()
+                    ReportDiagnostic(new Diagnostic()
                     {
                         Message = "duplicate bare else clauses",
                         ErrorCode = ErrorCode.DuplicateBareElseClauses,
                         Level = DiagnosticLevel.Error,
-                        TextLocation = b.ElseToken.GetTextLocation()
+                        TextLocation = b.GetTextLocation(b.ElseToken.Span)
                     });
                 }
             }
@@ -104,8 +103,7 @@ public sealed partial class Parser
             IfOrUnlessToken = ifOrUnlessToken,
             ConditionExpression = conditionExpression,
             BlockStatement = blockStatement,
-            ElseClauses = elseClauses,
-            DiagnosticBuilder = diagnosticBuilder
+            ElseClauses = elseClauses.ToImmutable()
         };
     }
 

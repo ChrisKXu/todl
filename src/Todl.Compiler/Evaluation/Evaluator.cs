@@ -2,17 +2,16 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
+using System.Runtime.InteropServices;
 using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.Evaluation
 {
-    using Binder = CodeAnalysis.Binding.BoundTree.Binder;
-
     /// <summary>
     /// An evaluator evaluates expressions and statements and give out results as output
     /// </summary>
@@ -33,8 +32,9 @@ namespace Todl.Compiler.Evaluation
 
         public EvaluatorResult Evaluate(SourceText sourceText)
         {
-            var expression = SyntaxTree.ParseExpression(sourceText, clrTypeCache);
-            var diagnostics = expression.GetDiagnostics();
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            var expression = SyntaxTree.ParseExpression(sourceText, diagnosticBuilder);
+            var diagnostics = diagnosticBuilder.Build();
 
             if (diagnostics.Any())
             {
@@ -46,12 +46,12 @@ namespace Todl.Compiler.Evaluation
                 };
             }
 
-            var binder = Binder.CreateScriptBinder(clrTypeCache);
+            var binder = Binder.CreateScriptBinder(clrTypeCache, diagnosticBuilder);
             var boundExpression = binder.BindExpression(expression);
 
             return new()
             {
-                DiagnosticsOutput = boundExpression.GetDiagnostics().Select(d => d.Message).ToList(),
+                DiagnosticsOutput = diagnosticBuilder.Build().Select(d => d.Message).ToList(),
                 EvaluationOutput = EvaluateBoundExpression(boundExpression),
                 ResultType = boundExpression.ResultType
             };
@@ -68,7 +68,7 @@ namespace Todl.Compiler.Evaluation
                 BoundVariableExpression boundVariableExpression => EvaluateBoundVariableExpression(boundVariableExpression),
                 BoundMemberAccessExpression boundMemberAccessExpression => EvaluateBoundMemberAccessExpression(boundMemberAccessExpression),
                 BoundTypeExpression boundTypeExpression => boundTypeExpression.ResultType.Name,
-                BoundClrFunctionCallExpression boundFunctionCallExpression => EvaluateBoundFunctionCallExpression(boundFunctionCallExpression),
+                BoundClrInvocationExpression boundInvocationExpression => EvaluateBoundInvocationExpression(boundInvocationExpression),
                 BoundObjectCreationExpression boundObjectCreationExpression => EvaluateBoundObjectCreationExpression(boundObjectCreationExpression),
                 _ => throw new NotSupportedException($"{typeof(BoundExpression)} is not supported for evaluation"),
             };
@@ -80,38 +80,13 @@ namespace Todl.Compiler.Evaluation
 
             Debug.Assert(operandValue != null);
 
-            return boundUnaryExpression.Operator.BoundUnaryOperatorKind switch
+            return boundUnaryExpression.Operator.BoundUnaryOperatorKind.GetOperationKind() switch
             {
                 BoundUnaryOperatorKind.UnaryPlus => operandValue,
                 BoundUnaryOperatorKind.UnaryMinus => -(int)operandValue,
                 BoundUnaryOperatorKind.LogicalNegation => !(bool)operandValue,
-                _ => this.EvaluateBoundUnaryExpressionWithSideEffects(boundUnaryExpression)
+                _ => throw new NotSupportedException($"Unary operator {boundUnaryExpression.Operator.BoundUnaryOperatorKind} is not supported for evaluation")
             };
-        }
-
-        private object EvaluateBoundUnaryExpressionWithSideEffects(BoundUnaryExpression boundUnaryExpression)
-        {
-            if (boundUnaryExpression.Operand is BoundVariableExpression boundVariableExpression)
-            {
-                var variable = boundVariableExpression.Variable;
-                var oldValue = this.variables[variable];
-
-                switch (boundUnaryExpression.Operator.BoundUnaryOperatorKind)
-                {
-                    case BoundUnaryOperatorKind.PrefixIncrement:
-                        return SetVariableValue(variable, (int)oldValue + 1);
-                    case BoundUnaryOperatorKind.PostfixIncrement:
-                        SetVariableValue(variable, (int)oldValue + 1);
-                        return oldValue;
-                    case BoundUnaryOperatorKind.PrefixDecrement:
-                        return SetVariableValue(variable, (int)oldValue - 1);
-                    case BoundUnaryOperatorKind.PostfixDecrement:
-                        SetVariableValue(variable, (int)oldValue - 1);
-                        return oldValue;
-                }
-            }
-
-            return null;
         }
 
         private object EvaluateBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
@@ -173,15 +148,15 @@ namespace Todl.Compiler.Evaluation
             };
         }
 
-        private object EvaluateBoundFunctionCallExpression(BoundClrFunctionCallExpression boundFunctionCallExpression)
+        private object EvaluateBoundInvocationExpression(BoundClrInvocationExpression boundInvocationExpression)
         {
-            var isStatic = boundFunctionCallExpression.MethodInfo.IsStatic;
-            var invokingObject = isStatic ? null : EvaluateBoundExpression(boundFunctionCallExpression.BoundBaseExpression);
+            var isStatic = boundInvocationExpression.MethodInfo.IsStatic;
+            var invokingObject = isStatic ? null : EvaluateBoundExpression(boundInvocationExpression.BoundBaseExpression);
 
-            var arguments = boundFunctionCallExpression.BoundArguments.Select(EvaluateBoundExpression).ToArray();
+            var arguments = boundInvocationExpression.BoundArguments.Select(EvaluateBoundExpression).ToArray();
 
             // assuming the BoundMemberAccessKind is Function since it's checked in Binder
-            return boundFunctionCallExpression.MethodInfo.Invoke(invokingObject, arguments);
+            return boundInvocationExpression.MethodInfo.Invoke(invokingObject, arguments);
         }
 
         private object EvaluateBoundObjectCreationExpression(BoundObjectCreationExpression boundObjectCreationExpression)

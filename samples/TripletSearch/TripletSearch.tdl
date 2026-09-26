@@ -1,0 +1,121 @@
+import { Console } from System;
+import { Math } from System;
+
+void Main() {
+    Console.WriteLine(FindClearTriplet());
+}
+
+// Finds the first non-degenerate, obstacle-free triangle among a fixed point set.
+// No arrays or for-loops in todl: points are index-keyed lookup functions, and each
+// range loop uses a pre-increment while so `continue`/`continue <label>` still advance
+// the index. Distances/areas are compared in squared/doubled form to stay in Int32.
+string FindClearTriplet() {
+    const pointCount = 6;
+    const obstacleCount = 2;
+    const maxBaseDistSquared = 3600;
+    const minTwiceArea = 200;
+
+    let i = -1;
+    while i < pointCount - 1 {
+        i += 1;
+        const p1x = PointX(i);
+        const p1y = PointY(i);
+
+        let j = i;
+        while j < pointCount - 1 : baseline {
+            j += 1;
+            const p2x = PointX(j);
+            const p2y = PointY(j);
+
+            // Base too wide: bail out to the next p1.
+            if DistanceSquared(p1x, p1y, p2x, p2y) > maxBaseDistSquared {
+                break baseline;
+            }
+
+            let k = j;
+            while k < pointCount - 1 {
+                k += 1;
+                const p3x = PointX(k);
+                const p3y = PointY(k);
+                const area = TwiceArea(p1x, p1y, p2x, p2y, p3x, p3y);
+
+                unless area >= minTwiceArea {
+                    continue; // Skip small triangles, stay in this loop.
+                }
+
+                let o = -1;
+                while o < obstacleCount - 1 {
+                    o += 1;
+
+                    // Obstacle inside: skip straight to the next baseline.
+                    if IsInside(ObstacleX(o), ObstacleY(o), p1x, p1y, p2x, p2y, p3x, p3y) {
+                        continue baseline;
+                    }
+                }
+
+                // Found it: return unwinds every loop at once.
+                const realArea = area / 2;
+                return "Clear triplet: (" + p1x + ", " + p1y + ") - ("
+                    + p2x + ", " + p2y + ") - ("
+                    + p3x + ", " + p3y + "), area " + realArea;
+            }
+        }
+    }
+
+    return "no clear triplet found";
+}
+
+int PointX(int index) {
+    if index == 0 { return 0; }
+    if index == 1 { return 120; }
+    if index == 2 { return 10; }
+    if index == 3 { return 12; }
+    if index == 4 { return 50; }
+    return 20;
+}
+
+int PointY(int index) {
+    if index == 0 { return 0; }
+    if index == 1 { return 0; }
+    if index == 2 { return 10; }
+    if index == 3 { return 13; }
+    if index == 4 { return 40; }
+    return 60;
+}
+
+int ObstacleX(int index) {
+    if index == 0 { return 26; }
+    return 500;
+}
+
+int ObstacleY(int index) {
+    if index == 0 { return 22; }
+    return 500;
+}
+
+int DistanceSquared(int x1, int y1, int x2, int y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return dx * dx + dy * dy;
+}
+
+// Twice the triangle's area (shoelace formula); avoids needing a fractional type.
+int TwiceArea(int x1, int y1, int x2, int y2, int x3, int y3) {
+    const cross = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
+    return Math.Abs(cross);
+}
+
+int CrossSign(int px, int py, int ax, int ay, int bx, int by) {
+    return (ax - px) * (by - py) - (bx - px) * (ay - py);
+}
+
+bool IsInside(int px, int py, int ax, int ay, int bx, int by, int cx, int cy) {
+    const d1 = CrossSign(px, py, ax, ay, bx, by);
+    const d2 = CrossSign(px, py, bx, by, cx, cy);
+    const d3 = CrossSign(px, py, cx, cy, ax, ay);
+
+    const hasNegative = d1 < 0 || d2 < 0 || d3 < 0;
+    const hasPositive = d1 > 0 || d2 > 0 || d3 > 0;
+
+    return !(hasNegative && hasPositive);
+}

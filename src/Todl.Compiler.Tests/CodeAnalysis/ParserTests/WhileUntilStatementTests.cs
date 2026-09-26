@@ -1,5 +1,6 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -11,9 +12,9 @@ public sealed class WhileUntilStatementTests
     {
         var breakStatement = TestUtils.ParseStatement<BreakStatement>("break;");
         breakStatement.Should().NotBeNull();
-        breakStatement.GetDiagnostics().Should().BeEmpty();
 
         breakStatement.BreakKeywordToken.Kind.Should().Be(SyntaxKind.BreakKeywordToken);
+        breakStatement.Label.Should().BeNull();
         breakStatement.SemicolonToken.Kind.Should().Be(SyntaxKind.SemicolonToken);
         breakStatement.Text.Length.Should().Be(6);
     }
@@ -23,9 +24,9 @@ public sealed class WhileUntilStatementTests
     {
         var continueStatement = TestUtils.ParseStatement<ContinueStatement>("continue;");
         continueStatement.Should().NotBeNull();
-        continueStatement.GetDiagnostics().Should().BeEmpty();
 
         continueStatement.ContinueKeywordToken.Kind.Should().Be(SyntaxKind.ContinueKeywordToken);
+        continueStatement.Label.Should().BeNull();
         continueStatement.SemicolonToken.Kind.Should().Be(SyntaxKind.SemicolonToken);
         continueStatement.Text.Length.Should().Be(9);
     }
@@ -37,16 +38,29 @@ public sealed class WhileUntilStatementTests
     {
         var whileUntilStatement = TestUtils.ParseStatement<WhileUntilStatement>(inputText);
         whileUntilStatement.Should().NotBeNull();
-        whileUntilStatement.GetDiagnostics().Should().BeEmpty();
 
         whileUntilStatement.WhileOrUntilToken.Kind.Should().Be(expectedSyntaxKind);
         whileUntilStatement.BlockStatement.InnerStatements.Should().BeEmpty();
+        whileUntilStatement.LoopLabel.Should().BeNull();
 
         var condition = whileUntilStatement.ConditionExpression.As<BinaryExpression>();
         condition.Should().NotBeNull();
-        condition.Left.As<NameExpression>().Text.ToString().Should().Be("n");
+        condition.Left.As<SimpleNameExpression>().GetText().Should().Be("n");
         condition.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
-        condition.Right.As<LiteralExpression>().Text.ToString().Should().Be("0");
+        condition.Right.As<LiteralExpression>().GetText().Should().Be("0");
+    }
+
+    [Theory]
+    [InlineData("while n == 0 : l0 { return n; }", "l0")]
+    [InlineData("until n == 0 : LongerLabel { return n; }", "LongerLabel")]
+    public void WhileUntilStatementsCanHaveLoopLabels(string inputText, string label)
+    {
+        var whileUntilStatement = TestUtils.ParseStatement<WhileUntilStatement>(inputText);
+        whileUntilStatement.Should().NotBeNull();
+
+        whileUntilStatement.LoopLabel.Should().NotBeNull();
+        whileUntilStatement.LoopLabel.Label.As<SimpleNameExpression>().GetText().Should().Be(label);
+        whileUntilStatement.LoopLabel.ColonToken.Kind.Should().Be(SyntaxKind.ColonToken);
     }
 
     [Theory]
@@ -56,7 +70,72 @@ public sealed class WhileUntilStatementTests
     {
         var whileUntilStatement = TestUtils.ParseStatement<WhileUntilStatement>(inputText);
         whileUntilStatement.Should().NotBeNull();
-        whileUntilStatement.GetDiagnostics().Should().BeEmpty();
-        whileUntilStatement.BlockStatement.InnerStatements.Count.Should().Be(expectedStatementsCount);
+        whileUntilStatement.BlockStatement.InnerStatements.Should().HaveCount(expectedStatementsCount);
+    }
+
+    [Fact]
+    public void InvalidLoopLabelProducesError()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var whileUntilStatement = TestUtils.ParseStatement<WhileUntilStatement>(
+            "while n == 0 : System::Label { }", diagnosticBuilder);
+
+        whileUntilStatement.Should().NotBeNull();
+        whileUntilStatement.LoopLabel.Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().Contain(d => d.ErrorCode == ErrorCode.InvalidLoopLabel);
+    }
+
+    [Theory]
+    [InlineData("break outer;", "outer")]
+    [InlineData("break LongerLabel;", "LongerLabel")]
+    public void BreakStatementsCanHaveLabels(string inputText, string label)
+    {
+        var breakStatement = TestUtils.ParseStatement<BreakStatement>(inputText);
+        breakStatement.Should().NotBeNull();
+
+        breakStatement.Label.Should().NotBeNull();
+        breakStatement.Label.As<SimpleNameExpression>().GetText().Should().Be(label);
+    }
+
+    [Theory]
+    [InlineData("continue outer;", "outer")]
+    [InlineData("continue LongerLabel;", "LongerLabel")]
+    public void ContinueStatementsCanHaveLabels(string inputText, string label)
+    {
+        var continueStatement = TestUtils.ParseStatement<ContinueStatement>(inputText);
+        continueStatement.Should().NotBeNull();
+
+        continueStatement.Label.Should().NotBeNull();
+        continueStatement.Label.As<SimpleNameExpression>().GetText().Should().Be(label);
+    }
+
+    [Fact]
+    public void InvalidBreakLabelProducesError()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var breakStatement = TestUtils.ParseStatement<BreakStatement>(
+            "break System::Label;", diagnosticBuilder);
+
+        breakStatement.Should().NotBeNull();
+        breakStatement.Label.Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().Contain(d => d.ErrorCode == ErrorCode.InvalidLoopLabel);
+    }
+
+    [Fact]
+    public void InvalidContinueLabelProducesError()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var continueStatement = TestUtils.ParseStatement<ContinueStatement>(
+            "continue System::Label;", diagnosticBuilder);
+
+        continueStatement.Should().NotBeNull();
+        continueStatement.Label.Should().NotBeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().Contain(d => d.ErrorCode == ErrorCode.InvalidLoopLabel);
     }
 }

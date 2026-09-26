@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
@@ -10,7 +12,9 @@ namespace Todl.Compiler.CodeAnalysis.Syntax;
 /// </summary>
 internal sealed class Lexer
 {
-    private readonly List<SyntaxToken> syntaxTokens = new();
+    private readonly ImmutableArray<SyntaxToken>.Builder syntaxTokens
+        = ImmutableArray.CreateBuilder<SyntaxToken>();
+
     private int position = 0;
 
     public SourceText SourceText { get; internal set; }
@@ -18,7 +22,7 @@ internal sealed class Lexer
     private char Current => Seek(0);
     private char Peak => Seek(1);
 
-    public IReadOnlyList<SyntaxToken> SyntaxTokens => syntaxTokens;
+    public ImmutableArray<SyntaxToken> SyntaxTokens { get; private set; }
 
     private char Seek(int offset)
     {
@@ -32,9 +36,9 @@ internal sealed class Lexer
         return this.SourceText.Text[index];
     }
 
-    private IReadOnlyList<SyntaxTrivia> ReadSyntaxTrivia(bool leading)
+    private ImmutableArray<SyntaxTrivia> ReadSyntaxTrivia(bool leading)
     {
-        var triviaList = new List<SyntaxTrivia>();
+        var triviaList = ImmutableArray.CreateBuilder<SyntaxTrivia>();
 
         var done = false;
         var start = this.position;
@@ -64,6 +68,11 @@ internal sealed class Lexer
                         kind = SyntaxKind.SingleLineCommentTrivia;
                         ReadSingleLineComment();
                     }
+                    else if (Peak == '*')
+                    {
+                        kind = SyntaxKind.DelimitedCommentTrivia;
+                        ReadDelimitedComment();
+                    }
                     else
                     {
                         done = true;
@@ -79,13 +88,13 @@ internal sealed class Lexer
             if (length > 0)
             {
                 triviaList.Add(
-                    new SyntaxTrivia(kind, SourceText.GetTextSpan(start, length)));
+                    new SyntaxTrivia(kind, new TextSpan(start, length), SourceText.Text.AsMemory(start, length)));
             }
 
             start = position;
         }
 
-        return triviaList;
+        return triviaList.ToImmutable();
     }
 
     private void ReadLineBreak()
@@ -118,6 +127,21 @@ internal sealed class Lexer
         position += 2; // '//'
         while (Current != '\r' && Current != '\n' && Current != '\0')
         {
+            ++position;
+        }
+    }
+
+    private void ReadDelimitedComment()
+    {
+        position += 2; // '/*'
+        while (Current != '\0')
+        {
+            if (Current == '*' && Peak == '/')
+            {
+                position += 2;
+                break;
+            }
+
             ++position;
         }
     }
@@ -251,8 +275,8 @@ internal sealed class Lexer
         return SyntaxFacts.KeywordMap.GetValueOrDefault(token, SyntaxKind.IdentifierToken);
     }
 
-    private IReadOnlyList<SyntaxTrivia> ReadLeadingSyntaxTrivia() => ReadSyntaxTrivia(true);
-    private IReadOnlyList<SyntaxTrivia> ReadTrailingSyntaxTrivia() => ReadSyntaxTrivia(false);
+    private ImmutableArray<SyntaxTrivia> ReadLeadingSyntaxTrivia() => ReadSyntaxTrivia(true);
+    private ImmutableArray<SyntaxTrivia> ReadTrailingSyntaxTrivia() => ReadSyntaxTrivia(false);
 
     private SyntaxToken GetNextToken()
     {
@@ -303,12 +327,7 @@ internal sealed class Lexer
                 }
                 break;
             case '+':
-                if (Peak == '+')
-                {
-                    kind = SyntaxKind.PlusPlusToken;
-                    this.position += 2;
-                }
-                else if (Peak == '=')
+                if (Peak == '=')
                 {
                     kind = SyntaxKind.PlusEqualsToken;
                     this.position += 2;
@@ -320,12 +339,7 @@ internal sealed class Lexer
                 }
                 break;
             case '-':
-                if (Peak == '-')
-                {
-                    kind = SyntaxKind.MinusMinusToken;
-                    this.position += 2;
-                }
-                else if (Peak == '=')
+                if (Peak == '=')
                 {
                     kind = SyntaxKind.MinusEqualsToken;
                     this.position += 2;
@@ -358,6 +372,11 @@ internal sealed class Lexer
                 {
                     // We always process SingleLineCommentTrivia
                     // at the end of a token
+                    break;
+                }
+                else if (Peak == '*')
+                {
+                    // processed as DelimitedCommentTrivia
                     break;
                 }
                 else
@@ -395,8 +414,16 @@ internal sealed class Lexer
                 ++this.position;
                 break;
             case ':':
-                kind = SyntaxKind.ColonToken;
-                ++this.position;
+                if (Peak == ':')
+                {
+                    kind = SyntaxKind.ColonColonToken;
+                    this.position += 2;
+                }
+                else
+                {
+                    kind = SyntaxKind.ColonToken;
+                    ++this.position;
+                }
                 break;
             case '=':
                 if (Peak == '=')
@@ -500,14 +527,16 @@ internal sealed class Lexer
         var length = this.position - start;
 
         var trailingTrivia = ReadTrailingSyntaxTrivia();
-        var text = SourceText.GetTextSpan(start, length);
+        var span = new TextSpan(start, length);
+        var lexeme = SourceText.Text.AsMemory(start, length);
 
         if (kind == SyntaxKind.BadToken)
         {
             return new()
             {
                 Kind = kind,
-                Text = text,
+                Span = span,
+                Text = lexeme,
                 LeadingTrivia = leadingTrivia,
                 TrailingTrivia = trailingTrivia,
                 ErrorCode = errorCode
@@ -517,7 +546,8 @@ internal sealed class Lexer
         return new()
         {
             Kind = kind,
-            Text = text,
+            Span = span,
+            Text = lexeme,
             LeadingTrivia = leadingTrivia,
             TrailingTrivia = trailingTrivia
         };
@@ -525,8 +555,8 @@ internal sealed class Lexer
 
     public void Lex()
     {
-        // if syntaxTokens is not empty, it means lexer has already been executed.
-        if (syntaxTokens.Any())
+        // if position is not 0, it means lexer has already been executed.
+        if (position != 0)
         {
             return;
         }
@@ -540,5 +570,7 @@ internal sealed class Lexer
         }
         while (token.Kind != SyntaxKind.BadToken
             && token.Kind != SyntaxKind.EndOfFileToken);
+
+        SyntaxTokens = syntaxTokens.ToImmutable();
     }
 }

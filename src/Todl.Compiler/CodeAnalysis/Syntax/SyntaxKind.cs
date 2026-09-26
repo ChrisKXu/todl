@@ -9,10 +9,8 @@
         StringToken,
         PlusToken,
         PlusEqualsToken,
-        PlusPlusToken,
         MinusToken,
         MinusEqualsToken,
-        MinusMinusToken,
         StarToken,
         StarEqualsToken,
         SlashToken,
@@ -25,6 +23,7 @@
         CloseBracketToken,
         SemicolonToken,
         ColonToken,
+        ColonColonToken,
         EqualsToken,
         EqualsEqualsToken,
         BangToken,
@@ -69,6 +68,7 @@
         // Trivia
         WhitespaceTrivia,
         LineBreakTrivia,
-        SingleLineCommentTrivia
+        SingleLineCommentTrivia,
+        DelimitedCommentTrivia
     }
 }

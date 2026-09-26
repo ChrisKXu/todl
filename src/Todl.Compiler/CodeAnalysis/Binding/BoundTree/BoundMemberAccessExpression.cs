@@ -25,9 +25,6 @@ internal sealed class BoundClrFieldAccessExpression : BoundMemberAccessExpressio
     public override string MemberName => FieldInfo.Name;
     public override bool IsStatic => FieldInfo.IsStatic;
 
-    public override TypeSymbol ResultType
-        => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(FieldInfo.FieldType);
-
     public override bool Constant => FieldInfo.IsLiteral;
     public override bool ReadOnly => Constant || FieldInfo.IsInitOnly;
     public override bool IsPublic => FieldInfo.IsPublic;
@@ -42,9 +39,6 @@ internal sealed class BoundClrPropertyAccessExpression : BoundMemberAccessExpres
     public PropertyInfo PropertyInfo { get; internal init; }
     public override string MemberName => PropertyInfo.Name;
     public override bool IsStatic => PropertyInfo.GetAccessors().Any(a => a.IsStatic);
-
-    public override TypeSymbol ResultType
-        => SyntaxNode.SyntaxTree.ClrTypeCache.Resolve(PropertyInfo.PropertyType);
 
     public override bool ReadOnly => PropertyInfo.GetSetMethod() is null;
     public override bool IsPublic => PropertyInfo.GetAccessors().Any(a => a.IsPublic);
@@ -73,7 +67,6 @@ public partial class Binder
     private BoundMemberAccessExpression BindMemberAccessExpression(
         MemberAccessExpression memberAccessExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundBaseExpression = BindExpression(memberAccessExpression.BaseExpression);
 
         if (boundBaseExpression.ResultType is not ClrTypeSymbol clrTypeSymbol)
@@ -90,11 +83,11 @@ public partial class Binder
                     syntaxNode: memberAccessExpression,
                     boundBaseExpression: boundBaseExpression,
                     fieldInfo: fieldInfo,
-                    diagnosticBuilder: diagnosticBuilder);
+                    resultType: ClrTypeCache.Resolve(fieldInfo.FieldType));
 
                 if (!boundFieldAccessExpression.IsPublic)
                 {
-                    ReportNonPublicMemberAccess(boundFieldAccessExpression, diagnosticBuilder);
+                    ReportNonPublicMemberAccess(boundFieldAccessExpression);
                 }
 
                 return boundFieldAccessExpression;
@@ -103,39 +96,38 @@ public partial class Binder
                     syntaxNode: memberAccessExpression,
                     boundBaseExpression: boundBaseExpression,
                     propertyInfo: propertyInfo,
-                    diagnosticBuilder: diagnosticBuilder);
+                    resultType: ClrTypeCache.Resolve(propertyInfo.PropertyType));
 
                 if (!boundPropertyAccessExpression.IsPublic)
                 {
-                    ReportNonPublicMemberAccess(boundPropertyAccessExpression, diagnosticBuilder);
+                    ReportNonPublicMemberAccess(boundPropertyAccessExpression);
                 }
 
                 return boundPropertyAccessExpression;
         }
 
-        diagnosticBuilder.Add(
+        ReportDiagnostic(
             new Diagnostic()
             {
                 Message = $"Member '{memberAccessExpression.MemberIdentifierToken.Text}' does not exist in type '{clrTypeSymbol.ClrType.FullName}'",
                 Level = DiagnosticLevel.Error,
-                TextLocation = memberAccessExpression.MemberIdentifierToken.GetTextLocation(),
+                TextLocation = memberAccessExpression.GetTextLocation(memberAccessExpression.MemberIdentifierToken.Span),
                 ErrorCode = ErrorCode.MemberNotFound
             });
 
         return BoundNodeFactory.CreateBoundInvalidMemberAccessExpression(
             syntaxNode: memberAccessExpression,
-            boundBaseExpression: boundBaseExpression,
-            diagnosticBuilder: diagnosticBuilder);
+            boundBaseExpression: boundBaseExpression);
     }
 
-    private void ReportNonPublicMemberAccess(BoundMemberAccessExpression boundMemberAccessExpression, DiagnosticBag.Builder diagnosticBuilder)
+    private void ReportNonPublicMemberAccess(BoundMemberAccessExpression boundMemberAccessExpression)
     {
-        diagnosticBuilder.Add(
+        ReportDiagnostic(
             new Diagnostic()
             {
                 Message = $"Member {boundMemberAccessExpression.MemberName} is not public.",
                 Level = DiagnosticLevel.Error,
-                TextLocation = boundMemberAccessExpression.SyntaxNode.Text.GetTextLocation(),
+                TextLocation = boundMemberAccessExpression.SyntaxNode.GetTextLocation(),
                 ErrorCode = ErrorCode.MemberNotAccessible
             });
     }

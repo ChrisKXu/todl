@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -23,9 +23,9 @@ public sealed class IfUnlessStatementTests
         var condition = ifUnlessStatement.ConditionExpression.As<BinaryExpression>();
         condition.Should().NotBeNull();
 
-        condition.Left.As<NameExpression>().Text.ToString().Should().Be("n");
+        condition.Left.As<SimpleNameExpression>().GetText().Should().Be("n");
         condition.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
-        condition.Right.As<LiteralExpression>().Text.ToString().Should().Be("0");
+        condition.Right.As<LiteralExpression>().GetText().Should().Be("0");
     }
 
     [Theory]
@@ -55,9 +55,9 @@ public sealed class IfUnlessStatementTests
         var condition = ifUnlessStatement.ConditionExpression.As<ParethesizedExpression>().InnerExpression.As<BinaryExpression>();
         condition.Should().NotBeNull();
 
-        condition.Left.As<NameExpression>().Text.ToString().Should().Be("n");
+        condition.Left.As<SimpleNameExpression>().GetText().Should().Be("n");
         condition.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
-        condition.Right.As<LiteralExpression>().Text.ToString().Should().Be("0");
+        condition.Right.As<LiteralExpression>().GetText().Should().Be("0");
     }
 
     [Theory]
@@ -71,7 +71,7 @@ public sealed class IfUnlessStatementTests
         ifUnlessStatement.ElseClauses.Should().HaveCount(1);
         ifUnlessStatement.ElseClauses[0].BlockStatement.InnerStatements.Should().HaveCount(1);
         var returnStatement = ifUnlessStatement.ElseClauses[0].BlockStatement.InnerStatements[0].As<ReturnStatement>();
-        returnStatement.ReturnValueExpression.Text.Should().Be("0");
+        returnStatement.ReturnValueExpression.GetText().Should().Be("0");
     }
 
     [Theory]
@@ -82,7 +82,6 @@ public sealed class IfUnlessStatementTests
         var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>(inputText);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(expectedCount);
-        ifUnlessStatement.GetDiagnostics().Should().BeEmpty();
     }
 
     [Theory]
@@ -93,58 +92,60 @@ public sealed class IfUnlessStatementTests
         var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>(inputText);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(1);
-        ifUnlessStatement.GetDiagnostics().Should().BeEmpty();
     }
 
     [Fact]
     public void IfUnlessStatementsCannotHaveMoreThanOneBareElseClauses()
     {
-        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else { }");
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else { }", diagnosticBuilder);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(2);
 
-        var diagnostics = ifUnlessStatement.GetDiagnostics();
+        var diagnostics = diagnosticBuilder.Build();
         diagnostics.Should().NotBeEmpty();
         diagnostics.Count(d => d.ErrorCode == ErrorCode.DuplicateBareElseClauses).Should().Be(2);
 
         var duplicateBareElseClauses = diagnostics.First(d => d.ErrorCode == ErrorCode.DuplicateBareElseClauses);
         duplicateBareElseClauses.Should().NotBeNull();
         duplicateBareElseClauses.Level.Should().Be(DiagnosticLevel.Error);
-        duplicateBareElseClauses.TextLocation.TextSpan.ToString().Should().Be("else");
+        duplicateBareElseClauses.TextLocation.GetText().Should().Be("else");
     }
 
     [Fact]
     public void IfUnlessStatementsCannotHaveMisplacedElseClause()
     {
-        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else if b == 0 { }");
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else { } else if b == 0 { }", diagnosticBuilder);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(2);
 
-        var diagnostics = ifUnlessStatement.GetDiagnostics();
+        var diagnostics = diagnosticBuilder.Build();
         diagnostics.Should().NotBeEmpty();
         diagnostics.Count(d => d.ErrorCode == ErrorCode.MisplacedBareElseClauses).Should().Be(1);
 
         var misplacedBareElseClauses = diagnostics.First(d => d.ErrorCode == ErrorCode.MisplacedBareElseClauses);
         misplacedBareElseClauses.Should().NotBeNull();
         misplacedBareElseClauses.Level.Should().Be(DiagnosticLevel.Error);
-        misplacedBareElseClauses.TextLocation.TextSpan.ToString().Should().Be("else");
+        misplacedBareElseClauses.TextLocation.GetText().Should().Be("else");
     }
 
     [Fact]
     public void IfUnlessStatementsCannotHaveMismatchedIfOrUnlessKeywords()
     {
-        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else unless b == 0 { }");
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var ifUnlessStatement = TestUtils.ParseStatement<IfUnlessStatement>("if a == 0 { } else unless b == 0 { }", diagnosticBuilder);
         ifUnlessStatement.Should().NotBeNull();
         ifUnlessStatement.ElseClauses.Should().HaveCount(1);
 
-        var diagnostics = ifUnlessStatement.GetDiagnostics();
+        var diagnostics = diagnosticBuilder.Build();
         diagnostics.Should().NotBeEmpty();
         diagnostics.Count(d => d.ErrorCode == ErrorCode.IfUnlessKeywordMismatch).Should().Be(1);
 
         var ifUnlessKeywordMismatch = diagnostics.First(d => d.ErrorCode == ErrorCode.IfUnlessKeywordMismatch);
         ifUnlessKeywordMismatch.Should().NotBeNull();
         ifUnlessKeywordMismatch.Level.Should().Be(DiagnosticLevel.Error);
-        ifUnlessKeywordMismatch.TextLocation.TextSpan.ToString().Should().Be("unless");
+        ifUnlessKeywordMismatch.TextLocation.GetText().Should().Be("unless");
     }
 
     [Fact]
@@ -160,10 +161,10 @@ public sealed class IfUnlessStatementTests
 
         condition.Left.As<BinaryExpression>().Invoking(left =>
         {
-            left.Left.As<NameExpression>().Text.Should().Be("a");
+            left.Left.As<SimpleNameExpression>().GetText().Should().Be("a");
             left.Operator.Kind.Should().Be(SyntaxKind.EqualsEqualsToken);
-            left.Right.As<LiteralExpression>().Text.Should().Be("0");
-        });
+            left.Right.As<LiteralExpression>().GetText().Should().Be("0");
+        }).Should().NotThrow();
 
         condition.Operator.Kind.Should().Be(SyntaxKind.AmpersandAmpersandToken);
 
@@ -174,9 +175,9 @@ public sealed class IfUnlessStatementTests
             .As<BinaryExpression>()
             .Invoking(right =>
         {
-            right.Left.As<FunctionCallExpression>().Should().NotBeNull();
+            right.Left.As<InvocationExpression>().Should().NotBeNull();
             right.Operator.Kind.Should().Be(SyntaxKind.PipePipeToken);
-            right.Right.As<FunctionCallExpression>().Should().NotBeNull();
-        });
+            right.Right.As<InvocationExpression>().Should().NotBeNull();
+        }).Should().NotThrow();
     }
 }

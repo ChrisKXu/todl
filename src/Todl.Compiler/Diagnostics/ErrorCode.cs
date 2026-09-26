@@ -14,6 +14,7 @@
         IfUnlessKeywordMismatch,
         DuplicateBareElseClauses,
         MisplacedBareElseClauses,
+        InvalidLoopLabel,
 
         // BinderErrors
         UndeclaredVariable,
@@ -23,6 +24,7 @@
         UnsupportedOperator,
         UnsupportedLiteral,
         NoMatchingCandidate,
+        ExpressionNotInvocable,
         MemberNotFound,
         MemberNotAccessible,
         TypeNotFound,
@@ -32,6 +34,8 @@
         UnreachableCode,
         DuplicateParameterName,
         MissingEntryPoint,
-        NoEnclosingLoop
+        NoEnclosingLoop,
+        DuplicateLoopLabel,
+        UndefinedLoopLabel
     }
 }

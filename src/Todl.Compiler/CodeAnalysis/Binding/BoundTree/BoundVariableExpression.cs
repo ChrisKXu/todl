@@ -8,7 +8,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 internal sealed class BoundVariableExpression : BoundExpression
 {
     public VariableSymbol Variable { get; internal init; }
-    public override TypeSymbol ResultType => Variable.Type;
     public override bool LValue => true;
     public override bool Constant => Variable.Constant;
     public override bool ReadOnly => Variable.ReadOnly;
@@ -18,35 +17,65 @@ internal sealed class BoundVariableExpression : BoundExpression
 
 public partial class Binder
 {
-    private BoundExpression BindNameExpression(NameExpression nameExpression)
+    /// <summary>
+    /// Binds a simple name - could be a type or a variable.
+    /// </summary>
+    private BoundExpression BindSimpleNameExpression(SimpleNameExpression simpleNameExpression)
     {
-        var name = nameExpression.Text.ToString();
-        var type = nameExpression.SyntaxTree.ClrTypeCacheView.ResolveType(nameExpression);
+        var name = simpleNameExpression.CanonicalName;
 
+        // First check if it's a type (imported or built-in)
+        var type = GetClrTypeCacheView(simpleNameExpression.SyntaxTree).ResolveType(simpleNameExpression);
         if (type != null)
         {
             return BoundNodeFactory.CreateBoundTypeExpression(
-                syntaxNode: nameExpression,
-                targetType: type);
+                syntaxNode: simpleNameExpression,
+                resultType: type);
         }
 
-        var diagnosticBuilder = new DiagnosticBag.Builder();
+        // Then check if it's a variable
         var variable = Scope.LookupVariable(name);
         if (variable == null)
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
-                    Message = $"Undeclared variable {nameExpression.Text}",
+                    Message = $"Undeclared variable {simpleNameExpression.GetText()}",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = nameExpression.SyntaxTokens[0].GetTextLocation(),
+                    TextLocation = simpleNameExpression.GetTextLocation(),
                     ErrorCode = ErrorCode.UndeclaredVariable
                 });
         }
 
         return BoundNodeFactory.CreateBoundVariableExpression(
-            syntaxNode: nameExpression,
+            syntaxNode: simpleNameExpression,
             variable: variable,
-            diagnosticBuilder: diagnosticBuilder);
+            resultType: variable?.Type);
+    }
+
+    /// <summary>
+    /// Binds a namespace-qualified expression - ALWAYS resolves to a type.
+    /// This is a key semantic distinction: :: means namespace qualification,
+    /// and namespace-qualified names are always types, never variables.
+    /// </summary>
+    private BoundExpression BindNamespaceQualifiedNameExpression(NamespaceQualifiedNameExpression NamespaceQualifiedNameExpression)
+    {
+        var type = GetClrTypeCacheView(NamespaceQualifiedNameExpression.SyntaxTree).ResolveType(NamespaceQualifiedNameExpression);
+
+        if (type == null)
+        {
+            ReportDiagnostic(
+                new Diagnostic()
+                {
+                    Message = $"Type '{NamespaceQualifiedNameExpression.CanonicalName}' could not be found",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = NamespaceQualifiedNameExpression.GetTextLocation(NamespaceQualifiedNameExpression.TypeIdentifierToken.Span),
+                    ErrorCode = ErrorCode.TypeNotFound
+                });
+        }
+
+        return BoundNodeFactory.CreateBoundTypeExpression(
+            syntaxNode: NamespaceQualifiedNameExpression,
+            resultType: type);
     }
 }

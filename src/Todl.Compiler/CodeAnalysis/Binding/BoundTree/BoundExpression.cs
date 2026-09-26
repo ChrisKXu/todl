@@ -6,7 +6,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 internal abstract class BoundExpression : BoundNode
 {
-    public virtual TypeSymbol ResultType { get; }
+    public virtual TypeSymbol ResultType { get; internal init; }
     public virtual bool LValue => false;
     public virtual bool Constant => false;
     public virtual bool ReadOnly => true;
@@ -22,9 +22,10 @@ public partial class Binder
             UnaryExpression unaryExpression => BindUnaryExpression(unaryExpression),
             ParethesizedExpression parethesizedExpression => BindExpression(parethesizedExpression.InnerExpression),
             AssignmentExpression assignmentExpression => BindAssignmentExpression(assignmentExpression),
-            NameExpression nameExpression => BindNameExpression(nameExpression),
+            SimpleNameExpression simpleNameExpression => BindSimpleNameExpression(simpleNameExpression),
+            NamespaceQualifiedNameExpression NamespaceQualifiedNameExpression => BindNamespaceQualifiedNameExpression(NamespaceQualifiedNameExpression),
             MemberAccessExpression memberAccessExpression => BindMemberAccessExpression(memberAccessExpression),
-            FunctionCallExpression functionCallExpression => BindFunctionCallExpression(functionCallExpression),
+            InvocationExpression invocationExpression => BindInvocationExpression(invocationExpression),
             NewExpression newExpression => BindNewExpression(newExpression),
             _ => throw new NotSupportedException() // keep compiler happy, this shouldn't happen as guarded by test cases
         };

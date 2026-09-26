@@ -2,10 +2,10 @@
 
 namespace Todl;
 
-static class Program
+class Program
 {
-    static void Main()
+    static int Main(string[] args)
     {
-        Console.WriteLine("Hello Todl!");
+        return CommandLine.Program.Run(args);
     }
 }

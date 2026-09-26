@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis
@@ -21,7 +23,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
-            boundBlockStatement.Statements.Count.Should().Be(2);
+            boundBlockStatement.Statements.Should().HaveCount(2);
             boundBlockStatement.Scope.LookupVariable("a").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
             boundBlockStatement.Scope.LookupVariable("b").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
 
@@ -45,7 +47,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
-            boundBlockStatement.Statements.Count.Should().Be(2);
+            boundBlockStatement.Statements.Should().HaveCount(2);
             boundBlockStatement.Scope.LookupVariable("a").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
             boundBlockStatement.Scope.LookupVariable("b").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
         }
@@ -68,7 +70,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var boundBlockStatement = TestUtils.BindStatement<BoundBlockStatement>(input);
 
             boundBlockStatement.Should().NotBeNull();
-            boundBlockStatement.Statements.Count.Should().Be(4);
+            boundBlockStatement.Statements.Should().HaveCount(4);
 
             var scope = boundBlockStatement.Scope;
             var childScope = (boundBlockStatement.Statements[2] as BoundBlockStatement).Scope;
@@ -84,7 +86,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         [Fact]
         public void TestBoundObjectCreationExpressionWithNoArguments()
         {
-            var boundObjectCreationExpression = TestUtils.BindExpression<BoundObjectCreationExpression>("new System.Exception()");
+            var boundObjectCreationExpression = TestUtils.BindExpression<BoundObjectCreationExpression>("new System::Exception()");
 
             var exceptionType = TestDefaults.DefaultClrTypeCache.Resolve(typeof(Exception).FullName);
             boundObjectCreationExpression.ResultType.Should().Be(exceptionType);
@@ -93,8 +95,8 @@ namespace Todl.Compiler.Tests.CodeAnalysis
         }
 
         [Theory]
-        [InlineData("new System.Exception(\"exception message\")")]
-        [InlineData("new System.Exception(message: \"exception message\")")]
+        [InlineData("new System::Exception(\"exception message\")")]
+        [InlineData("new System::Exception(message: \"exception message\")")]
         public void TestBoundObjectCreationExpressionWithOneArgument(string inputText)
         {
             var boundObjectCreationExpression = TestUtils.BindExpression<BoundObjectCreationExpression>(inputText);
@@ -102,10 +104,55 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             var exceptionType = TestDefaults.DefaultClrTypeCache.Resolve(typeof(Exception).FullName);
             boundObjectCreationExpression.ResultType.Should().Be(exceptionType);
             boundObjectCreationExpression.ConstructorInfo.Should().NotBeNull();
-            boundObjectCreationExpression.BoundArguments.Count.Should().Be(1);
+            boundObjectCreationExpression.BoundArguments.Should().HaveCount(1);
 
             var message = boundObjectCreationExpression.BoundArguments[0].As<BoundConstant>();
             message.Value.Should().Be("exception message");
+        }
+
+        [Fact]
+        public void BindObjectCreationWithNoMatchingPositionalConstructorShouldReportDiagnosticAndReturnInvalidNode()
+        {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            var boundExpression = TestUtils.BindExpression<BoundExpression>("new System::Exception(1)", diagnosticBuilder);
+
+            boundExpression.Should().BeOfType<BoundInvalidObjectCreationExpression>();
+            boundExpression.ResultType.Should().BeNull();
+
+            var diagnostics = diagnosticBuilder.Build();
+            diagnostics.Should().ContainSingle();
+            diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
+            diagnostics.Single().ErrorCode.Should().Be(ErrorCode.NoMatchingCandidate);
+        }
+
+        [Fact]
+        public void BindObjectCreationWithNoMatchingNamedConstructorShouldReportDiagnosticAndReturnInvalidNode()
+        {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            var boundExpression = TestUtils.BindExpression<BoundExpression>("new System::Exception(bogus: 1)", diagnosticBuilder);
+
+            boundExpression.Should().BeOfType<BoundInvalidObjectCreationExpression>();
+            boundExpression.ResultType.Should().BeNull();
+
+            var diagnostics = diagnosticBuilder.Build();
+            diagnostics.Should().ContainSingle();
+            diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
+            diagnostics.Single().ErrorCode.Should().Be(ErrorCode.NoMatchingCandidate);
+        }
+
+        [Fact]
+        public void BindObjectCreationWithUnresolvedTypeShouldReportDiagnosticAndReturnInvalidNodeInsteadOfThrowing()
+        {
+            var diagnosticBuilder = new DiagnosticBag.Builder();
+            var boundExpression = TestUtils.BindExpression<BoundExpression>("new System::NonExistentType(1)", diagnosticBuilder);
+
+            boundExpression.Should().BeOfType<BoundInvalidObjectCreationExpression>();
+            boundExpression.ResultType.Should().BeNull();
+
+            var diagnostics = diagnosticBuilder.Build();
+            diagnostics.Should().ContainSingle();
+            diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
+            diagnostics.Single().ErrorCode.Should().Be(ErrorCode.TypeNotFound);
         }
     }
 }

@@ -27,7 +27,6 @@ public sealed class BoundAssignmentExpressionTests
         var block = TestUtils.BindStatement<BoundBlockStatement>(input);
         var boundAssignmentExpression = block.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundAssignmentExpression>();
         boundAssignmentExpression.Should().NotBeNull();
-        boundAssignmentExpression.GetDiagnostics().Should().BeEmpty();
 
         boundAssignmentExpression.Operator.BoundAssignmentOperatorKind.Should().Be(expectedBoundAssignmentOperatorKind);
         boundAssignmentExpression.ResultType.SpecialType.Should().Be(expectedResultType);
@@ -47,11 +46,12 @@ public sealed class BoundAssignmentExpressionTests
     [InlineData("{ const n = 0; n /= 10; }")]
     public void TestBindAssignmentExpressionWithReadonlyVariables(string input)
     {
-        var block = TestUtils.BindStatement<BoundBlockStatement>(input);
+        var diagnosticsBuilder = new DiagnosticBag.Builder();
+        var block = TestUtils.BindStatement<BoundBlockStatement>(input, diagnosticsBuilder);
         var boundAssignmentExpression = block.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundAssignmentExpression>();
         boundAssignmentExpression.Should().NotBeNull();
 
-        var diagnostics = boundAssignmentExpression.GetDiagnostics();
+        var diagnostics = diagnosticsBuilder.Build();
         diagnostics.Should().HaveCount(1);
 
         var readonlyVariable = diagnostics.First();
@@ -68,10 +68,11 @@ public sealed class BoundAssignmentExpressionTests
     [InlineData("n /= 10;")]
     public void TestBindAssignmentExpressionWithUndeclaredVariables(string input)
     {
-        var boundAssignmentExpression = TestUtils.BindExpression<BoundAssignmentExpression>(input);
+        var diagnosticsBuilder = new DiagnosticBag.Builder();
+        var boundAssignmentExpression = TestUtils.BindExpression<BoundAssignmentExpression>(input, diagnosticsBuilder);
         boundAssignmentExpression.Should().NotBeNull();
 
-        var diagnostics = boundAssignmentExpression.GetDiagnostics();
+        var diagnostics = diagnosticsBuilder.Build();
         diagnostics.Should().HaveCount(1);
 
         var undeclaredVariable = diagnostics.First();
@@ -88,11 +89,12 @@ public sealed class BoundAssignmentExpressionTests
     [InlineData("{ let n = 0; n /= \"abc\"; }")]
     public void TestBindAssignmentExpressionWithMismatchedTypes(string input)
     {
-        var block = TestUtils.BindStatement<BoundBlockStatement>(input);
+        var diagnosticsBuilder = new DiagnosticBag.Builder();
+        var block = TestUtils.BindStatement<BoundBlockStatement>(input, diagnosticsBuilder);
         var boundAssignmentExpression = block.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundAssignmentExpression>();
         boundAssignmentExpression.Should().NotBeNull();
 
-        var diagnostics = boundAssignmentExpression.GetDiagnostics();
+        var diagnostics = diagnosticsBuilder.Build();
         diagnostics.Should().HaveCount(1);
 
         var typeMismatch = diagnostics.First();

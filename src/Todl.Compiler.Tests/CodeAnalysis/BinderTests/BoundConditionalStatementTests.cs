@@ -16,7 +16,6 @@ public sealed class BoundConditionalStatementTests
     {
         var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
         boundConditionalStatement.Should().NotBeNull();
-        boundConditionalStatement.GetDiagnostics().Should().BeEmpty();
 
         boundConditionalStatement.Condition.As<BoundConstant>().Value.Should().Be(true);
 
@@ -30,7 +29,6 @@ public sealed class BoundConditionalStatementTests
         var inputText = "if true { 0.ToString(); } else { 1.ToString(); }";
         var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
         boundConditionalStatement.Should().NotBeNull();
-        boundConditionalStatement.GetDiagnostics().Should().BeEmpty();
 
         boundConditionalStatement.Condition.As<BoundConstant>().Value.Should().Be(true);
 
@@ -47,7 +45,6 @@ public sealed class BoundConditionalStatementTests
         var inputText = "unless 0 == 1 { 0.ToString(); } else unless 1 == 2 { 1.ToString(); } else { 2.ToString(); }";
         var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
         boundConditionalStatement.Should().NotBeNull();
-        boundConditionalStatement.GetDiagnostics().Should().BeEmpty();
 
         void ValidateCondition(BoundConditionalStatement boundConditionalStatement, int expectedLeft, int expectedRight)
         {
@@ -56,7 +53,7 @@ public sealed class BoundConditionalStatementTests
                 b.Left.As<BoundConstant>().Value.Should().Be(expectedLeft);
                 b.Right.As<BoundConstant>().Value.Should().Be(expectedRight);
                 b.Operator.BoundBinaryOperatorKind.Should().Be(BoundBinaryOperatorKind.Equality);
-            });
+            }).Should().NotThrow();
         }
 
         void ValidateAlternative(BoundConditionalStatement boundConditionalStatement, int expectedValue)
@@ -67,12 +64,13 @@ public sealed class BoundConditionalStatementTests
 
         void ValidateBlockStatements(BoundBlockStatement boundBlockStatement, int expectedValue)
         {
-            boundBlockStatement.Statements[0].As<BoundClrFunctionCallExpression>().Invoking(func =>
+            var expressionStatement = boundBlockStatement.Statements[0].As<BoundExpressionStatement>();
+            expressionStatement.Expression.As<BoundClrInvocationExpression>().Invoking(func =>
             {
                 func.BoundBaseExpression.As<BoundConstant>().Value.Should().Be(expectedValue);
                 func.BoundArguments.Should().BeEmpty();
                 func.MethodInfo.Name.Should().Be("ToString");
-            });
+            }).Should().NotThrow();
         }
 
         // 0 == 1
@@ -96,11 +94,11 @@ public sealed class BoundConditionalStatementTests
     [InlineData("if 0 { 0.ToString(); }")]
     public void BoundConditionalStatementShouldHaveBooleanConditions(string inputText)
     {
-        var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText);
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundConditionalStatement = TestUtils.BindStatement<BoundConditionalStatement>(inputText, diagnosticBuilder);
         boundConditionalStatement.Should().NotBeNull();
 
-        var diagnostics = boundConditionalStatement.GetDiagnostics().ToList();
-        diagnostics[0].ErrorCode.Should().Be(ErrorCode.TypeMismatch);
+        diagnosticBuilder.Build().First().ErrorCode.Should().Be(ErrorCode.TypeMismatch);
     }
 
     [Fact]
@@ -117,11 +115,8 @@ public sealed class BoundConditionalStatementTests
                 }
                 b = a + 5;
             }";
-        var syntaxTree = TestUtils.ParseSyntaxTree(inputText);
-        var boundModule = BoundModule.Create(TestDefaults.DefaultClrTypeCache, new[] { syntaxTree });
-        boundModule.GetDiagnostics().Should().BeEmpty();
+        var func = TestUtils.BindMember<BoundFunctionMember>(inputText);
 
-        var func = boundModule.EntryPointType.BoundMembers[0].As<BoundFunctionMember>();
         var conditionalStatement = func.Body.Statements[2].As<BoundConditionalStatement>();
         var consequence = conditionalStatement.Consequence.As<BoundBlockStatement>();
         consequence.Scope.Parent.Should().Be(func.FunctionScope);

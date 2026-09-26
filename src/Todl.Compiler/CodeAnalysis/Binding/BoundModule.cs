@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Binding.ControlFlowAnalysis;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -7,40 +8,43 @@ using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
 
-internal sealed class BoundModule : IDiagnosable
+internal sealed class BoundModule
 {
     public IReadOnlyCollection<SyntaxTree> SyntaxTrees { get; private init; }
     public BoundEntryPointTypeDefinition EntryPointType { get; private init; }
+    public ImmutableArray<BoundTodlTypeDefinition> Types { get; private init; }
     public BoundFunctionMember EntryPoint => EntryPointType.EntryPointFunctionMember;
+    public DiagnosticBag.Builder DiagnosticBuilder { get; private init; }
 
     public static BoundModule Create(
         ClrTypeCache clrTypeCache,
-        IReadOnlyList<SyntaxTree> syntaxTrees)
+        IReadOnlyList<SyntaxTree> syntaxTrees,
+        DiagnosticBag.Builder diagnosticBuilder)
     {
         syntaxTrees ??= Array.Empty<SyntaxTree>();
-        var binder = Binder.CreateModuleBinder(clrTypeCache);
+        var constantValueFactory = new ConstantValueFactory(clrTypeCache.BuiltInTypes);
+        var binder = Binder.CreateModuleBinder(clrTypeCache, constantValueFactory, diagnosticBuilder);
         var entryPointType = binder.BindEntryPointTypeDefinition(syntaxTrees);
 
-        var controlFlowAnalyzer = new ControlFlowAnalyzer();
-        entryPointType.Accept(controlFlowAnalyzer);
-
-        var boundNodeVisitors = new BoundNodeVisitor[]
+        // Order matters: constant folding must run before string concatenation lowering.
+        var boundTreeVisitors = new BoundTreeVisitor[]
         {
-            new ConstantFoldingBoundNodeVisitor(binder.ConstantValueFactory)
+            new ControlFlowAnalyzer(diagnosticBuilder),
+            new ConstantFoldingBoundTreeRewriter(binder.ConstantValueFactory),
+            new StringConcatenationLoweringBoundTreeRewriter(binder.ConstantValueFactory)
         };
 
-        foreach (var v in boundNodeVisitors)
+        foreach (var boundTreeVisitor in boundTreeVisitors)
         {
-            entryPointType = (BoundEntryPointTypeDefinition)v.VisitBoundTypeDefinition(entryPointType);
+            entryPointType = (BoundEntryPointTypeDefinition)entryPointType.Accept(boundTreeVisitor);
         }
 
         return new()
         {
             SyntaxTrees = syntaxTrees,
-            EntryPointType = entryPointType
+            EntryPointType = entryPointType,
+            Types = ImmutableArray.Create<BoundTodlTypeDefinition>(entryPointType),
+            DiagnosticBuilder = diagnosticBuilder
         };
     }
-
-    public IEnumerable<Diagnostic> GetDiagnostics()
-        => EntryPointType.GetDiagnostics();
 }

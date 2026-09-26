@@ -13,9 +13,6 @@ internal sealed class BoundUnaryExpression : BoundExpression
     public BoundUnaryOperator Operator { get; internal init; }
     public BoundExpression Operand { get; internal init; }
 
-    public override TypeSymbol ResultType
-        => Operand.SyntaxNode.SyntaxTree.ClrTypeCache.ResolveSpecialType(Operator.ResultType);
-
     public override bool Constant => Operand.Constant;
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundUnaryExpression(this);
@@ -46,10 +43,6 @@ public enum BoundUnaryOperatorKind
 
     OpMask = 0x0000FF00,
 
-    PostfixIncrement = 0x00001000,
-    PostfixDecrement = 0x00001100,
-    PrefixIncrement = 0x00001200,
-    PrefixDecrement = 0x00001300,
     UnaryPlus = 0x00001400,
     UnaryMinus = 0x00001500,
     LogicalNegation = 0x00001600,
@@ -65,16 +58,6 @@ public static class BoundUnaryOperatorKindExtensions
 
     public static BoundUnaryOperatorKind GetOperandKind(this BoundUnaryOperatorKind boundUnaryOperatorKind)
         => boundUnaryOperatorKind & BoundUnaryOperatorKind.TypeMask;
-
-    public static bool HasSideEffect(this BoundUnaryOperatorKind boundUnaryOperatorKind)
-        => boundUnaryOperatorKind.GetOperationKind() switch
-        {
-            BoundUnaryOperatorKind.PrefixIncrement => true,
-            BoundUnaryOperatorKind.PrefixDecrement => true,
-            BoundUnaryOperatorKind.PostfixIncrement => true,
-            BoundUnaryOperatorKind.PostfixDecrement => true,
-            _ => false
-        };
 }
 
 public sealed record BoundUnaryOperator(
@@ -84,8 +67,7 @@ public sealed record BoundUnaryOperator(
 {
     public static BoundUnaryOperator Create(
         TypeSymbol operandType,
-        SyntaxKind syntaxKind,
-        bool trailing)
+        SyntaxKind syntaxKind)
     {
         var boundUnaryOperatorKind = BoundUnaryOperatorKind.Error;
 
@@ -95,8 +77,6 @@ public sealed record BoundUnaryOperator(
             SyntaxKind.MinusToken => BoundUnaryOperatorKind.UnaryMinus,
             SyntaxKind.BangToken => BoundUnaryOperatorKind.LogicalNegation,
             SyntaxKind.TildeToken => BoundUnaryOperatorKind.BitwiseComplement,
-            SyntaxKind.PlusPlusToken => trailing ? BoundUnaryOperatorKind.PostfixIncrement : BoundUnaryOperatorKind.PrefixIncrement,
-            SyntaxKind.MinusMinusToken => trailing ? BoundUnaryOperatorKind.PostfixDecrement : BoundUnaryOperatorKind.PrefixDecrement,
             _ => BoundUnaryOperatorKind.Error
         };
 
@@ -159,54 +139,6 @@ public sealed record BoundUnaryOperator(
         { BoundUnaryOperatorKind.BitwiseComplement | BoundUnaryOperatorKind.UInt, SpecialType.ClrUInt32 },
         { BoundUnaryOperatorKind.BitwiseComplement | BoundUnaryOperatorKind.Long, SpecialType.ClrInt64 },
         { BoundUnaryOperatorKind.BitwiseComplement | BoundUnaryOperatorKind.ULong, SpecialType.ClrUInt64 },
-
-        // PostfixIncrement
-        { BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.SByte, SpecialType.ClrSByte },
-        { BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Byte, SpecialType.ClrByte },
-        { BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Short, SpecialType.ClrInt16 },
-        { BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.UShort, SpecialType.ClrUInt16 },
-        { BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Int, SpecialType.ClrInt32 },
-        { BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.UInt, SpecialType.ClrUInt32 },
-        { BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Long, SpecialType.ClrInt64 },
-        { BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.ULong, SpecialType.ClrUInt64 },
-        { BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Float, SpecialType.ClrFloat },
-        { BoundUnaryOperatorKind.PostfixIncrement | BoundUnaryOperatorKind.Double, SpecialType.ClrDouble },
-
-        // PostfixDecrement
-        { BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.SByte, SpecialType.ClrSByte },
-        { BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Byte, SpecialType.ClrByte },
-        { BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Short, SpecialType.ClrInt16 },
-        { BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.UShort, SpecialType.ClrUInt16 },
-        { BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Int, SpecialType.ClrInt32 },
-        { BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.UInt, SpecialType.ClrUInt32 },
-        { BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Long, SpecialType.ClrInt64 },
-        { BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.ULong, SpecialType.ClrUInt64 },
-        { BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Float, SpecialType.ClrFloat },
-        { BoundUnaryOperatorKind.PostfixDecrement | BoundUnaryOperatorKind.Double, SpecialType.ClrDouble },
-
-        // PrefixIncrement
-        { BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.SByte, SpecialType.ClrSByte },
-        { BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Byte, SpecialType.ClrByte },
-        { BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Short, SpecialType.ClrInt16 },
-        { BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.UShort, SpecialType.ClrUInt16 },
-        { BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Int, SpecialType.ClrInt32 },
-        { BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.UInt, SpecialType.ClrUInt32 },
-        { BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Long, SpecialType.ClrInt64 },
-        { BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.ULong, SpecialType.ClrUInt64 },
-        { BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Float, SpecialType.ClrFloat },
-        { BoundUnaryOperatorKind.PrefixIncrement | BoundUnaryOperatorKind.Double, SpecialType.ClrDouble },
-
-        // PrefixDecrement
-        { BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.SByte, SpecialType.ClrSByte },
-        { BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Byte, SpecialType.ClrByte },
-        { BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Short, SpecialType.ClrInt16 },
-        { BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.UShort, SpecialType.ClrUInt16 },
-        { BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Int, SpecialType.ClrInt32 },
-        { BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.UInt, SpecialType.ClrUInt32 },
-        { BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Long, SpecialType.ClrInt64 },
-        { BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.ULong, SpecialType.ClrUInt64 },
-        { BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Float, SpecialType.ClrFloat },
-        { BoundUnaryOperatorKind.PrefixDecrement | BoundUnaryOperatorKind.Double, SpecialType.ClrDouble },
     }.ToImmutableDictionary();
 }
 
@@ -214,45 +146,20 @@ public partial class Binder
 {
     private BoundUnaryExpression BindUnaryExpression(UnaryExpression unaryExpression)
     {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
         var boundOperand = BindExpression(unaryExpression.Operand);
         var boundUnaryOperator = BoundUnaryOperator.Create(
             operandType: boundOperand.ResultType,
-            syntaxKind: unaryExpression.Operator.Kind,
-            trailing: unaryExpression.Trailing);
+            syntaxKind: unaryExpression.Operator.Kind);
 
         if (boundUnaryOperator is null)
         {
-            diagnosticBuilder.Add(
+            ReportDiagnostic(
                 new Diagnostic()
                 {
                     Message = $"Unary operator \"{unaryExpression.Operator.Text}\" is not supported on type \"{boundOperand.ResultType.Name}\"",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = unaryExpression.Operator.GetTextLocation(),
+                    TextLocation = unaryExpression.GetTextLocation(unaryExpression.Operator.Span),
                     ErrorCode = ErrorCode.UnsupportedOperator
-                });
-        }
-
-        if (!boundOperand.LValue && boundUnaryOperator.BoundUnaryOperatorKind.HasSideEffect())
-        {
-            diagnosticBuilder.Add(
-                new Diagnostic()
-                {
-                    Message = $"Unary operator \"{unaryExpression.Operator.Text}\" requires an lvalue.",
-                    Level = DiagnosticLevel.Error,
-                    TextLocation = unaryExpression.Operator.GetTextLocation(),
-                    ErrorCode = ErrorCode.NotAnLValue
-                });
-        }
-        else if (boundOperand.ReadOnly && boundUnaryOperator.BoundUnaryOperatorKind.HasSideEffect())
-        {
-            diagnosticBuilder.Add(
-                new Diagnostic()
-                {
-                    Message = $"Expression \"{unaryExpression.Operand.Text}\" is read only.",
-                    Level = DiagnosticLevel.Error,
-                    TextLocation = unaryExpression.Operand.Text.GetTextLocation(),
-                    ErrorCode = ErrorCode.ReadOnlyVariable
                 });
         }
 
@@ -260,6 +167,6 @@ public partial class Binder
             syntaxNode: unaryExpression,
             operand: boundOperand,
             @operator: boundUnaryOperator,
-            diagnosticBuilder: diagnosticBuilder);
+            resultType: boundUnaryOperator is null ? null : ClrTypeCache.ResolveSpecialType(boundUnaryOperator.ResultType));
     }
 }

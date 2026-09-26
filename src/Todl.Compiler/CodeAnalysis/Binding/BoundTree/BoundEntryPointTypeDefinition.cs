@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -27,7 +28,6 @@ internal sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
         }
 
         // entry point function should either return "void" or "int"
-        var builtInTypes = f.SyntaxNode.SyntaxTree.ClrTypeCache.BuiltInTypes;
         if (f.ReturnType.SpecialType != SpecialType.ClrVoid
             && f.ReturnType.SpecialType != SpecialType.ClrInt32)
         {
@@ -49,7 +49,7 @@ internal sealed class BoundEntryPointTypeDefinition : BoundTodlTypeDefinition
                 return false;
             }
 
-            return clrTypeSymbol.ClrType.IsArray && clrTypeSymbol.ClrType.GetElementType().Equals(builtInTypes.String.ClrType);
+            return clrTypeSymbol.ClrType.IsArray && clrTypeSymbol.ClrType.GetElementType().FullName == typeof(string).FullName;
         }
 
         return true;
@@ -63,33 +63,30 @@ public partial class Binder
     internal BoundEntryPointTypeDefinition BindEntryPointTypeDefinition(IEnumerable<SyntaxTree> syntaxTrees)
     {
         var typeBinder = CreateTypeBinder();
-        var diagnosticBuilder = new DiagnosticBag.Builder();
 
         var members = syntaxTrees.SelectMany(tree => tree.Members);
         foreach (var functionDeclarationMember in members.OfType<FunctionDeclarationMember>())
         {
-            var function = FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember);
+            var function = FunctionSymbol.FromFunctionDeclarationMember(functionDeclarationMember, GetClrTypeCacheView(functionDeclarationMember.SyntaxTree));
             if (typeBinder.Scope.DeclareFunction(function) != function)
             {
-                diagnosticBuilder.Add(new Diagnostic()
+                ReportDiagnostic(new Diagnostic()
                 {
                     Message = "Ambiguous function declaration. Multiple functions with the same name and parameters set are declared within the same scope.",
                     ErrorCode = ErrorCode.AmbiguousFunctionDeclaration,
-                    TextLocation = functionDeclarationMember.Name.Text.GetTextLocation(),
+                    TextLocation = functionDeclarationMember.GetTextLocation(functionDeclarationMember.Name.Span),
                     Level = DiagnosticLevel.Error
                 });
             }
         }
 
         var boundMembers = members.Select(m => typeBinder.BindMember(m));
-        diagnosticBuilder.AddRange(boundMembers);
 
         // TODO: Use BoundNodeFactory to create BoundEntryPointTypeDefinition
         return new()
         {
             SyntaxNode = null,
-            BoundMembers = boundMembers.ToList(),
-            DiagnosticBuilder = diagnosticBuilder
+            BoundMembers = boundMembers.ToImmutableArray(),
         };
     }
 }

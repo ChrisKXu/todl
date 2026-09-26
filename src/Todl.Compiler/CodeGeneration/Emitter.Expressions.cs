@@ -5,8 +5,7 @@ using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
-
-using MethodInfo = System.Reflection.MethodInfo;
+using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeGeneration;
 
@@ -14,13 +13,6 @@ internal partial class Emitter
 {
     internal partial class InstructionEmitter
     {
-        // TODO: Replace this with proper lowering logic
-        private static readonly MethodInfo StringConcatMethodInfo = typeof(string)
-            .GetMethods(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
-            .Single(m => m.Name == nameof(string.Concat)
-                && m.GetParameters().Length == 2
-                && m.GetParameters()[0].ParameterType.Equals(typeof(string)));
-
         public void EmitExpression(BoundExpression boundExpression)
         {
             switch (boundExpression)
@@ -31,11 +23,14 @@ internal partial class Emitter
                 case BoundAssignmentExpression boundAssignmentExpression:
                     EmitAssignmentExpression(boundAssignmentExpression);
                     return;
-                case BoundClrFunctionCallExpression boundClrFunctionCallExpression:
-                    EmitClrFunctionCallExpression(boundClrFunctionCallExpression);
+                case BoundClrInvocationExpression boundClrInvocationExpression:
+                    EmitClrInvocationExpression(boundClrInvocationExpression);
                     return;
-                case BoundTodlFunctionCallExpression boundTodlFunctionCallExpression:
-                    EmitTodlFunctionCallExpression(boundTodlFunctionCallExpression);
+                case BoundTodlInvocationExpression boundTodlInvocationExpression:
+                    EmitTodlInvocationExpression(boundTodlInvocationExpression);
+                    return;
+                case BoundObjectCreationExpression boundObjectCreationExpression:
+                    EmitObjectCreationExpression(boundObjectCreationExpression);
                     return;
                 case BoundUnaryExpression boundUnaryExpression:
                     EmitUnaryExpression(boundUnaryExpression, true);
@@ -145,28 +140,71 @@ internal partial class Emitter
             ILProcessor.Emit(OpCodes.Ldc_R8, doubleValue);
         }
 
-        private void EmitClrFunctionCallExpression(BoundClrFunctionCallExpression boundClrFunctionCallExpression)
+        private void EmitClrInvocationExpression(BoundClrInvocationExpression boundClrInvocationExpression)
         {
-            foreach (var argument in boundClrFunctionCallExpression.BoundArguments)
+            // The "this" reference must be on the stack ahead of the arguments for an
+            // instance call - pushing arguments first leaves an invalid evaluation stack.
+            if (!boundClrInvocationExpression.IsStatic)
+            {
+                EmitInstanceCallReceiver(boundClrInvocationExpression.BoundBaseExpression);
+            }
+
+            foreach (var argument in boundClrInvocationExpression.BoundArguments)
             {
                 EmitExpression(argument);
             }
 
-            if (!boundClrFunctionCallExpression.IsStatic)
+            var methodReference = ResolveMethodReference(boundClrInvocationExpression);
+            ILProcessor.Emit(OpCodes.Call, methodReference);
+        }
+
+        // A value-type receiver (local or parameter) needs its managed pointer on the stack,
+        // not its value, so the callee can be invoked with `call` against the struct in place.
+        private void EmitInstanceCallReceiver(BoundExpression baseExpression)
+        {
+            switch ((baseExpression as BoundVariableExpression)?.Variable)
             {
-                if (boundClrFunctionCallExpression.BoundBaseExpression is BoundVariableExpression boundVariableExpression
-                    && boundVariableExpression.Variable is LocalVariableSymbol localVariableSymbol)
-                {
+                case LocalVariableSymbol localVariableSymbol:
                     EmitLocalAddress(localVariableSymbol);
-                }
-                else
-                {
-                    EmitExpression(boundClrFunctionCallExpression.BoundBaseExpression);
-                }
+                    return;
+                case ParameterSymbol parameterSymbol:
+                    EmitParameterAddress(parameterSymbol);
+                    return;
+                default:
+                    if (baseExpression.ResultType.IsReferenceType)
+                    {
+                        EmitExpression(baseExpression);
+                        return;
+                    }
+
+                    // Not a local/parameter, so spill it to a temp local to make it addressable.
+                    ILProcessor.Body.InitLocals = true;
+                    var temp = new VariableDefinition(ResolveTypeReference(baseExpression.ResultType as ClrTypeSymbol));
+                    ILProcessor.Body.Variables.Add(temp);
+                    EmitExpression(baseExpression);
+                    EmitLocalStore(temp);
+
+                    if (temp.Index < 0xFF)
+                    {
+                        ILProcessor.Emit(OpCodes.Ldloca_S, temp);
+                    }
+                    else
+                    {
+                        ILProcessor.Emit(OpCodes.Ldloca, temp);
+                    }
+                    return;
+            }
+        }
+
+        private void EmitObjectCreationExpression(BoundObjectCreationExpression boundObjectCreationExpression)
+        {
+            foreach (var argument in boundObjectCreationExpression.BoundArguments)
+            {
+                EmitExpression(argument);
             }
 
-            var methodReference = ResolveMethodReference(boundClrFunctionCallExpression);
-            ILProcessor.Emit(OpCodes.Call, methodReference);
+            var methodReference = ResolveMethodReference(boundObjectCreationExpression);
+            ILProcessor.Emit(OpCodes.Newobj, methodReference);
         }
 
         private void EmitBinaryExpression(BoundBinaryExpression boundBinaryExpression)
@@ -186,8 +224,32 @@ internal partial class Emitter
                     ILProcessor.Emit(OpCodes.Ceq);
                     return;
                 case BoundBinaryOperatorKind.Comparison:
-                    ILProcessor.Emit(OpCodes.Cgt);
-                    return;
+                    // BoundBinaryOperatorKind.Comparison covers all four relational operators;
+                    // the actual operator survives on Operator.SyntaxKind. `<=`/`>=` have no
+                    // dedicated CIL opcode, so they're the negation of the strict opposite.
+                    switch (boundBinaryExpression.Operator.SyntaxKind)
+                    {
+                        case SyntaxKind.LessThanToken:
+                            ILProcessor.Emit(OpCodes.Clt);
+                            return;
+                        case SyntaxKind.GreaterThanToken:
+                            ILProcessor.Emit(OpCodes.Cgt);
+                            return;
+                        case SyntaxKind.LessThanOrEqualsToken:
+                            // left <= right ==> (left > right) == 0
+                            ILProcessor.Emit(OpCodes.Cgt);
+                            ILProcessor.Emit(OpCodes.Ldc_I4_0);
+                            ILProcessor.Emit(OpCodes.Ceq);
+                            return;
+                        case SyntaxKind.GreaterThanOrEqualsToken:
+                            // left >= right ==> (left < right) == 0
+                            ILProcessor.Emit(OpCodes.Clt);
+                            ILProcessor.Emit(OpCodes.Ldc_I4_0);
+                            ILProcessor.Emit(OpCodes.Ceq);
+                            return;
+                        default:
+                            throw new NotSupportedException($"{boundBinaryExpression.Operator.SyntaxKind} is not a supported comparison operator");
+                    }
                 case BoundBinaryOperatorKind.LogicalAnd:
                     ILProcessor.Emit(OpCodes.And);
                     return;
@@ -200,12 +262,16 @@ internal partial class Emitter
                 case BoundBinaryOperatorKind.NumericSubstraction:
                     ILProcessor.Emit(OpCodes.Sub);
                     return;
-                case BoundBinaryOperatorKind.StringConcatenation:
-                    var methodReference = AssemblyDefinition.MainModule.ImportReference(StringConcatMethodInfo);
-                    ILProcessor.Emit(OpCodes.Call, methodReference);
+                case BoundBinaryOperatorKind.NumericMultiplication:
+                    ILProcessor.Emit(OpCodes.Mul);
+                    return;
+                case BoundBinaryOperatorKind.NumericDivision:
+                    // Only Int32 (signed) division is currently a supported binary operator, so
+                    // Div (not Div_Un) matches every binder-resolved operand type today.
+                    ILProcessor.Emit(OpCodes.Div);
                     return;
                 default:
-                    return;
+                    throw new NotSupportedException($"{boundBinaryExpression.Operator.BoundBinaryOperatorKind} is not a supported binary operator kind");
             }
         }
 
@@ -227,9 +293,9 @@ internal partial class Emitter
 
         private void EmitLocalLoad(LocalVariableSymbol localVariableSymbol)
         {
-            var slot = Variables[localVariableSymbol].Index;
+            var variableDefinition = Variables[localVariableSymbol];
 
-            switch (slot)
+            switch (variableDefinition.Index)
             {
                 case 0:
                     ILProcessor.Emit(OpCodes.Ldloc_0);
@@ -244,10 +310,10 @@ internal partial class Emitter
                     ILProcessor.Emit(OpCodes.Ldloc_3);
                     return;
                 case < 0xFF:
-                    ILProcessor.Emit(OpCodes.Ldloc_S, (sbyte)slot);
+                    ILProcessor.Emit(OpCodes.Ldloc_S, variableDefinition);
                     return;
                 default:
-                    ILProcessor.Emit(OpCodes.Ldloc, slot);
+                    ILProcessor.Emit(OpCodes.Ldloc, variableDefinition);
                     return;
             }
         }
@@ -260,47 +326,57 @@ internal partial class Emitter
                 return;
             }
 
-            var slot = Variables[localVariableSymbol].Index;
-            if (slot < 0xFF)
+            var variableDefinition = Variables[localVariableSymbol];
+            if (variableDefinition.Index < 0xFF)
             {
-                ILProcessor.Emit(OpCodes.Ldloca_S, (byte)slot);
+                ILProcessor.Emit(OpCodes.Ldloca_S, variableDefinition);
             }
             else
             {
-                ILProcessor.Emit(OpCodes.Ldloca, slot);
+                ILProcessor.Emit(OpCodes.Ldloca, variableDefinition);
             }
         }
 
-        private void EmitTodlFunctionCallExpression(BoundTodlFunctionCallExpression boundTodlFunctionCallExpression)
+        private void EmitParameterAddress(ParameterSymbol parameterSymbol)
         {
-            foreach (var argument in boundTodlFunctionCallExpression.BoundArguments.Values)
+            if (parameterSymbol.Type.IsReferenceType)
             {
-                EmitExpression(argument);
+                ILProcessor.Emit(OpCodes.Ldarg, Parameters[parameterSymbol]);
+                return;
             }
 
-            var methodReference = ResolveMethodReference(boundTodlFunctionCallExpression);
+            var parameterDefinition = Parameters[parameterSymbol];
+            if (parameterDefinition.Index < 0xFF)
+            {
+                ILProcessor.Emit(OpCodes.Ldarga_S, parameterDefinition);
+            }
+            else
+            {
+                ILProcessor.Emit(OpCodes.Ldarga, parameterDefinition);
+            }
+        }
+
+        private void EmitTodlInvocationExpression(BoundTodlInvocationExpression boundTodlInvocationExpression)
+        {
+            // BoundArguments is a name-keyed dictionary; its enumeration order is not guaranteed
+            // to match declaration order, but positional argument pushes onto the stack must -
+            // walk the function's declared parameter order instead of the dictionary's.
+            foreach (var parameterName in boundTodlInvocationExpression.FunctionSymbol.OrderedParameterNames)
+            {
+                EmitExpression(boundTodlInvocationExpression.BoundArguments[parameterName]);
+            }
+
+            var methodReference = ResolveMethodReference(boundTodlInvocationExpression);
             ILProcessor.Emit(OpCodes.Call, methodReference);
         }
 
         private void EmitUnaryExpression(BoundUnaryExpression boundUnaryExpression, bool emitSideEffect)
         {
             var boundUnaryOperatorKind = boundUnaryExpression.Operator.BoundUnaryOperatorKind;
-
-            if (!boundUnaryOperatorKind.HasSideEffect())
-            {
-                EmitUnaryExpressionWithoutSideEffect(boundUnaryExpression.Operand, boundUnaryOperatorKind);
-            }
-            else
-            {
-                EmitStore(boundUnaryExpression.Operand, () =>
-                {
-                    EmitUnaryExpressionWithoutSideEffect(boundUnaryExpression.Operand, boundUnaryOperatorKind);
-                    EmitUnaryOperatorWithSideEffect(boundUnaryOperatorKind, emitSideEffect);
-                });
-            }
+            EmitUnaryExpressionCore(boundUnaryExpression.Operand, boundUnaryOperatorKind);
         }
 
-        private void EmitUnaryExpressionWithoutSideEffect(BoundExpression operand, BoundUnaryOperatorKind boundUnaryOperatorKind)
+        private void EmitUnaryExpressionCore(BoundExpression operand, BoundUnaryOperatorKind boundUnaryOperatorKind)
         {
             EmitExpression(operand);
 
@@ -323,48 +399,6 @@ internal partial class Emitter
                     return;
                 default:
                     break;
-            }
-        }
-
-        private void EmitUnaryOperatorWithSideEffect(BoundUnaryOperatorKind boundUnaryOperatorKind, bool emitSideEffect)
-        {
-            var operationKind = boundUnaryOperatorKind.GetOperationKind();
-
-            var opCode =
-                operationKind == BoundUnaryOperatorKind.PrefixIncrement
-                || operationKind == BoundUnaryOperatorKind.PostfixIncrement
-                ? OpCodes.Add
-                : OpCodes.Sub;
-
-            var prefix = operationKind == BoundUnaryOperatorKind.PrefixIncrement || operationKind == BoundUnaryOperatorKind.PrefixDecrement;
-
-            if (!prefix && emitSideEffect)
-            {
-                ILProcessor.Emit(OpCodes.Dup);
-            }
-
-            switch (boundUnaryOperatorKind.GetOperandKind())
-            {
-                case BoundUnaryOperatorKind.Long:
-                case BoundUnaryOperatorKind.ULong:
-                    EmitInt64Value(1L);
-                    break;
-                case BoundUnaryOperatorKind.Float:
-                    EmitFloatValue(1.0F);
-                    break;
-                case BoundUnaryOperatorKind.Double:
-                    EmitDoubleValue(1.0);
-                    break;
-                default:
-                    EmitIntValue(1);
-                    break;
-            }
-
-            ILProcessor.Emit(opCode);
-
-            if (prefix && emitSideEffect)
-            {
-                ILProcessor.Emit(OpCodes.Dup);
             }
         }
 
@@ -471,7 +505,7 @@ internal partial class Emitter
                 default:
                     ILProcessor.Emit(OpCodes.Stloc, variableDefinition);
                     return;
-            };
+            }
         }
 
         private void EmitArgStore(ParameterDefinition parameterDefinition)
@@ -488,11 +522,21 @@ internal partial class Emitter
 
         private void EmitAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
         {
+            var operatorKind = boundAssignmentExpression.Operator.BoundAssignmentOperatorKind;
+            var isInline = operatorKind != BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment;
+
             EmitStore(boundAssignmentExpression.Left, () =>
             {
+                // Inline operators (+=, -=, *=, /=) need the current value of the target
+                // under the new one before applying the operator; plain `=` does not.
+                if (isInline)
+                {
+                    EmitExpression(boundAssignmentExpression.Left);
+                }
+
                 EmitExpression(boundAssignmentExpression.Right);
 
-                switch (boundAssignmentExpression.Operator.BoundAssignmentOperatorKind)
+                switch (operatorKind)
                 {
                     case BoundAssignmentExpression.BoundAssignmentOperatorKind.AdditionInline:
                         ILProcessor.Emit(OpCodes.Add);
