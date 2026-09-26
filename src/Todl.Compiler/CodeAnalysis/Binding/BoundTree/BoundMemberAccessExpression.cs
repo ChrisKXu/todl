@@ -64,7 +64,7 @@ internal sealed class BoundInvalidMemberAccessExpression : BoundMemberAccessExpr
 
 public partial class Binder
 {
-    private BoundMemberAccessExpression BindMemberAccessExpression(
+    private BoundExpression BindMemberAccessExpression(
         MemberAccessExpression memberAccessExpression)
     {
         var boundBaseExpression = BindExpression(memberAccessExpression.BaseExpression);
@@ -114,6 +114,26 @@ public partial class Binder
                 }
 
                 return boundPropertyAccessExpression;
+            case Type nestedType when boundBaseExpression is BoundTypeExpression:
+                if (!nestedType.IsVisible)
+                {
+                    ReportDiagnostic(
+                        new Diagnostic()
+                        {
+                            Message = $"Member {memberAccessExpression.MemberIdentifierToken.Text} is not public.",
+                            Level = DiagnosticLevel.Error,
+                            TextLocation = memberAccessExpression.GetTextLocation(),
+                            ErrorCode = ErrorCode.MemberNotAccessible
+                        });
+
+                    return BoundNodeFactory.CreateBoundTypeExpression(
+                        syntaxNode: memberAccessExpression,
+                        resultType: null);
+                }
+
+                return BoundNodeFactory.CreateBoundTypeExpression(
+                    syntaxNode: memberAccessExpression,
+                    resultType: ClrTypeCache.Resolve(nestedType));
         }
 
         ReportDiagnostic(

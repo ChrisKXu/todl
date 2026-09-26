@@ -84,4 +84,53 @@ int Run() {
             runMethod.Invoke(null, null).Should().Be(1);
         });
     }
+
+    [Fact]
+    public void StaticClrFieldAccessShouldBindAndExecuteSuccessfully()
+    {
+        var inputText = @"
+void Main() {}
+string Run() {
+    return System::String.Empty;
+}
+";
+        var (assemblyDefinition, diagnostics) = TestUtils.Compile(SourceText.FromString(inputText));
+        diagnostics.Should().BeEmpty();
+        assemblyDefinition.Should().NotBeNull();
+
+        TestUtils.RunAssembly(assemblyDefinition, assembly =>
+        {
+            var runMethod = assembly.EntryPoint.DeclaringType?.GetMethod("Run");
+            runMethod.Should().NotBeNull();
+
+            runMethod.Invoke(null, null).Should().Be(string.Empty);
+        });
+    }
+
+    // Note: this test intentionally does not invoke Run() via TestUtils.RunAssembly.
+    // SpecialFolder.ApplicationData is a literal/const enum field with no runtime storage slot
+    // (ECMA-335); executing it requires constant-folding CLR literal fields, a separate
+    // pre-existing gap (FieldInfo.IsLiteral is never checked in EmitClrFieldLoad) - not in scope
+    // here. Assembly write succeeding proves the DeclaringType/nested-type fix works; invoking
+    // Run() is deferred to that follow-up.
+    [Fact]
+    public void NestedClrTypeAccessShouldBindAndEmitSuccessfully()
+    {
+        var inputText = @"
+import { Environment } from System;
+
+void Main() {}
+int Run() {
+    let folder = Environment.SpecialFolder.ApplicationData;
+    return 1;
+}
+";
+        var (assemblyDefinition, diagnostics) = TestUtils.Compile(SourceText.FromString(inputText));
+        diagnostics.Should().BeEmpty();
+        assemblyDefinition.Should().NotBeNull();
+
+        using var memoryStream = new System.IO.MemoryStream();
+        var write = () => assemblyDefinition.Write(memoryStream);
+        write.Should().NotThrow();
+    }
 }
