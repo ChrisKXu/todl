@@ -129,11 +129,7 @@ int Run() {
         });
     }
 
-    // SpecialFolder.ApplicationData is a literal/const enum field with no runtime storage slot
-    // (ECMA-335); ldsfld against it used to throw MissingFieldException at runtime even though
-    // binding and IL emission both succeeded. Constant-folding CLR literal fields at bind time
-    // (ConstantFoldingBoundTreeRewriter.VisitBoundClrFieldAccessExpression) removes the node
-    // before the emitter ever sees it, so this now binds, emits, AND executes successfully.
+    // SpecialFolder.ApplicationData is a literal enum field - now constant-folded at bind time.
     [Fact]
     public void NestedClrTypeAccessShouldBindAndEmitSuccessfully()
     {

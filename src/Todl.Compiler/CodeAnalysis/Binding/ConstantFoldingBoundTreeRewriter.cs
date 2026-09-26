@@ -230,11 +230,7 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
         return base.VisitBoundClrFieldAccessExpression(boundClrFieldAccessExpression);
     }
 
-    // CLR literal/const fields (FieldInfo.IsLiteral) have no runtime storage slot per ECMA-335, so
-    // ldsfld/ldfld against them is invalid IL. GetRawConstantValue() can return any of these raw CLR
-    // types; the value is widened into ConstantInt32Value for correct IL emission (there is no
-    // sub-int32 constant-load opcode), while the caller still passes the field's real (possibly
-    // narrower or enum) type as the BoundConstant's resultType to preserve type fidelity.
+    // Literal/const fields have no runtime storage slot; narrow integer/char values widen to Int32 for emission.
     private ConstantValue CreateConstantValueFromRawValue(object rawValue)
     {
         return rawValue switch
