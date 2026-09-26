@@ -36,6 +36,7 @@
         MissingEntryPoint,
         NoEnclosingLoop,
         DuplicateLoopLabel,
-        UndefinedLoopLabel
+        UndefinedLoopLabel,
+        ObjectReferenceRequired
     }
 }
