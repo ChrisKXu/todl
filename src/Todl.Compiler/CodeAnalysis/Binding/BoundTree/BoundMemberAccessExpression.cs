@@ -79,6 +79,11 @@ public partial class Binder
         switch (memberInfo)
         {
             case FieldInfo fieldInfo:
+                if (!fieldInfo.IsStatic && boundBaseExpression is BoundTypeExpression)
+                {
+                    return ReportObjectReferenceRequired(memberAccessExpression, boundBaseExpression, fieldInfo.Name);
+                }
+
                 var boundFieldAccessExpression = BoundNodeFactory.CreateBoundClrFieldAccessExpression(
                     syntaxNode: memberAccessExpression,
                     boundBaseExpression: boundBaseExpression,
@@ -92,6 +97,11 @@ public partial class Binder
 
                 return boundFieldAccessExpression;
             case PropertyInfo propertyInfo:
+                if (!propertyInfo.GetAccessors().Any(a => a.IsStatic) && boundBaseExpression is BoundTypeExpression)
+                {
+                    return ReportObjectReferenceRequired(memberAccessExpression, boundBaseExpression, propertyInfo.Name);
+                }
+
                 var boundPropertyAccessExpression = BoundNodeFactory.CreateBoundClrPropertyAccessExpression(
                     syntaxNode: memberAccessExpression,
                     boundBaseExpression: boundBaseExpression,
@@ -113,6 +123,25 @@ public partial class Binder
                 Level = DiagnosticLevel.Error,
                 TextLocation = memberAccessExpression.GetTextLocation(memberAccessExpression.MemberIdentifierToken.Span),
                 ErrorCode = ErrorCode.MemberNotFound
+            });
+
+        return BoundNodeFactory.CreateBoundInvalidMemberAccessExpression(
+            syntaxNode: memberAccessExpression,
+            boundBaseExpression: boundBaseExpression);
+    }
+
+    private BoundMemberAccessExpression ReportObjectReferenceRequired(
+        MemberAccessExpression memberAccessExpression,
+        BoundExpression boundBaseExpression,
+        string memberName)
+    {
+        ReportDiagnostic(
+            new Diagnostic()
+            {
+                Message = $"An object reference is required to access non-static member '{memberName}'.",
+                Level = DiagnosticLevel.Error,
+                TextLocation = memberAccessExpression.GetTextLocation(memberAccessExpression.MemberIdentifierToken.Span),
+                ErrorCode = ErrorCode.ObjectReferenceRequired
             });
 
         return BoundNodeFactory.CreateBoundInvalidMemberAccessExpression(

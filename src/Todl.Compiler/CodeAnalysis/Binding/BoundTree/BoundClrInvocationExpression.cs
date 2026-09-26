@@ -157,13 +157,16 @@ public partial class Binder
 
         var boundArguments = invocationExpression.Arguments.Items.Select(a => BindExpression(a.Expression)).ToImmutableArray();
         var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
+        var isStatic = boundBaseExpression is BoundTypeExpression;
 
         var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
 
         var candidate = type.GetMethod(
             name: nameToken.Text.ToString(),
-            genericParameterCount: 0,
-            types: argumentTypes);
+            bindingAttr: BindingFlags.Public | (isStatic ? BindingFlags.Static : BindingFlags.Instance),
+            binder: null,
+            types: argumentTypes,
+            modifiers: null);
 
         if (candidate is null)
         {

@@ -43,4 +43,27 @@ public sealed class BoundMemberAccessExpressionTests
         diagnostic.Level.Should().Be(DiagnosticLevel.Error);
         diagnostic.Message.Should().Be("Member 'Maxvalue' does not exist in type 'System.Int32'");
     }
+
+    [Fact]
+    public void TestBoundInstanceMemberAccessThroughTypeNameShouldReportDiagnosticAndReturnInvalidNode()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundExpression = TestUtils.BindExpression<BoundMemberAccessExpression>("System::Text::StringBuilder.Capacity", diagnosticBuilder);
+
+        boundExpression.Should().BeOfType<BoundInvalidMemberAccessExpression>();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().ContainSingle();
+        diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
+        diagnostics.Single().ErrorCode.Should().Be(ErrorCode.ObjectReferenceRequired);
+    }
+
+    [Fact]
+    public void TestBoundStaticMemberAccessThroughInstanceExpressionShouldStillCompile()
+    {
+        var boundClrFieldAccessExpression = TestUtils.BindExpression<BoundClrFieldAccessExpression>("\"abc\".Empty");
+
+        boundClrFieldAccessExpression.MemberName.Should().Be("Empty");
+        boundClrFieldAccessExpression.IsStatic.Should().Be(true);
+    }
 }

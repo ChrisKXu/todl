@@ -141,6 +141,20 @@ public sealed class BoundInvocationExpressionTests
     }
 
     [Fact]
+    public void BindInvocationOfInstanceMethodThroughTypeNameShouldReportDiagnosticAndReturnInvalidNode()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundExpression = TestUtils.BindExpression<BoundExpression>("System::Text::StringBuilder.ToString()", diagnosticBuilder);
+
+        boundExpression.Should().BeOfType<BoundInvalidInvocationExpression>();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().ContainSingle();
+        diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
+        diagnostics.Single().ErrorCode.Should().Be(ErrorCode.NoMatchingCandidate);
+    }
+
+    [Fact]
     public void TestBindTodlInvocationExpressionWithNoArguments()
     {
         var inputText = @"
