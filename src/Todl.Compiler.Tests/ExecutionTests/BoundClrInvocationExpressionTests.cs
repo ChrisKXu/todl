@@ -107,12 +107,33 @@ string Run() {
         });
     }
 
-    // Note: this test intentionally does not invoke Run() via TestUtils.RunAssembly.
+    [Fact]
+    public void LiteralClrFieldAccessShouldBindAndExecuteSuccessfully()
+    {
+        var inputText = @"
+void Main() {}
+int Run() {
+    return System::Int32.MaxValue;
+}
+";
+        var (assemblyDefinition, diagnostics) = TestUtils.Compile(SourceText.FromString(inputText));
+        diagnostics.Should().BeEmpty();
+        assemblyDefinition.Should().NotBeNull();
+
+        TestUtils.RunAssembly(assemblyDefinition, assembly =>
+        {
+            var runMethod = assembly.EntryPoint.DeclaringType?.GetMethod("Run");
+            runMethod.Should().NotBeNull();
+
+            runMethod.Invoke(null, null).Should().Be(int.MaxValue);
+        });
+    }
+
     // SpecialFolder.ApplicationData is a literal/const enum field with no runtime storage slot
-    // (ECMA-335); executing it requires constant-folding CLR literal fields, a separate
-    // pre-existing gap (FieldInfo.IsLiteral is never checked in EmitClrFieldLoad) - not in scope
-    // here. Assembly write succeeding proves the DeclaringType/nested-type fix works; invoking
-    // Run() is deferred to that follow-up.
+    // (ECMA-335); ldsfld against it used to throw MissingFieldException at runtime even though
+    // binding and IL emission both succeeded. Constant-folding CLR literal fields at bind time
+    // (ConstantFoldingBoundTreeRewriter.VisitBoundClrFieldAccessExpression) removes the node
+    // before the emitter ever sees it, so this now binds, emits, AND executes successfully.
     [Fact]
     public void NestedClrTypeAccessShouldBindAndEmitSuccessfully()
     {
@@ -129,8 +150,12 @@ int Run() {
         diagnostics.Should().BeEmpty();
         assemblyDefinition.Should().NotBeNull();
 
-        using var memoryStream = new System.IO.MemoryStream();
-        var write = () => assemblyDefinition.Write(memoryStream);
-        write.Should().NotThrow();
+        TestUtils.RunAssembly(assemblyDefinition, assembly =>
+        {
+            var runMethod = assembly.EntryPoint.DeclaringType?.GetMethod("Run");
+            runMethod.Should().NotBeNull();
+
+            runMethod.Invoke(null, null).Should().Be(1);
+        });
     }
 }

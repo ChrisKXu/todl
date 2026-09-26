@@ -2,6 +2,7 @@
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
+using Todl.Compiler.CodeAnalysis.Symbols;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -100,5 +101,54 @@ public sealed class ConstantFoldingTests
         boundVariableDeclarationStatement.Variable.Constant.Should().Be(false);
         boundVariableDeclarationStatement.InitializerExpression.Constant.Should().Be(true);
         boundVariableDeclarationStatement.InitializerExpression.As<BoundConstant>().Value.Should().Be(20);
+    }
+
+    [Fact]
+    public void ClrLiteralFieldAccessShouldFoldToConstantPreservingItsOwnType()
+    {
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var boundConstant = TestUtils
+            .BindExpression<BoundClrFieldAccessExpression>("System::Int32.MaxValue")
+            .Accept(constantFoldingBoundNodeVisitor)
+            .As<BoundConstant>();
+
+        boundConstant.Value.Int32Value.Should().Be(int.MaxValue);
+        boundConstant.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
+    }
+
+    [Fact]
+    public void ClrLiteralEnumFieldAccessShouldFoldToConstantPreservingTheEnumType()
+    {
+        var expectedValue = (int)System.Environment.SpecialFolder.ApplicationData;
+
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var boundConstant = TestUtils
+            .BindExpression<BoundClrFieldAccessExpression>("System::Environment.SpecialFolder.ApplicationData")
+            .Accept(constantFoldingBoundNodeVisitor)
+            .As<BoundConstant>();
+
+        boundConstant.Value.Int32Value.Should().Be(expectedValue);
+        boundConstant.ResultType.Should().BeOfType<ClrTypeSymbol>();
+        ((ClrTypeSymbol)boundConstant.ResultType).ClrType.FullName.Should().Be("System.Environment+SpecialFolder");
+        boundConstant.ResultType.SpecialType.Should().NotBe(SpecialType.ClrInt32);
+    }
+
+    [Fact]
+    public void ClrLiteralFieldAccessShouldFoldThroughExistingConstantFoldingLogic()
+    {
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var boundVariableDeclarationStatement = TestUtils
+            .BindStatement<BoundVariableDeclarationStatement>("const a = System::Int32.MaxValue;")
+            .Accept(constantFoldingBoundNodeVisitor)
+            .As<BoundVariableDeclarationStatement>();
+
+        boundVariableDeclarationStatement.Variable.Constant.Should().Be(true);
+        boundVariableDeclarationStatement
+            .InitializerExpression
+            .As<BoundConstant>()
+            .Value
+            .Int32Value
+            .Should()
+            .Be(int.MaxValue);
     }
 }
