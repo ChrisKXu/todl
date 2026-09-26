@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
@@ -218,7 +217,7 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
     {
         if (boundClrFieldAccessExpression.Constant)
         {
-            var constantValue = CreateConstantValueFromRawValue(boundClrFieldAccessExpression.FieldInfo.GetRawConstantValue());
+            var constantValue = constantValueFactory.Create(boundClrFieldAccessExpression.FieldInfo.GetRawConstantValue());
             if (constantValue is not null)
             {
                 return BoundNodeFactory.CreateBoundConstant(
@@ -229,25 +228,6 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
         }
 
         return base.VisitBoundClrFieldAccessExpression(boundClrFieldAccessExpression);
-    }
-
-    // Literal/const fields have no runtime storage slot; narrow integer/char values widen to Int32 for emission.
-    private ConstantValue CreateConstantValueFromRawValue(object rawValue)
-    {
-        return rawValue switch
-        {
-            null => constantValueFactory.Null,
-            bool boolValue => constantValueFactory.Create(boolValue),
-            string stringValue => constantValueFactory.Create(stringValue),
-            float floatValue => constantValueFactory.Create(floatValue),
-            double doubleValue => constantValueFactory.Create(doubleValue),
-            uint uint32Value => constantValueFactory.Create(uint32Value),
-            long int64Value => constantValueFactory.Create(int64Value),
-            ulong uint64Value => constantValueFactory.Create(uint64Value),
-            byte or sbyte or short or ushort or char or int
-                => constantValueFactory.Create(Convert.ToInt32(rawValue)),
-            _ => null
-        };
     }
 
     public override BoundNode VisitBoundVariableExpression(BoundVariableExpression boundVariableExpression)
