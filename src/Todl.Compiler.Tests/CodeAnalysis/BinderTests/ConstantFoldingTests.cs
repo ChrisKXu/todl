@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
@@ -119,7 +120,7 @@ public sealed class ConstantFoldingTests
     [Fact]
     public void ClrLiteralEnumFieldAccessShouldFoldToConstantPreservingTheEnumType()
     {
-        var expectedValue = (int)System.Environment.SpecialFolder.ApplicationData;
+        var expectedValue = (int)Environment.SpecialFolder.ApplicationData;
 
         var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
         var boundConstant = TestUtils

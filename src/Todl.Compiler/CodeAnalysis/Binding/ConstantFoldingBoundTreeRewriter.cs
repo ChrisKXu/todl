@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
 
@@ -244,7 +245,7 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
             long int64Value => constantValueFactory.Create(int64Value),
             ulong uint64Value => constantValueFactory.Create(uint64Value),
             byte or sbyte or short or ushort or char or int
-                => constantValueFactory.Create(System.Convert.ToInt32(rawValue)),
+                => constantValueFactory.Create(Convert.ToInt32(rawValue)),
             _ => null
         };
     }
