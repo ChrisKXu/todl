@@ -320,9 +320,7 @@ public sealed class ControlFlowAnalysisTests
     [Fact]
     public void UnreachableIfWithRealStatementShouldReportAtTheRealStatementNotTheFunctionName()
     {
-        // Transitive reachability now correctly marks the consequence block as dead too
-        // (its only incoming edge originates from an already-dead `begin` block), so the
-        // single warning must point at the real statement, not the placeholder ahead of it.
+        // The consequence block is transitively dead too (its only incoming edge comes from a dead `begin`), so the warning must point at the real statement.
         var diagnosticBuilder = new DiagnosticBag.Builder();
         BindMemberAndAnalyze<BoundFunctionMember>("int func() { return 1; if true { 2.ToString(); } }", diagnosticBuilder);
         var diagnostics = diagnosticBuilder.Build().ToList();
@@ -336,9 +334,7 @@ public sealed class ControlFlowAnalysisTests
     [Fact]
     public void UnreachableIfWithNoRealContentShouldReportAtTheIfStatementItself()
     {
-        // The dead region here (begin/consequence/alternative/merge) is made up entirely of
-        // synthesized placeholders; the single warning must point at the `if` statement's
-        // own location rather than any placeholder or the function-name fallback.
+        // The dead region is entirely synthesized placeholders, so the warning must point at the `if` statement itself.
         var diagnosticBuilder = new DiagnosticBag.Builder();
         BindMemberAndAnalyze<BoundFunctionMember>("int func() { return 1; if true { } }", diagnosticBuilder);
         var diagnostics = diagnosticBuilder.Build().ToList();
@@ -367,13 +363,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { while true && true { return 1; } }")]
     public void ConstantFoldingRunningBeforeControlFlowAnalysisRecognizesCompositeLoopConditions(string inputText)
     {
-        // With the pipeline reorder, a loop condition that folds to a constant - a `const`
-        // variable reference or a folded binary expression - must be recognized by
-        // EvaluateConstantCondition just like a bare literal `true` already was, so the
-        // loop's unreachable exit is correctly omitted and no spurious "not all paths
-        // return" diagnostic is produced. This only runs through the full BoundModule
-        // pipeline (not BindMemberAndAnalyze), since that is what actually orders constant
-        // folding ahead of control flow analysis.
+        // A loop condition that folds to a constant (const variable or binary expression) must be recognized just like a bare literal, which needs the full pipeline (not BindMemberAndAnalyze) to order folding ahead of control flow analysis.
         var diagnosticBuilder = new DiagnosticBag.Builder();
         TestUtils.BindModule(inputText, diagnosticBuilder).Should().NotBeNull();
         diagnosticBuilder.Build().Should().BeEmpty();
