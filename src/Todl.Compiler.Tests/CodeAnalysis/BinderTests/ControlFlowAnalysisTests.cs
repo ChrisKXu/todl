@@ -317,45 +317,20 @@ public sealed class ControlFlowAnalysisTests
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
     }
 
-    [Fact]
-    public void UnreachableIfWithRealStatementShouldReportAtTheRealStatementNotTheFunctionName()
+    [Theory]
+    [InlineData("int func() { return 1; if true { 2.ToString(); } }", "2.ToString();")]
+    [InlineData("int func() { return 1; if true { } }", "if true { }")]
+    [InlineData("int func() { return 1; while true { 10.ToString(); } }", "10.ToString();")]
+    public void UnreachableCodeShouldReportAtTheRealStatementOrOwningConstructNotTheFunctionName(string inputText, string expectedText)
     {
-        // The consequence block is transitively dead too (its only incoming edge comes from a dead `begin`), so the warning must point at the real statement.
         var diagnosticBuilder = new DiagnosticBag.Builder();
-        BindMemberAndAnalyze<BoundFunctionMember>("int func() { return 1; if true { 2.ToString(); } }", diagnosticBuilder);
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
         var diagnostics = diagnosticBuilder.Build().ToList();
 
         diagnostics.Count.Should().Be(1);
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
-        diagnostics[0].TextLocation.GetText().Should().Be("2.ToString();");
-    }
-
-    [Fact]
-    public void UnreachableIfWithNoRealContentShouldReportAtTheIfStatementItself()
-    {
-        // The dead region is entirely synthesized placeholders, so the warning must point at the `if` statement itself.
-        var diagnosticBuilder = new DiagnosticBag.Builder();
-        BindMemberAndAnalyze<BoundFunctionMember>("int func() { return 1; if true { } }", diagnosticBuilder);
-        var diagnostics = diagnosticBuilder.Build().ToList();
-
-        diagnostics.Count.Should().Be(1);
-        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
-        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
-        diagnostics[0].TextLocation.GetText().Should().Be("if true { }");
-    }
-
-    [Fact]
-    public void UnreachableLoopWithRealStatementShouldReportAtTheRealStatementNotTheFunctionName()
-    {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
-        BindMemberAndAnalyze<BoundFunctionMember>("int func() { return 1; while true { 10.ToString(); } }", diagnosticBuilder);
-        var diagnostics = diagnosticBuilder.Build().ToList();
-
-        diagnostics.Count.Should().Be(1);
-        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
-        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
-        diagnostics[0].TextLocation.GetText().Should().Be("10.ToString();");
+        diagnostics[0].TextLocation.GetText().Should().Be(expectedText);
     }
 
     [Theory]
