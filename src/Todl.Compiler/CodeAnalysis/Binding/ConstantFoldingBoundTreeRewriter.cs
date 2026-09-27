@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding;
 
@@ -8,10 +9,12 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
 {
     private readonly Dictionary<VariableSymbol, BoundConstant> constantMap = new();
     private readonly ConstantValueFactory constantValueFactory;
+    private readonly DiagnosticBag.Builder diagnosticBuilder;
 
-    public ConstantFoldingBoundTreeRewriter(ConstantValueFactory constantValueFactory)
+    public ConstantFoldingBoundTreeRewriter(ConstantValueFactory constantValueFactory, DiagnosticBag.Builder diagnosticBuilder)
     {
         this.constantValueFactory = constantValueFactory;
+        this.diagnosticBuilder = diagnosticBuilder;
     }
 
     public override BoundNode VisitBoundConstant(BoundConstant boundConstant)
@@ -47,6 +50,20 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
     {
         var l = left.Value;
         var r = right.Value;
+
+        if (boundBinaryExpression.Operator.BoundBinaryOperatorKind == BoundBinaryOperatorKind.NumericDivision
+            && ((r is ConstantInt32Value rInt32 && rInt32.Int32Value == 0)
+                || (r is ConstantInt64Value rInt64 && rInt64.Int64Value == 0)))
+        {
+            diagnosticBuilder.Add(new Diagnostic()
+            {
+                Level = DiagnosticLevel.Error,
+                TextLocation = boundBinaryExpression.SyntaxNode.GetTextLocation(),
+                ErrorCode = ErrorCode.DivisionByZero
+            });
+
+            return boundBinaryExpression;
+        }
 
         ConstantValue value = boundBinaryExpression.Operator.BoundBinaryOperatorKind switch
         {
