@@ -4,6 +4,7 @@ using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -30,7 +31,7 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = ~10UL;", ~10UL)]
     public void ConstantFoldingUnaryOperatorTest(string inputText, object expectedValue)
     {
-        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory, new DiagnosticBag.Builder());
         var boundVariableDeclarationStatement = TestUtils
             .BindStatement<BoundVariableDeclarationStatement>(inputText)
             .Accept(constantFoldingBoundNodeVisitor)
@@ -54,7 +55,7 @@ public sealed class ConstantFoldingTests
     [InlineData("const a = -20;", -20)]
     public void BasicConstantFoldingTests(string inputText, object expectedValue)
     {
-        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory, new DiagnosticBag.Builder());
         var blockStatement = TestUtils
             .BindStatement<BoundBlockStatement>("{ " + inputText + " }")
             .Accept(constantFoldingBoundNodeVisitor)
@@ -73,13 +74,32 @@ public sealed class ConstantFoldingTests
     }
 
     [Theory]
+    [InlineData("const a = 1 / 0;")]
+    public void ConstantDivisionByZeroShouldReportDiagnosticAndNotThrow(string inputText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory, diagnosticBuilder);
+
+        var act = () => TestUtils
+            .BindStatement<BoundVariableDeclarationStatement>(inputText)
+            .Accept(constantFoldingBoundNodeVisitor);
+
+        act.Should().NotThrow();
+
+        var diagnostics = diagnosticBuilder.Build().ToList();
+        diagnostics.Count.Should().Be(1);
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.DivisionByZero);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Error);
+    }
+
+    [Theory]
     [InlineData("let a = 10 + 10;")]
     [InlineData("const a = 10; let b = a + 10;")]
     [InlineData("const a = 10; let b = a * 2;")]
     [InlineData("const a = 10; let b = a + 10; const c = a + b;")]
     public void BasicConstantFoldingNegativeTests(string inputText)
     {
-        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory, new DiagnosticBag.Builder());
         var blockStatement = TestUtils
             .BindStatement<BoundBlockStatement>("{ " + inputText + " }")
             .Accept(constantFoldingBoundNodeVisitor)
@@ -93,7 +113,7 @@ public sealed class ConstantFoldingTests
     public void PartiallyFoldedConstantTests()
     {
         var inputText = "let a = 10 + 10;";
-        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory, new DiagnosticBag.Builder());
         var boundVariableDeclarationStatement = TestUtils
             .BindStatement<BoundVariableDeclarationStatement>(inputText)
             .Accept(constantFoldingBoundNodeVisitor)
@@ -107,7 +127,7 @@ public sealed class ConstantFoldingTests
     [Fact]
     public void ClrLiteralFieldAccessShouldFoldToConstantPreservingItsOwnType()
     {
-        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory, new DiagnosticBag.Builder());
         var boundConstant = TestUtils
             .BindExpression<BoundClrFieldAccessExpression>("System::Int32.MaxValue")
             .Accept(constantFoldingBoundNodeVisitor)
@@ -122,7 +142,7 @@ public sealed class ConstantFoldingTests
     {
         var expectedValue = (int)Environment.SpecialFolder.ApplicationData;
 
-        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory, new DiagnosticBag.Builder());
         var boundConstant = TestUtils
             .BindExpression<BoundClrFieldAccessExpression>("System::Environment.SpecialFolder.ApplicationData")
             .Accept(constantFoldingBoundNodeVisitor)
@@ -137,7 +157,7 @@ public sealed class ConstantFoldingTests
     [Fact]
     public void ClrLiteralFieldAccessShouldFoldThroughExistingConstantFoldingLogic()
     {
-        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory);
+        var constantFoldingBoundNodeVisitor = new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory, new DiagnosticBag.Builder());
         var boundVariableDeclarationStatement = TestUtils
             .BindStatement<BoundVariableDeclarationStatement>("const a = System::Int32.MaxValue;")
             .Accept(constantFoldingBoundNodeVisitor)

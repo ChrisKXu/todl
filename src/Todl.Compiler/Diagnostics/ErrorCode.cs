@@ -37,6 +37,7 @@
         NoEnclosingLoop,
         DuplicateLoopLabel,
         UndefinedLoopLabel,
-        ObjectReferenceRequired
+        ObjectReferenceRequired,
+        DivisionByZero
     }
 }

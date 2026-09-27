@@ -2,6 +2,7 @@
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -80,7 +81,7 @@ public sealed class StringConcatenationLoweringTests
     {
         var blockStatement = TestUtils
             .BindStatement<BoundBlockStatement>("{ " + statements + " }")
-            .Accept(new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory))
+            .Accept(new ConstantFoldingBoundTreeRewriter(TestDefaults.ConstantValueFactory, new DiagnosticBag.Builder()))
             .Accept(new StringConcatenationLoweringBoundTreeRewriter(TestDefaults.ConstantValueFactory))
             .As<BoundBlockStatement>();
 

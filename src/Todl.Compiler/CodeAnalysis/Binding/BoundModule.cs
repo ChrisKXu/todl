@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
@@ -31,7 +31,7 @@ internal sealed class BoundModule
         // concatenation lowering.
         var boundTreeVisitors = new BoundTreeVisitor[]
         {
-            new ConstantFoldingBoundTreeRewriter(binder.ConstantValueFactory),
+            new ConstantFoldingBoundTreeRewriter(binder.ConstantValueFactory, diagnosticBuilder),
             new ControlFlowAnalyzer(diagnosticBuilder),
             new StringConcatenationLoweringBoundTreeRewriter(binder.ConstantValueFactory)
         };
