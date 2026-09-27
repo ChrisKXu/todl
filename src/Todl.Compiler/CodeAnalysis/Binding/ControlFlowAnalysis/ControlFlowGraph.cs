@@ -79,6 +79,7 @@ internal sealed class ControlFlowGraph
             {
                 begin.Statements.Add(new BoundNoOpStatement());
             }
+            begin.OriginatingStatement = boundConditionalStatement;
             blocks.Add(begin);
 
             var consequenceEnd = VisitBranch(boundConditionalStatement.Consequence, begin);
@@ -126,6 +127,7 @@ internal sealed class ControlFlowGraph
             {
                 preHeader.Statements.Add(new BoundNoOpStatement());
             }
+            preHeader.OriginatingStatement = boundLoopStatement;
             blocks.Add(preHeader);
 
             // The header is a synthetic branch point standing in for condition evaluation:
@@ -314,11 +316,38 @@ internal sealed class ControlFlowGraph
                 Connect(blocks[^2], endBlock);
             }
 
+            ComputeReachability();
+
             return new()
             {
                 Blocks = blocks.ToImmutable(),
                 Branches = branches.ToImmutable()
             };
+        }
+
+        // A block being locally wired into the graph (having an incoming edge) does not
+        // mean it is actually reachable - that edge might itself originate from a block
+        // nothing reaches. Reachability is transitive: only blocks reachable via a chain
+        // of Outgoing edges starting at startBlock are truly reachable.
+        private void ComputeReachability()
+        {
+            var stack = new Stack<BasicBlock>();
+            stack.Push(startBlock);
+
+            while (stack.Count > 0)
+            {
+                var block = stack.Pop();
+                if (block.Reachable)
+                {
+                    continue;
+                }
+
+                block.Reachable = true;
+                foreach (var branch in block.Outgoing)
+                {
+                    stack.Push(branch.To);
+                }
+            }
         }
     }
 
@@ -328,6 +357,12 @@ internal sealed class ControlFlowGraph
         public List<BoundStatement> Statements { get; } = new();
         public List<BasicBlockBranch> Incoming { get; } = new();
         public List<BasicBlockBranch> Outgoing { get; } = new();
+
+        // Set on the block that stands in for the code immediately preceding an `if`/
+        // `while`/`until` statement, pointing back at that statement. Used as a diagnostic
+        // location fallback when an entire unreachable region is made up of synthesized
+        // placeholder statements with no real SyntaxNode of their own.
+        public BoundStatement OriginatingStatement { get; set; }
 
         public bool IsTerminal
         {
@@ -355,7 +390,7 @@ internal sealed class ControlFlowGraph
             }
         }
 
-        public bool Reachable => Incoming.Any();
+        public bool Reachable { get; internal set; }
 
         public string GetDebuggerDisplay()
         {

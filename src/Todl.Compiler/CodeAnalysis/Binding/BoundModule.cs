@@ -26,11 +26,13 @@ internal sealed class BoundModule
         var binder = Binder.CreateModuleBinder(clrTypeCache, constantValueFactory, diagnosticBuilder);
         var entryPointType = binder.BindEntryPointTypeDefinition(syntaxTrees);
 
-        // Order matters: constant folding must run before string concatenation lowering.
+        // Order matters: constant folding must run before both control flow analysis
+        // (so it can see composite constant conditions as BoundConstant nodes) and string
+        // concatenation lowering.
         var boundTreeVisitors = new BoundTreeVisitor[]
         {
-            new ControlFlowAnalyzer(diagnosticBuilder),
             new ConstantFoldingBoundTreeRewriter(binder.ConstantValueFactory),
+            new ControlFlowAnalyzer(diagnosticBuilder),
             new StringConcatenationLoweringBoundTreeRewriter(binder.ConstantValueFactory)
         };
 

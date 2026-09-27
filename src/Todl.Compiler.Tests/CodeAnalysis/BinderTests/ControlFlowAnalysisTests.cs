@@ -317,6 +317,68 @@ public sealed class ControlFlowAnalysisTests
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
     }
 
+    [Fact]
+    public void UnreachableIfWithRealStatementShouldReportAtTheRealStatementNotTheFunctionName()
+    {
+        // Transitive reachability now correctly marks the consequence block as dead too
+        // (its only incoming edge originates from an already-dead `begin` block), so the
+        // single warning must point at the real statement, not the placeholder ahead of it.
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>("int func() { return 1; if true { 2.ToString(); } }", diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Count.Should().Be(1);
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
+        diagnostics[0].TextLocation.GetText().Should().Be("2.ToString();");
+    }
+
+    [Fact]
+    public void UnreachableIfWithNoRealContentShouldReportAtTheIfStatementItself()
+    {
+        // The dead region here (begin/consequence/alternative/merge) is made up entirely of
+        // synthesized placeholders; the single warning must point at the `if` statement's
+        // own location rather than any placeholder or the function-name fallback.
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>("int func() { return 1; if true { } }", diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Count.Should().Be(1);
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
+        diagnostics[0].TextLocation.GetText().Should().Be("if true { }");
+    }
+
+    [Fact]
+    public void UnreachableLoopWithRealStatementShouldReportAtTheRealStatementNotTheFunctionName()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>("int func() { return 1; while true { 10.ToString(); } }", diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Count.Should().Be(1);
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
+        diagnostics[0].TextLocation.GetText().Should().Be("10.ToString();");
+    }
+
+    [Theory]
+    [InlineData("int func() { const flag = true; while flag { return 1; } }")]
+    [InlineData("int func() { while true && true { return 1; } }")]
+    public void ConstantFoldingRunningBeforeControlFlowAnalysisRecognizesCompositeLoopConditions(string inputText)
+    {
+        // With the pipeline reorder, a loop condition that folds to a constant - a `const`
+        // variable reference or a folded binary expression - must be recognized by
+        // EvaluateConstantCondition just like a bare literal `true` already was, so the
+        // loop's unreachable exit is correctly omitted and no spurious "not all paths
+        // return" diagnostic is produced. This only runs through the full BoundModule
+        // pipeline (not BindMemberAndAnalyze), since that is what actually orders constant
+        // folding ahead of control flow analysis.
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        TestUtils.BindModule(inputText, diagnosticBuilder).Should().NotBeNull();
+        diagnosticBuilder.Build().Should().BeEmpty();
+    }
+
     private static TBoundMember BindMemberAndAnalyze<TBoundMember>(string inputText, DiagnosticBag.Builder diagnosticBuilder) where TBoundMember : BoundMember
     {
         var boundMember = TestUtils.BindMember<TBoundMember>(inputText, diagnosticBuilder);

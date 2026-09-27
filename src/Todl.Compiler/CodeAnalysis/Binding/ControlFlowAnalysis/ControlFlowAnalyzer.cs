@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Todl.Compiler.CodeAnalysis.Text;
 using Todl.Compiler.Diagnostics;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
@@ -53,30 +55,84 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
         ControlFlowGraph controlFlowGraph,
         BoundFunctionMember boundFunctionMember)
     {
-        foreach (var block in controlFlowGraph.Blocks)
+        var unreachableBlocks = controlFlowGraph.Blocks
+            .Where(block => !block.Reachable
+                && !block.Equals(controlFlowGraph.StartBlock)
+                && !block.Equals(controlFlowGraph.EndBlock))
+            .ToList();
+
+        if (!unreachableBlocks.Any())
         {
-            if (block.Equals(controlFlowGraph.StartBlock)
-                || block.Equals(controlFlowGraph.EndBlock)
-                || block.Reachable)
+            return;
+        }
+
+        // Group unreachable blocks into regions: blocks chained together purely through
+        // other unreachable blocks share the same root cause and get a single diagnostic,
+        // instead of one warning per block in the dead subtree.
+        var parent = unreachableBlocks.ToDictionary(block => block, block => block);
+
+        ControlFlowGraph.BasicBlock Find(ControlFlowGraph.BasicBlock block)
+        {
+            while (parent[block] != block)
             {
-                continue;
+                parent[block] = parent[parent[block]];
+                block = parent[block];
             }
+            return block;
+        }
 
-            // Synthesized statements (e.g. an empty block/branch's placeholder) carry no
-            // SyntaxNode; fall back to the function's own location rather than crash.
-            var textLocation = block.Statements
-                .Select(statement => statement.SyntaxNode)
-                .FirstOrDefault(syntaxNode => syntaxNode is not null)
-                ?.GetTextLocation()
-                ?? boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.GetTextLocation(boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.Name.Span);
+        foreach (var branch in controlFlowGraph.Branches)
+        {
+            if (parent.ContainsKey(branch.From) && parent.ContainsKey(branch.To))
+            {
+                var fromRoot = Find(branch.From);
+                var toRoot = Find(branch.To);
+                if (fromRoot != toRoot)
+                {
+                    parent[fromRoot] = toRoot;
+                }
+            }
+        }
 
+        foreach (var region in unreachableBlocks.GroupBy(Find))
+        {
             diagnosticBuilder.Add(new Diagnostic()
             {
                 Message = "Unreachable code",
                 ErrorCode = ErrorCode.UnreachableCode,
                 Level = DiagnosticLevel.Warning,
-                TextLocation = textLocation
+                TextLocation = GetUnreachableRegionLocation(region, boundFunctionMember)
             });
         }
+    }
+
+    private static TextLocation GetUnreachableRegionLocation(
+        IEnumerable<ControlFlowGraph.BasicBlock> region,
+        BoundFunctionMember boundFunctionMember)
+    {
+        foreach (var block in region)
+        {
+            var realStatement = block.Statements.FirstOrDefault(
+                statement => statement is not BoundNoOpStatement && statement.SyntaxNode is not null);
+
+            if (realStatement is not null)
+            {
+                return realStatement.SyntaxNode.GetTextLocation();
+            }
+        }
+
+        // Entirely synthesized region (e.g. an empty block or a missing else clause): the
+        // if/while statement that owns it is itself the unreachable statement, so point at
+        // its own location instead of any of its individually-meaningless placeholders.
+        var originatingStatement = region
+            .Select(block => block.OriginatingStatement)
+            .FirstOrDefault(statement => statement is not null);
+
+        if (originatingStatement is not null)
+        {
+            return originatingStatement.SyntaxNode.GetTextLocation();
+        }
+
+        return boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.GetTextLocation(boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.Name.Span);
     }
 }
