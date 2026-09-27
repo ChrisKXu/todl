@@ -66,9 +66,7 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
             return;
         }
 
-        // Group unreachable blocks into regions: blocks chained together purely through
-        // other unreachable blocks share the same root cause and get a single diagnostic,
-        // instead of one warning per block in the dead subtree.
+        // Blocks chained only through other unreachable blocks share a root cause and get one diagnostic.
         var parent = unreachableBlocks.ToDictionary(block => block, block => block);
 
         ControlFlowGraph.BasicBlock Find(ControlFlowGraph.BasicBlock block)
@@ -121,9 +119,7 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
             }
         }
 
-        // Entirely synthesized region (e.g. an empty block or a missing else clause): the
-        // if/while statement that owns it is itself the unreachable statement, so point at
-        // its own location instead of any of its individually-meaningless placeholders.
+        // Entirely synthesized region: point at the owning if/while statement, not its placeholders.
         var originatingStatement = region
             .Select(block => block.OriginatingStatement)
             .FirstOrDefault(statement => statement is not null);

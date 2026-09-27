@@ -325,10 +325,7 @@ internal sealed class ControlFlowGraph
             };
         }
 
-        // A block being locally wired into the graph (having an incoming edge) does not
-        // mean it is actually reachable - that edge might itself originate from a block
-        // nothing reaches. Reachability is transitive: only blocks reachable via a chain
-        // of Outgoing edges starting at startBlock are truly reachable.
+        // Incoming.Any() alone isn't enough: that edge may come from a block nothing reaches.
         private void ComputeReachability()
         {
             var stack = new Stack<BasicBlock>();
@@ -358,10 +355,7 @@ internal sealed class ControlFlowGraph
         public List<BasicBlockBranch> Incoming { get; } = new();
         public List<BasicBlockBranch> Outgoing { get; } = new();
 
-        // Set on the block that stands in for the code immediately preceding an `if`/
-        // `while`/`until` statement, pointing back at that statement. Used as a diagnostic
-        // location fallback when an entire unreachable region is made up of synthesized
-        // placeholder statements with no real SyntaxNode of their own.
+        // Points at the if/while/until statement a placeholder block stands in for, used as a diagnostic location fallback.
         public BoundStatement OriginatingStatement { get; set; }
 
         public bool IsTerminal
