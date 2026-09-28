@@ -129,45 +129,19 @@ public sealed class ControlFlowAnalysisTests
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
     }
 
-    [Fact]
-    public void ConstantTrueConditionalWithUnreachableElseAndTrailingCodeReportsBothRegions()
+    [Theory]
+    [InlineData("int func() { if true { return 1; } else { return 0; } 10.ToString(); }", "return 0;", "10.ToString();")]
+    [InlineData("int func() { if true { return 1; } if true { return 2; } return 0; }", "return 2;", "return 0;")]
+    [InlineData("int func() { if true { if false { return 1; } else { return 2; } } else { return 3; } }", "return 1;", "return 3;")]
+    public void ConstantConditionalsReportUnreachableCodeForEachDeadRegion(string inputText, string firstText, string secondText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
-        BindMemberAndAnalyze<BoundFunctionMember>(
-            "int func() { if true { return 1; } else { return 0; } 10.ToString(); }",
-            diagnosticBuilder);
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
         var diagnostics = diagnosticBuilder.Build().ToList();
 
         diagnostics.Count.Should().Be(2);
         diagnostics.Should().OnlyContain(d => d.ErrorCode == ErrorCode.UnreachableCode && d.Level == DiagnosticLevel.Warning);
-        diagnostics.Select(d => d.TextLocation.GetText()).Should().BeEquivalentTo(new[] { "return 0;", "10.ToString();" });
-    }
-
-    [Fact]
-    public void ChainedConstantTrueIfsEachReportTheirOwnUnreachableCode()
-    {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
-        BindMemberAndAnalyze<BoundFunctionMember>(
-            "int func() { if true { return 1; } if true { return 2; } return 0; }",
-            diagnosticBuilder);
-        var diagnostics = diagnosticBuilder.Build().ToList();
-
-        diagnostics.Should().OnlyContain(d => d.ErrorCode == ErrorCode.UnreachableCode && d.Level == DiagnosticLevel.Warning);
-        diagnostics.Select(d => d.TextLocation.GetText()).Should().Contain(new[] { "return 2;", "return 0;" });
-    }
-
-    [Fact]
-    public void NestedConstantConditionalsReportUnreachableCodeForEachDeadBranch()
-    {
-        var diagnosticBuilder = new DiagnosticBag.Builder();
-        BindMemberAndAnalyze<BoundFunctionMember>(
-            "int func() { if true { if false { return 1; } else { return 2; } } else { return 3; } }",
-            diagnosticBuilder);
-        var diagnostics = diagnosticBuilder.Build().ToList();
-
-        diagnostics.Count.Should().Be(2);
-        diagnostics.Should().OnlyContain(d => d.ErrorCode == ErrorCode.UnreachableCode && d.Level == DiagnosticLevel.Warning);
-        diagnostics.Select(d => d.TextLocation.GetText()).Should().BeEquivalentTo(new[] { "return 1;", "return 3;" });
+        diagnostics.Select(d => d.TextLocation.GetText()).Should().BeEquivalentTo(new[] { firstText, secondText });
     }
 
     [Fact]
@@ -391,19 +365,10 @@ public sealed class ControlFlowAnalysisTests
     [Theory]
     [InlineData("int func() { const flag = true; while flag { return 1; } }")]
     [InlineData("int func() { while true && true { return 1; } }")]
-    public void ConstantFoldingRunningBeforeControlFlowAnalysisRecognizesCompositeLoopConditions(string inputText)
-    {
-        // A loop condition that folds to a constant (const variable or binary expression) must be recognized just like a bare literal, which needs the full pipeline (not BindMemberAndAnalyze) to order folding ahead of control flow analysis.
-        var diagnosticBuilder = new DiagnosticBag.Builder();
-        TestUtils.BindModule(inputText, diagnosticBuilder).Should().NotBeNull();
-        diagnosticBuilder.Build().Should().BeEmpty();
-    }
-
-    [Theory]
     [InlineData("int func() { const flag = true; if flag { return 1; } }")]
     [InlineData("int func() { if !false { return 1; } }")]
     [InlineData("int func() { if true && true { return 1; } }")]
-    public void ConstantFoldingRunningBeforeControlFlowAnalysisRecognizesCompositeConditionalConditions(string inputText)
+    public void ConstantFoldingRunningBeforeControlFlowAnalysisRecognizesCompositeConditions(string inputText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
         TestUtils.BindModule(inputText, diagnosticBuilder).Should().NotBeNull();
