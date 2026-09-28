@@ -16,21 +16,16 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("void func() { int.MaxValue.ToString(); return; }")]
     [InlineData("void func() { if true { int.MaxValue.ToString(); } }")]
     [InlineData("void func() { if true { return; } }")]
-    [InlineData("void func() { if true { return; } int.MaxValue.ToString(); }")]
     [InlineData("int func() { return int.MaxValue; }")]
     [InlineData("int func() { int.MaxValue.ToString(); return int.MaxValue; }")]
-    [InlineData("int func() { if true { return int.MaxValue; } return 0; }")]
-    [InlineData("int func() { if true { return int.MaxValue; } else { return 0; } }")]
+    [InlineData("int func() { if true { return 10; } }")]
     [InlineData("int func() { if true { } return 0; }")]
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else if a == 1 { return 1; } else { return 0; } }")]
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else { if a == 1 { return 1; } return 0; } }")]
+    [InlineData("int func() { const a = 3; if a == 0 { return 1; } else { return 2; } }")]
     [InlineData("System::Uri func(string a) { return new System::Uri(a); }")]
     [InlineData("int func() { while true { return 1; } }")]
     [InlineData("int func() { let i = 0; while i < 10 { i = i + 1; } return i; }")]
-    [InlineData("int func() { unless false { return 1; } return 0; }")]
-    [InlineData("int func() { unless false { return 1; } else { return 0; } }")]
-    [InlineData("int func() { if true { return 1; } if true { return 2; } return 0; }")]
-    [InlineData("int func() { if true { if false { return 1; } else { return 2; } } else { return 3; } }")]
     [InlineData("int func() { let i = 0; while i < 10 { while i < 5 { break; } i = i + 1; } return i; }")]
     [InlineData("int func() { let i = 0; while i < 10 { while i < 5 { continue; } i = i + 1; } return i; }")]
     [InlineData("int func() { let i = 0; while i < 1 { while i < 2 { while i < 3 { break; } } } return i; }")]
@@ -64,6 +59,11 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { return 10; 10.ToString(); }")]
     [InlineData("int func() { if true { return 10; 10.ToString();} return 0; }")]
     [InlineData("System::Uri func(string a) { const r = new System::Uri(a); return r; r.ToString(); }")]
+    [InlineData("void func() { if true { return; } int.MaxValue.ToString(); }")]
+    [InlineData("int func() { if true { return int.MaxValue; } return 0; }")]
+    [InlineData("int func() { if true { return int.MaxValue; } else { return 0; } }")]
+    [InlineData("int func() { unless false { return 1; } return 0; }")]
+    [InlineData("int func() { unless false { return 1; } else { return 0; } }")]
     public void TestControlFlowAnalysisWithUnreachableCode(string inputText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
@@ -75,8 +75,6 @@ public sealed class ControlFlowAnalysisTests
     }
 
     [Theory]
-    [InlineData("int func() { if true { return 10; } }")]
-    [InlineData("int func() { if true { } else { return 0; } }")]
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else { if a == 1 { return 1; } } }")]
     public void TestControlFlowAnalysisWithConditionalStatements(string inputText)
     {
@@ -118,7 +116,7 @@ public sealed class ControlFlowAnalysisTests
     }
 
     [Theory]
-    [InlineData("int func() { if true { return 1; } else { return 0; } 10.ToString(); }")]
+    [InlineData("int func(int a) { if a == 0 { return 1; } else { return 0; } 10.ToString(); }")]
     [InlineData("int func() { const a = 1; if a == 0 { return 0; } else if a == 1 { return 1; } else { return 2; } 10.ToString(); }")]
     public void ControlFlowAnalysisWithUnreachableCodeAfterFullyReturningConditional(string inputText)
     {
@@ -129,6 +127,37 @@ public sealed class ControlFlowAnalysisTests
 
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
+    }
+
+    [Theory]
+    [InlineData("int func() { if true { return 1; } else { return 0; } 10.ToString(); }", "return 0;", "10.ToString();")]
+    [InlineData("int func() { if true { return 1; } if true { return 2; } return 0; }", "return 2;", "return 0;")]
+    [InlineData("int func() { if true { if false { return 1; } else { return 2; } } else { return 3; } }", "return 1;", "return 3;")]
+    public void ConstantConditionalsReportUnreachableCodeForEachDeadRegion(string inputText, string firstText, string secondText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Count.Should().Be(2);
+        diagnostics.Should().OnlyContain(d => d.ErrorCode == ErrorCode.UnreachableCode && d.Level == DiagnosticLevel.Warning);
+        diagnostics.Select(d => d.TextLocation.GetText()).Should().BeEquivalentTo(new[] { firstText, secondText });
+    }
+
+    [Fact]
+    public void ConstantTrueConditionalWithEmptyConsequenceReportsBothMissingReturnAndUnreachableElse()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(
+            "int func() { if true { } else { return 0; } }",
+            diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Count.Should().Be(2);
+        diagnostics.Should().Contain(d => d.ErrorCode == ErrorCode.NotAllPathsReturn && d.Level == DiagnosticLevel.Error);
+        diagnostics.Should().Contain(d => d.ErrorCode == ErrorCode.UnreachableCode
+            && d.Level == DiagnosticLevel.Warning
+            && d.TextLocation.GetText() == "return 0;");
     }
 
     [Theory]
@@ -336,12 +365,27 @@ public sealed class ControlFlowAnalysisTests
     [Theory]
     [InlineData("int func() { const flag = true; while flag { return 1; } }")]
     [InlineData("int func() { while true && true { return 1; } }")]
-    public void ConstantFoldingRunningBeforeControlFlowAnalysisRecognizesCompositeLoopConditions(string inputText)
+    [InlineData("int func() { const flag = true; if flag { return 1; } }")]
+    [InlineData("int func() { if !false { return 1; } }")]
+    [InlineData("int func() { if true && true { return 1; } }")]
+    public void ConstantFoldingRunningBeforeControlFlowAnalysisRecognizesCompositeConditions(string inputText)
     {
-        // A loop condition that folds to a constant (const variable or binary expression) must be recognized just like a bare literal, which needs the full pipeline (not BindMemberAndAnalyze) to order folding ahead of control flow analysis.
         var diagnosticBuilder = new DiagnosticBag.Builder();
         TestUtils.BindModule(inputText, diagnosticBuilder).Should().NotBeNull();
         diagnosticBuilder.Build().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ConstantFoldingRunningBeforeControlFlowAnalysisRecognizesCompositeConditionForUnreachableElse()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        TestUtils.BindModule("int func() { const flag = true; if flag { return 1; } else { return 0; } }", diagnosticBuilder).Should().NotBeNull();
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Count.Should().Be(1);
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
+        diagnostics[0].TextLocation.GetText().Should().Be("return 0;");
     }
 
     private static TBoundMember BindMemberAndAnalyze<TBoundMember>(string inputText, DiagnosticBag.Builder diagnosticBuilder) where TBoundMember : BoundMember

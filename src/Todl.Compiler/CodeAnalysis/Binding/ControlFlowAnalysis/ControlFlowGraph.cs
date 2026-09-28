@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
@@ -82,8 +82,11 @@ internal sealed class ControlFlowGraph
             begin.OriginatingStatement = boundConditionalStatement;
             blocks.Add(begin);
 
-            var consequenceEnd = VisitBranch(boundConditionalStatement.Consequence, begin);
-            var alternativeEnd = VisitBranch(boundConditionalStatement.Alternative, begin);
+            // Constant folding runs before control flow analysis, so a constant condition is visible as a BoundConstant. `unless` is already desugared into swapped Consequence/Alternative at bind time, so no extra negation handling is needed here.
+            var constantCondition = EvaluateConstantCondition(boundConditionalStatement.Condition);
+
+            var consequenceEnd = VisitBranch(boundConditionalStatement.Consequence, begin, constantCondition != false);
+            var alternativeEnd = VisitBranch(boundConditionalStatement.Alternative, begin, constantCondition != true);
 
             // Merge block - only connect branches with live, non-terminal flow. The merge
             // is kept even if it stays empty here: StartNewBlock/Build preserve any block
@@ -95,14 +98,18 @@ internal sealed class ControlFlowGraph
             return boundConditionalStatement;
         }
 
-        private BasicBlock VisitBranch(BoundStatement branch, BasicBlock from)
+        private BasicBlock VisitBranch(BoundStatement branch, BasicBlock from, bool connect)
         {
             current = new BasicBlock();
-            Connect(from, current);
+            if (connect)
+            {
+                Connect(from, current);
+            }
             Visit(branch);
 
             var end = current;
-            if (ShouldPreserve(end))
+
+            if (ShouldPreserve(end) && (connect || HasRealStatement(end)))
             {
                 blocks.Add(end);
             }
@@ -226,19 +233,32 @@ internal sealed class ControlFlowGraph
         }
 
         /// <summary>
+        /// Returns a boolean condition's constant value, or null when it is not known to
+        /// be constant at this point in the pipeline.
+        /// </summary>
+        private static bool? EvaluateConstantCondition(BoundExpression condition)
+        {
+            if (condition is not BoundConstant { Value: ConstantBooleanValue constantBooleanValue })
+            {
+                return null;
+            }
+
+            return constantBooleanValue.BooleanValue;
+        }
+
+        /// <summary>
         /// Returns the loop's condition as a constant boolean, accounting for `until`
         /// negation, or null when it is not known to be constant at this point.
         /// </summary>
         private static bool? EvaluateConstantCondition(BoundLoopStatement boundLoopStatement)
         {
-            if (boundLoopStatement.Condition is not BoundConstant { Value: ConstantBooleanValue constantBooleanValue })
+            var constantValue = EvaluateConstantCondition(boundLoopStatement.Condition);
+            if (constantValue is null)
             {
                 return null;
             }
 
-            return boundLoopStatement.ConditionNegated
-                ? !constantBooleanValue.BooleanValue
-                : constantBooleanValue.BooleanValue;
+            return boundLoopStatement.ConditionNegated ? !constantValue : constantValue;
         }
 
         // A block must be kept once it is wired into the graph (has an incoming edge) or
@@ -248,6 +268,9 @@ internal sealed class ControlFlowGraph
         // that Branches references but Blocks does not contain.
         private static bool ShouldPreserve(BasicBlock block)
             => block.Statements.Any() || block.Incoming.Any();
+
+        private static bool HasRealStatement(BasicBlock block)
+            => block.Statements.Any(statement => statement is not BoundNoOpStatement);
 
         private void Connect(BasicBlock from, BasicBlock to)
         {
