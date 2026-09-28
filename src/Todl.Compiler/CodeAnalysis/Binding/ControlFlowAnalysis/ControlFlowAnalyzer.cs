@@ -25,7 +25,7 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
             AllPathsShouldReturn(controlFlowGraph, boundFunctionMember);
         }
 
-        AllBlocksShouldBeReachable(controlFlowGraph, boundFunctionMember);
+        AllBlocksShouldBeReachable(controlFlowGraph);
 
         return boundFunctionMember;
     }
@@ -51,9 +51,7 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
         }
     }
 
-    private void AllBlocksShouldBeReachable(
-        ControlFlowGraph controlFlowGraph,
-        BoundFunctionMember boundFunctionMember)
+    private void AllBlocksShouldBeReachable(ControlFlowGraph controlFlowGraph)
     {
         var unreachableBlocks = controlFlowGraph.Blocks
             .Where(block => !block.Reachable
@@ -94,19 +92,25 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
 
         foreach (var region in unreachableBlocks.GroupBy(Find))
         {
+            // A region with nothing real and no if/while to blame (e.g. a void function's synthesized implicit return) has no user-visible dead code; stay silent.
+            if (!TryGetUnreachableRegionLocation(region, out var textLocation))
+            {
+                continue;
+            }
+
             diagnosticBuilder.Add(new Diagnostic()
             {
                 Message = "Unreachable code",
                 ErrorCode = ErrorCode.UnreachableCode,
                 Level = DiagnosticLevel.Warning,
-                TextLocation = GetUnreachableRegionLocation(region, boundFunctionMember)
+                TextLocation = textLocation
             });
         }
     }
 
-    private static TextLocation GetUnreachableRegionLocation(
+    private static bool TryGetUnreachableRegionLocation(
         IEnumerable<ControlFlowGraph.BasicBlock> region,
-        BoundFunctionMember boundFunctionMember)
+        out TextLocation textLocation)
     {
         foreach (var block in region)
         {
@@ -115,7 +119,8 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
 
             if (realStatement is not null)
             {
-                return realStatement.SyntaxNode.GetTextLocation();
+                textLocation = realStatement.SyntaxNode.GetTextLocation();
+                return true;
             }
         }
 
@@ -126,9 +131,11 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
 
         if (originatingStatement is not null)
         {
-            return originatingStatement.SyntaxNode.GetTextLocation();
+            textLocation = originatingStatement.SyntaxNode.GetTextLocation();
+            return true;
         }
 
-        return boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.GetTextLocation(boundFunctionMember.FunctionSymbol.FunctionDeclarationMember.Name.Span);
+        textLocation = default;
+        return false;
     }
 }
