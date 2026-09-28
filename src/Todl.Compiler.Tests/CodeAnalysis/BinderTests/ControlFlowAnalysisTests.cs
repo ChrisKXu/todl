@@ -18,12 +18,10 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("void func() { if true { return; } }")]
     [InlineData("int func() { return int.MaxValue; }")]
     [InlineData("int func() { int.MaxValue.ToString(); return int.MaxValue; }")]
-    // A constant-true condition with no else and nothing after the `if` leaves no real unreachable code.
     [InlineData("int func() { if true { return 10; } }")]
     [InlineData("int func() { if true { } return 0; }")]
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else if a == 1 { return 1; } else { return 0; } }")]
     [InlineData("int func() { const a = 3; if a == 0 { return int.MaxValue; } else { if a == 1 { return 1; } return 0; } }")]
-    // `==` never folds to a constant, so both branches stay live regardless of the short-circuit.
     [InlineData("int func() { const a = 3; if a == 0 { return 1; } else { return 2; } }")]
     [InlineData("System::Uri func(string a) { return new System::Uri(a); }")]
     [InlineData("int func() { while true { return 1; } }")]
@@ -61,11 +59,9 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { return 10; 10.ToString(); }")]
     [InlineData("int func() { if true { return 10; 10.ToString();} return 0; }")]
     [InlineData("System::Uri func(string a) { const r = new System::Uri(a); return r; r.ToString(); }")]
-    // A constant-true `if` with no else consumes its consequence's edge to the merge point, so anything after it is unreachable.
     [InlineData("void func() { if true { return; } int.MaxValue.ToString(); }")]
     [InlineData("int func() { if true { return int.MaxValue; } return 0; }")]
     [InlineData("int func() { if true { return int.MaxValue; } else { return 0; } }")]
-    // `unless false` always runs its guarded block, so code after a terminal guarded block is unreachable.
     [InlineData("int func() { unless false { return 1; } return 0; }")]
     [InlineData("int func() { unless false { return 1; } else { return 0; } }")]
     public void TestControlFlowAnalysisWithUnreachableCode(string inputText)
@@ -136,7 +132,6 @@ public sealed class ControlFlowAnalysisTests
     [Fact]
     public void ConstantTrueConditionalWithUnreachableElseAndTrailingCodeReportsBothRegions()
     {
-        // Unlike the non-constant case above, a constant-true condition makes the `else` branch itself unreachable too, not just the trailing code.
         var diagnosticBuilder = new DiagnosticBag.Builder();
         BindMemberAndAnalyze<BoundFunctionMember>(
             "int func() { if true { return 1; } else { return 0; } 10.ToString(); }",
@@ -151,7 +146,6 @@ public sealed class ControlFlowAnalysisTests
     [Fact]
     public void ChainedConstantTrueIfsEachReportTheirOwnUnreachableCode()
     {
-        // The first `if`'s merge point is unreachable (constant-true, no else, terminal consequence), which cascades to the second `if` and `return 0;`.
         var diagnosticBuilder = new DiagnosticBag.Builder();
         BindMemberAndAnalyze<BoundFunctionMember>(
             "int func() { if true { return 1; } if true { return 2; } return 0; }",
@@ -179,7 +173,6 @@ public sealed class ControlFlowAnalysisTests
     [Fact]
     public void ConstantTrueConditionalWithEmptyConsequenceReportsBothMissingReturnAndUnreachableElse()
     {
-        // The empty consequence is the only reachable path (missing a return), independently from the unreachable `else` (condition is constantly true).
         var diagnosticBuilder = new DiagnosticBag.Builder();
         BindMemberAndAnalyze<BoundFunctionMember>(
             "int func() { if true { } else { return 0; } }",
@@ -420,7 +413,6 @@ public sealed class ControlFlowAnalysisTests
     [Fact]
     public void ConstantFoldingRunningBeforeControlFlowAnalysisRecognizesCompositeConditionForUnreachableElse()
     {
-        // Proves the condition is actually evaluated as constant: under old semantics both branches would stay live and this would report zero diagnostics.
         var diagnosticBuilder = new DiagnosticBag.Builder();
         TestUtils.BindModule("int func() { const flag = true; if flag { return 1; } else { return 0; } }", diagnosticBuilder).Should().NotBeNull();
         var diagnostics = diagnosticBuilder.Build().ToList();

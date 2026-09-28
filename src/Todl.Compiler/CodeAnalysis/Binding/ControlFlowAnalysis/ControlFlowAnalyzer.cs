@@ -92,7 +92,6 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
 
         foreach (var region in unreachableBlocks.GroupBy(Find))
         {
-            // A region with nothing real and no if/while to blame (e.g. a void function's synthesized implicit return) has no user-visible dead code; stay silent.
             if (!TryGetUnreachableRegionLocation(region, out var textLocation))
             {
                 continue;

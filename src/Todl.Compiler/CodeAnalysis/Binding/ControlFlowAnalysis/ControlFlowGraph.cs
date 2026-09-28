@@ -109,7 +109,6 @@ internal sealed class ControlFlowGraph
 
             var end = current;
 
-            // A ruled-out branch with no real content is a floating placeholder, dropped like any orphan; one with real statements is kept so that content gets diagnosed.
             if (ShouldPreserve(end) && (connect || HasRealStatement(end)))
             {
                 blocks.Add(end);
@@ -270,7 +269,6 @@ internal sealed class ControlFlowGraph
         private static bool ShouldPreserve(BasicBlock block)
             => block.Statements.Any() || block.Incoming.Any();
 
-        // Distinguishes real, diagnosable content from a synthesized placeholder (e.g. BoundNoOpStatement).
         private static bool HasRealStatement(BasicBlock block)
             => block.Statements.Any(statement => statement is not BoundNoOpStatement);
 
