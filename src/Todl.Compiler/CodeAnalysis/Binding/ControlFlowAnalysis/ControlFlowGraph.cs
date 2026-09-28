@@ -79,6 +79,7 @@ internal sealed class ControlFlowGraph
             {
                 begin.Statements.Add(new BoundNoOpStatement());
             }
+            begin.OriginatingStatement = boundConditionalStatement;
             blocks.Add(begin);
 
             var consequenceEnd = VisitBranch(boundConditionalStatement.Consequence, begin);
@@ -126,6 +127,7 @@ internal sealed class ControlFlowGraph
             {
                 preHeader.Statements.Add(new BoundNoOpStatement());
             }
+            preHeader.OriginatingStatement = boundLoopStatement;
             blocks.Add(preHeader);
 
             // The header is a synthetic branch point standing in for condition evaluation:
@@ -314,11 +316,35 @@ internal sealed class ControlFlowGraph
                 Connect(blocks[^2], endBlock);
             }
 
+            ComputeReachability();
+
             return new()
             {
                 Blocks = blocks.ToImmutable(),
                 Branches = branches.ToImmutable()
             };
+        }
+
+        // Incoming.Any() alone isn't enough: that edge may come from a block nothing reaches.
+        private void ComputeReachability()
+        {
+            var stack = new Stack<BasicBlock>();
+            stack.Push(startBlock);
+
+            while (stack.Count > 0)
+            {
+                var block = stack.Pop();
+                if (block.Reachable)
+                {
+                    continue;
+                }
+
+                block.Reachable = true;
+                foreach (var branch in block.Outgoing)
+                {
+                    stack.Push(branch.To);
+                }
+            }
         }
     }
 
@@ -328,6 +354,9 @@ internal sealed class ControlFlowGraph
         public List<BoundStatement> Statements { get; } = new();
         public List<BasicBlockBranch> Incoming { get; } = new();
         public List<BasicBlockBranch> Outgoing { get; } = new();
+
+        // Points at the if/while/until statement a placeholder block stands in for, used as a diagnostic location fallback.
+        public BoundStatement OriginatingStatement { get; set; }
 
         public bool IsTerminal
         {
@@ -355,7 +384,7 @@ internal sealed class ControlFlowGraph
             }
         }
 
-        public bool Reachable => Incoming.Any();
+        public bool Reachable { get; internal set; }
 
         public string GetDebuggerDisplay()
         {

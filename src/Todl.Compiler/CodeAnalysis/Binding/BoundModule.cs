@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
@@ -26,11 +26,11 @@ internal sealed class BoundModule
         var binder = Binder.CreateModuleBinder(clrTypeCache, constantValueFactory, diagnosticBuilder);
         var entryPointType = binder.BindEntryPointTypeDefinition(syntaxTrees);
 
-        // Order matters: constant folding must run before string concatenation lowering.
+        // Order matters: constant folding runs before control flow analysis (so composite constants are visible) and string concatenation lowering.
         var boundTreeVisitors = new BoundTreeVisitor[]
         {
-            new ControlFlowAnalyzer(diagnosticBuilder),
             new ConstantFoldingBoundTreeRewriter(binder.ConstantValueFactory, diagnosticBuilder),
+            new ControlFlowAnalyzer(diagnosticBuilder),
             new StringConcatenationLoweringBoundTreeRewriter(binder.ConstantValueFactory)
         };
 

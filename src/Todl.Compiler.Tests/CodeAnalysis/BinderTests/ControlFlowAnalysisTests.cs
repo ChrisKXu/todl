@@ -317,6 +317,33 @@ public sealed class ControlFlowAnalysisTests
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
     }
 
+    [Theory]
+    [InlineData("int func() { return 1; if true { 2.ToString(); } }", "2.ToString();")]
+    [InlineData("int func() { return 1; if true { } }", "if true { }")]
+    [InlineData("int func() { return 1; while true { 10.ToString(); } }", "10.ToString();")]
+    public void UnreachableCodeShouldReportAtTheRealStatementOrOwningConstructNotTheFunctionName(string inputText, string expectedText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Count.Should().Be(1);
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
+        diagnostics[0].TextLocation.GetText().Should().Be(expectedText);
+    }
+
+    [Theory]
+    [InlineData("int func() { const flag = true; while flag { return 1; } }")]
+    [InlineData("int func() { while true && true { return 1; } }")]
+    public void ConstantFoldingRunningBeforeControlFlowAnalysisRecognizesCompositeLoopConditions(string inputText)
+    {
+        // A loop condition that folds to a constant (const variable or binary expression) must be recognized just like a bare literal, which needs the full pipeline (not BindMemberAndAnalyze) to order folding ahead of control flow analysis.
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        TestUtils.BindModule(inputText, diagnosticBuilder).Should().NotBeNull();
+        diagnosticBuilder.Build().Should().BeEmpty();
+    }
+
     private static TBoundMember BindMemberAndAnalyze<TBoundMember>(string inputText, DiagnosticBag.Builder diagnosticBuilder) where TBoundMember : BoundMember
     {
         var boundMember = TestUtils.BindMember<TBoundMember>(inputText, diagnosticBuilder);
