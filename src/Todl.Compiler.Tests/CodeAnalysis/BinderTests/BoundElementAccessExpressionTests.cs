@@ -92,4 +92,17 @@ public sealed class BoundElementAccessExpressionTests
         diagnostics.Single().Level.Should().Be(DiagnosticLevel.Error);
         diagnostics.Single().ErrorCode.Should().Be(ErrorCode.ObjectReferenceRequired);
     }
+
+    [Fact]
+    public void BindElementAccessOnUndeclaredVariableShouldNotThrowAndReportsOnlyOneDiagnostic()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundExpression = TestUtils.BindExpression<BoundExpression>("undeclared[0]", diagnosticBuilder);
+
+        boundExpression.Should().BeOfType<BoundInvalidElementAccessExpression>();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().ContainSingle();
+        diagnostics.Single().ErrorCode.Should().Be(ErrorCode.UndeclaredVariable);
+    }
 }

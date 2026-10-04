@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Reflection;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
@@ -59,9 +58,29 @@ public partial class Binder
         var boundBaseExpression = BindExpression(elementAccessExpression.BaseExpression);
         var boundIndexExpression = BindExpression(elementAccessExpression.IndexExpression);
 
+        if (boundBaseExpression.ResultType is null)
+        {
+            return BoundNodeFactory.CreateBoundInvalidElementAccessExpression(
+                syntaxNode: elementAccessExpression,
+                boundBaseExpression: boundBaseExpression,
+                boundIndexExpression: boundIndexExpression);
+        }
+
         if (boundBaseExpression.ResultType is not ClrTypeSymbol clrTypeSymbol)
         {
-            throw new NotSupportedException($"{boundBaseExpression.ResultType?.GetType()} is not supported");
+            ReportDiagnostic(
+                new Diagnostic()
+                {
+                    Message = $"Type '{boundBaseExpression.ResultType}' has no indexer.",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = elementAccessExpression.GetTextLocation(),
+                    ErrorCode = ErrorCode.NoMatchingIndexer
+                });
+
+            return BoundNodeFactory.CreateBoundInvalidElementAccessExpression(
+                syntaxNode: elementAccessExpression,
+                boundBaseExpression: boundBaseExpression,
+                boundIndexExpression: boundIndexExpression);
         }
 
         if (clrTypeSymbol.ClrType.IsArray)
