@@ -66,7 +66,8 @@ public sealed class SyntaxNodeTests
         "System::Console.WriteLine(\"Hello World!\")", // InvocationExpression
         "\"Hello World!\"", // LiteralExpression
         "\"abc\".Length", // MemberAccessExpression
-        "new object()" // NewExpression
+        "new object()", // NewExpression
+        "a[0]" // ElementAccessExpression
     };
 
     private static readonly string[] testStatements =

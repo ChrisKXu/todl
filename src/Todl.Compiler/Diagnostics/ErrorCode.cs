@@ -38,6 +38,7 @@
         DuplicateLoopLabel,
         UndefinedLoopLabel,
         ObjectReferenceRequired,
-        DivisionByZero
+        DivisionByZero,
+        NoMatchingIndexer
     }
 }

@@ -4,6 +4,16 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 internal abstract class BoundTreeRewriter : BoundTreeVisitor
 {
+    public override BoundNode VisitBoundArrayElementAccessExpression(BoundArrayElementAccessExpression boundArrayElementAccessExpression)
+    {
+        var baseExpression = VisitBoundExpression(boundArrayElementAccessExpression.BoundBaseExpression);
+        var indexExpression = VisitBoundExpression(boundArrayElementAccessExpression.BoundIndexExpression);
+
+        return baseExpression == boundArrayElementAccessExpression.BoundBaseExpression && indexExpression == boundArrayElementAccessExpression.BoundIndexExpression
+            ? boundArrayElementAccessExpression
+            : BoundNodeFactory.CreateBoundArrayElementAccessExpression(boundArrayElementAccessExpression.SyntaxNode, baseExpression, indexExpression, boundArrayElementAccessExpression.ResultType);
+    }
+
     public override BoundNode VisitBoundAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
     {
         var left = VisitBoundExpression(boundAssignmentExpression.Left);
@@ -118,6 +128,26 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
         return body == boundFunctionMember.Body
             ? boundFunctionMember
             : BoundNodeFactory.CreateBoundFunctionMember(boundFunctionMember.SyntaxNode, boundFunctionMember.FunctionScope, body, boundFunctionMember.FunctionSymbol);
+    }
+
+    public override BoundNode VisitBoundIndexerAccessExpression(BoundIndexerAccessExpression boundIndexerAccessExpression)
+    {
+        var baseExpression = VisitBoundExpression(boundIndexerAccessExpression.BoundBaseExpression);
+        var indexExpression = VisitBoundExpression(boundIndexerAccessExpression.BoundIndexExpression);
+
+        return baseExpression == boundIndexerAccessExpression.BoundBaseExpression && indexExpression == boundIndexerAccessExpression.BoundIndexExpression
+            ? boundIndexerAccessExpression
+            : BoundNodeFactory.CreateBoundIndexerAccessExpression(boundIndexerAccessExpression.SyntaxNode, baseExpression, indexExpression, boundIndexerAccessExpression.PropertyInfo, boundIndexerAccessExpression.ResultType);
+    }
+
+    public override BoundNode VisitBoundInvalidElementAccessExpression(BoundInvalidElementAccessExpression boundInvalidElementAccessExpression)
+    {
+        var baseExpression = VisitBoundExpression(boundInvalidElementAccessExpression.BoundBaseExpression);
+        var indexExpression = VisitBoundExpression(boundInvalidElementAccessExpression.BoundIndexExpression);
+
+        return baseExpression == boundInvalidElementAccessExpression.BoundBaseExpression && indexExpression == boundInvalidElementAccessExpression.BoundIndexExpression
+            ? boundInvalidElementAccessExpression
+            : BoundNodeFactory.CreateBoundInvalidElementAccessExpression(boundInvalidElementAccessExpression.SyntaxNode, baseExpression, indexExpression);
     }
 
     public override BoundNode VisitBoundInvalidInvocationExpression(BoundInvalidInvocationExpression boundInvalidInvocationExpression)

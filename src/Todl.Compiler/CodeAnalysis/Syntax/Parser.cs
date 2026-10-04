@@ -150,6 +150,10 @@ public sealed partial class Parser
             {
                 baseExpression = ParseInvocationExpression(baseExpression);
             }
+            else if (Current.Kind == SyntaxKind.OpenBracketToken)
+            {
+                baseExpression = ParseElementAccessExpression(baseExpression);
+            }
             else
             {
                 break;

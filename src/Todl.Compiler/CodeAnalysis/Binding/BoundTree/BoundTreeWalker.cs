@@ -7,6 +7,14 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 /// </summary>
 internal abstract class BoundTreeWalker : BoundTreeVisitor
 {
+    public override BoundNode VisitBoundArrayElementAccessExpression(BoundArrayElementAccessExpression boundArrayElementAccessExpression)
+    {
+        Visit(boundArrayElementAccessExpression.BoundBaseExpression);
+        Visit(boundArrayElementAccessExpression.BoundIndexExpression);
+
+        return boundArrayElementAccessExpression;
+    }
+
     public override BoundNode VisitBoundAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
     {
         Visit(boundAssignmentExpression.Left);
@@ -96,6 +104,22 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         Visit(boundFunctionMember.Body);
 
         return boundFunctionMember;
+    }
+
+    public override BoundNode VisitBoundIndexerAccessExpression(BoundIndexerAccessExpression boundIndexerAccessExpression)
+    {
+        Visit(boundIndexerAccessExpression.BoundBaseExpression);
+        Visit(boundIndexerAccessExpression.BoundIndexExpression);
+
+        return boundIndexerAccessExpression;
+    }
+
+    public override BoundNode VisitBoundInvalidElementAccessExpression(BoundInvalidElementAccessExpression boundInvalidElementAccessExpression)
+    {
+        Visit(boundInvalidElementAccessExpression.BoundBaseExpression);
+        Visit(boundInvalidElementAccessExpression.BoundIndexExpression);
+
+        return boundInvalidElementAccessExpression;
     }
 
     public override BoundNode VisitBoundInvalidInvocationExpression(BoundInvalidInvocationExpression boundInvalidInvocationExpression)
