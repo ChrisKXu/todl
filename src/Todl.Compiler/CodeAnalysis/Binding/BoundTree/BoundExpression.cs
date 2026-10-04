@@ -29,6 +29,7 @@ public partial class Binder
             NewExpression newExpression => BindNewExpression(newExpression),
             ElementAccessExpression elementAccessExpression => BindElementAccessExpression(elementAccessExpression),
             NewArrayExpression newArrayExpression => BindArrayCreationExpression(newArrayExpression),
+            ArrayLiteralExpression arrayLiteralExpression => BindArrayLiteralExpression(arrayLiteralExpression),
             _ => throw new NotSupportedException() // keep compiler happy, this shouldn't happen as guarded by test cases
         };
 }

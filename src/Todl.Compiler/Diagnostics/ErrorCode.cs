@@ -40,6 +40,7 @@ namespace Todl.Compiler.Diagnostics
         ObjectReferenceRequired,
         DivisionByZero,
         NoMatchingIndexer,
-        InvalidArrayElementType
+        InvalidArrayElementType,
+        ArrayElementTypeMismatch
     }
 }

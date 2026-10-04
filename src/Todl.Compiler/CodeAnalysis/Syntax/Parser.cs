@@ -121,6 +121,9 @@ public sealed partial class Parser
             case SyntaxKind.OpenParenthesisToken:
                 baseExpression = this.ParseParethesizedExpression();
                 break;
+            case SyntaxKind.OpenBracketToken:
+                baseExpression = ParseArrayLiteralExpression();
+                break;
             case SyntaxKind.NewKeywordToken:
                 baseExpression = ParseNewExpression();
                 break;
