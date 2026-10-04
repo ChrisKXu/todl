@@ -1,4 +1,5 @@
-﻿﻿using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -41,6 +42,23 @@ public sealed class ClrTypeSymbol : TypeSymbol
     public MemberInfo ResolveMember(ReadOnlyMemory<char> name)
     {
         return ClrType.GetMember(name.ToString()).FirstOrDefault();
+    }
+
+    public IEnumerable<PropertyInfo> ResolveIndexerCandidates()
+    {
+        var defaultMemberAttributeData = CustomAttributeData.GetCustomAttributes(ClrType)
+            .FirstOrDefault(a => a.AttributeType.FullName == typeof(DefaultMemberAttribute).FullName);
+
+        if (defaultMemberAttributeData is null)
+        {
+            return Enumerable.Empty<PropertyInfo>();
+        }
+
+        var indexerName = (string)defaultMemberAttributeData.ConstructorArguments[0].Value;
+
+        return ClrType
+            .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            .Where(p => p.Name == indexerName && p.GetIndexParameters().Length == 1);
     }
 
     public override int GetHashCode()

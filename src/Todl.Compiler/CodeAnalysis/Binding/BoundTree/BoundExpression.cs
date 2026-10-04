@@ -27,6 +27,7 @@ public partial class Binder
             MemberAccessExpression memberAccessExpression => BindMemberAccessExpression(memberAccessExpression),
             InvocationExpression invocationExpression => BindInvocationExpression(invocationExpression),
             NewExpression newExpression => BindNewExpression(newExpression),
+            ElementAccessExpression elementAccessExpression => BindElementAccessExpression(elementAccessExpression),
             _ => throw new NotSupportedException() // keep compiler happy, this shouldn't happen as guarded by test cases
         };
 }
