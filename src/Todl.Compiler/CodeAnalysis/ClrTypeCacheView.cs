@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
@@ -45,6 +46,19 @@ public sealed class ClrTypeCacheView
         var resolvedTypeString = typeExpression.GetText().Replace(typeExpression.BaseTypeExpression.GetText(), baseType.Name);
 
         return new(baseType.ClrType.Assembly.GetType(resolvedTypeString));
+    }
+
+    internal ClrTypeSymbol ResolveArrayType(ClrTypeSymbol elementType, int rank)
+    {
+        if (elementType is null)
+        {
+            return null;
+        }
+
+        var arrayTypeName = elementType.ClrType.FullName + string.Concat(Enumerable.Repeat("[]", rank));
+        var clrType = elementType.ClrType.Assembly.GetType(arrayTypeName);
+
+        return clrType is null ? null : new(clrType);
     }
 
     private ImmutableDictionary<string, ClrTypeSymbol> ImportTypeAliases(IEnumerable<ImportDirective> importDirectives)

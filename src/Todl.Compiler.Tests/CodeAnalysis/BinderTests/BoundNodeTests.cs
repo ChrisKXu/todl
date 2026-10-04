@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -30,7 +30,7 @@ public sealed class BoundNodeTests
     public void AllBoundNodeVariantsAreCovered()
     {
         var types = GetAllSyntaxNodesForTest().Select(pair => pair[1].GetType());
-        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition), typeof(BoundNoOpStatement), typeof(BoundInvalidMemberAccessExpression), typeof(BoundInvalidInvocationExpression), typeof(BoundInvalidObjectCreationExpression), typeof(BoundConversionExpression), typeof(BoundInvalidElementAccessExpression) };
+        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition), typeof(BoundNoOpStatement), typeof(BoundInvalidMemberAccessExpression), typeof(BoundInvalidInvocationExpression), typeof(BoundInvalidObjectCreationExpression), typeof(BoundConversionExpression), typeof(BoundInvalidElementAccessExpression), typeof(BoundInvalidArrayCreationExpression) };
 
         var allBoundNodeTypes = typeof(BoundNode)
             .Assembly
@@ -100,7 +100,8 @@ public sealed class BoundNodeTests
         "int.MaxValue", // BoundClrFieldAccessExpression
         "new System::Exception()", // BoundNewExpression
         "System::Environment.GetCommandLineArgs()[0]", // BoundArrayElementAccessExpression
-        "new System::Text::StringBuilder(\"abc\")[0]" // BoundIndexerAccessExpression
+        "new System::Text::StringBuilder(\"abc\")[0]", // BoundIndexerAccessExpression
+        "new int[5]" // BoundArrayCreationExpression
     ];
 
     private static readonly string[] testStatements =

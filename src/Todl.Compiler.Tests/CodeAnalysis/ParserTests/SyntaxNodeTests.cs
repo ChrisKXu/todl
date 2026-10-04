@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -67,7 +67,8 @@ public sealed class SyntaxNodeTests
         "\"Hello World!\"", // LiteralExpression
         "\"abc\".Length", // MemberAccessExpression
         "new object()", // NewExpression
-        "a[0]" // ElementAccessExpression
+        "a[0]", // ElementAccessExpression
+        "new int[5]" // ArrayCreationExpression
     };
 
     private static readonly string[] testStatements =

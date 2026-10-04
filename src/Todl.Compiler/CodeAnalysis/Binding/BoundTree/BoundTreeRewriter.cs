@@ -4,6 +4,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 internal abstract class BoundTreeRewriter : BoundTreeVisitor
 {
+    public override BoundNode VisitBoundArrayCreationExpression(BoundArrayCreationExpression boundArrayCreationExpression)
+    {
+        var lengthExpression = VisitBoundExpression(boundArrayCreationExpression.BoundLengthExpression);
+
+        return lengthExpression == boundArrayCreationExpression.BoundLengthExpression
+            ? boundArrayCreationExpression
+            : BoundNodeFactory.CreateBoundArrayCreationExpression(boundArrayCreationExpression.SyntaxNode, lengthExpression, boundArrayCreationExpression.ResultType);
+    }
+
     public override BoundNode VisitBoundArrayElementAccessExpression(BoundArrayElementAccessExpression boundArrayElementAccessExpression)
     {
         var baseExpression = VisitBoundExpression(boundArrayElementAccessExpression.BoundBaseExpression);
@@ -138,6 +147,15 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
         return baseExpression == boundIndexerAccessExpression.BoundBaseExpression && indexExpression == boundIndexerAccessExpression.BoundIndexExpression
             ? boundIndexerAccessExpression
             : BoundNodeFactory.CreateBoundIndexerAccessExpression(boundIndexerAccessExpression.SyntaxNode, baseExpression, indexExpression, boundIndexerAccessExpression.PropertyInfo, boundIndexerAccessExpression.ResultType);
+    }
+
+    public override BoundNode VisitBoundInvalidArrayCreationExpression(BoundInvalidArrayCreationExpression boundInvalidArrayCreationExpression)
+    {
+        var lengthExpression = VisitBoundExpression(boundInvalidArrayCreationExpression.BoundLengthExpression);
+
+        return lengthExpression == boundInvalidArrayCreationExpression.BoundLengthExpression
+            ? boundInvalidArrayCreationExpression
+            : BoundNodeFactory.CreateBoundInvalidArrayCreationExpression(boundInvalidArrayCreationExpression.SyntaxNode, lengthExpression);
     }
 
     public override BoundNode VisitBoundInvalidElementAccessExpression(BoundInvalidElementAccessExpression boundInvalidElementAccessExpression)

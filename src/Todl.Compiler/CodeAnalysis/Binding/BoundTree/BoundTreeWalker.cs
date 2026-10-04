@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
@@ -7,6 +7,13 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 /// </summary>
 internal abstract class BoundTreeWalker : BoundTreeVisitor
 {
+    public override BoundNode VisitBoundArrayCreationExpression(BoundArrayCreationExpression boundArrayCreationExpression)
+    {
+        Visit(boundArrayCreationExpression.BoundLengthExpression);
+
+        return boundArrayCreationExpression;
+    }
+
     public override BoundNode VisitBoundArrayElementAccessExpression(BoundArrayElementAccessExpression boundArrayElementAccessExpression)
     {
         Visit(boundArrayElementAccessExpression.BoundBaseExpression);
@@ -112,6 +119,13 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         Visit(boundIndexerAccessExpression.BoundIndexExpression);
 
         return boundIndexerAccessExpression;
+    }
+
+    public override BoundNode VisitBoundInvalidArrayCreationExpression(BoundInvalidArrayCreationExpression boundInvalidArrayCreationExpression)
+    {
+        Visit(boundInvalidArrayCreationExpression.BoundLengthExpression);
+
+        return boundInvalidArrayCreationExpression;
     }
 
     public override BoundNode VisitBoundInvalidElementAccessExpression(BoundInvalidElementAccessExpression boundInvalidElementAccessExpression)
