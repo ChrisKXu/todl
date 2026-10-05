@@ -121,13 +121,6 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         return boundIndexerAccessExpression;
     }
 
-    public override BoundNode VisitBoundInvalidArrayCreationExpression(BoundInvalidArrayCreationExpression boundInvalidArrayCreationExpression)
-    {
-        Visit(boundInvalidArrayCreationExpression.BoundLengthExpression);
-
-        return boundInvalidArrayCreationExpression;
-    }
-
     public override BoundNode VisitBoundInvalidElementAccessExpression(BoundInvalidElementAccessExpression boundInvalidElementAccessExpression)
     {
         Visit(boundInvalidElementAccessExpression.BoundBaseExpression);

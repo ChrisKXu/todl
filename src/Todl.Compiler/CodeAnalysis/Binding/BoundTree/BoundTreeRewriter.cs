@@ -149,15 +149,6 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
             : BoundNodeFactory.CreateBoundIndexerAccessExpression(boundIndexerAccessExpression.SyntaxNode, baseExpression, indexExpression, boundIndexerAccessExpression.PropertyInfo, boundIndexerAccessExpression.ResultType);
     }
 
-    public override BoundNode VisitBoundInvalidArrayCreationExpression(BoundInvalidArrayCreationExpression boundInvalidArrayCreationExpression)
-    {
-        var lengthExpression = VisitBoundExpression(boundInvalidArrayCreationExpression.BoundLengthExpression);
-
-        return lengthExpression == boundInvalidArrayCreationExpression.BoundLengthExpression
-            ? boundInvalidArrayCreationExpression
-            : BoundNodeFactory.CreateBoundInvalidArrayCreationExpression(boundInvalidArrayCreationExpression.SyntaxNode, lengthExpression);
-    }
-
     public override BoundNode VisitBoundInvalidElementAccessExpression(BoundInvalidElementAccessExpression boundInvalidElementAccessExpression)
     {
         var baseExpression = VisitBoundExpression(boundInvalidElementAccessExpression.BoundBaseExpression);

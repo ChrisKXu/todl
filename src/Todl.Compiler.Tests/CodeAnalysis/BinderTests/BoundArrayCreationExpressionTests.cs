@@ -40,12 +40,11 @@ public sealed class BoundArrayCreationExpressionTests
     }
 
     [Fact]
-    public void BindArrayCreationWithVoidElementTypeShouldReportDiagnosticAndReturnInvalidNode()
+    public void BindArrayCreationWithVoidElementTypeShouldReportDiagnosticAndReturnNullResultType()
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
-        var boundExpression = TestUtils.BindExpression<BoundExpression>("new void[5]", diagnosticBuilder);
+        var boundExpression = TestUtils.BindExpression<BoundArrayCreationExpression>("new void[5]", diagnosticBuilder);
 
-        boundExpression.Should().BeOfType<BoundInvalidArrayCreationExpression>();
         boundExpression.ResultType.Should().BeNull();
 
         var diagnostics = diagnosticBuilder.Build();
@@ -54,12 +53,11 @@ public sealed class BoundArrayCreationExpressionTests
     }
 
     [Fact]
-    public void BindArrayCreationWithUnresolvedElementTypeShouldReportDiagnosticAndReturnInvalidNode()
+    public void BindArrayCreationWithUnresolvedElementTypeShouldReportDiagnosticAndReturnNullResultType()
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
-        var boundExpression = TestUtils.BindExpression<BoundExpression>("new NonExistentType[5]", diagnosticBuilder);
+        var boundExpression = TestUtils.BindExpression<BoundArrayCreationExpression>("new NonExistentType[5]", diagnosticBuilder);
 
-        boundExpression.Should().BeOfType<BoundInvalidArrayCreationExpression>();
         boundExpression.ResultType.Should().BeNull();
 
         var diagnostics = diagnosticBuilder.Build();

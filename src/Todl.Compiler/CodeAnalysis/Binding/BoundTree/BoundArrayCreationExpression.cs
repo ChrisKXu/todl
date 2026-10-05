@@ -12,15 +12,6 @@ internal sealed class BoundArrayCreationExpression : BoundExpression
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundArrayCreationExpression(this);
 }
 
-// This is not emittable, just to place a node in the bound tree to indicate this is an error
-[BoundNode]
-internal sealed class BoundInvalidArrayCreationExpression : BoundExpression
-{
-    public BoundExpression BoundLengthExpression { get; internal init; }
-
-    public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundInvalidArrayCreationExpression(this);
-}
-
 public partial class Binder
 {
     private BoundExpression BindArrayCreationExpression(ArrayCreationExpression arrayCreationExpression)
@@ -43,9 +34,10 @@ public partial class Binder
 
         if (elementTypeExpression.ResultType is null)
         {
-            return BoundNodeFactory.CreateBoundInvalidArrayCreationExpression(
+            return BoundNodeFactory.CreateBoundArrayCreationExpression(
                 syntaxNode: arrayCreationExpression,
-                boundLengthExpression: boundLengthExpression);
+                boundLengthExpression: boundLengthExpression,
+                resultType: null);
         }
 
         if (elementTypeExpression.ResultType.SpecialType == SpecialType.ClrVoid)
@@ -59,9 +51,10 @@ public partial class Binder
                     ErrorCode = ErrorCode.InvalidArrayElementType
                 });
 
-            return BoundNodeFactory.CreateBoundInvalidArrayCreationExpression(
+            return BoundNodeFactory.CreateBoundArrayCreationExpression(
                 syntaxNode: arrayCreationExpression,
-                boundLengthExpression: boundLengthExpression);
+                boundLengthExpression: boundLengthExpression,
+                resultType: null);
         }
 
         var rank = 1 + arrayCreationExpression.ArrayRankSpecifiers.Length;
