@@ -4,6 +4,15 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
 internal abstract class BoundTreeRewriter : BoundTreeVisitor
 {
+    public override BoundNode VisitBoundArrayCreationExpression(BoundArrayCreationExpression boundArrayCreationExpression)
+    {
+        var lengthExpression = VisitBoundExpression(boundArrayCreationExpression.BoundLengthExpression);
+
+        return lengthExpression == boundArrayCreationExpression.BoundLengthExpression
+            ? boundArrayCreationExpression
+            : BoundNodeFactory.CreateBoundArrayCreationExpression(boundArrayCreationExpression.SyntaxNode, lengthExpression, boundArrayCreationExpression.ResultType);
+    }
+
     public override BoundNode VisitBoundArrayElementAccessExpression(BoundArrayElementAccessExpression boundArrayElementAccessExpression)
     {
         var baseExpression = VisitBoundExpression(boundArrayElementAccessExpression.BoundBaseExpression);

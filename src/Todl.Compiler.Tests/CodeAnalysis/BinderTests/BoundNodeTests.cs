@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -100,7 +100,8 @@ public sealed class BoundNodeTests
         "int.MaxValue", // BoundClrFieldAccessExpression
         "new System::Exception()", // BoundNewExpression
         "System::Environment.GetCommandLineArgs()[0]", // BoundArrayElementAccessExpression
-        "new System::Text::StringBuilder(\"abc\")[0]" // BoundIndexerAccessExpression
+        "new System::Text::StringBuilder(\"abc\")[0]", // BoundIndexerAccessExpression
+        "new int[5]" // BoundArrayCreationExpression
     ];
 
     private static readonly string[] testStatements =

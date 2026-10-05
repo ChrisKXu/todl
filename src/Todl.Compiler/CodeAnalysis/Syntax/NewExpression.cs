@@ -15,10 +15,16 @@ public sealed class NewExpression : Expression
 
 public sealed partial class Parser
 {
-    private NewExpression ParseNewExpression()
+    private Expression ParseNewExpression()
     {
         var newKeywordToken = ExpectToken(SyntaxKind.NewKeywordToken);
         var typeNameExpression = ParseNameExpression();
+
+        if (Current.Kind == SyntaxKind.OpenBracketToken)
+        {
+            return ParseNewArrayExpression(newKeywordToken, typeNameExpression);
+        }
+
         var arguments = ParseCommaSeparatedSyntaxList(ParseArgument);
 
         var namedArguments = arguments.Items.Where(p => p.IsNamedArgument);

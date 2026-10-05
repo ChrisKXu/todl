@@ -1,4 +1,4 @@
-﻿namespace Todl.Compiler.Diagnostics
+namespace Todl.Compiler.Diagnostics
 {
     public enum ErrorCode
     {
@@ -39,6 +39,7 @@
         UndefinedLoopLabel,
         ObjectReferenceRequired,
         DivisionByZero,
-        NoMatchingIndexer
+        NoMatchingIndexer,
+        InvalidArrayElementType
     }
 }

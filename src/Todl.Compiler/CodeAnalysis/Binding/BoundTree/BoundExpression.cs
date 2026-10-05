@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 
@@ -28,6 +28,7 @@ public partial class Binder
             InvocationExpression invocationExpression => BindInvocationExpression(invocationExpression),
             NewExpression newExpression => BindNewExpression(newExpression),
             ElementAccessExpression elementAccessExpression => BindElementAccessExpression(elementAccessExpression),
+            NewArrayExpression newArrayExpression => BindArrayCreationExpression(newArrayExpression),
             _ => throw new NotSupportedException() // keep compiler happy, this shouldn't happen as guarded by test cases
         };
 }
