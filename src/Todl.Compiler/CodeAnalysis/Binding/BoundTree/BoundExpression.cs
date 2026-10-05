@@ -28,7 +28,7 @@ public partial class Binder
             InvocationExpression invocationExpression => BindInvocationExpression(invocationExpression),
             NewExpression newExpression => BindNewExpression(newExpression),
             ElementAccessExpression elementAccessExpression => BindElementAccessExpression(elementAccessExpression),
-            ArrayCreationExpression arrayCreationExpression => BindArrayCreationExpression(arrayCreationExpression),
+            NewArrayExpression newArrayExpression => BindArrayCreationExpression(newArrayExpression),
             _ => throw new NotSupportedException() // keep compiler happy, this shouldn't happen as guarded by test cases
         };
 }

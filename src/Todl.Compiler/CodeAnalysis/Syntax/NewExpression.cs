@@ -22,7 +22,7 @@ public sealed partial class Parser
 
         if (Current.Kind == SyntaxKind.OpenBracketToken)
         {
-            return ParseArrayCreationExpression(newKeywordToken, typeNameExpression);
+            return ParseNewArrayExpression(newKeywordToken, typeNameExpression);
         }
 
         var arguments = ParseCommaSeparatedSyntaxList(ParseArgument);

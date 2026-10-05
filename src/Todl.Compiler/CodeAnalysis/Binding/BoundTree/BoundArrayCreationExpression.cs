@@ -14,10 +14,10 @@ internal sealed class BoundArrayCreationExpression : BoundExpression
 
 public partial class Binder
 {
-    private BoundExpression BindArrayCreationExpression(ArrayCreationExpression arrayCreationExpression)
+    private BoundExpression BindArrayCreationExpression(NewArrayExpression newArrayExpression)
     {
-        var elementTypeExpression = BindTypeExpression(arrayCreationExpression.ElementTypeNameExpression);
-        var boundLengthExpression = BindExpression(arrayCreationExpression.LengthExpression);
+        var elementTypeExpression = BindTypeExpression(newArrayExpression.ElementTypeNameExpression);
+        var boundLengthExpression = BindExpression(newArrayExpression.LengthExpression);
 
         if (boundLengthExpression.ResultType is not null
             && boundLengthExpression.ResultType.SpecialType != SpecialType.ClrInt32)
@@ -27,7 +27,7 @@ public partial class Binder
                 {
                     Message = "Array length must be of type int.",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = arrayCreationExpression.LengthExpression.GetTextLocation(),
+                    TextLocation = newArrayExpression.LengthExpression.GetTextLocation(),
                     ErrorCode = ErrorCode.TypeMismatch
                 });
         }
@@ -35,7 +35,7 @@ public partial class Binder
         if (elementTypeExpression.ResultType is null)
         {
             return BoundNodeFactory.CreateBoundArrayCreationExpression(
-                syntaxNode: arrayCreationExpression,
+                syntaxNode: newArrayExpression,
                 boundLengthExpression: boundLengthExpression,
                 resultType: null);
         }
@@ -47,22 +47,22 @@ public partial class Binder
                 {
                     Message = "Array element type cannot be void.",
                     Level = DiagnosticLevel.Error,
-                    TextLocation = arrayCreationExpression.ElementTypeNameExpression.GetTextLocation(),
+                    TextLocation = newArrayExpression.ElementTypeNameExpression.GetTextLocation(),
                     ErrorCode = ErrorCode.InvalidArrayElementType
                 });
 
             return BoundNodeFactory.CreateBoundArrayCreationExpression(
-                syntaxNode: arrayCreationExpression,
+                syntaxNode: newArrayExpression,
                 boundLengthExpression: boundLengthExpression,
                 resultType: null);
         }
 
-        var rank = 1 + arrayCreationExpression.ArrayRankSpecifiers.Length;
-        var arrayType = GetClrTypeCacheView(arrayCreationExpression.SyntaxTree)
+        var rank = 1 + newArrayExpression.ArrayRankSpecifiers.Length;
+        var arrayType = GetClrTypeCacheView(newArrayExpression.SyntaxTree)
             .ResolveArrayType((ClrTypeSymbol)elementTypeExpression.ResultType, rank);
 
         return BoundNodeFactory.CreateBoundArrayCreationExpression(
-            syntaxNode: arrayCreationExpression,
+            syntaxNode: newArrayExpression,
             boundLengthExpression: boundLengthExpression,
             resultType: arrayType);
     }

@@ -3,7 +3,7 @@ using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
 
-public sealed class ArrayCreationExpression : Expression
+public sealed class NewArrayExpression : Expression
 {
     public SyntaxToken NewKeywordToken { get; internal init; }
     public NameExpression ElementTypeNameExpression { get; internal init; }
@@ -20,7 +20,7 @@ public sealed class ArrayCreationExpression : Expression
 
 public sealed partial class Parser
 {
-    private ArrayCreationExpression ParseArrayCreationExpression(SyntaxToken newKeywordToken, NameExpression elementTypeNameExpression)
+    private NewArrayExpression ParseNewArrayExpression(SyntaxToken newKeywordToken, NameExpression elementTypeNameExpression)
     {
         var openBracketToken = ExpectToken(SyntaxKind.OpenBracketToken);
         var lengthExpression = ParseExpression();
