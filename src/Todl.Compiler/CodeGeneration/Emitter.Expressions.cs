@@ -425,10 +425,6 @@ internal partial class Emitter
                 case BoundClrFieldAccessExpression boundClrFieldAccessExpression:
                     EmitClrFieldLoad(boundClrFieldAccessExpression);
                     return;
-                case BoundClrPropertyAccessExpression { PropertyInfo.Name: "Length", BoundBaseExpression.ResultType.IsArray: true }:
-                    ILProcessor.Emit(OpCodes.Ldlen);
-                    ILProcessor.Emit(OpCodes.Conv_I4);
-                    return;
                 case BoundClrPropertyAccessExpression boundClrPropertyAccessExpression:
                     EmitClrPropertyLoad(boundClrPropertyAccessExpression);
                     return;
@@ -454,6 +450,7 @@ internal partial class Emitter
         private void EmitClrPropertyLoad(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
         {
             var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.GetMethod);
+            methodReference.ReturnType = ResolveTypeReference(boundClrPropertyAccessExpression.ResultType as ClrTypeSymbol);
             var opCode = boundClrPropertyAccessExpression.IsStatic ? OpCodes.Call : OpCodes.Callvirt;
             ILProcessor.Emit(opCode, methodReference);
         }
@@ -461,6 +458,8 @@ internal partial class Emitter
         private void EmitClrPropertyStore(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
         {
             var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.SetMethod);
+            methodReference.Parameters[0].ParameterType = ResolveTypeReference(boundClrPropertyAccessExpression.ResultType as ClrTypeSymbol);
+            methodReference.ReturnType = AssemblyDefinition.MainModule.TypeSystem.Void;
             var opCode = boundClrPropertyAccessExpression.IsStatic ? OpCodes.Call : OpCodes.Callvirt;
             ILProcessor.Emit(opCode, methodReference);
         }
