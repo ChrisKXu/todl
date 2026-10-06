@@ -10,8 +10,6 @@ void Main() {
 // `continue`/`continue <label>` still advance the index. Distances/areas are compared
 // in squared/doubled form to stay in Int32.
 string FindClearTriplet() {
-    const pointCount = 6;
-    const obstacleCount = 2;
     const xs = [0, 120, 10, 12, 50, 20];
     const ys = [0, 0, 10, 13, 40, 60];
     const obstacleXs = [26, 500];
@@ -20,13 +18,13 @@ string FindClearTriplet() {
     const minTwiceArea = 200;
 
     let i = -1;
-    while i < pointCount - 1 {
+    while i < xs.Length - 1 {
         i += 1;
         const p1x = xs[i];
         const p1y = ys[i];
 
         let j = i;
-        while j < pointCount - 1 : baseline {
+        while j < xs.Length - 1 : baseline {
             j += 1;
             const p2x = xs[j];
             const p2y = ys[j];
@@ -37,7 +35,7 @@ string FindClearTriplet() {
             }
 
             let k = j;
-            while k < pointCount - 1 {
+            while k < xs.Length - 1 {
                 k += 1;
                 const p3x = xs[k];
                 const p3y = ys[k];
@@ -48,7 +46,7 @@ string FindClearTriplet() {
                 }
 
                 let o = -1;
-                while o < obstacleCount - 1 {
+                while o < obstacleXs.Length - 1 {
                     o += 1;
 
                     // Obstacle inside: skip straight to the next baseline.

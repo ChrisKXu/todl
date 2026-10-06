@@ -25,6 +25,20 @@ public sealed class EmitArrayExpressionTests
     }
 
     [Fact]
+    public void TestEmitArrayLengthUsesLdlen()
+    {
+        TestUtils.EmitStatementAndVerify(
+            "{ let a = new int[2]; let n = a.Length; }",
+            TestInstruction.Create(OpCodes.Ldc_I4_2),
+            TestInstruction.Create(OpCodes.Newarr, "System.Int32"),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldlen),
+            TestInstruction.Create(OpCodes.Conv_I4),
+            TestInstruction.Create(OpCodes.Stloc_1));
+    }
+
+    [Fact]
     public void TestEmitArrayLiteral()
     {
         TestUtils.EmitExpressionAndVerify(

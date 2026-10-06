@@ -23,6 +23,8 @@ public sealed class ArrayExpressionTests
         yield return new object[] { "double Run() { let a = [1.5, 2.5]; return a[1]; }", null, 2.5 };
         yield return new object[] { "string Run(string[] args) { return args[1]; }", new object[] { new[] { "a", "b" } }, "b" };
         yield return new object[] { "char Run(string s) { return s[1]; }", new object[] { "abc" }, 'b' };
+        yield return new object[] { "int Run() { let a = new int[4]; return a.Length; }", null, 4 };
+        yield return new object[] { "int Run() { let a = [[1], [2, 3]]; return a[1].Length; }", null, 2 };
         yield return new object[]
         {
             ArrayListImports + "Object Run() { let l = new ArrayList(); let n = l.Add(\"a\"); l[0] = \"b\"; return l[0]; }",

@@ -425,6 +425,10 @@ internal partial class Emitter
                 case BoundClrFieldAccessExpression boundClrFieldAccessExpression:
                     EmitClrFieldLoad(boundClrFieldAccessExpression);
                     return;
+                case BoundClrPropertyAccessExpression { PropertyInfo.Name: "Length", BoundBaseExpression.ResultType.IsArray: true }:
+                    ILProcessor.Emit(OpCodes.Ldlen);
+                    ILProcessor.Emit(OpCodes.Conv_I4);
+                    return;
                 case BoundClrPropertyAccessExpression boundClrPropertyAccessExpression:
                     EmitClrPropertyLoad(boundClrPropertyAccessExpression);
                     return;
