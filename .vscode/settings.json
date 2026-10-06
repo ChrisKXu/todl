@@ -3,5 +3,5 @@
   "omnisharp.enableEditorConfigSupport": true,
   "debug.internalConsoleOptions": "neverOpen",
   "azureFunctions.preDeployTask": "publish (functions)",
-  "dotnet.defaultSolution": "src\\Todl.slnx"
+  "dotnet.defaultSolution": "src/Todl.slnx"
 }
