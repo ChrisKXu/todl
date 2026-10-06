@@ -23,6 +23,15 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
             : BoundNodeFactory.CreateBoundArrayElementAccessExpression(boundArrayElementAccessExpression.SyntaxNode, baseExpression, indexExpression, boundArrayElementAccessExpression.ResultType);
     }
 
+    public override BoundNode VisitBoundArrayLiteralExpression(BoundArrayLiteralExpression boundArrayLiteralExpression)
+    {
+        var elements = VisitList(boundArrayLiteralExpression.BoundElements);
+
+        return elements == boundArrayLiteralExpression.BoundElements
+            ? boundArrayLiteralExpression
+            : BoundNodeFactory.CreateBoundArrayLiteralExpression(boundArrayLiteralExpression.SyntaxNode, elements, boundArrayLiteralExpression.ResultType);
+    }
+
     public override BoundNode VisitBoundAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
     {
         var left = VisitBoundExpression(boundAssignmentExpression.Left);

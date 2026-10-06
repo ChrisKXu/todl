@@ -68,7 +68,8 @@ public sealed class SyntaxNodeTests
         "\"abc\".Length", // MemberAccessExpression
         "new object()", // NewExpression
         "a[0]", // ElementAccessExpression
-        "new int[5]" // NewArrayExpression
+        "new int[5]", // NewArrayExpression
+        "[1, 2, 3]" // ArrayLiteralExpression
     };
 
     private static readonly string[] testStatements =

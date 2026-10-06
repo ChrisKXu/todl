@@ -22,6 +22,13 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         return boundArrayElementAccessExpression;
     }
 
+    public override BoundNode VisitBoundArrayLiteralExpression(BoundArrayLiteralExpression boundArrayLiteralExpression)
+    {
+        VisitList(boundArrayLiteralExpression.BoundElements);
+
+        return boundArrayLiteralExpression;
+    }
+
     public override BoundNode VisitBoundAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
     {
         Visit(boundAssignmentExpression.Left);
