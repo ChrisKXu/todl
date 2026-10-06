@@ -147,6 +147,16 @@ public partial class Binder
     private BoundUnaryExpression BindUnaryExpression(UnaryExpression unaryExpression)
     {
         var boundOperand = BindExpression(unaryExpression.Operand);
+
+        if (boundOperand.ResultType is null)
+        {
+            return BoundNodeFactory.CreateBoundUnaryExpression(
+                syntaxNode: unaryExpression,
+                operand: boundOperand,
+                @operator: null,
+                resultType: null);
+        }
+
         var boundUnaryOperator = BoundUnaryOperator.Create(
             operandType: boundOperand.ResultType,
             syntaxKind: unaryExpression.Operator.Kind);

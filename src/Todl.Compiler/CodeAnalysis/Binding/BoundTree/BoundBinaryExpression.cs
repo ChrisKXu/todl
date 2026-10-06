@@ -110,6 +110,17 @@ public partial class Binder
     {
         var boundLeft = BindExpression(binaryExpression.Left);
         var boundRight = BindExpression(binaryExpression.Right);
+
+        if (boundLeft.ResultType is null || boundRight.ResultType is null)
+        {
+            return BoundNodeFactory.CreateBoundBinaryExpression(
+                syntaxNode: binaryExpression,
+                left: boundLeft,
+                right: boundRight,
+                @operator: null,
+                resultType: null);
+        }
+
         var boundBinaryOperator = BoundBinaryOperatorFactory.MatchBinaryOperator(boundLeft.ResultType.SpecialType, boundRight.ResultType.SpecialType, binaryExpression.Operator.Kind);
 
         if (boundBinaryOperator is null)
