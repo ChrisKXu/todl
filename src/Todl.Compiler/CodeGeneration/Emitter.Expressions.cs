@@ -44,6 +44,17 @@ internal partial class Emitter
                 case BoundMemberAccessExpression boundMemberAccessExpression:
                     EmitMemberAccessExpression(boundMemberAccessExpression);
                     return;
+                case BoundArrayCreationExpression boundArrayCreationExpression:
+                    EmitArrayCreationExpression(boundArrayCreationExpression);
+                    return;
+                case BoundArrayLiteralExpression boundArrayLiteralExpression:
+                    EmitArrayLiteralExpression(boundArrayLiteralExpression);
+                    return;
+                case BoundElementAccessExpression boundElementAccessExpression:
+                    EmitExpression(boundElementAccessExpression.BoundBaseExpression);
+                    EmitExpression(boundElementAccessExpression.BoundIndexExpression);
+                    EmitElementLoad(boundElementAccessExpression);
+                    return;
                 default:
                     throw new NotSupportedException($"Expression type {boundExpression.GetType().Name} is not supported.");
             }
@@ -457,6 +468,11 @@ internal partial class Emitter
             {
                 EmitExpression(boundMemberAccessExpression.BoundBaseExpression);
             }
+            else if (left is BoundElementAccessExpression boundElementAccessExpression)
+            {
+                EmitExpression(boundElementAccessExpression.BoundBaseExpression);
+                EmitExpression(boundElementAccessExpression.BoundIndexExpression);
+            }
 
             assignmentAction();
 
@@ -480,6 +496,9 @@ internal partial class Emitter
                     break;
                 case BoundClrPropertyAccessExpression boundClrPropertyAccessExpression:
                     EmitClrPropertyStore(boundClrPropertyAccessExpression);
+                    break;
+                case BoundElementAccessExpression boundElementAccessExpression:
+                    EmitElementStore(boundElementAccessExpression);
                     break;
             }
         }
@@ -527,6 +546,12 @@ internal partial class Emitter
             var operatorKind = boundAssignmentExpression.Operator.BoundAssignmentOperatorKind;
             var isInline = operatorKind != BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment;
 
+            if (isInline && boundAssignmentExpression.Left is BoundElementAccessExpression elementAccess)
+            {
+                EmitElementCompoundAssignment(boundAssignmentExpression, elementAccess);
+                return;
+            }
+
             EmitStore(boundAssignmentExpression.Left, () =>
             {
                 // Inline operators (+=, -=, *=, /=) need the current value of the target
@@ -537,23 +562,243 @@ internal partial class Emitter
                 }
 
                 EmitExpression(boundAssignmentExpression.Right);
-
-                switch (operatorKind)
-                {
-                    case BoundAssignmentExpression.BoundAssignmentOperatorKind.AdditionInline:
-                        ILProcessor.Emit(OpCodes.Add);
-                        break;
-                    case BoundAssignmentExpression.BoundAssignmentOperatorKind.SubstractionInline:
-                        ILProcessor.Emit(OpCodes.Sub);
-                        break;
-                    case BoundAssignmentExpression.BoundAssignmentOperatorKind.MultiplicationInline:
-                        ILProcessor.Emit(OpCodes.Mul);
-                        break;
-                    case BoundAssignmentExpression.BoundAssignmentOperatorKind.DivisionInline:
-                        ILProcessor.Emit(OpCodes.Div);
-                        break;
-                }
+                EmitAssignmentOperator(operatorKind);
             });
+        }
+
+        private void EmitAssignmentOperator(BoundAssignmentExpression.BoundAssignmentOperatorKind operatorKind)
+        {
+            switch (operatorKind)
+            {
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.AdditionInline:
+                    ILProcessor.Emit(OpCodes.Add);
+                    break;
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.SubstractionInline:
+                    ILProcessor.Emit(OpCodes.Sub);
+                    break;
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.MultiplicationInline:
+                    ILProcessor.Emit(OpCodes.Mul);
+                    break;
+                case BoundAssignmentExpression.BoundAssignmentOperatorKind.DivisionInline:
+                    ILProcessor.Emit(OpCodes.Div);
+                    break;
+            }
+        }
+
+        // Base and index are spilled so they are evaluated once, per the compound assignment rule.
+        private void EmitElementCompoundAssignment(
+            BoundAssignmentExpression boundAssignmentExpression,
+            BoundElementAccessExpression elementAccess)
+        {
+            var baseTemp = NewTemp(ResolveTypeReference(elementAccess.BoundBaseExpression.ResultType as ClrTypeSymbol));
+            var indexTemp = NewTemp(ResolveTypeReference(elementAccess.BoundIndexExpression.ResultType as ClrTypeSymbol));
+
+            EmitExpression(elementAccess.BoundBaseExpression);
+            EmitLocalStore(baseTemp);
+            EmitExpression(elementAccess.BoundIndexExpression);
+            EmitLocalStore(indexTemp);
+
+            EmitLocalLoad(baseTemp);
+            EmitLocalLoad(indexTemp);
+            EmitLocalLoad(baseTemp);
+            EmitLocalLoad(indexTemp);
+            EmitElementLoad(elementAccess);
+            EmitExpression(boundAssignmentExpression.Right);
+            EmitAssignmentOperator(boundAssignmentExpression.Operator.BoundAssignmentOperatorKind);
+            EmitElementStore(elementAccess);
+        }
+
+        private VariableDefinition NewTemp(TypeReference typeReference)
+        {
+            ILProcessor.Body.InitLocals = true;
+            var temp = new VariableDefinition(typeReference);
+            ILProcessor.Body.Variables.Add(temp);
+            return temp;
+        }
+
+        private void EmitLocalLoad(VariableDefinition variableDefinition)
+        {
+            switch (variableDefinition.Index)
+            {
+                case 0:
+                    ILProcessor.Emit(OpCodes.Ldloc_0);
+                    return;
+                case 1:
+                    ILProcessor.Emit(OpCodes.Ldloc_1);
+                    return;
+                case 2:
+                    ILProcessor.Emit(OpCodes.Ldloc_2);
+                    return;
+                case 3:
+                    ILProcessor.Emit(OpCodes.Ldloc_3);
+                    return;
+                case < 0xFF:
+                    ILProcessor.Emit(OpCodes.Ldloc_S, variableDefinition);
+                    return;
+                default:
+                    ILProcessor.Emit(OpCodes.Ldloc, variableDefinition);
+                    return;
+            }
+        }
+
+        private TypeReference ResolveElementTypeReference(TypeSymbol arrayType)
+            => ResolveTypeReference(Compilation.ClrTypeCache.Resolve(((ClrTypeSymbol)arrayType).ClrType.GetElementType()));
+
+        private void EmitArrayCreationExpression(BoundArrayCreationExpression boundArrayCreationExpression)
+        {
+            EmitExpression(boundArrayCreationExpression.BoundLengthExpression);
+            ILProcessor.Emit(OpCodes.Newarr, ResolveElementTypeReference(boundArrayCreationExpression.ResultType));
+        }
+
+        private void EmitArrayLiteralExpression(BoundArrayLiteralExpression boundArrayLiteralExpression)
+        {
+            var elementType = ((ClrTypeSymbol)boundArrayLiteralExpression.ResultType).ClrType.GetElementType();
+            var elementTypeReference = ResolveElementTypeReference(boundArrayLiteralExpression.ResultType);
+
+            EmitIntValue(boundArrayLiteralExpression.BoundElements.Length);
+            ILProcessor.Emit(OpCodes.Newarr, elementTypeReference);
+
+            for (var i = 0; i < boundArrayLiteralExpression.BoundElements.Length; ++i)
+            {
+                ILProcessor.Emit(OpCodes.Dup);
+                EmitIntValue(i);
+                EmitExpression(boundArrayLiteralExpression.BoundElements[i]);
+                EmitStelem(Compilation.ClrTypeCache.Resolve(elementType), elementTypeReference);
+            }
+        }
+
+        private void EmitElementLoad(BoundElementAccessExpression boundElementAccessExpression)
+        {
+            switch (boundElementAccessExpression)
+            {
+                case BoundArrayElementAccessExpression:
+                    var elementType = ((ClrTypeSymbol)boundElementAccessExpression.BoundBaseExpression.ResultType).ClrType.GetElementType();
+                    EmitLdelem(Compilation.ClrTypeCache.Resolve(elementType), ResolveElementTypeReference(boundElementAccessExpression.BoundBaseExpression.ResultType));
+                    return;
+                case BoundIndexerAccessExpression boundIndexerAccessExpression:
+                    EmitIndexerCall(boundIndexerAccessExpression, boundIndexerAccessExpression.GetMethod);
+                    return;
+                default:
+                    throw new NotSupportedException($"Expression type {boundElementAccessExpression.GetType().Name} is not supported.");
+            }
+        }
+
+        private void EmitElementStore(BoundElementAccessExpression boundElementAccessExpression)
+        {
+            switch (boundElementAccessExpression)
+            {
+                case BoundArrayElementAccessExpression:
+                    var elementType = ((ClrTypeSymbol)boundElementAccessExpression.BoundBaseExpression.ResultType).ClrType.GetElementType();
+                    EmitStelem(Compilation.ClrTypeCache.Resolve(elementType), ResolveElementTypeReference(boundElementAccessExpression.BoundBaseExpression.ResultType));
+                    return;
+                case BoundIndexerAccessExpression boundIndexerAccessExpression:
+                    EmitIndexerCall(boundIndexerAccessExpression, boundIndexerAccessExpression.SetMethod);
+                    return;
+                default:
+                    throw new NotSupportedException($"Expression type {boundElementAccessExpression.GetType().Name} is not supported.");
+            }
+        }
+
+        private void EmitIndexerCall(BoundIndexerAccessExpression boundIndexerAccessExpression, System.Reflection.MethodInfo methodInfo)
+        {
+            var methodReference = AssemblyDefinition.MainModule.ImportReference(methodInfo);
+            var parameters = methodInfo.GetParameters();
+            for (var i = 0; i != methodReference.Parameters.Count; ++i)
+            {
+                methodReference.Parameters[i].ParameterType
+                    = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(parameters[i].ParameterType));
+            }
+
+            methodReference.ReturnType = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(methodInfo.ReturnType));
+            ILProcessor.Emit(OpCodes.Callvirt, methodReference);
+        }
+
+        private void EmitLdelem(ClrTypeSymbol elementType, TypeReference elementTypeReference)
+        {
+            switch (elementType.SpecialType)
+            {
+                case SpecialType.ClrSByte:
+                    ILProcessor.Emit(OpCodes.Ldelem_I1);
+                    return;
+                case SpecialType.ClrBoolean:
+                case SpecialType.ClrByte:
+                    ILProcessor.Emit(OpCodes.Ldelem_U1);
+                    return;
+                case SpecialType.ClrInt16:
+                    ILProcessor.Emit(OpCodes.Ldelem_I2);
+                    return;
+                case SpecialType.ClrUInt16:
+                case SpecialType.ClrChar:
+                    ILProcessor.Emit(OpCodes.Ldelem_U2);
+                    return;
+                case SpecialType.ClrInt32:
+                    ILProcessor.Emit(OpCodes.Ldelem_I4);
+                    return;
+                case SpecialType.ClrUInt32:
+                    ILProcessor.Emit(OpCodes.Ldelem_U4);
+                    return;
+                case SpecialType.ClrInt64:
+                case SpecialType.ClrUInt64:
+                    ILProcessor.Emit(OpCodes.Ldelem_I8);
+                    return;
+                case SpecialType.ClrFloat:
+                    ILProcessor.Emit(OpCodes.Ldelem_R4);
+                    return;
+                case SpecialType.ClrDouble:
+                    ILProcessor.Emit(OpCodes.Ldelem_R8);
+                    return;
+                default:
+                    if (elementType.IsReferenceType)
+                    {
+                        ILProcessor.Emit(OpCodes.Ldelem_Ref);
+                    }
+                    else
+                    {
+                        ILProcessor.Emit(OpCodes.Ldelem_Any, elementTypeReference);
+                    }
+                    return;
+            }
+        }
+
+        private void EmitStelem(ClrTypeSymbol elementType, TypeReference elementTypeReference)
+        {
+            switch (elementType.SpecialType)
+            {
+                case SpecialType.ClrSByte:
+                case SpecialType.ClrByte:
+                case SpecialType.ClrBoolean:
+                    ILProcessor.Emit(OpCodes.Stelem_I1);
+                    return;
+                case SpecialType.ClrInt16:
+                case SpecialType.ClrUInt16:
+                case SpecialType.ClrChar:
+                    ILProcessor.Emit(OpCodes.Stelem_I2);
+                    return;
+                case SpecialType.ClrInt32:
+                case SpecialType.ClrUInt32:
+                    ILProcessor.Emit(OpCodes.Stelem_I4);
+                    return;
+                case SpecialType.ClrInt64:
+                case SpecialType.ClrUInt64:
+                    ILProcessor.Emit(OpCodes.Stelem_I8);
+                    return;
+                case SpecialType.ClrFloat:
+                    ILProcessor.Emit(OpCodes.Stelem_R4);
+                    return;
+                case SpecialType.ClrDouble:
+                    ILProcessor.Emit(OpCodes.Stelem_R8);
+                    return;
+                default:
+                    if (elementType.IsReferenceType)
+                    {
+                        ILProcessor.Emit(OpCodes.Stelem_Ref);
+                    }
+                    else
+                    {
+                        ILProcessor.Emit(OpCodes.Stelem_Any, elementTypeReference);
+                    }
+                    return;
+            }
         }
     }
 }

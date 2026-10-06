@@ -243,6 +243,7 @@ internal readonly struct TestInstruction : IEquatable<TestInstruction>
                 VariableDefinition variableDefinition => variableDefinition.Index,
                 FieldReference fieldReference => fieldReference.FullName,
                 MethodReference methodReference => methodReference.FullName,
+                TypeReference typeReference => typeReference.FullName,
                 Instruction innerInstruction => innerInstruction.Offset,
                 _ => instruction.Operand
             }
