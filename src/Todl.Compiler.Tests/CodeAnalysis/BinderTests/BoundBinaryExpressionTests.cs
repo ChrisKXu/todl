@@ -86,4 +86,20 @@ public sealed class BoundBinaryExpressionTests
         diagnostics.Should().ContainSingle();
         diagnostics.Single().ErrorCode.Should().Be(ErrorCode.UnsupportedOperator);
     }
+
+    [Theory]
+    [InlineData("missing == 1")]
+    [InlineData("1 + missing")]
+    public void BindBinaryExpressionWithUnresolvedOperandShouldReportOnlyTheUnresolvedName(string input)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundBinaryExpression = TestUtils.BindExpression<BoundBinaryExpression>(input, diagnosticBuilder);
+
+        boundBinaryExpression.Operator.Should().BeNull();
+        boundBinaryExpression.ResultType.Should().BeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().ContainSingle();
+        diagnostics.Single().ErrorCode.Should().Be(ErrorCode.UndeclaredVariable);
+    }
 }

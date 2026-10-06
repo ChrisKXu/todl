@@ -69,4 +69,20 @@ public sealed class BoundUnaryExpressionTests
         diagnostic.Message.Should().Be($"Unary operator \"{operatorText}\" is not supported on type \"{operandType.FullName}\"");
         diagnostic.ErrorCode.Should().Be(ErrorCode.UnsupportedOperator);
     }
+
+    [Theory]
+    [InlineData("-missing")]
+    [InlineData("!missing")]
+    public void BindUnaryExpressionWithUnresolvedOperandShouldReportOnlyTheUnresolvedName(string input)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundUnaryExpression = TestUtils.BindExpression<BoundUnaryExpression>(input, diagnosticBuilder);
+
+        boundUnaryExpression.Operator.Should().BeNull();
+        boundUnaryExpression.ResultType.Should().BeNull();
+
+        var diagnostics = diagnosticBuilder.Build();
+        diagnostics.Should().ContainSingle();
+        diagnostics.Single().ErrorCode.Should().Be(ErrorCode.UndeclaredVariable);
+    }
 }
