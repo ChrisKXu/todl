@@ -34,6 +34,9 @@ public partial class Binder
     public virtual BoundLoopContext BoundLoopContext
         => Parent?.BoundLoopContext;
 
+    public virtual BoundJumpContext JumpContext
+        => Parent?.JumpContext ?? BoundJumpContext.Empty;
+
     public virtual DiagnosticBag.Builder DiagnosticBuilder
         => Parent?.DiagnosticBuilder;
 
@@ -107,6 +110,13 @@ public partial class Binder
         };
     }
 
+    private Binder CreateJumpContextBinder(BoundJumpContext jumpContext)
+        => new JumpContextBinder(jumpContext)
+        {
+            Parent = this,
+            Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
+        };
+
     /// <summary>
     /// Resolves the <see cref="BoundLoopContext"/> that a <c>break</c>/<c>continue</c>
     /// statement targets: the innermost enclosing loop when unlabeled, or the ancestor loop whose
@@ -131,7 +141,7 @@ public partial class Binder
 
         if (label is null)
         {
-            return BoundLoopContext;
+            return ValidateJumpTarget(BoundLoopContext, statementTextLocation);
         }
 
         var labelText = label.GetText();
@@ -139,7 +149,7 @@ public partial class Binder
         {
             if (context.LoopLabel is not null && context.LoopLabel.Label.GetText().Equals(labelText))
             {
-                return context;
+                return ValidateJumpTarget(context, statementTextLocation);
             }
         }
 
@@ -172,6 +182,22 @@ public partial class Binder
         }
 
         Scope.DeclareVariable(variable);
+    }
+
+    private BoundLoopContext ValidateJumpTarget(BoundLoopContext target, TextLocation statementTextLocation)
+    {
+        if (JumpContext.ExitsFinally(target))
+        {
+            ReportDiagnostic(new Diagnostic()
+            {
+                Level = DiagnosticLevel.Error,
+                ErrorCode = ErrorCode.JumpOutOfFinally,
+                Message = "A break or continue statement cannot exit a finally block.",
+                TextLocation = statementTextLocation
+            });
+        }
+
+        return target;
     }
 
     protected void ReportDiagnostic(Diagnostic diagnostic)
@@ -223,6 +249,19 @@ public partial class Binder
         }
 
         public override FunctionSymbol FunctionSymbol { get; }
+
+        // a function never inherits except/finally state from where it is declared
+        public override BoundJumpContext JumpContext { get; } = BoundJumpContext.Empty;
+    }
+
+    internal sealed class JumpContextBinder : Binder
+    {
+        internal JumpContextBinder(BoundJumpContext jumpContext)
+        {
+            JumpContext = jumpContext;
+        }
+
+        public override BoundJumpContext JumpContext { get; }
     }
 
     internal sealed partial class LoopBinder : Binder

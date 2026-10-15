@@ -130,6 +130,15 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
             };
     }
 
+    public override BoundNode VisitBoundExceptClause(BoundExceptClause boundExceptClause)
+    {
+        var body = (BoundBlockStatement)VisitBoundStatement(boundExceptClause.Body);
+
+        return body == boundExceptClause.Body
+            ? boundExceptClause
+            : BoundNodeFactory.CreateBoundExceptClause(boundExceptClause.SyntaxNode, boundExceptClause.ExceptionType, boundExceptClause.ExceptionVariable, body);
+    }
+
     public override BoundNode VisitBoundExpressionStatement(BoundExpressionStatement boundExpressionStatement)
     {
         var expression = VisitBoundExpression(boundExpressionStatement.Expression);
@@ -227,6 +236,15 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
             : BoundNodeFactory.CreateBoundReturnStatement(boundReturnStatement.SyntaxNode, returnValueExpression, boundReturnStatement.ReturnType);
     }
 
+    public override BoundNode VisitBoundThrowStatement(BoundThrowStatement boundThrowStatement)
+    {
+        var expression = VisitBoundExpression(boundThrowStatement.Expression);
+
+        return expression == boundThrowStatement.Expression
+            ? boundThrowStatement
+            : BoundNodeFactory.CreateBoundThrowStatement(boundThrowStatement.SyntaxNode, expression);
+    }
+
     public override BoundNode VisitBoundTodlInvocationExpression(BoundTodlInvocationExpression boundTodlInvocationExpression)
     {
         var arguments = VisitList(boundTodlInvocationExpression.BoundArguments);
@@ -234,6 +252,17 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
         return arguments == boundTodlInvocationExpression.BoundArguments
             ? boundTodlInvocationExpression
             : BoundNodeFactory.CreateBoundTodlInvocationExpression(boundTodlInvocationExpression.SyntaxNode, boundTodlInvocationExpression.FunctionSymbol, arguments, boundTodlInvocationExpression.ResultType);
+    }
+
+    public override BoundNode VisitBoundTryStatement(BoundTryStatement boundTryStatement)
+    {
+        var body = (BoundBlockStatement)VisitBoundStatement(boundTryStatement.Body);
+        var exceptClauses = VisitList(boundTryStatement.ExceptClauses);
+        var finallyBlock = (BoundBlockStatement)VisitBoundStatement(boundTryStatement.FinallyBlock);
+
+        return body == boundTryStatement.Body && exceptClauses == boundTryStatement.ExceptClauses && finallyBlock == boundTryStatement.FinallyBlock
+            ? boundTryStatement
+            : BoundNodeFactory.CreateBoundTryStatement(boundTryStatement.SyntaxNode, body, exceptClauses, finallyBlock);
     }
 
     public override BoundNode VisitBoundTypeExpression(BoundTypeExpression boundTypeExpression)

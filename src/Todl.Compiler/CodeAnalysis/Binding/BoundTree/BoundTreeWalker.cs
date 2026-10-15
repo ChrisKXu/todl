@@ -106,6 +106,13 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         return boundEntryPointTypeDefinition;
     }
 
+    public override BoundNode VisitBoundExceptClause(BoundExceptClause boundExceptClause)
+    {
+        Visit(boundExceptClause.Body);
+
+        return boundExceptClause;
+    }
+
     public override BoundNode VisitBoundExpressionStatement(BoundExpressionStatement boundExpressionStatement)
     {
         Visit(boundExpressionStatement.Expression);
@@ -183,11 +190,27 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
         return boundReturnStatement;
     }
 
+    public override BoundNode VisitBoundThrowStatement(BoundThrowStatement boundThrowStatement)
+    {
+        Visit(boundThrowStatement.Expression);
+
+        return boundThrowStatement;
+    }
+
     public override BoundNode VisitBoundTodlInvocationExpression(BoundTodlInvocationExpression boundTodlInvocationExpression)
     {
         VisitList(boundTodlInvocationExpression.BoundArguments);
 
         return boundTodlInvocationExpression;
+    }
+
+    public override BoundNode VisitBoundTryStatement(BoundTryStatement boundTryStatement)
+    {
+        Visit(boundTryStatement.Body);
+        VisitList(boundTryStatement.ExceptClauses);
+        Visit(boundTryStatement.FinallyBlock);
+
+        return boundTryStatement;
     }
 
     public override BoundNode VisitBoundTypeExpression(BoundTypeExpression boundTypeExpression)
