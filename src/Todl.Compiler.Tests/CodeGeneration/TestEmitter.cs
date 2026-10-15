@@ -38,6 +38,17 @@ internal sealed class TestEmitter : Emitter.InstructionEmitter
         MethodDefinition.Body.SimplifyMacros();
     }
 
+    public static TestEmitter CreateWithReturnEpilogue(out Instruction epilogue)
+    {
+        var emitter = new TestEmitter();
+        epilogue = emitter.ILProcessor.Create(OpCodes.Nop);
+
+        var returnLocal = new VariableDefinition(emitter.AssemblyDefinition.MainModule.TypeSystem.Int32);
+        emitter.ILProcessor.Body.Variables.Add(returnLocal);
+        emitter.ConfigureReturn(epilogue, returnLocal);
+        return emitter;
+    }
+
     public void Emit()
     {
         MethodDefinition.Body.OptimizeMacros();

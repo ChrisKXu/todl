@@ -140,4 +140,50 @@ public sealed class EmitLoopStatementTests
         jumpsToOuterCondition.Should().HaveCount(2);
         jumpsToOuterCondition.Should().Contain(instructions[0]);
     }
+
+    [Fact]
+    public void BreakAndContinueInsideRegionWithinLoopEmitLeave()
+    {
+        var emitter = new TestEmitter();
+        var loop = BindLoop("while true { break; continue; }").As<BoundLoopStatement>();
+        var body = loop.Body.As<BoundBlockStatement>();
+
+        // Emit the loop normally, then re-emit the body statements inside a region:
+        // the loop's targets stay registered at depth 0.
+        emitter.EmitStatement(loop);
+        var before = emitter.ILProcessor.Body.Instructions.Count;
+
+        emitter.EnterProtectedRegion();
+        foreach (var statement in body.Statements)
+        {
+            emitter.EmitStatement(statement);
+        }
+
+        emitter.ExitProtectedRegion();
+
+        emitter.ILProcessor.Body.Instructions.Skip(before).Select(i => i.OpCode)
+            .Should().Equal(OpCodes.Leave, OpCodes.Leave);
+    }
+
+    [Fact]
+    public void LoopEntirelyInsideRegionJumpsWithBr()
+    {
+        var emitter = new TestEmitter();
+
+        // A loop that is itself inside a region jumps within that region.
+        emitter.EnterProtectedRegion();
+        emitter.EmitStatement(BindLoop("while true { break; }"));
+        emitter.ExitProtectedRegion();
+
+        emitter.ILProcessor.Body.Instructions.Select(i => i.OpCode)
+            .Should().NotContain(OpCodes.Leave);
+    }
+
+    private static BoundStatement BindLoop(string input)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var boundStatement = TestUtils.BindStatement<BoundStatement>(input, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+        return boundStatement;
+    }
 }

@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.ExecutionTests;
 
-public sealed class ReturnStatementTests
+public sealed class BoundReturnStatementTests
 {
     [Fact]
     public void MultipleValuedReturnsInsideBranchesAndLoops()
