@@ -109,8 +109,8 @@ public sealed class BoundConditionalStatementTests
                 const a = 0;
                 let b = a + 4;
                 if true {
-                    let a = 20;
-                    a += 20;
+                    let c = 20;
+                    c += 20;
                     b = 20;
                 }
                 b = a + 5;
@@ -119,14 +119,15 @@ public sealed class BoundConditionalStatementTests
 
         var conditionalStatement = func.Body.Statements[2].As<BoundConditionalStatement>();
         var consequence = conditionalStatement.Consequence.As<BoundBlockStatement>();
-        consequence.Scope.Parent.Should().Be(func.FunctionScope);
+        consequence.Scope.Parent.Should().Be(func.Body.Scope);
+        func.Body.Scope.Parent.Should().Be(func.FunctionScope);
 
-        var outerA = func.FunctionScope.LookupVariable("a");
-        var outerB = func.FunctionScope.LookupVariable("b");
-        var innerA = consequence.Scope.LookupVariable("a");
-        var innerB = consequence.Scope.LookupVariable("b");
+        var outerA = func.Body.Scope.LookupVariable("a");
+        var outerB = func.Body.Scope.LookupVariable("b");
 
-        outerA.Should().NotBe(innerA);
-        outerB.Should().Be(innerB);
+        consequence.Scope.LookupVariable("a").Should().Be(outerA);
+        consequence.Scope.LookupVariable("b").Should().Be(outerB);
+        consequence.Scope.LookupVariable("c").Should().NotBeNull();
+        func.Body.Scope.LookupVariable("c").Should().BeNull();
     }
 }

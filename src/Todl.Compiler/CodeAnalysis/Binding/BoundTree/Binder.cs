@@ -154,6 +154,26 @@ public partial class Binder
         return null;
     }
 
+    /// <summary>
+    /// Declares a local variable in the current scope, reporting <see cref="ErrorCode.DuplicateVariableDeclaration"/>
+    /// when its name is already declared in the same block or an enclosing block or parameter list of the function.
+    /// </summary>
+    private void DeclareLocalVariable(VariableSymbol variable, TextLocation declarationLocation)
+    {
+        if (Scope.FindConflictingVariable(variable.Name) is not null)
+        {
+            ReportDiagnostic(new Diagnostic()
+            {
+                ErrorCode = ErrorCode.DuplicateVariableDeclaration,
+                Level = DiagnosticLevel.Error,
+                TextLocation = declarationLocation,
+                Message = $"A variable named '{variable.Name}' is already declared in this scope or an enclosing scope."
+            });
+        }
+
+        Scope.DeclareVariable(variable);
+    }
+
     protected void ReportDiagnostic(Diagnostic diagnostic)
         => DiagnosticBuilder.Add(diagnostic);
 

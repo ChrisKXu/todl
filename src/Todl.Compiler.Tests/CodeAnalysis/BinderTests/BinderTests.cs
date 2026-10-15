@@ -60,7 +60,7 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 const a = 0;
                 let b = a + 4;
                 {
-                    let a = true;
+                    let c = true;
                     b = 20;
                 }
                 b = a + 5;
@@ -79,7 +79,9 @@ namespace Todl.Compiler.Tests.CodeAnalysis
             scope.LookupVariable("a").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
             scope.LookupVariable("b").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
 
-            childScope.LookupVariable("a").Type.SpecialType.Should().Be(SpecialType.ClrBoolean);
+            childScope.LookupVariable("a").Should().Be(scope.LookupVariable("a"));
+            childScope.LookupVariable("c").Type.SpecialType.Should().Be(SpecialType.ClrBoolean);
+            scope.LookupVariable("c").Should().BeNull();
             childScope.LookupVariable("b").Type.SpecialType.Should().Be(SpecialType.ClrInt32);
         }
 

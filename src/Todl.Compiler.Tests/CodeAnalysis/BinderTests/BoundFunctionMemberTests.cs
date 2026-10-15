@@ -38,7 +38,7 @@ public sealed class BoundFunctionMemberTests
 
         var a = function.Body.Statements[0].As<BoundVariableDeclarationStatement>().Variable;
         a.Name.Should().Be("a");
-        function.FunctionScope.LookupVariable("a").Should().Be(a);
+        function.Body.Scope.LookupVariable("a").Should().Be(a);
 
         function.Body.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundClrInvocationExpression>().Should().NotBeNull();
 

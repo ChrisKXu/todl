@@ -47,7 +47,7 @@ public partial class Binder
             functionBinder.Scope.DeclareVariable(parameter);
         }
 
-        var body = functionBinder.BindBlockStatementInScope(functionDeclarationMember.Body);
+        var body = functionBinder.BindBlockStatement(functionDeclarationMember.Body);
         if (functionSymbol.ReturnType.SpecialType == SpecialType.ClrVoid)
         {
             if (!body.Statements.Any() || body.Statements[^1] is not BoundReturnStatement)
