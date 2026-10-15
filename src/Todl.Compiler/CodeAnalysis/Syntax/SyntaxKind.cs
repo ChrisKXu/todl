@@ -64,6 +64,10 @@
         UntilKeywordToken,
         BreakKeywordToken,
         ContinueKeywordToken,
+        TryKeywordToken,
+        ExceptKeywordToken,
+        FinallyKeywordToken,
+        ThrowKeywordToken,
 
         // Trivia
         WhitespaceTrivia,

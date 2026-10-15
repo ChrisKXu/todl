@@ -129,7 +129,11 @@ public sealed partial class LexerTests
         { SyntaxKind.WhileKeywordToken, "while" },
         { SyntaxKind.UntilKeywordToken, "until" },
         { SyntaxKind.BreakKeywordToken, "break" },
-        { SyntaxKind.ContinueKeywordToken, "continue" }
+        { SyntaxKind.ContinueKeywordToken, "continue" },
+        { SyntaxKind.TryKeywordToken, "try" },
+        { SyntaxKind.ExceptKeywordToken, "except" },
+        { SyntaxKind.FinallyKeywordToken, "finally" },
+        { SyntaxKind.ThrowKeywordToken, "throw" }
     };
 
     [Theory]

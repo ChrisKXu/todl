@@ -60,7 +60,11 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             { "while", SyntaxKind.WhileKeywordToken },
             { "until", SyntaxKind.UntilKeywordToken },
             { "break", SyntaxKind.BreakKeywordToken },
-            { "continue", SyntaxKind.ContinueKeywordToken }
+            { "continue", SyntaxKind.ContinueKeywordToken },
+            { "try", SyntaxKind.TryKeywordToken },
+            { "except", SyntaxKind.ExceptKeywordToken },
+            { "finally", SyntaxKind.FinallyKeywordToken },
+            { "throw", SyntaxKind.ThrowKeywordToken }
         };
 
         public static readonly IReadOnlySet<SyntaxKind> BuiltInTypes = new HashSet<SyntaxKind>()
