@@ -41,6 +41,7 @@ namespace Todl.Compiler.Diagnostics
         DivisionByZero,
         NoMatchingIndexer,
         InvalidArrayElementType,
-        ArrayElementTypeMismatch
+        ArrayElementTypeMismatch,
+        DuplicateVariableDeclaration
     }
 }

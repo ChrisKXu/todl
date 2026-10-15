@@ -24,7 +24,9 @@ public partial class Binder
             BoundInitializer = initializerExpression
         };
 
-        Scope.DeclareVariable(variable);
+        DeclareLocalVariable(
+            variable,
+            variableDeclarationStatement.GetTextLocation(variableDeclarationStatement.IdentifierToken.Span));
 
         return BoundNodeFactory.CreateBoundVariableDeclarationStatement(
             syntaxNode: variableDeclarationStatement,

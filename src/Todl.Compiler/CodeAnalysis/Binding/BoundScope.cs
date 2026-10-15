@@ -24,6 +24,29 @@ namespace Todl.Compiler.CodeAnalysis.Binding
         private VariableSymbol LookupLocalVariable(string name)
             => LookupLocalSymbol<VariableSymbol>(name);
 
+        /// <summary>
+        /// Finds a variable named <paramref name="name"/> that a new declaration in this scope would collide with:
+        /// one declared in this scope or in an enclosing block, up to and including the function scope.
+        /// </summary>
+        public VariableSymbol FindConflictingVariable(string name)
+        {
+            for (var scope = this; scope is not null; scope = scope.Parent)
+            {
+                var variable = scope.LookupLocalVariable(name);
+                if (variable is not null)
+                {
+                    return variable;
+                }
+
+                if (scope.BoundScopeKind != BoundScopeKind.BlockStatement)
+                {
+                    break;
+                }
+            }
+
+            return null;
+        }
+
         public VariableSymbol DeclareVariable(VariableSymbol variable)
         {
             var existingVariable = LookupLocalVariable(variable.Name);
