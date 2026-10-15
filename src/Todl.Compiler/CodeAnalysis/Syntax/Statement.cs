@@ -14,6 +14,8 @@ public sealed partial class Parser
             SyntaxKind.BreakKeywordToken => ParseBreakStatement(),
             SyntaxKind.ContinueKeywordToken => ParseContinueStatement(),
             SyntaxKind.WhileKeywordToken or SyntaxKind.UntilKeywordToken => ParseWhileUntilStatement(),
+            SyntaxKind.TryKeywordToken => ParseTryStatement(),
+            SyntaxKind.ThrowKeywordToken => ParseThrowStatement(),
             _ => ParseExpressionStatement()
         };
 }

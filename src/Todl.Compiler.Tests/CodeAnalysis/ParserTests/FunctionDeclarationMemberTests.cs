@@ -158,5 +158,48 @@ namespace Todl.Compiler.Tests.CodeAnalysis
                 binaryExpression.Right.As<LiteralExpression>().GetText().Should().Be("4");
             }).Should().NotThrow();
         }
+
+        [Fact]
+        public void FunctionDeclarationMemberWithoutHandlerClausesHasNone()
+        {
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>("void Function() {}");
+            function.HasHandlerClauses.Should().BeFalse();
+            function.ExceptClauses.Should().BeEmpty();
+            function.FinallyClause.Should().BeNull();
+        }
+
+        [Fact]
+        public void FunctionDeclarationMemberCanHaveExceptAndFinallyClauses()
+        {
+            const string inputText = "int Function(string s) { return 1; } except FormatException { return 2; } except Exception e { throw; } finally { }";
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>(inputText);
+
+            function.HasHandlerClauses.Should().BeTrue();
+            function.Body.InnerStatements.Should().HaveCount(1);
+            function.ExceptClauses.Should().HaveCount(2);
+            function.FinallyClause.Should().NotBeNull();
+            function.GetText().Should().Be(inputText);
+        }
+
+        [Fact]
+        public void FunctionDeclarationMemberCanHaveOnlyFinallyClause()
+        {
+            const string inputText = "void Function() { } finally { a(); }";
+            var function = TestUtils.ParseMember<FunctionDeclarationMember>(inputText);
+
+            function.ExceptClauses.Should().BeEmpty();
+            function.FinallyClause.BlockStatement.InnerStatements.Should().HaveCount(1);
+            function.GetText().Should().Be(inputText);
+        }
+
+        [Fact]
+        public void HandlerClausesBelongToTheirOwnFunction()
+        {
+            var syntaxTree = TestUtils.ParseSyntaxTree("void A() { } except { } void B() { }");
+
+            syntaxTree.Members.Should().HaveCount(2);
+            syntaxTree.Members[0].As<FunctionDeclarationMember>().ExceptClauses.Should().HaveCount(1);
+            syntaxTree.Members[1].As<FunctionDeclarationMember>().HasHandlerClauses.Should().BeFalse();
+        }
     }
 }

@@ -39,6 +39,8 @@ public sealed class SyntaxNodeTests
             typeof(TypeExpression),
             typeof(ArrayRankSpecifier),
             typeof(ElseClause),
+            typeof(ExceptClause),
+            typeof(FinallyClause),
             typeof(LoopLabel)
         }).ToHashSet();
 
@@ -81,7 +83,9 @@ public sealed class SyntaxNodeTests
         "if a == 0 { return; }", // IfOrUnlessStatement
         "break;", // BreakStatement
         "continue;", // ContinueStatement
-        "while a == 0 { break; }" // WhileUntilStatement
+        "while a == 0 { break; }", // WhileUntilStatement
+        "try { a = 5; } except Exception e { throw; } finally { b = 5; }", // TryStatement
+        "throw e;" // ThrowStatement
     };
 
     private static readonly string[] testDirectives =

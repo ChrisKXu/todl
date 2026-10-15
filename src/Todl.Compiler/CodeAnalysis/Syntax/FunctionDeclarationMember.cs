@@ -1,4 +1,5 @@
-﻿using Todl.Compiler.CodeAnalysis.Text;
+﻿using System.Collections.Immutable;
+using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
 
@@ -17,8 +18,13 @@ public sealed class FunctionDeclarationMember : Member
     public SyntaxToken Name { get; internal init; }
     public CommaSeparatedSyntaxList<Parameter> Parameters { get; internal init; }
     public BlockStatement Body { get; internal init; }
+    public ImmutableArray<ExceptClause> ExceptClauses { get; internal init; }
+    public FinallyClause FinallyClause { get; internal init; }
 
-    public override TextSpan Text => TextSpan.FromBounds(ReturnType.Text.Start, Body.Text.End);
+    public bool HasHandlerClauses => !ExceptClauses.IsEmpty || FinallyClause is not null;
+
+    public override TextSpan Text
+        => TextSpan.FromBounds(ReturnType.Text.Start, HandlerClauses.GetEnd(Body, ExceptClauses, FinallyClause));
 }
 
 public sealed partial class Parser
@@ -39,6 +45,7 @@ public sealed partial class Parser
         var name = ExpectToken(SyntaxKind.IdentifierToken);
         var parameters = ParseCommaSeparatedSyntaxList(ParseParemeter);
         var body = ParseBlockStatement();
+        var (exceptClauses, finallyClause) = ParseHandlerClauses();
 
         return new FunctionDeclarationMember()
         {
@@ -46,7 +53,9 @@ public sealed partial class Parser
             ReturnType = returnType,
             Name = name,
             Parameters = parameters,
-            Body = body
+            Body = body,
+            ExceptClauses = exceptClauses,
+            FinallyClause = finallyClause
         };
     }
 }
