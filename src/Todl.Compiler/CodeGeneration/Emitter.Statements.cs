@@ -13,7 +13,42 @@ internal partial class Emitter
     {
         // Per-loop continue/break targets, keyed by BoundLoopContext so a labeled
         // break/continue can reach any enclosing loop (mirrors loopBlocks in the CFG).
-        private readonly Dictionary<BoundLoopContext, (Instruction ContinueTarget, Instruction BreakTarget)> loopTargets = new();
+        // Depth is the protected-region depth at which the targets live.
+        private readonly Dictionary<BoundLoopContext, (Instruction ContinueTarget, Instruction BreakTarget, int Depth)> loopTargets = new();
+
+        private int protectedRegionDepth;
+        private Instruction returnEpilogue;
+        private VariableDefinition returnLocal;
+
+        // Both must bracket the emission of a protected region's contents so that jumps
+        // leaving the region are emitted as `leave` rather than `br`.
+        internal void EnterProtectedRegion() => protectedRegionDepth++;
+        internal void ExitProtectedRegion() => protectedRegionDepth--;
+
+        // Returns jump to the epilogue (which is outside every region) instead of emitting `ret`
+        // inline. Without an epilogue (statement-only emission) `ret` is emitted directly.
+        internal void ConfigureReturn(Instruction epilogue, VariableDefinition local)
+        {
+            returnEpilogue = epilogue;
+            returnLocal = local;
+        }
+
+        internal void EmitReturnEpilogue()
+        {
+            ILProcessor.Append(returnEpilogue);
+            if (returnLocal is not null)
+            {
+                EmitLocalLoad(returnLocal);
+            }
+
+            ILProcessor.Emit(OpCodes.Ret);
+        }
+
+        private void EmitJump(Instruction target, int targetDepth)
+        {
+            var opCode = protectedRegionDepth > targetDepth ? OpCodes.Leave : OpCodes.Br;
+            ILProcessor.Emit(opCode, target);
+        }
 
         public void EmitStatement(BoundStatement boundStatement)
         {
@@ -77,7 +112,18 @@ internal partial class Emitter
                 EmitExpression(boundReturnStatement.BoundReturnValueExpression);
             }
 
-            ILProcessor.Emit(OpCodes.Ret);
+            if (returnEpilogue is null)
+            {
+                ILProcessor.Emit(OpCodes.Ret);
+                return;
+            }
+
+            if (boundReturnStatement.BoundReturnValueExpression is not null)
+            {
+                EmitLocalStore(returnLocal);
+            }
+
+            EmitJump(returnEpilogue, 0);
         }
 
         private void EmitConditionalStatement(BoundConditionalStatement boundConditionalStatement)
@@ -123,7 +169,7 @@ internal partial class Emitter
             var breakLabel = ILProcessor.Create(OpCodes.Nop);
 
             // Registered before the body so nested break/continue - including labeled - resolve.
-            loopTargets[boundLoopStatement.BoundLoopContext] = (conditionLabel, breakLabel);
+            loopTargets[boundLoopStatement.BoundLoopContext] = (conditionLabel, breakLabel, protectedRegionDepth);
 
             ILProcessor.Emit(OpCodes.Br, conditionLabel);
             ILProcessor.Append(startLabel);
@@ -152,8 +198,8 @@ internal partial class Emitter
                 return;
             }
 
-            var (_, breakTarget) = loopTargets[boundBreakStatement.BoundLoopContext];
-            ILProcessor.Emit(OpCodes.Br, breakTarget);
+            var (_, breakTarget, depth) = loopTargets[boundBreakStatement.BoundLoopContext];
+            EmitJump(breakTarget, depth);
         }
 
         private void EmitContinueStatement(BoundContinueStatement boundContinueStatement)
@@ -164,8 +210,8 @@ internal partial class Emitter
                 return;
             }
 
-            var (continueTarget, _) = loopTargets[boundContinueStatement.BoundLoopContext];
-            ILProcessor.Emit(OpCodes.Br, continueTarget);
+            var (continueTarget, _, depth) = loopTargets[boundContinueStatement.BoundLoopContext];
+            EmitJump(continueTarget, depth);
         }
     }
 }

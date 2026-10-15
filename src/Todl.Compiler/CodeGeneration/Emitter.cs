@@ -281,7 +281,19 @@ internal partial class Emitter
 
         public MethodDefinition Emit()
         {
+            var epilogue = ILProcessor.Create(OpCodes.Nop);
+            VariableDefinition returnLocal = null;
+
+            if (methodDefinition.ReturnType.MetadataType != MetadataType.Void)
+            {
+                returnLocal = new VariableDefinition(methodDefinition.ReturnType);
+                methodDefinition.Body.Variables.Add(returnLocal);
+            }
+
+            ConfigureReturn(epilogue, returnLocal);
             EmitStatement(boundFunctionMember.Body);
+
+            EmitReturnEpilogue();
             return methodDefinition;
         }
     }
