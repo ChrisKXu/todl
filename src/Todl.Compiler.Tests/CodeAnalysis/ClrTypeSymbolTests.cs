@@ -49,6 +49,6 @@ public sealed class ClrTypeSymbolTests
     {
         var symbol = TestDefaults.DefaultClrTypeCache.Resolve(type.FullName);
 
-        symbol.IsExceptionType(TestDefaults.DefaultClrTypeCache.BuiltInTypes).Should().Be(expected);
+        symbol.IsExceptionType.Should().Be(expected);
     }
 }

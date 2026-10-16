@@ -82,7 +82,7 @@ public partial class Binder
             return null;
         }
 
-        if (!type.IsExceptionType(ClrTypeCache.BuiltInTypes))
+        if (!type.IsExceptionType)
         {
             ReportNotAnExceptionType($"Type {type} is not an exception type.", typeExpression);
             return type;

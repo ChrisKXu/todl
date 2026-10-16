@@ -19,7 +19,7 @@ public abstract class TypeSymbol : Symbol
     /// <summary>
     /// Whether the type is <c>System.Exception</c> or derives from it.
     /// </summary>
-    public abstract bool IsExceptionType(BuiltInTypes builtInTypes);
+    public abstract bool IsExceptionType { get; }
 }
 
 public enum SpecialType

@@ -41,7 +41,7 @@ public partial class Binder
             {
                 ReportNotAnExceptionType("The operand of a throw statement must be a value.", throwStatement.Expression);
             }
-            else if (expression.ResultType is not null && !expression.ResultType.IsExceptionType(ClrTypeCache.BuiltInTypes))
+            else if (expression.ResultType is not null && !expression.ResultType.IsExceptionType)
             {
                 ReportNotAnExceptionType(
                     $"The operand of a throw statement must be of an exception type but is of type {expression.ResultType}.",
