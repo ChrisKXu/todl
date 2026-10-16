@@ -8,8 +8,6 @@ using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
-// These tests bind statements and members directly rather than whole modules: the control flow
-// graph does not model try statements yet and would report spurious diagnostics.
 public sealed class BoundTryStatementTests
 {
     private static Diagnostic[] BindStatementDiagnostics(string inputText)
