@@ -42,6 +42,11 @@ namespace Todl.Compiler.Diagnostics
         NoMatchingIndexer,
         InvalidArrayElementType,
         ArrayElementTypeMismatch,
-        DuplicateVariableDeclaration
+        DuplicateVariableDeclaration,
+        NotAnExceptionType,
+        UnreachableExceptClause,
+        MisplacedGeneralExceptClause,
+        RethrowOutsideExceptBlock,
+        JumpOutOfFinally
     }
 }

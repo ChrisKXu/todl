@@ -18,6 +18,8 @@ public partial class Binder
             BreakStatement breakStatement => BindBreakStatement(breakStatement),
             ContinueStatement continueStatement => BindContinueStatement(continueStatement),
             WhileUntilStatement whileUntilStatement => BindWhileUntilStatement(whileUntilStatement),
+            TryStatement tryStatement => BindTryStatement(tryStatement),
+            ThrowStatement throwStatement => BindThrowStatement(throwStatement),
             _ => throw new NotSupportedException() // keep compiler happy, this shouldn't happen as guarded by test cases
         };
 }

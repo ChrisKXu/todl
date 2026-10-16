@@ -45,7 +45,7 @@ public sealed class ClrTypeCacheView
 
         var resolvedTypeString = typeExpression.GetText().Replace(typeExpression.BaseTypeExpression.GetText(), baseType.Name);
 
-        return new(baseType.ClrType.Assembly.GetType(resolvedTypeString));
+        return new(baseType.ClrType.Assembly.GetType(resolvedTypeString), isExceptionType: false);
     }
 
     internal ClrTypeSymbol ResolveArrayType(ClrTypeSymbol elementType, int rank)
@@ -58,7 +58,7 @@ public sealed class ClrTypeCacheView
         var arrayTypeName = elementType.ClrType.FullName + string.Concat(Enumerable.Repeat("[]", rank));
         var clrType = elementType.ClrType.Assembly.GetType(arrayTypeName);
 
-        return clrType is null ? null : new(clrType);
+        return clrType is null ? null : new(clrType, isExceptionType: false);
     }
 
     private ImmutableDictionary<string, ClrTypeSymbol> ImportTypeAliases(IEnumerable<ImportDirective> importDirectives)

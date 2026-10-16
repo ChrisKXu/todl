@@ -17,16 +17,20 @@ public sealed class ClrTypeSymbol : TypeSymbol
 
     public override SpecialType SpecialType { get; }
 
-    internal ClrTypeSymbol(Type clrType)
-        : this(clrType, SpecialType.None)
-    {
+    public override bool IsExceptionType { get; }
 
+    internal ClrTypeSymbol(Type clrType, bool isExceptionType)
+    {
+        ClrType = clrType;
+        SpecialType = SpecialType.None;
+        IsExceptionType = isExceptionType;
     }
 
     internal ClrTypeSymbol(Type clrType, SpecialType specialType)
     {
         ClrType = clrType;
         SpecialType = specialType;
+        IsExceptionType = specialType == SpecialType.ClrException;
     }
 
     public override bool Equals(Symbol other)
@@ -38,6 +42,9 @@ public sealed class ClrTypeSymbol : TypeSymbol
 
         return false;
     }
+
+    public bool DerivesFrom(ClrTypeSymbol baseType)
+        => baseType is not null && ClrType.IsSubclassOf(baseType.ClrType);
 
     public MemberInfo ResolveMember(ReadOnlyMemory<char> name)
     {

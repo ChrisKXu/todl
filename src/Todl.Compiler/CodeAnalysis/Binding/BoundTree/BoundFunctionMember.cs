@@ -48,9 +48,26 @@ public partial class Binder
         }
 
         var body = functionBinder.BindBlockStatement(functionDeclarationMember.Body);
+
+        if (functionDeclarationMember.HasHandlerClauses)
+        {
+            // handler clauses see the parameters but not the body block's locals
+            var tryStatement = functionBinder.BindHandlerClauses(
+                functionDeclarationMember,
+                body,
+                functionDeclarationMember.ExceptClauses,
+                functionDeclarationMember.FinallyClause);
+
+            body = BoundNodeFactory.CreateBoundBlockStatement(
+                syntaxNode: functionDeclarationMember.Body,
+                scope: functionBinder.Scope,
+                statements: [tryStatement]);
+        }
+
         if (functionSymbol.ReturnType.SpecialType == SpecialType.ClrVoid)
         {
-            if (!body.Statements.Any() || body.Statements[^1] is not BoundReturnStatement)
+            if (!body.Statements.Any() || body.Statements[^1] is not BoundReturnStatement
+                || functionDeclarationMember.HasHandlerClauses)
             {
                 var returnStatement = BoundNodeFactory.CreateBoundReturnStatement(
                     syntaxNode: null,

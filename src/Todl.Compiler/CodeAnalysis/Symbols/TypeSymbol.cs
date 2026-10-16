@@ -1,13 +1,7 @@
 ﻿namespace Todl.Compiler.CodeAnalysis.Symbols;
 
-/// <summary>
-/// Todl supports both types defined in CLR and types defined by the user program.
-/// </summary>
 public abstract class TypeSymbol : Symbol
 {
-    /// <summary>
-    /// Gets if a type is a native CLR type
-    /// </summary>
     public virtual bool IsNative => false;
 
     public virtual bool IsArray => false;
@@ -15,6 +9,8 @@ public abstract class TypeSymbol : Symbol
     public abstract SpecialType SpecialType { get; }
 
     public abstract bool IsReferenceType { get; }
+
+    public abstract bool IsExceptionType { get; }
 }
 
 public enum SpecialType
@@ -37,5 +33,6 @@ public enum SpecialType
     ClrUInt64,
     ClrFloat,
     ClrDouble,
-    ClrString
+    ClrString,
+    ClrException
 }

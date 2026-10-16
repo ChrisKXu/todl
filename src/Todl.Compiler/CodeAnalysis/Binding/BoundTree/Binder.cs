@@ -7,10 +7,6 @@ using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-/// <summary>
-/// Binder reorganizes SyntaxTree elements into Bound counterparts
-/// and prepares necessary information for Emitter to use in the emit process
-/// </summary>
 public partial class Binder
 {
     public BoundScope Scope { get; private init; }
@@ -33,6 +29,9 @@ public partial class Binder
 
     public virtual BoundLoopContext BoundLoopContext
         => Parent?.BoundLoopContext;
+
+    public virtual BoundExceptionContext ExceptionContext
+        => Parent?.ExceptionContext ?? BoundExceptionContext.Empty;
 
     public virtual DiagnosticBag.Builder DiagnosticBuilder
         => Parent?.DiagnosticBuilder;
@@ -107,13 +106,13 @@ public partial class Binder
         };
     }
 
-    /// <summary>
-    /// Resolves the <see cref="BoundLoopContext"/> that a <c>break</c>/<c>continue</c>
-    /// statement targets: the innermost enclosing loop when unlabeled, or the ancestor loop whose
-    /// declared label matches when labeled. Reports <see cref="ErrorCode.NoEnclosingLoop"/> when there
-    /// is no enclosing loop at all, or <see cref="ErrorCode.UndefinedLoopLabel"/> when a label doesn't
-    /// match any enclosing loop, and returns null in both cases.
-    /// </summary>
+    private Binder CreateExceptionContextBinder(BoundExceptionContext exceptionContext)
+        => new ExceptionContextBinder(exceptionContext)
+        {
+            Parent = this,
+            Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
+        };
+
     private BoundLoopContext ResolveLoopContext(NameExpression label, TextLocation statementTextLocation)
     {
         if (BoundLoopContext is null)
@@ -131,7 +130,7 @@ public partial class Binder
 
         if (label is null)
         {
-            return BoundLoopContext;
+            return ValidateJumpTarget(BoundLoopContext, statementTextLocation);
         }
 
         var labelText = label.GetText();
@@ -139,7 +138,7 @@ public partial class Binder
         {
             if (context.LoopLabel is not null && context.LoopLabel.Label.GetText().Equals(labelText))
             {
-                return context;
+                return ValidateJumpTarget(context, statementTextLocation);
             }
         }
 
@@ -154,10 +153,6 @@ public partial class Binder
         return null;
     }
 
-    /// <summary>
-    /// Declares a local variable in the current scope, reporting <see cref="ErrorCode.DuplicateVariableDeclaration"/>
-    /// when its name is already declared in the same block or an enclosing block or parameter list of the function.
-    /// </summary>
     private void DeclareLocalVariable(VariableSymbol variable, TextLocation declarationLocation)
     {
         if (Scope.FindConflictingVariable(variable.Name) is not null)
@@ -172,6 +167,22 @@ public partial class Binder
         }
 
         Scope.DeclareVariable(variable);
+    }
+
+    private BoundLoopContext ValidateJumpTarget(BoundLoopContext target, TextLocation statementTextLocation)
+    {
+        if (ExceptionContext.ExitsFinally(target))
+        {
+            ReportDiagnostic(new Diagnostic()
+            {
+                Level = DiagnosticLevel.Error,
+                ErrorCode = ErrorCode.JumpOutOfFinally,
+                Message = "A break or continue statement cannot exit a finally block.",
+                TextLocation = statementTextLocation
+            });
+        }
+
+        return target;
     }
 
     protected void ReportDiagnostic(Diagnostic diagnostic)
@@ -223,6 +234,19 @@ public partial class Binder
         }
 
         public override FunctionSymbol FunctionSymbol { get; }
+
+        // a function never inherits except/finally state from where it is declared
+        public override BoundExceptionContext ExceptionContext { get; } = BoundExceptionContext.Empty;
+    }
+
+    internal sealed class ExceptionContextBinder : Binder
+    {
+        internal ExceptionContextBinder(BoundExceptionContext exceptionContext)
+        {
+            ExceptionContext = exceptionContext;
+        }
+
+        public override BoundExceptionContext ExceptionContext { get; }
     }
 
     internal sealed partial class LoopBinder : Binder

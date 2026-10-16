@@ -16,6 +16,7 @@ public sealed class ClrTypeCache
 
     public BuiltInTypes BuiltInTypes { get; }
 
+
     // Lazy cache: full type name -> ClrTypeSymbol
     private readonly ConcurrentDictionary<string, ClrTypeSymbol> typeCache = new();
 
@@ -53,7 +54,8 @@ public sealed class ClrTypeCache
             { "float", SpecialType.ClrFloat },
             { typeof(float).FullName, SpecialType.ClrFloat },
             { "double", SpecialType.ClrDouble },
-            { typeof(double).FullName, SpecialType.ClrDouble }
+            { typeof(double).FullName, SpecialType.ClrDouble },
+            { typeof(Exception).FullName, SpecialType.ClrException }
         }.ToImmutableDictionary();
 
     private ClrTypeCache(IEnumerable<Assembly> assemblies, Assembly coreAssembly)
@@ -84,7 +86,7 @@ public sealed class ClrTypeCache
             var type = assembly.GetType(name);
             if (type != null && !type.IsGenericType && type.IsVisible)
             {
-                var symbol = new ClrTypeSymbol(type);
+                var symbol = new ClrTypeSymbol(type, IsExceptionClrType(type));
                 // Thread-safe cache population
                 return typeCache.GetOrAdd(name, symbol);
             }
@@ -122,9 +124,12 @@ public sealed class ClrTypeCache
         }
 
         // Create and cache
-        var symbol = new ClrTypeSymbol(type);
+        var symbol = new ClrTypeSymbol(type, IsExceptionClrType(type));
         return typeCache.GetOrAdd(fullName, symbol);
     }
+
+    private bool IsExceptionClrType(Type type)
+        => type.Equals(BuiltInTypes.Exception.ClrType) || type.IsSubclassOf(BuiltInTypes.Exception.ClrType);
 
     public ClrTypeSymbol ResolveSpecialType(SpecialType specialType)
     {
@@ -145,16 +150,13 @@ public sealed class ClrTypeCache
             SpecialType.ClrUInt64 => CoreAssembly.GetType(typeof(ulong).FullName),
             SpecialType.ClrDouble => CoreAssembly.GetType(typeof(double).FullName),
             SpecialType.ClrFloat => CoreAssembly.GetType(typeof(float).FullName),
+            SpecialType.ClrException => CoreAssembly.GetType(typeof(Exception).FullName),
             _ => throw new NotSupportedException($"Special type {specialType} is not supported")
         };
 
         return new(type, specialType);
     }
 
-    /// <summary>
-    /// Gets all types in a namespace (lazy, cached).
-    /// Used for wildcard imports.
-    /// </summary>
     public ImmutableArray<ClrTypeSymbol> GetTypesInNamespace(string namespaceName)
     {
         return namespaceTypes.GetOrAdd(namespaceName, ns =>

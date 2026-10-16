@@ -49,6 +49,17 @@ public partial class Binder
             });
         }
 
+        if (ExceptionContext.InFinally)
+        {
+            ReportDiagnostic(new Diagnostic()
+            {
+                Message = "A return statement cannot appear within a finally block.",
+                ErrorCode = ErrorCode.JumpOutOfFinally,
+                TextLocation = returnStatement.GetTextLocation(),
+                Level = DiagnosticLevel.Error
+            });
+        }
+
         return boundReturnStatement;
     }
 }

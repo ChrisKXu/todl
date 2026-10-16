@@ -30,7 +30,7 @@ public sealed class BoundNodeTests
     public void AllBoundNodeVariantsAreCovered()
     {
         var types = GetAllSyntaxNodesForTest().Select(pair => pair[1].GetType());
-        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition), typeof(BoundNoOpStatement), typeof(BoundInvalidMemberAccessExpression), typeof(BoundInvalidInvocationExpression), typeof(BoundInvalidObjectCreationExpression), typeof(BoundConversionExpression), typeof(BoundInvalidElementAccessExpression) };
+        var exceptions = new[] { typeof(BoundEntryPointTypeDefinition), typeof(BoundNoOpStatement), typeof(BoundInvalidMemberAccessExpression), typeof(BoundInvalidInvocationExpression), typeof(BoundInvalidObjectCreationExpression), typeof(BoundConversionExpression), typeof(BoundInvalidElementAccessExpression), typeof(BoundExceptClause) };
 
         var allBoundNodeTypes = typeof(BoundNode)
             .Assembly
@@ -114,7 +114,9 @@ public sealed class BoundNodeTests
         "if true { }", // IfUnlessStatement
         "break;", // BreakStatement
         "continue;", // ContinueStatement
-        "while true { }" // WhileUntilStatement
+        "while true { }", // WhileUntilStatement
+        "try { } except System::Exception e { } finally { }", // BoundTryStatement (and BoundExceptClause)
+        "throw new System::Exception();" // BoundThrowStatement
     ];
 
     private static readonly string[] testMembers = new[]
