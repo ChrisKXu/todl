@@ -142,41 +142,37 @@ public sealed class EmitLoopStatementTests
     }
 
     [Fact]
-    public void BreakAndContinueInsideRegionWithinLoopEmitLeave()
+    public void BreakAndContinueInsideTryBlockWithinLoopEmitLeave()
     {
         var emitter = new TestEmitter();
-        var loop = BindLoop("while true { break; continue; }").As<BoundLoopStatement>();
-        var body = loop.Body.As<BoundBlockStatement>();
+        emitter.EmitStatement(BindLoop("while true { try { break; } finally { } try { continue; } finally { } }"));
 
-        // Emit the loop normally, then re-emit the body statements inside a region:
-        // the loop's targets stay registered at depth 0.
-        emitter.EmitStatement(loop);
-        var before = emitter.ILProcessor.Body.Instructions.Count;
+        var instructions = emitter.ILProcessor.Body.Instructions;
+        var continueTarget = instructions[0].Operand;
+        var breakTarget = instructions[^1];
 
-        emitter.EnterProtectedRegion();
-        foreach (var statement in body.Statements)
-        {
-            emitter.EmitStatement(statement);
-        }
-
-        emitter.ExitProtectedRegion();
-
-        emitter.ILProcessor.Body.Instructions.Skip(before).Select(i => i.OpCode)
-            .Should().Equal(OpCodes.Leave, OpCodes.Leave);
+        instructions.Where(i => i.OpCode == OpCodes.Leave && ReferenceEquals(i.Operand, breakTarget)).Should().ContainSingle();
+        instructions.Where(i => i.OpCode == OpCodes.Leave && ReferenceEquals(i.Operand, continueTarget)).Should().ContainSingle();
     }
 
     [Fact]
-    public void LoopEntirelyInsideRegionJumpsWithBr()
+    public void BreakInsideExceptBlockWithinLoopEmitsLeave()
     {
         var emitter = new TestEmitter();
+        emitter.EmitStatement(BindLoop("while true { try { } except { break; } }"));
 
-        // A loop that is itself inside a region jumps within that region.
-        emitter.EnterProtectedRegion();
-        emitter.EmitStatement(BindLoop("while true { break; }"));
-        emitter.ExitProtectedRegion();
+        var instructions = emitter.ILProcessor.Body.Instructions;
+        instructions.Where(i => i.OpCode == OpCodes.Leave && ReferenceEquals(i.Operand, instructions[^1])).Should().ContainSingle();
+    }
 
-        emitter.ILProcessor.Body.Instructions.Select(i => i.OpCode)
-            .Should().NotContain(OpCodes.Leave);
+    [Fact]
+    public void LoopEntirelyInsideTryBlockJumpsWithBr()
+    {
+        var emitter = new TestEmitter();
+        emitter.EmitStatement(BindLoop("try { while true { break; } } finally { }"));
+
+        // Only the structural leave out of the try block, none for the loop's break.
+        emitter.ILProcessor.Body.Instructions.Count(i => i.OpCode == OpCodes.Leave).Should().Be(1);
     }
 
     private static BoundStatement BindLoop(string input)
