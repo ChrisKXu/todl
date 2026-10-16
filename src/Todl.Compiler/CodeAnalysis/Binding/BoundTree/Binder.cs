@@ -7,10 +7,6 @@ using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-/// <summary>
-/// Binder reorganizes SyntaxTree elements into Bound counterparts
-/// and prepares necessary information for Emitter to use in the emit process
-/// </summary>
 public partial class Binder
 {
     public BoundScope Scope { get; private init; }
@@ -117,13 +113,6 @@ public partial class Binder
             Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
         };
 
-    /// <summary>
-    /// Resolves the <see cref="BoundLoopContext"/> that a <c>break</c>/<c>continue</c>
-    /// statement targets: the innermost enclosing loop when unlabeled, or the ancestor loop whose
-    /// declared label matches when labeled. Reports <see cref="ErrorCode.NoEnclosingLoop"/> when there
-    /// is no enclosing loop at all, or <see cref="ErrorCode.UndefinedLoopLabel"/> when a label doesn't
-    /// match any enclosing loop, and returns null in both cases.
-    /// </summary>
     private BoundLoopContext ResolveLoopContext(NameExpression label, TextLocation statementTextLocation)
     {
         if (BoundLoopContext is null)
@@ -164,10 +153,6 @@ public partial class Binder
         return null;
     }
 
-    /// <summary>
-    /// Declares a local variable in the current scope, reporting <see cref="ErrorCode.DuplicateVariableDeclaration"/>
-    /// when its name is already declared in the same block or an enclosing block or parameter list of the function.
-    /// </summary>
     private void DeclareLocalVariable(VariableSymbol variable, TextLocation declarationLocation)
     {
         if (Scope.FindConflictingVariable(variable.Name) is not null)

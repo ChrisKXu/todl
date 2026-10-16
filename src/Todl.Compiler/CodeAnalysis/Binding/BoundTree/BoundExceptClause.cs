@@ -8,10 +8,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 [BoundNode]
 internal sealed class BoundExceptClause : BoundNode
 {
-    /// <summary>The exception type the clause matches; null for a general clause.</summary>
     public TypeSymbol ExceptionType { get; internal init; }
 
-    /// <summary>The declared exception variable; null when the clause declares none.</summary>
     public ExceptionVariableSymbol ExceptionVariable { get; internal init; }
 
     public BoundBlockStatement Body { get; internal init; }

@@ -9,7 +9,6 @@ internal sealed class BoundTryStatement : BoundStatement
     public BoundBlockStatement Body { get; internal init; }
     public ImmutableArray<BoundExceptClause> ExceptClauses { get; internal init; }
 
-    /// <summary>The finally block; null when there is no finally clause.</summary>
     public BoundBlockStatement FinallyBlock { get; internal init; }
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundTryStatement(this);
@@ -24,10 +23,6 @@ public partial class Binder
             tryStatement.ExceptClauses,
             tryStatement.FinallyClause);
 
-    /// <summary>
-    /// Binds the handler clauses that follow an already bound try block, from this binder's scope.
-    /// Shared by try statements and function-level handler clauses.
-    /// </summary>
     private BoundTryStatement BindHandlerClauses(
         SyntaxNode syntaxNode,
         BoundBlockStatement body,

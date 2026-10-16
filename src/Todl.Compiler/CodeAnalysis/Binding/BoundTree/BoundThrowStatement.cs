@@ -6,7 +6,6 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 [BoundNode]
 internal sealed class BoundThrowStatement : BoundStatement
 {
-    /// <summary>The thrown expression; null for a rethrow.</summary>
     public BoundExpression Expression { get; internal init; }
 
     public bool IsRethrow => Expression is null;

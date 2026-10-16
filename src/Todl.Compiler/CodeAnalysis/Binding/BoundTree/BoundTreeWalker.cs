@@ -2,9 +2,6 @@ using System.Collections.Immutable;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
-/// <summary>
-/// BoundTreeWalker walks and observes the BoundTree without altering the nodes
-/// </summary>
 internal abstract class BoundTreeWalker : BoundTreeVisitor
 {
     public override BoundNode VisitBoundArrayCreationExpression(BoundArrayCreationExpression boundArrayCreationExpression)

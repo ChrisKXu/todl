@@ -10,13 +10,10 @@ public sealed class BoundExceptionContext
 {
     public static readonly BoundExceptionContext Empty = new();
 
-    /// <summary>True when a rethrow is permitted: inside an except block, and not in a finally block nested in it.</summary>
     public bool InExceptBlock { get; private init; }
 
-    /// <summary>True when inside the innermost enclosing finally block.</summary>
     public bool InFinally { get; private init; }
 
-    /// <summary>The loop context that was in effect where the innermost finally block begins.</summary>
     public BoundLoopContext FinallyLoopContext { get; private init; }
 
     public BoundExceptionContext EnterExceptBlock()

@@ -2,9 +2,6 @@ using Todl.Compiler.CodeAnalysis.Syntax;
 
 namespace Todl.Compiler.CodeAnalysis.Symbols;
 
-/// <summary>
-/// The variable declared by a typed except clause; typed exactly as the clause and read-only.
-/// </summary>
 internal sealed class ExceptionVariableSymbol : VariableSymbol
 {
     public ExceptClause ExceptClause { get; }

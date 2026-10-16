@@ -30,6 +30,7 @@ public sealed class ClrTypeSymbol : TypeSymbol
     {
         ClrType = clrType;
         SpecialType = specialType;
+        IsExceptionType = specialType == SpecialType.ClrException;
     }
 
     public override bool Equals(Symbol other)
@@ -42,10 +43,6 @@ public sealed class ClrTypeSymbol : TypeSymbol
         return false;
     }
 
-    /// <summary>
-    /// Whether this type derives, directly or indirectly, from <paramref name="baseType"/>.
-    /// A type does not derive from itself.
-    /// </summary>
     public bool DerivesFrom(ClrTypeSymbol baseType)
         => baseType is not null && ClrType.IsSubclassOf(baseType.ClrType);
 

@@ -54,7 +54,8 @@ public sealed class ClrTypeCache
             { "float", SpecialType.ClrFloat },
             { typeof(float).FullName, SpecialType.ClrFloat },
             { "double", SpecialType.ClrDouble },
-            { typeof(double).FullName, SpecialType.ClrDouble }
+            { typeof(double).FullName, SpecialType.ClrDouble },
+            { typeof(Exception).FullName, SpecialType.ClrException }
         }.ToImmutableDictionary();
 
     private ClrTypeCache(IEnumerable<Assembly> assemblies, Assembly coreAssembly)
@@ -127,14 +128,8 @@ public sealed class ClrTypeCache
         return typeCache.GetOrAdd(fullName, symbol);
     }
 
-    // BuiltInTypes.Exception is created before any other non-special type is resolved
     private bool IsExceptionClrType(Type type)
         => type.Equals(BuiltInTypes.Exception.ClrType) || type.IsSubclassOf(BuiltInTypes.Exception.ClrType);
-
-    internal ClrTypeSymbol ResolveExceptionType()
-        => typeCache.GetOrAdd(
-            typeof(Exception).FullName,
-            _ => new ClrTypeSymbol(CoreAssembly.GetType(typeof(Exception).FullName), isExceptionType: true));
 
     public ClrTypeSymbol ResolveSpecialType(SpecialType specialType)
     {
@@ -155,16 +150,13 @@ public sealed class ClrTypeCache
             SpecialType.ClrUInt64 => CoreAssembly.GetType(typeof(ulong).FullName),
             SpecialType.ClrDouble => CoreAssembly.GetType(typeof(double).FullName),
             SpecialType.ClrFloat => CoreAssembly.GetType(typeof(float).FullName),
+            SpecialType.ClrException => CoreAssembly.GetType(typeof(Exception).FullName),
             _ => throw new NotSupportedException($"Special type {specialType} is not supported")
         };
 
         return new(type, specialType);
     }
 
-    /// <summary>
-    /// Gets all types in a namespace (lazy, cached).
-    /// Used for wildcard imports.
-    /// </summary>
     public ImmutableArray<ClrTypeSymbol> GetTypesInNamespace(string namespaceName)
     {
         return namespaceTypes.GetOrAdd(namespaceName, ns =>
