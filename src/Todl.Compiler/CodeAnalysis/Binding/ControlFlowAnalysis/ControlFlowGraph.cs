@@ -28,10 +28,10 @@ internal sealed class ControlFlowGraph
         private readonly BasicBlock startBlock = new();
         private readonly BasicBlock endBlock = new();
 
-        // this helps to keep track of header and exit blocks for a given loop, and how many finally regions were active when the loop was entered
+        // header and exit blocks of each loop, plus the number of finally regions active at loop entry
         private readonly Dictionary<BoundLoopContext, (BasicBlock Header, BasicBlock Exit, int FinallyDepth)> loopBlocks = new();
 
-        // finally blocks of the try statements being visited, innermost last
+        // finally regions of the enclosing try statements, innermost last
         private readonly List<FinallyRegion> finallyRegions = new();
 
         private BasicBlock current = new();
@@ -54,8 +54,7 @@ internal sealed class ControlFlowGraph
             return boundReturnStatement;
         }
 
-        // Like return, a throw leaves the function as far as this graph is concerned; the except blocks of
-        // an enclosing try are already reachable from the try entry.
+        // except blocks are reached from the try entry, so a throw only needs to leave the function
         public override BoundNode VisitBoundThrowStatement(BoundThrowStatement boundThrowStatement)
         {
             current.Statements.Add(boundThrowStatement);
@@ -82,8 +81,7 @@ internal sealed class ControlFlowGraph
                 region = new FinallyRegion();
                 finallyRegions.Add(region);
 
-                // Any point in the try statement may throw, so the finally block is always reachable.
-                // The exception may keep propagating, but only through enclosing finally blocks.
+                // any point may throw, so the finally block is always reachable
                 RouteThroughFinally(begin, ActiveFinallyRegions(finallyDepth: 0), target: null);
             }
 
@@ -137,12 +135,23 @@ internal sealed class ControlFlowGraph
                 return;
             }
 
-            // Past the finally block, each pending jump continues towards its own destination,
-            // but only if some jump that goes there is itself reachable.
+            region.End = finallyEnd;
+
+            // a jump continues past this finally block only if it and every finally block it ran before this one completes
             foreach (var jumpsToTarget in region.Jumps.GroupBy(jump => jump.Next))
             {
+                var guards = jumpsToTarget
+                    .Where(jump => jump.Earlier.All(earlier => earlier.End is not null))
+                    .Select(jump => jump.Earlier.Select(earlier => earlier.End).Prepend(jump.Source).ToList())
+                    .ToList();
+
+                if (guards.Count == 0)
+                {
+                    continue;
+                }
+
                 var branch = Connect(finallyEnd, jumpsToTarget.Key);
-                branch.Guards.AddRange(jumpsToTarget.Select(jump => jump.Source).Distinct());
+                branch?.Guards.AddRange(guards);
             }
         }
 
@@ -154,8 +163,7 @@ internal sealed class ControlFlowGraph
             return regions;
         }
 
-        // Sends source through each finally region in turn and on to target, which is null
-        // for an exception that is not known to reach anything beyond the regions.
+        // target is null for an exception, which only travels through the finally regions
         private void RouteThroughFinally(BasicBlock source, IReadOnlyList<FinallyRegion> regions, BasicBlock target)
         {
             if (regions.Count == 0)
@@ -174,12 +182,12 @@ internal sealed class ControlFlowGraph
                 var next = i + 1 < regions.Count ? regions[i + 1].Entry : target;
                 if (next is not null)
                 {
-                    regions[i].Jumps.Add((source, next));
+                    regions[i].Jumps.Add(new FinallyJump(source, next, regions.Take(i).ToList()));
                 }
             }
         }
 
-        // Ends the current block with a jump to target, running the finally blocks entered at or after finallyDepth first.
+        // runs the finally regions entered at or after finallyDepth before reaching target
         private void Jump(BasicBlock target, int finallyDepth)
         {
             RouteThroughFinally(current, ActiveFinallyRegions(finallyDepth), target);
@@ -469,7 +477,7 @@ internal sealed class ControlFlowGraph
             var stack = new Stack<BasicBlock>();
             stack.Push(startBlock);
 
-            // A guarded edge may only become usable after its source was visited, so repeat until nothing new is reached.
+            // a guarded edge can become usable after its source was visited, so repeat until nothing new is reached
             while (stack.Count > 0)
             {
                 while (stack.Count > 0)
@@ -495,15 +503,20 @@ internal sealed class ControlFlowGraph
         }
 
         private static bool IsTraversable(BasicBlockBranch branch)
-            => branch.Guards.Count == 0 || branch.Guards.Any(guard => guard.Reachable);
+            => branch.Guards.Count == 0 || branch.Guards.Any(guard => guard.All(block => block.Reachable));
 
         private sealed class FinallyRegion
         {
             public BasicBlock Entry { get; } = new();
 
-            // Each jump into the region and the block it continues to once the finally block completes.
-            public List<(BasicBlock Source, BasicBlock Next)> Jumps { get; } = new();
+            // set when the finally block can complete
+            public BasicBlock End { get; set; }
+
+            public List<FinallyJump> Jumps { get; } = new();
         }
+
+        // Earlier: the regions the jump ran through before this one
+        private sealed record FinallyJump(BasicBlock Source, BasicBlock Next, IReadOnlyList<FinallyRegion> Earlier);
     }
 
     [DebuggerDisplay("{GetDebuggerDisplay()}")]
@@ -547,10 +560,10 @@ internal sealed class ControlFlowGraph
     [DebuggerDisplay("{From} ==> {To}")]
     internal sealed record BasicBlockBranch(BasicBlock From, BasicBlock To)
     {
-        // Reaching the end block by running off the end of the function, rather than via return or throw.
+        // reaches the end block by running off the end of the function
         public bool IsFallOff { get; init; }
 
-        // When present, the edge is only taken if one of these blocks is reachable: a jump routed through a shared finally block.
-        public List<BasicBlock> Guards { get; } = new();
+        // when present, the edge is taken only if all blocks of at least one entry are reachable
+        public List<List<BasicBlock>> Guards { get; } = new();
     }
 }

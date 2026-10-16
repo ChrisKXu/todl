@@ -435,6 +435,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("void func() { 1.ToString(); } except { }")]
     [InlineData("void func() { return; } finally { 1.ToString(); }")]
     [InlineData("void func() { throw new System::Exception(); } except { throw; }")]
+    [InlineData("int func() { while true { try { try { break; } finally { throw new System::Exception(); } } finally { } } }")]
     [InlineData("int func() { let i = 0; while i < 10 { i = i + 1; if i == 5 { break; } } return i; } finally { 1.ToString(); }")]
     [InlineData("int func() { return 1; } finally { let i = 0; while i < 3 { i = i + 1; continue; } }")]
     public void TestControlFlowAnalysisWithExceptionHandling(string inputText)
