@@ -32,6 +32,6 @@ public sealed class BuiltInTypes
         Void = clrTypeCache.ResolveSpecialType(SpecialType.ClrVoid);
         Object = clrTypeCache.ResolveSpecialType(SpecialType.ClrObject);
         String = clrTypeCache.ResolveSpecialType(SpecialType.ClrString);
-        Exception = clrTypeCache.Resolve(clrTypeCache.CoreAssembly.GetType("System.Exception"));
+        Exception = clrTypeCache.ResolveExceptionType();
     }
 }

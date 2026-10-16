@@ -11,8 +11,6 @@ namespace Todl.Compiler.CodeAnalysis;
 
 public sealed class ClrTypeCache
 {
-    private readonly Type exceptionClrType;
-
     public ImmutableArray<Assembly> Assemblies { get; }
     public Assembly CoreAssembly { get; } // the assembly that contains object, bool, int, etc...
 
@@ -63,7 +61,6 @@ public sealed class ClrTypeCache
     {
         Assemblies = assemblies.ToImmutableArray();
         CoreAssembly = coreAssembly;
-        exceptionClrType = coreAssembly.GetType("System.Exception");
         BuiltInTypes = new BuiltInTypes(this);
         // No eager type loading - types resolved on demand
     }
@@ -130,8 +127,14 @@ public sealed class ClrTypeCache
         return typeCache.GetOrAdd(fullName, symbol);
     }
 
+    // BuiltInTypes.Exception is created before any other non-special type is resolved
     private bool IsExceptionClrType(Type type)
-        => exceptionClrType is not null && (type.Equals(exceptionClrType) || type.IsSubclassOf(exceptionClrType));
+        => type.Equals(BuiltInTypes.Exception.ClrType) || type.IsSubclassOf(BuiltInTypes.Exception.ClrType);
+
+    internal ClrTypeSymbol ResolveExceptionType()
+        => typeCache.GetOrAdd(
+            typeof(Exception).FullName,
+            _ => new ClrTypeSymbol(CoreAssembly.GetType(typeof(Exception).FullName), isExceptionType: true));
 
     public ClrTypeSymbol ResolveSpecialType(SpecialType specialType)
     {
