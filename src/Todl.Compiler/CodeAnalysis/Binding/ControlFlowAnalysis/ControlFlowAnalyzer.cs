@@ -39,7 +39,7 @@ internal sealed class ControlFlowAnalyzer : BoundTreeWalker
 
         var endIsReachable = end.Incoming.Any(i => i.From != start);
 
-        if (!endIsReachable || end.Incoming.Any(i => i.From.Reachable && !i.From.IsReturn))
+        if (!endIsReachable || end.Incoming.Any(i => i.IsFallOff && i.From.Reachable))
         {
             diagnosticBuilder.Add(new Diagnostic()
             {

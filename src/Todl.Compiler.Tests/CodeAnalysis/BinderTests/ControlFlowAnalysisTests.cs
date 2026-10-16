@@ -169,6 +169,10 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { let i = 0; while i < 1 { while i < 2 { while i < 3 { break; } } } return i; }")]
     [InlineData("int func() { let i = 0; while i < 10 { break; } return i; }")]
     [InlineData("int func() { let i = 0; while i < 10 : outer { while true : inner { break outer; } i = i + 1; } return i; }")]
+    [InlineData("int func() { try { return 1; } except { return 2; } finally { 1.ToString(); } }")]
+    [InlineData("int func() { let i = 0; while i < 10 { try { break; } finally { i = i + 1; } } return i; }")]
+    [InlineData("int func() { while true { try { try { break; } finally { 1.ToString(); } } finally { 2.ToString(); } } return 1; }")]
+    [InlineData("int func() { try { 1.ToString(); } except { throw; } finally { throw new System::Exception(); } }")]
     public void ControlFlowGraphShouldNotHaveDuplicateEdges(string inputText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
@@ -192,6 +196,10 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { let i = 0; while i < 1 { while i < 2 { while i < 3 { break; } } } return i; }")]
     [InlineData("void func() { if true { } while true { } }")]
     [InlineData("int func() { let i = 0; while i < 10 : outer { while true : inner { break outer; } i = i + 1; } return i; }")]
+    [InlineData("int func() { try { return 1; } except { return 2; } finally { 1.ToString(); } }")]
+    [InlineData("int func() { let i = 0; while i < 10 { try { break; } finally { i = i + 1; } } return i; }")]
+    [InlineData("int func() { while true { try { try { break; } finally { 1.ToString(); } } finally { 2.ToString(); } } return 1; }")]
+    [InlineData("int func() { try { 1.ToString(); } except { throw; } finally { throw new System::Exception(); } }")]
     public void ControlFlowGraphBlocksShouldContainEveryReferencedBlock(string inputText)
     {
         // Every block a Branch points at or from must actually be present in Blocks;
@@ -386,6 +394,139 @@ public sealed class ControlFlowAnalysisTests
         diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
         diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
         diagnostics[0].TextLocation.GetText().Should().Be("return 0;");
+    }
+
+    [Theory]
+    [InlineData("int func() { try { return 1; } except { return 2; } }")]
+    [InlineData("int func() { try { return 1; } except System::FormatException e { return 2; } except { return 3; } }")]
+    [InlineData("int func() { try { return 1; } except { 1.ToString(); } return 2; }")]
+    [InlineData("int func() { try { 1.ToString(); } except { return 2; } return 1; }")]
+    [InlineData("int func() { try { return 1; } except { throw; } }")]
+    [InlineData("int func() { try { 1.ToString(); } except { throw; } return 1; }")]
+    [InlineData("int func() { try { 1.ToString(); } finally { 2.ToString(); } return 1; }")]
+    [InlineData("int func() { try { return 1; } finally { 2.ToString(); } }")]
+    [InlineData("int func() { try { return 1; } except { return 2; } finally { 3.ToString(); } }")]
+    [InlineData("int func() { try { 1.ToString(); } except { return 1; } finally { 2.ToString(); } return 0; }")]
+    [InlineData("int func() { try { try { return 1; } finally { 1.ToString(); } } finally { 2.ToString(); } }")]
+    [InlineData("int func() { try { try { return 1; } except { return 2; } } except { return 3; } }")]
+    [InlineData("int func() { try { try { 1.ToString(); } finally { 2.ToString(); } } except { return 1; } return 0; }")]
+    [InlineData("int func() { while true { try { return 1; } finally { } } }")]
+    [InlineData("int func() { let i = 0; while i < 10 { try { break; } finally { i = i + 1; } } return i; }")]
+    [InlineData("int func() { let i = 0; while i < 10 { try { continue; } finally { i = i + 1; } } return i; }")]
+    [InlineData("int func() { while true { try { break; } finally { 1.ToString(); } } return 1; }")]
+    [InlineData("int func() { while true { try { 1.ToString(); } except { break; } finally { 2.ToString(); } } return 1; }")]
+    [InlineData("int func() { while true { try { try { break; } finally { 1.ToString(); } } finally { 2.ToString(); } } return 1; }")]
+    [InlineData("int func() { let i = 0; while i < 10 : outer { while true { try { break outer; } finally { 1.ToString(); } } } return i; }")]
+    [InlineData("int func() { let i = 0; while i < 10 : outer { while i < 5 { try { continue outer; } finally { i = i + 1; } } } return i; }")]
+    [InlineData("int func() { let i = 0; while i < 10 { try { 1.ToString(); } finally { while i < 5 { i = i + 1; } } } return i; }")]
+    [InlineData("int func() { throw new System::Exception(); }")]
+    [InlineData("int func(int a) { if a == 0 { throw new System::Exception(); } else { return 1; } }")]
+    [InlineData("int func(int a) { if a == 0 { throw new System::Exception(); } return 1; }")]
+    [InlineData("int func() { try { 1.ToString(); } finally { throw new System::Exception(); } }")]
+    [InlineData("int func() { try { return 1; } finally { throw new System::Exception(); } }")]
+    [InlineData("void func() { throw new System::Exception(); }")]
+    [InlineData("void func() { try { throw new System::Exception(); } except { } }")]
+    [InlineData("void func() { try { 1.ToString(); } except { return; } finally { 2.ToString(); } 3.ToString(); }")]
+    [InlineData("int func() { return 1; } except { return 2; }")]
+    [InlineData("int func() { return 1; } finally { 1.ToString(); }")]
+    [InlineData("int func() { return 1; } except System::Exception e { throw; }")]
+    [InlineData("int func() { throw new System::Exception(); } except { return 0; }")]
+    [InlineData("int func(int a) { return a; } except System::FormatException { return 1; } except { return 2; } finally { 1.ToString(); }")]
+    [InlineData("void func() { 1.ToString(); } except { }")]
+    [InlineData("void func() { return; } finally { 1.ToString(); }")]
+    public void TestControlFlowAnalysisWithExceptionHandling(string inputText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("int func() { try { return 1; } except { 1.ToString(); } }")]
+    [InlineData("int func() { try { 1.ToString(); } except { return 1; } }")]
+    [InlineData("int func() { try { } except { return 1; } }")]
+    [InlineData("int func() { try { 1.ToString(); } finally { 2.ToString(); } }")]
+    [InlineData("int func() { while true { try { break; } finally { 1.ToString(); } } }")]
+    [InlineData("int func() { let i = 0; while i < 10 { try { return 1; } finally { 1.ToString(); } } }")]
+    [InlineData("int func() { return 1; } except { 1.ToString(); }")]
+    [InlineData("int func() { 1.ToString(); } finally { 2.ToString(); }")]
+    [InlineData("int func() { return 1; } except System::FormatException { return 2; } except { 3.ToString(); } finally { }")]
+    public void TestControlFlowAnalysisWithExceptionHandlingMissingReturn(string inputText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Count.Should().Be(1);
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.NotAllPathsReturn);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Error);
+    }
+
+    [Theory]
+    [InlineData("int func() { try { return 1; } except { return 2; } return 3; }", "return 3;")]
+    [InlineData("int func() { try { return 1; } finally { 1.ToString(); } return 2; }", "return 2;")]
+    [InlineData("int func() { try { return 1; } except { return 2; } finally { 1.ToString(); } return 3; }", "return 3;")]
+    [InlineData("int func() { try { return 1; } except { throw; } return 2; }", "return 2;")]
+    [InlineData("int func() { try { 1.ToString(); } finally { throw new System::Exception(); } return 1; }", "return 1;")]
+    [InlineData("int func() { try { try { return 1; } finally { 1.ToString(); } } finally { 2.ToString(); } return 3; }", "return 3;")]
+    [InlineData("int func() { while true { try { continue; } finally { } } return 1; }", "return 1;")]
+    [InlineData("int func() { throw new System::Exception(); 1.ToString(); }", "1.ToString();")]
+    [InlineData("int func() { throw new System::Exception(); return 1; }", "return 1;")]
+    [InlineData("void func() { throw new System::Exception(); 1.ToString(); }", "1.ToString();")]
+    [InlineData("void func() { try { return; } finally { 1.ToString(); } 2.ToString(); }", "2.ToString();")]
+    [InlineData("int func() { return 1; try { 1.ToString(); } finally { 2.ToString(); } }", "1.ToString();")]
+    [InlineData("int func() { return 1; try { } except { } }", "try { } except { }")]
+    public void ExceptionHandlingShouldReportUnreachableCodeAtTheDeadStatement(string inputText, string expectedText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(inputText, diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Count.Should().Be(1);
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.UnreachableCode);
+        diagnostics[0].Level.Should().Be(DiagnosticLevel.Warning);
+        diagnostics[0].TextLocation.GetText().Should().Be(expectedText);
+    }
+
+    [Fact]
+    public void ExceptAndFinallyBlocksAreReachableEvenWhenTryBlockNeverCompletes()
+    {
+        // flow analysis ignores which exceptions can be thrown, so handlers stay live
+        // even when the protected block loops forever or always returns
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(
+            "int func() { try { while true { } } except { return 1; } finally { 1.ToString(); } }",
+            diagnosticBuilder);
+        diagnosticBuilder.Build().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void JumpsFromUnreachableCodeShouldNotRouteThroughFinallyBlocks()
+    {
+        // the dead `break` must not make the loop exit reachable through the finally block
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(
+            "int func() { while true { try { return 1; break; } finally { 1.ToString(); } } return 2; }",
+            diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Should().OnlyContain(d => d.ErrorCode == ErrorCode.UnreachableCode && d.Level == DiagnosticLevel.Warning);
+        diagnostics.Select(d => d.TextLocation.GetText()).Should().BeEquivalentTo(new[] { "break;", "return 2;" });
+    }
+
+    [Fact]
+    public void ReturnThroughFinallyShouldNotCompleteTheTryStatement()
+    {
+        // only the except block completes normally, so the statement after the try is live
+        // while the return in the try block still routes through the finally block
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        BindMemberAndAnalyze<BoundFunctionMember>(
+            "int func() { try { return 1; } except { 1.ToString(); } finally { 2.ToString(); } 3.ToString(); }",
+            diagnosticBuilder);
+        var diagnostics = diagnosticBuilder.Build().ToList();
+
+        diagnostics.Count.Should().Be(1);
+        diagnostics[0].ErrorCode.Should().Be(ErrorCode.NotAllPathsReturn);
     }
 
     private static TBoundMember BindMemberAndAnalyze<TBoundMember>(string inputText, DiagnosticBag.Builder diagnosticBuilder) where TBoundMember : BoundMember

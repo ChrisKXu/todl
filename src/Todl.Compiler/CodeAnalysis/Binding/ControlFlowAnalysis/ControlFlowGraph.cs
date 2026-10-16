@@ -28,8 +28,11 @@ internal sealed class ControlFlowGraph
         private readonly BasicBlock startBlock = new();
         private readonly BasicBlock endBlock = new();
 
-        // this helps to keep track of header and exit blocks for a given loop
-        private readonly Dictionary<BoundLoopContext, (BasicBlock Header, BasicBlock Exit)> loopBlocks = new();
+        // this helps to keep track of header and exit blocks for a given loop, and how many finally regions were active when the loop was entered
+        private readonly Dictionary<BoundLoopContext, (BasicBlock Header, BasicBlock Exit, int FinallyDepth)> loopBlocks = new();
+
+        // finally blocks of the try statements being visited, innermost last
+        private readonly List<FinallyRegion> finallyRegions = new();
 
         private BasicBlock current = new();
 
@@ -46,9 +49,141 @@ internal sealed class ControlFlowGraph
         public override BoundNode VisitBoundReturnStatement(BoundReturnStatement boundReturnStatement)
         {
             current.Statements.Add(boundReturnStatement);
-            StartNewBlock(endBlock);
+            Jump(endBlock, finallyDepth: 0);
 
             return boundReturnStatement;
+        }
+
+        // Like return, a throw leaves the function as far as this graph is concerned; the except blocks of
+        // an enclosing try are already reachable from the try entry.
+        public override BoundNode VisitBoundThrowStatement(BoundThrowStatement boundThrowStatement)
+        {
+            current.Statements.Add(boundThrowStatement);
+            Jump(endBlock, finallyDepth: 0);
+
+            return boundThrowStatement;
+        }
+
+        public override BoundNode VisitBoundTryStatement(BoundTryStatement boundTryStatement)
+        {
+            // Closed off as its own block so the except and finally edges leave from the try entry.
+            var begin = current;
+            if (!begin.Statements.Any())
+            {
+                begin.Statements.Add(new BoundNoOpStatement());
+            }
+            begin.OriginatingStatement = boundTryStatement;
+            blocks.Add(begin);
+
+            var after = new BasicBlock();
+            FinallyRegion region = null;
+            if (boundTryStatement.FinallyBlock is not null)
+            {
+                region = new FinallyRegion();
+                finallyRegions.Add(region);
+
+                // Any point in the try statement may throw, so the finally block is always reachable.
+                // The exception may keep propagating, but only through enclosing finally blocks.
+                RouteThroughFinally(begin, ActiveFinallyRegions(finallyDepth: 0), target: null);
+            }
+
+            var normalEnds = new List<BasicBlock> { VisitBranch(boundTryStatement.Body, begin, connect: true) };
+            foreach (var exceptClause in boundTryStatement.ExceptClauses)
+            {
+                normalEnds.Add(VisitBranch(exceptClause.Body, begin, connect: true));
+            }
+
+            if (region is not null)
+            {
+                finallyRegions.RemoveAt(finallyRegions.Count - 1);
+            }
+
+            foreach (var end in normalEnds.Where(end => end.Incoming.Any() && !end.IsTerminal))
+            {
+                if (region is null)
+                {
+                    Connect(end, after);
+                }
+                else
+                {
+                    RouteThroughFinally(end, new[] { region }, after);
+                }
+            }
+
+            if (region is not null)
+            {
+                VisitFinallyBlock(boundTryStatement.FinallyBlock, region);
+            }
+
+            current = after;
+
+            return boundTryStatement;
+        }
+
+        private void VisitFinallyBlock(BoundBlockStatement finallyBlock, FinallyRegion region)
+        {
+            current = region.Entry;
+            Visit(finallyBlock);
+
+            var finallyEnd = current;
+            if (!ShouldPreserve(finallyEnd))
+            {
+                return;
+            }
+
+            blocks.Add(finallyEnd);
+            if (!finallyEnd.Incoming.Any() || finallyEnd.IsTerminal)
+            {
+                return;
+            }
+
+            // Past the finally block, each pending jump continues towards its own destination,
+            // but only if some jump that goes there is itself reachable.
+            foreach (var jumpsToTarget in region.Jumps.GroupBy(jump => jump.Next))
+            {
+                var branch = Connect(finallyEnd, jumpsToTarget.Key);
+                branch.Guards.AddRange(jumpsToTarget.Select(jump => jump.Source).Distinct());
+            }
+        }
+
+        // Innermost first, covering the finally regions entered at or after finallyDepth.
+        private List<FinallyRegion> ActiveFinallyRegions(int finallyDepth)
+        {
+            var regions = finallyRegions.Skip(finallyDepth).ToList();
+            regions.Reverse();
+            return regions;
+        }
+
+        // Sends source through each finally region in turn and on to target, which is null
+        // for an exception that is not known to reach anything beyond the regions.
+        private void RouteThroughFinally(BasicBlock source, IReadOnlyList<FinallyRegion> regions, BasicBlock target)
+        {
+            if (regions.Count == 0)
+            {
+                if (target is not null)
+                {
+                    Connect(source, target);
+                }
+
+                return;
+            }
+
+            Connect(source, regions[0].Entry);
+            for (var i = 0; i < regions.Count; i++)
+            {
+                var next = i + 1 < regions.Count ? regions[i + 1].Entry : target;
+                if (next is not null)
+                {
+                    regions[i].Jumps.Add((source, next));
+                }
+            }
+        }
+
+        // Ends the current block with a jump to target, running the finally blocks entered at or after finallyDepth first.
+        private void Jump(BasicBlock target, int finallyDepth)
+        {
+            RouteThroughFinally(current, ActiveFinallyRegions(finallyDepth), target);
+            FlushCurrentBlock();
         }
 
         public override BoundNode VisitBoundVariableDeclarationStatement(BoundVariableDeclarationStatement boundVariableDeclarationStatement)
@@ -89,7 +224,7 @@ internal sealed class ControlFlowGraph
             var alternativeEnd = VisitBranch(boundConditionalStatement.Alternative, begin, constantCondition != true);
 
             // Merge block - only connect branches with live, non-terminal flow. The merge
-            // is kept even if it stays empty here: StartNewBlock/Build preserve any block
+            // is kept even if it stays empty here: FlushCurrentBlock/Build preserve any block
             // that already has an incoming edge instead of silently dropping it.
             current = new BasicBlock();
             ConnectToMerge(consequenceEnd, current);
@@ -161,7 +296,7 @@ internal sealed class ControlFlowGraph
 
             // Registered before visiting the body so nested break/continue statements -
             // including ones belonging to this exact loop - resolve correctly.
-            loopBlocks[boundLoopStatement.BoundLoopContext] = (header, exit);
+            loopBlocks[boundLoopStatement.BoundLoopContext] = (header, exit, finallyRegions.Count);
 
             current = new BasicBlock();
             if (constantCondition != false)
@@ -199,8 +334,8 @@ internal sealed class ControlFlowGraph
                 return boundBreakStatement;
             }
 
-            var (_, exit) = loopBlocks[boundBreakStatement.BoundLoopContext];
-            StartNewBlock(exit);
+            var (_, exit, finallyDepth) = loopBlocks[boundBreakStatement.BoundLoopContext];
+            Jump(exit, finallyDepth);
 
             return boundBreakStatement;
         }
@@ -215,13 +350,10 @@ internal sealed class ControlFlowGraph
                 return boundContinueStatement;
             }
 
-            var (header, _) = loopBlocks[boundContinueStatement.BoundLoopContext];
+            var (header, _, finallyDepth) = loopBlocks[boundContinueStatement.BoundLoopContext];
 
-            // continue re-checks the condition, so it targets the header directly - not the
-            // loop's exit. FlushCurrentBlock (unlike StartNewBlock) adds no implicit edge,
-            // since the edge above is already the block's one and only outgoing edge.
-            Connect(current, header);
-            FlushCurrentBlock();
+            // continue re-checks the condition, so it targets the header directly - not the loop's exit.
+            Jump(header, finallyDepth);
 
             return boundContinueStatement;
         }
@@ -272,44 +404,24 @@ internal sealed class ControlFlowGraph
         private static bool HasRealStatement(BasicBlock block)
             => block.Statements.Any(statement => statement is not BoundNoOpStatement);
 
-        private void Connect(BasicBlock from, BasicBlock to)
+        private BasicBlockBranch Connect(BasicBlock from, BasicBlock to, bool isFallOff = false)
         {
             if (from == to)
             {
-                return;
+                return null;
             }
 
-            var branch = new BasicBlockBranch(from, to);
+            var branch = new BasicBlockBranch(from, to) { IsFallOff = isFallOff };
             branches.Add(branch);
             from.Outgoing.Add(branch);
             to.Incoming.Add(branch);
-        }
 
-        private void StartNewBlock(BasicBlock end)
-        {
-            if (!ShouldPreserve(current))
-            {
-                return;
-            }
-
-            blocks.Add(current);
-            var next = new BasicBlock();
-
-            if (current.IsTerminal)
-            {
-                Connect(current, end);
-            }
-            else
-            {
-                Connect(current, next);
-            }
-
-            current = next;
+            return branch;
         }
 
         /// <summary>
         /// Flushes `current` into the graph without adding an implicit outgoing edge, for
-        /// statements (namely `continue`) that already wired their own outgoing edge.
+        /// statements (return, break, continue, throw) that already wired their own outgoing edge.
         /// </summary>
         private void FlushCurrentBlock()
         {
@@ -324,6 +436,9 @@ internal sealed class ControlFlowGraph
 
         public ControlFlowGraph Build()
         {
+            // Only the block still being filled can run off the end of the function.
+            var fallsOff = ShouldPreserve(current) && !current.IsTerminal;
+
             if (blocks.LastOrDefault() != current && ShouldPreserve(current))
             {
                 blocks.Add(current);
@@ -334,9 +449,9 @@ internal sealed class ControlFlowGraph
 
             Connect(startBlock, blocks[1]);
 
-            if (blocks.Count > 2 && !blocks[^2].IsTerminal)
+            if (fallsOff)
             {
-                Connect(blocks[^2], endBlock);
+                Connect(current, endBlock, isFallOff: true);
             }
 
             ComputeReachability();
@@ -354,20 +469,40 @@ internal sealed class ControlFlowGraph
             var stack = new Stack<BasicBlock>();
             stack.Push(startBlock);
 
+            // A guarded edge may only become usable after its source was visited, so repeat until nothing new is reached.
             while (stack.Count > 0)
             {
-                var block = stack.Pop();
-                if (block.Reachable)
+                while (stack.Count > 0)
                 {
-                    continue;
+                    var block = stack.Pop();
+                    if (block.Reachable)
+                    {
+                        continue;
+                    }
+
+                    block.Reachable = true;
+                    foreach (var branch in block.Outgoing.Where(IsTraversable))
+                    {
+                        stack.Push(branch.To);
+                    }
                 }
 
-                block.Reachable = true;
-                foreach (var branch in block.Outgoing)
+                foreach (var branch in branches.Where(branch => branch.Guards.Count > 0 && branch.From.Reachable && !branch.To.Reachable && IsTraversable(branch)))
                 {
                     stack.Push(branch.To);
                 }
             }
+        }
+
+        private static bool IsTraversable(BasicBlockBranch branch)
+            => branch.Guards.Count == 0 || branch.Guards.Any(guard => guard.Reachable);
+
+        private sealed class FinallyRegion
+        {
+            public BasicBlock Entry { get; } = new();
+
+            // Each jump into the region and the block it continues to once the finally block completes.
+            public List<(BasicBlock Source, BasicBlock Next)> Jumps { get; } = new();
         }
     }
 
@@ -390,20 +525,9 @@ internal sealed class ControlFlowGraph
 
                 var last = Statements[^1];
                 return last is BoundReturnStatement
+                    || last is BoundThrowStatement
                     || last is BoundBreakStatement
                     || last is BoundContinueStatement;
-            }
-        }
-
-        public bool IsReturn
-        {
-            get
-            {
-                if (!Statements.Any())
-                    return false;
-
-                var last = Statements[^1];
-                return last is BoundReturnStatement;
             }
         }
 
@@ -421,5 +545,12 @@ internal sealed class ControlFlowGraph
     }
 
     [DebuggerDisplay("{From} ==> {To}")]
-    internal sealed record BasicBlockBranch(BasicBlock From, BasicBlock To);
+    internal sealed record BasicBlockBranch(BasicBlock From, BasicBlock To)
+    {
+        // Reaching the end block by running off the end of the function, rather than via return or throw.
+        public bool IsFallOff { get; init; }
+
+        // When present, the edge is only taken if one of these blocks is reachable: a jump routed through a shared finally block.
+        public List<BasicBlock> Guards { get; } = new();
+    }
 }
