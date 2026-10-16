@@ -434,6 +434,9 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func(int a) { return a; } except System::FormatException { return 1; } except { return 2; } finally { 1.ToString(); }")]
     [InlineData("void func() { 1.ToString(); } except { }")]
     [InlineData("void func() { return; } finally { 1.ToString(); }")]
+    [InlineData("void func() { throw new System::Exception(); } except { throw; }")]
+    [InlineData("int func() { let i = 0; while i < 10 { i = i + 1; if i == 5 { break; } } return i; } finally { 1.ToString(); }")]
+    [InlineData("int func() { return 1; } finally { let i = 0; while i < 3 { i = i + 1; continue; } }")]
     public void TestControlFlowAnalysisWithExceptionHandling(string inputText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
@@ -449,6 +452,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("int func() { while true { try { break; } finally { 1.ToString(); } } }")]
     [InlineData("int func() { let i = 0; while i < 10 { try { return 1; } finally { 1.ToString(); } } }")]
     [InlineData("int func() { return 1; } except { 1.ToString(); }")]
+    [InlineData("int func() { 1.ToString(); } except { return 1; }")]
     [InlineData("int func() { 1.ToString(); } finally { 2.ToString(); }")]
     [InlineData("int func() { return 1; } except System::FormatException { return 2; } except { 3.ToString(); } finally { }")]
     public void TestControlFlowAnalysisWithExceptionHandlingMissingReturn(string inputText)
@@ -476,6 +480,7 @@ public sealed class ControlFlowAnalysisTests
     [InlineData("void func() { try { return; } finally { 1.ToString(); } 2.ToString(); }", "2.ToString();")]
     [InlineData("int func() { return 1; try { 1.ToString(); } finally { 2.ToString(); } }", "1.ToString();")]
     [InlineData("int func() { return 1; try { } except { } }", "try { } except { }")]
+    [InlineData("int func() { return 1; } except { return 2; 3.ToString(); }", "3.ToString();")]
     public void ExceptionHandlingShouldReportUnreachableCodeAtTheDeadStatement(string inputText, string expectedText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
