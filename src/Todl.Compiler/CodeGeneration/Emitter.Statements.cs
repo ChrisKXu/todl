@@ -21,8 +21,7 @@ internal partial class Emitter
         private Instruction returnEpilogue;
         private VariableDefinition returnLocal;
 
-        // Both bracket the emission of a protected region's contents so that jumps
-        // leaving the region are emitted as `leave` rather than `br`.
+        // jumps leaving a protected region are emitted as `leave` rather than `br`
         private void EnterProtectedRegion() => protectedRegionDepth++;
         private void ExitProtectedRegion() => protectedRegionDepth--;
 
@@ -233,8 +232,7 @@ internal partial class Emitter
             ILProcessor.Emit(OpCodes.Throw);
         }
 
-        // CLR regions cannot have both catch and finally handlers, so try/except/finally is
-        // a try/except region nested inside a try/finally region.
+        // a CLR region cannot have both catch and finally handlers, so nest try/except inside try/finally
         private void EmitTryStatement(BoundTryStatement boundTryStatement)
         {
             if (boundTryStatement.FinallyBlock is null)
@@ -269,7 +267,7 @@ internal partial class Emitter
             });
         }
 
-        // Without except clauses the body is emitted as is: the enclosing finally region protects it.
+        // without except clauses the enclosing finally region protects the body
         private void EmitTryExcept(BoundTryStatement boundTryStatement)
         {
             if (boundTryStatement.ExceptClauses.IsEmpty)
@@ -307,8 +305,7 @@ internal partial class Emitter
 
             ILProcessor.Append(endLabel);
 
-            // Added after the clause bodies are emitted so that handlers of try statements
-            // nested inside them precede these in the table, as the CLR requires.
+            // added last so handlers of nested try statements precede these, as the CLR requires
             for (var i = 0; i < handlers.Count; i++)
             {
                 ILProcessor.Body.ExceptionHandlers.Add(new ExceptionHandler(ExceptionHandlerType.Catch)
@@ -322,7 +319,7 @@ internal partial class Emitter
             }
         }
 
-        // The exception is on the stack at handler entry.
+        // the exception is on the stack at handler entry
         private void EmitExceptionStore(BoundExceptClause exceptClause, TypeReference catchType)
         {
             if (exceptClause.ExceptionVariable is null)

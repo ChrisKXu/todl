@@ -1,8 +1,10 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.ExecutionTests;
@@ -641,7 +643,8 @@ public sealed class TryStatementTests
 
     private static void RunProgram(string source, Action<Assembly> action)
     {
-        var (assemblyDefinition, _) = TestUtils.Compile(SourceText.FromString(source));
+        var (assemblyDefinition, diagnostics) = TestUtils.Compile(SourceText.FromString(source));
+        diagnostics.Where(d => d.Level == DiagnosticLevel.Error).Should().BeEmpty();
         assemblyDefinition.Should().NotBeNull();
         TestUtils.RunAssembly(assemblyDefinition, action);
     }
