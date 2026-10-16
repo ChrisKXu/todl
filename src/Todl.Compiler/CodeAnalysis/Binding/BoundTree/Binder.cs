@@ -34,8 +34,8 @@ public partial class Binder
     public virtual BoundLoopContext BoundLoopContext
         => Parent?.BoundLoopContext;
 
-    public virtual BoundJumpContext JumpContext
-        => Parent?.JumpContext ?? BoundJumpContext.Empty;
+    public virtual BoundExceptionContext ExceptionContext
+        => Parent?.ExceptionContext ?? BoundExceptionContext.Empty;
 
     public virtual DiagnosticBag.Builder DiagnosticBuilder
         => Parent?.DiagnosticBuilder;
@@ -110,8 +110,8 @@ public partial class Binder
         };
     }
 
-    private Binder CreateJumpContextBinder(BoundJumpContext jumpContext)
-        => new JumpContextBinder(jumpContext)
+    private Binder CreateExceptionContextBinder(BoundExceptionContext exceptionContext)
+        => new ExceptionContextBinder(exceptionContext)
         {
             Parent = this,
             Scope = Scope.CreateChildScope(BoundScopeKind.BlockStatement)
@@ -186,7 +186,7 @@ public partial class Binder
 
     private BoundLoopContext ValidateJumpTarget(BoundLoopContext target, TextLocation statementTextLocation)
     {
-        if (JumpContext.ExitsFinally(target))
+        if (ExceptionContext.ExitsFinally(target))
         {
             ReportDiagnostic(new Diagnostic()
             {
@@ -251,17 +251,17 @@ public partial class Binder
         public override FunctionSymbol FunctionSymbol { get; }
 
         // a function never inherits except/finally state from where it is declared
-        public override BoundJumpContext JumpContext { get; } = BoundJumpContext.Empty;
+        public override BoundExceptionContext ExceptionContext { get; } = BoundExceptionContext.Empty;
     }
 
-    internal sealed class JumpContextBinder : Binder
+    internal sealed class ExceptionContextBinder : Binder
     {
-        internal JumpContextBinder(BoundJumpContext jumpContext)
+        internal ExceptionContextBinder(BoundExceptionContext exceptionContext)
         {
-            JumpContext = jumpContext;
+            ExceptionContext = exceptionContext;
         }
 
-        public override BoundJumpContext JumpContext { get; }
+        public override BoundExceptionContext ExceptionContext { get; }
     }
 
     internal sealed partial class LoopBinder : Binder

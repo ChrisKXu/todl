@@ -46,6 +46,9 @@ public sealed class ClrTypeSymbol : TypeSymbol
     public bool DerivesFrom(ClrTypeSymbol baseType)
         => baseType is not null && ClrType.IsSubclassOf(baseType.ClrType);
 
+    public override bool IsExceptionType(BuiltInTypes builtInTypes)
+        => Equals(builtInTypes.Exception) || DerivesFrom(builtInTypes.Exception);
+
     public MemberInfo ResolveMember(ReadOnlyMemory<char> name)
     {
         return ClrType.GetMember(name.ToString()).FirstOrDefault();

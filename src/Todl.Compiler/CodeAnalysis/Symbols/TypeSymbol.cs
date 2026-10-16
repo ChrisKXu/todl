@@ -15,6 +15,11 @@ public abstract class TypeSymbol : Symbol
     public abstract SpecialType SpecialType { get; }
 
     public abstract bool IsReferenceType { get; }
+
+    /// <summary>
+    /// Whether the type is <c>System.Exception</c> or derives from it.
+    /// </summary>
+    public abstract bool IsExceptionType(BuiltInTypes builtInTypes);
 }
 
 public enum SpecialType

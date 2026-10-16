@@ -49,7 +49,7 @@ public partial class Binder
             });
         }
 
-        if (JumpContext.InFinally)
+        if (ExceptionContext.InFinally)
         {
             ReportDiagnostic(new Diagnostic()
             {

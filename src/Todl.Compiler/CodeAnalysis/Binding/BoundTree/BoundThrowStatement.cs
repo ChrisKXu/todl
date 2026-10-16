@@ -22,7 +22,7 @@ public partial class Binder
 
         if (throwStatement.IsRethrow)
         {
-            if (!JumpContext.InExceptBlock)
+            if (!ExceptionContext.InExceptBlock)
             {
                 ReportDiagnostic(new Diagnostic()
                 {
@@ -41,7 +41,7 @@ public partial class Binder
             {
                 ReportNotAnExceptionType("The operand of a throw statement must be a value.", throwStatement.Expression);
             }
-            else if (expression.ResultType is not null && !ClrTypeCache.IsExceptionType(expression.ResultType))
+            else if (expression.ResultType is not null && !expression.ResultType.IsExceptionType(ClrTypeCache.BuiltInTypes))
             {
                 ReportNotAnExceptionType(
                     $"The operand of a throw statement must be of an exception type but is of type {expression.ResultType}.",

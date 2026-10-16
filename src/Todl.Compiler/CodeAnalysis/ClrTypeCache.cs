@@ -16,7 +16,6 @@ public sealed class ClrTypeCache
 
     public BuiltInTypes BuiltInTypes { get; }
 
-    private readonly Lazy<ClrTypeSymbol> exceptionType;
 
     // Lazy cache: full type name -> ClrTypeSymbol
     private readonly ConcurrentDictionary<string, ClrTypeSymbol> typeCache = new();
@@ -63,7 +62,6 @@ public sealed class ClrTypeCache
         Assemblies = assemblies.ToImmutableArray();
         CoreAssembly = coreAssembly;
         BuiltInTypes = new BuiltInTypes(this);
-        exceptionType = new(() => Resolve(CoreAssembly.GetType("System.Exception")));
         // No eager type loading - types resolved on demand
     }
 
@@ -128,13 +126,6 @@ public sealed class ClrTypeCache
         var symbol = new ClrTypeSymbol(type);
         return typeCache.GetOrAdd(fullName, symbol);
     }
-
-    /// <summary>
-    /// Whether the type is <c>System.Exception</c> (as declared by the core assembly) or derives from it.
-    /// </summary>
-    public bool IsExceptionType(TypeSymbol type)
-        => type is ClrTypeSymbol clrType
-        && (clrType.Equals(exceptionType.Value) || clrType.DerivesFrom(exceptionType.Value));
 
     public ClrTypeSymbol ResolveSpecialType(SpecialType specialType)
     {

@@ -27,7 +27,7 @@ public partial class Binder
         bool isLast)
     {
         // the exception variable's declaration space encloses the except block's own
-        var clauseBinder = CreateJumpContextBinder(JumpContext.EnterExceptBlock());
+        var clauseBinder = CreateExceptionContextBinder(ExceptionContext.EnterExceptBlock());
         TypeSymbol exceptionType = null;
         ExceptionVariableSymbol exceptionVariable = null;
 
@@ -82,7 +82,7 @@ public partial class Binder
             return null;
         }
 
-        if (!ClrTypeCache.IsExceptionType(type))
+        if (!type.IsExceptionType(ClrTypeCache.BuiltInTypes))
         {
             ReportNotAnExceptionType($"Type {type} is not an exception type.", typeExpression);
             return type;

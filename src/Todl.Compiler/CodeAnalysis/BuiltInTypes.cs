@@ -16,6 +16,7 @@ public sealed class BuiltInTypes
     public readonly ClrTypeSymbol Void;
     public readonly ClrTypeSymbol Object;
     public readonly ClrTypeSymbol String;
+    public readonly ClrTypeSymbol Exception;
 
     internal BuiltInTypes(ClrTypeCache clrTypeCache)
     {
@@ -31,5 +32,6 @@ public sealed class BuiltInTypes
         Void = clrTypeCache.ResolveSpecialType(SpecialType.ClrVoid);
         Object = clrTypeCache.ResolveSpecialType(SpecialType.ClrObject);
         String = clrTypeCache.ResolveSpecialType(SpecialType.ClrString);
+        Exception = clrTypeCache.Resolve(clrTypeCache.CoreAssembly.GetType("System.Exception"));
     }
 }

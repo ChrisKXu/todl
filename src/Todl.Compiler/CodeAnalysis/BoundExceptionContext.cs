@@ -6,9 +6,9 @@ namespace Todl.Compiler.CodeAnalysis;
 /// (for return, break and continue). It is function-scoped: a binder that starts a new
 /// function-like body supplies a fresh <see cref="Empty"/> context.
 /// </summary>
-public sealed class BoundJumpContext
+public sealed class BoundExceptionContext
 {
-    public static readonly BoundJumpContext Empty = new();
+    public static readonly BoundExceptionContext Empty = new();
 
     /// <summary>True when a rethrow is permitted: inside an except block, and not in a finally block nested in it.</summary>
     public bool InExceptBlock { get; private init; }
@@ -19,7 +19,7 @@ public sealed class BoundJumpContext
     /// <summary>The loop context that was in effect where the innermost finally block begins.</summary>
     public BoundLoopContext FinallyLoopContext { get; private init; }
 
-    public BoundJumpContext EnterExceptBlock()
+    public BoundExceptionContext EnterExceptBlock()
         => new()
         {
             InExceptBlock = true,
@@ -27,7 +27,7 @@ public sealed class BoundJumpContext
             FinallyLoopContext = FinallyLoopContext
         };
 
-    public BoundJumpContext EnterFinallyBlock(BoundLoopContext currentLoopContext)
+    public BoundExceptionContext EnterFinallyBlock(BoundLoopContext currentLoopContext)
         => new()
         {
             InExceptBlock = false,

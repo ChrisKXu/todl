@@ -44,7 +44,7 @@ public partial class Binder
         BoundBlockStatement finallyBlock = null;
         if (finallyClause is not null)
         {
-            finallyBlock = CreateJumpContextBinder(JumpContext.EnterFinallyBlock(BoundLoopContext))
+            finallyBlock = CreateExceptionContextBinder(ExceptionContext.EnterFinallyBlock(BoundLoopContext))
                 .BindBlockStatementInScope(finallyClause.BlockStatement);
         }
 
