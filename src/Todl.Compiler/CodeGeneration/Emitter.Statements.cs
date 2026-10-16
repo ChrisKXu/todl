@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Todl.Compiler.CodeAnalysis;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
@@ -20,10 +21,10 @@ internal partial class Emitter
         private Instruction returnEpilogue;
         private VariableDefinition returnLocal;
 
-        // Both must bracket the emission of a protected region's contents so that jumps
+        // Both bracket the emission of a protected region's contents so that jumps
         // leaving the region are emitted as `leave` rather than `br`.
-        internal void EnterProtectedRegion() => protectedRegionDepth++;
-        internal void ExitProtectedRegion() => protectedRegionDepth--;
+        private void EnterProtectedRegion() => protectedRegionDepth++;
+        private void ExitProtectedRegion() => protectedRegionDepth--;
 
         // Returns jump to the epilogue (which is outside every region) instead of emitting `ret`
         // inline. Without an epilogue (statement-only emission) `ret` is emitted directly.
@@ -77,6 +78,12 @@ internal partial class Emitter
                     return;
                 case BoundContinueStatement boundContinueStatement:
                     EmitContinueStatement(boundContinueStatement);
+                    return;
+                case BoundTryStatement boundTryStatement:
+                    EmitTryStatement(boundTryStatement);
+                    return;
+                case BoundThrowStatement boundThrowStatement:
+                    EmitThrowStatement(boundThrowStatement);
                     return;
                 case BoundNoOpStatement:
                     return;
@@ -212,6 +219,123 @@ internal partial class Emitter
 
             var (continueTarget, _, depth) = loopTargets[boundContinueStatement.BoundLoopContext];
             EmitJump(continueTarget, depth);
+        }
+
+        private void EmitThrowStatement(BoundThrowStatement boundThrowStatement)
+        {
+            if (boundThrowStatement.IsRethrow)
+            {
+                ILProcessor.Emit(OpCodes.Rethrow);
+                return;
+            }
+
+            EmitExpression(boundThrowStatement.Expression);
+            ILProcessor.Emit(OpCodes.Throw);
+        }
+
+        // CLR regions cannot have both catch and finally handlers, so try/except/finally is
+        // a try/except region nested inside a try/finally region.
+        private void EmitTryStatement(BoundTryStatement boundTryStatement)
+        {
+            if (boundTryStatement.FinallyBlock is null)
+            {
+                EmitTryExcept(boundTryStatement);
+                return;
+            }
+
+            var tryStart = ILProcessor.Create(OpCodes.Nop);
+            var finallyStart = ILProcessor.Create(OpCodes.Nop);
+            var endLabel = ILProcessor.Create(OpCodes.Nop);
+
+            ILProcessor.Append(tryStart);
+            EnterProtectedRegion();
+            EmitTryExcept(boundTryStatement);
+            ExitProtectedRegion();
+            ILProcessor.Emit(OpCodes.Leave, endLabel);
+
+            ILProcessor.Append(finallyStart);
+            EnterProtectedRegion();
+            EmitStatement(boundTryStatement.FinallyBlock);
+            ExitProtectedRegion();
+            ILProcessor.Emit(OpCodes.Endfinally);
+            ILProcessor.Append(endLabel);
+
+            ILProcessor.Body.ExceptionHandlers.Add(new ExceptionHandler(ExceptionHandlerType.Finally)
+            {
+                TryStart = tryStart,
+                TryEnd = finallyStart,
+                HandlerStart = finallyStart,
+                HandlerEnd = endLabel
+            });
+        }
+
+        // Without except clauses the body is emitted as is: the enclosing finally region protects it.
+        private void EmitTryExcept(BoundTryStatement boundTryStatement)
+        {
+            if (boundTryStatement.ExceptClauses.IsEmpty)
+            {
+                EmitStatement(boundTryStatement.Body);
+                return;
+            }
+
+            var tryStart = ILProcessor.Create(OpCodes.Nop);
+            var endLabel = ILProcessor.Create(OpCodes.Nop);
+
+            ILProcessor.Append(tryStart);
+            EnterProtectedRegion();
+            EmitStatement(boundTryStatement.Body);
+            ExitProtectedRegion();
+            ILProcessor.Emit(OpCodes.Leave, endLabel);
+
+            var handlers = new List<(TypeReference CatchType, Instruction Start)>();
+            foreach (var exceptClause in boundTryStatement.ExceptClauses)
+            {
+                var catchType = exceptClause.ExceptionType is ClrTypeSymbol clrTypeSymbol
+                    ? ResolveTypeReference(clrTypeSymbol)
+                    : AssemblyDefinition.MainModule.TypeSystem.Object;
+
+                var handlerStart = ILProcessor.Create(OpCodes.Nop);
+                ILProcessor.Append(handlerStart);
+                handlers.Add((catchType, handlerStart));
+
+                EmitExceptionStore(exceptClause, catchType);
+                EnterProtectedRegion();
+                EmitStatement(exceptClause.Body);
+                ExitProtectedRegion();
+                ILProcessor.Emit(OpCodes.Leave, endLabel);
+            }
+
+            ILProcessor.Append(endLabel);
+
+            // Added after the clause bodies are emitted so that handlers of try statements
+            // nested inside them precede these in the table, as the CLR requires.
+            for (var i = 0; i < handlers.Count; i++)
+            {
+                ILProcessor.Body.ExceptionHandlers.Add(new ExceptionHandler(ExceptionHandlerType.Catch)
+                {
+                    CatchType = handlers[i].CatchType,
+                    TryStart = tryStart,
+                    TryEnd = handlers[0].Start,
+                    HandlerStart = handlers[i].Start,
+                    HandlerEnd = i + 1 < handlers.Count ? handlers[i + 1].Start : endLabel
+                });
+            }
+        }
+
+        // The exception is on the stack at handler entry.
+        private void EmitExceptionStore(BoundExceptClause exceptClause, TypeReference catchType)
+        {
+            if (exceptClause.ExceptionVariable is null)
+            {
+                ILProcessor.Emit(OpCodes.Pop);
+                return;
+            }
+
+            ILProcessor.Body.InitLocals = true;
+            var variableDefinition = new VariableDefinition(catchType);
+            ILProcessor.Body.Variables.Add(variableDefinition);
+            Variables[exceptClause.ExceptionVariable] = variableDefinition;
+            EmitLocalStore(variableDefinition);
         }
     }
 }

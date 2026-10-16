@@ -175,8 +175,8 @@ internal partial class Emitter
         {
             switch ((baseExpression as BoundVariableExpression)?.Variable)
             {
-                case LocalVariableSymbol localVariableSymbol:
-                    EmitLocalAddress(localVariableSymbol);
+                case (LocalVariableSymbol or ExceptionVariableSymbol) and var variableSymbol:
+                    EmitLocalAddress(variableSymbol);
                     return;
                 case ParameterSymbol parameterSymbol:
                     EmitParameterAddress(parameterSymbol);
@@ -294,15 +294,15 @@ internal partial class Emitter
                     var parameterDefinition = ILProcessor.Body.Method.Parameters.FirstOrDefault(p => p.Name.Equals(parameter.Name));
                     ILProcessor.Emit(OpCodes.Ldarg, parameterDefinition);
                     break;
-                case LocalVariableSymbol localVariable:
-                    EmitLocalLoad(localVariable);
+                case LocalVariableSymbol or ExceptionVariableSymbol:
+                    EmitLocalLoad(boundVariableExpression.Variable);
                     break;
                 default:
                     throw new NotSupportedException($"{boundVariableExpression.Variable} is not supported");
             }
         }
 
-        private void EmitLocalLoad(LocalVariableSymbol localVariableSymbol)
+        private void EmitLocalLoad(VariableSymbol localVariableSymbol)
         {
             var variableDefinition = Variables[localVariableSymbol];
 
@@ -329,7 +329,7 @@ internal partial class Emitter
             }
         }
 
-        private void EmitLocalAddress(LocalVariableSymbol localVariableSymbol)
+        private void EmitLocalAddress(VariableSymbol localVariableSymbol)
         {
             if (localVariableSymbol.Type.IsReferenceType)
             {
@@ -484,8 +484,8 @@ internal partial class Emitter
                 case BoundVariableExpression boundVariableExpression:
                     switch (boundVariableExpression.Variable)
                     {
-                        case LocalVariableSymbol localVariableSymbol:
-                            EmitLocalStore(Variables[localVariableSymbol]);
+                        case LocalVariableSymbol or ExceptionVariableSymbol:
+                            EmitLocalStore(Variables[boundVariableExpression.Variable]);
                             break;
                         case ParameterSymbol parameterSymbol:
                             EmitArgStore(Parameters[parameterSymbol]);
