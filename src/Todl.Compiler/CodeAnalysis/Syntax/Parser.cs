@@ -210,7 +210,7 @@ public sealed partial class Parser
     // ++/-- are lexed only to report this diagnostic; callers drop the operator and keep the operand.
     private void ReportUnsupportedIncrementDecrement(SyntaxNode node, SyntaxToken operatorToken)
     {
-        var suggestion = SyntaxFacts.IncrementDecrementSuggestions[operatorToken.Kind];
+        var suggestion = operatorToken.Kind == SyntaxKind.PlusPlusToken ? "+=" : "-=";
 
         ReportDiagnostic(new()
         {

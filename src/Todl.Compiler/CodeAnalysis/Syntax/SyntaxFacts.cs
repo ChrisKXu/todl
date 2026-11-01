@@ -34,12 +34,6 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             { SyntaxKind.PipeToken, 1 }
         };
 
-        public static readonly IReadOnlyDictionary<SyntaxKind, string> IncrementDecrementSuggestions = new Dictionary<SyntaxKind, string>()
-        {
-            { SyntaxKind.PlusPlusToken, "+=" },
-            { SyntaxKind.MinusMinusToken, "-=" },
-        };
-
         public static readonly IReadOnlyDictionary<string, SyntaxKind> KeywordMap = new Dictionary<string, SyntaxKind>()
         {
             { "true", SyntaxKind.TrueKeywordToken },
