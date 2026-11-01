@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -66,5 +67,44 @@ public sealed class NewArrayExpressionTests
 
         memberAccessExpression.BaseExpression.Should().BeOfType<ParethesizedExpression>();
         memberAccessExpression.MemberIdentifierToken.Text.ToString().Should().Be("Length");
+    }
+
+    [Theory]
+    [InlineData("new int[3][1]")]
+    [InlineData("new int[3][1 +")]
+    [InlineData("new int[3][")]
+    [InlineData("new int[3][1][2]")]
+    public void TestInvalidRankSpecifierReportsDiagnosticAndTerminates(string inputText)
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        TestUtils.ParseExpression<NewArrayExpression>(inputText, diagnosticBuilder);
+
+        diagnosticBuilder.Build().Should().Contain(d => d.ErrorCode == ErrorCode.InvalidRankSpecifier);
+    }
+
+    [Fact]
+    public void TestParseMultipleJaggedRankSpecifiers()
+    {
+        var newArray = TestUtils.ParseExpression<NewArrayExpression>("new int[3][][]");
+
+        newArray.ArrayRankSpecifiers.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void TestParseElementAccessOnParenthesizedNewArray()
+    {
+        var elementAccess = TestUtils.ParseExpression<ElementAccessExpression>("(new int[3])[1]");
+
+        elementAccess.BaseExpression.Should().BeOfType<ParethesizedExpression>();
+        elementAccess.IndexExpression.GetText().Should().Be("1");
+    }
+
+    [Fact]
+    public void TestStrayTopLevelCloseBracketTerminatesWithDiagnostic()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        TestUtils.ParseSyntaxTree("]", diagnosticBuilder);
+
+        diagnosticBuilder.Build().Should().Contain(d => d.ErrorCode == ErrorCode.UnexpectedToken);
     }
 }

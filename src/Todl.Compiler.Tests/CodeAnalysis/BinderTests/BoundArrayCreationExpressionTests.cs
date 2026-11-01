@@ -64,4 +64,11 @@ public sealed class BoundArrayCreationExpressionTests
         diagnostics.Should().ContainSingle();
         diagnostics.Single().ErrorCode.Should().Be(ErrorCode.TypeNotFound);
     }
+
+    [Fact]
+    public void TestBoundElementAccessOnArrayCreation()
+    {
+        var access = TestUtils.BindExpression<BoundElementAccessExpression>("(new int[3])[1]");
+        access.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
+    }
 }
