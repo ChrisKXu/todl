@@ -48,6 +48,7 @@ namespace Todl.Compiler.Diagnostics
         UnreachableExceptClause,
         MisplacedGeneralExceptClause,
         RethrowOutsideExceptBlock,
-        JumpOutOfFinally
+        JumpOutOfFinally,
+        MissingIndexExpression
     }
 }

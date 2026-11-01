@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 using Xunit;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
@@ -67,4 +68,45 @@ public sealed class NewArrayExpressionTests
         memberAccessExpression.BaseExpression.Should().BeOfType<ParethesizedExpression>();
         memberAccessExpression.MemberIdentifierToken.Text.ToString().Should().Be("Length");
     }
+
+    [Fact]
+    public void TestParseElementAccessOnNewArrayExpression()
+    {
+        var elementAccess = TestUtils.ParseExpression<ElementAccessExpression>("new int[3][1]");
+
+        elementAccess.IndexExpression.GetText().Should().Be("1");
+        var newArray = elementAccess.BaseExpression.Should().BeOfType<NewArrayExpression>().Subject;
+        newArray.LengthExpression.GetText().Should().Be("3");
+        newArray.ArrayRankSpecifiers.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void TestParseElementAccessAfterRankSpecifier()
+    {
+        var elementAccess = TestUtils.ParseExpression<ElementAccessExpression>("new int[3][][0]");
+
+        elementAccess.IndexExpression.GetText().Should().Be("0");
+        var newArray = elementAccess.BaseExpression.Should().BeOfType<NewArrayExpression>().Subject;
+        newArray.ArrayRankSpecifiers.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void TestRankSpecifierAfterElementAccessIsAnError()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        var outer = TestUtils.ParseExpression<ElementAccessExpression>("new int[3][1][]", diagnosticBuilder);
+
+        outer.BaseExpression.Should().BeOfType<ElementAccessExpression>();
+        diagnosticBuilder.Build().Should().Contain(d => d.ErrorCode == ErrorCode.MissingIndexExpression);
+    }
+
+    [Fact]
+    public void TestStrayTopLevelCloseBracketTerminatesWithDiagnostic()
+    {
+        var diagnosticBuilder = new DiagnosticBag.Builder();
+        TestUtils.ParseSyntaxTree("]", diagnosticBuilder);
+
+        diagnosticBuilder.Build().Should().Contain(d => d.ErrorCode == ErrorCode.UnexpectedToken);
+    }
 }
+

@@ -27,7 +27,7 @@ public sealed partial class Parser
         var closeBracketToken = ExpectToken(SyntaxKind.CloseBracketToken);
 
         var arrayRankSpecifiers = ImmutableArray.CreateBuilder<ArrayRankSpecifier>();
-        while (Current.Kind == SyntaxKind.OpenBracketToken)
+        while (Current.Kind == SyntaxKind.OpenBracketToken && Peak.Kind == SyntaxKind.CloseBracketToken)
         {
             arrayRankSpecifiers.Add(ParseArrayRankSpecifier());
         }

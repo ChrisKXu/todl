@@ -94,7 +94,20 @@ public sealed partial class Parser
         while (Current.Kind != SyntaxKind.EndOfFileToken
             && Current.Kind != SyntaxKind.BadToken)
         {
+            var oldPosition = position;
             members.Add(ParseMember());
+
+            if (position == oldPosition)
+            {
+                var strayToken = NextToken();
+                ReportDiagnostic(new()
+                {
+                    Message = $"Unexpected token '{strayToken.Text}'",
+                    ErrorCode = ErrorCode.UnexpectedToken,
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = new(syntaxTree.SourceText, strayToken.Span)
+                });
+            }
         }
 
         // Materialize the immutable collections once parsing is finished.
