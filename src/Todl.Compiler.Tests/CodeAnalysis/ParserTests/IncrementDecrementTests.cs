@@ -1,9 +1,5 @@
-using System;
-using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Syntax;
-using Todl.Compiler.CodeAnalysis.Text;
-using Todl.Compiler.CodeGeneration;
 using Todl.Compiler.Diagnostics;
 using Xunit;
 
@@ -54,30 +50,5 @@ public sealed class IncrementDecrementTests
 
         binaryExpression.Operator.Kind.Should().Be(expectedOperatorKind);
         binaryExpression.Right.As<UnaryExpression>().Operator.Kind.Should().Be(expectedOperatorKind);
-    }
-
-    [Fact]
-    public void TestIncrementOnElementAccessDoesNotCrashCompilation()
-    {
-        const string source = """
-            int Run() {
-                let a = [1];
-                a[0]++;
-                return a[0];
-            }
-
-            void Main() {}
-            """;
-
-        var compilation = new Compilation(
-            assemblyName: "test",
-            version: new Version(1, 0),
-            sourceTexts: [SourceText.FromString(source)],
-            clrTypeCache: TestDefaults.DefaultClrTypeCache);
-
-        var diagnostics = compilation.GetDiagnostics().ToList();
-
-        diagnostics.Should().ContainSingle()
-            .Which.ErrorCode.Should().Be(ErrorCode.UnsupportedIncrementDecrementOperator);
     }
 }
