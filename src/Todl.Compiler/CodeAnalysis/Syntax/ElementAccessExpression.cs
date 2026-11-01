@@ -1,5 +1,4 @@
 ﻿using Todl.Compiler.CodeAnalysis.Text;
-using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
 
@@ -19,18 +18,6 @@ public sealed partial class Parser
     private ElementAccessExpression ParseElementAccessExpression(Expression baseExpression)
     {
         var openBracketToken = ExpectToken(SyntaxKind.OpenBracketToken);
-
-        if (Current.Kind == SyntaxKind.CloseBracketToken)
-        {
-            ReportDiagnostic(new()
-            {
-                Message = "Element access requires an index expression",
-                ErrorCode = ErrorCode.MissingIndexExpression,
-                Level = DiagnosticLevel.Error,
-                TextLocation = new(syntaxTree.SourceText, Current.Span)
-            });
-        }
-
         var indexExpression = ParseExpression();
         var closeBracketToken = ExpectToken(SyntaxKind.CloseBracketToken);
 

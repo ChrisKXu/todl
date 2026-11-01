@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using Todl.Compiler.Diagnostics;
 using Todl.Compiler.CodeAnalysis.Text;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
@@ -27,9 +28,24 @@ public sealed partial class Parser
         var closeBracketToken = ExpectToken(SyntaxKind.CloseBracketToken);
 
         var arrayRankSpecifiers = ImmutableArray.CreateBuilder<ArrayRankSpecifier>();
-        while (Current.Kind == SyntaxKind.OpenBracketToken && Peak.Kind == SyntaxKind.CloseBracketToken)
+        while (Current.Kind == SyntaxKind.OpenBracketToken)
         {
-            arrayRankSpecifiers.Add(ParseArrayRankSpecifier());
+            if (Peak.Kind == SyntaxKind.CloseBracketToken)
+            {
+                arrayRankSpecifiers.Add(ParseArrayRankSpecifier());
+                continue;
+            }
+
+            ReportDiagnostic(new()
+            {
+                Message = "Invalid rank specifier: expected ']'",
+                ErrorCode = ErrorCode.InvalidRankSpecifier,
+                Level = DiagnosticLevel.Error,
+                TextLocation = new(syntaxTree.SourceText, Current.Span)
+            });
+            NextToken();
+            ParseExpression();
+            ExpectToken(SyntaxKind.CloseBracketToken);
         }
 
         return new()

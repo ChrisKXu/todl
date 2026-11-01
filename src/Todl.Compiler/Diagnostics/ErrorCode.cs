@@ -49,6 +49,6 @@ namespace Todl.Compiler.Diagnostics
         MisplacedGeneralExceptClause,
         RethrowOutsideExceptBlock,
         JumpOutOfFinally,
-        MissingIndexExpression
+        InvalidRankSpecifier
     }
 }

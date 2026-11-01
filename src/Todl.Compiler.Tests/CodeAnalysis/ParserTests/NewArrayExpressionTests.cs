@@ -69,35 +69,34 @@ public sealed class NewArrayExpressionTests
         memberAccessExpression.MemberIdentifierToken.Text.ToString().Should().Be("Length");
     }
 
-    [Fact]
-    public void TestParseElementAccessOnNewArrayExpression()
-    {
-        var elementAccess = TestUtils.ParseExpression<ElementAccessExpression>("new int[3][1]");
-
-        elementAccess.IndexExpression.GetText().Should().Be("1");
-        var newArray = elementAccess.BaseExpression.Should().BeOfType<NewArrayExpression>().Subject;
-        newArray.LengthExpression.GetText().Should().Be("3");
-        newArray.ArrayRankSpecifiers.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void TestParseElementAccessAfterRankSpecifier()
-    {
-        var elementAccess = TestUtils.ParseExpression<ElementAccessExpression>("new int[3][][0]");
-
-        elementAccess.IndexExpression.GetText().Should().Be("0");
-        var newArray = elementAccess.BaseExpression.Should().BeOfType<NewArrayExpression>().Subject;
-        newArray.ArrayRankSpecifiers.Should().HaveCount(1);
-    }
-
-    [Fact]
-    public void TestRankSpecifierAfterElementAccessIsAnError()
+    [Theory]
+    [InlineData("new int[3][1]")]
+    [InlineData("new int[3][1 +")]
+    [InlineData("new int[3][")]
+    [InlineData("new int[3][1][2]")]
+    public void TestInvalidRankSpecifierReportsDiagnosticAndTerminates(string inputText)
     {
         var diagnosticBuilder = new DiagnosticBag.Builder();
-        var outer = TestUtils.ParseExpression<ElementAccessExpression>("new int[3][1][]", diagnosticBuilder);
+        TestUtils.ParseExpression<NewArrayExpression>(inputText, diagnosticBuilder);
 
-        outer.BaseExpression.Should().BeOfType<ElementAccessExpression>();
-        diagnosticBuilder.Build().Should().Contain(d => d.ErrorCode == ErrorCode.MissingIndexExpression);
+        diagnosticBuilder.Build().Should().Contain(d => d.ErrorCode == ErrorCode.InvalidRankSpecifier);
+    }
+
+    [Fact]
+    public void TestParseMultipleJaggedRankSpecifiers()
+    {
+        var newArray = TestUtils.ParseExpression<NewArrayExpression>("new int[3][][]");
+
+        newArray.ArrayRankSpecifiers.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void TestParseElementAccessOnParenthesizedNewArray()
+    {
+        var elementAccess = TestUtils.ParseExpression<ElementAccessExpression>("(new int[3])[1]");
+
+        elementAccess.BaseExpression.Should().BeOfType<ParethesizedExpression>();
+        elementAccess.IndexExpression.GetText().Should().Be("1");
     }
 
     [Fact]

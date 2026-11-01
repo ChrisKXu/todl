@@ -68,11 +68,8 @@ public sealed class BoundArrayCreationExpressionTests
     [Fact]
     public void TestBoundElementAccessOnArrayCreation()
     {
-        var access = TestUtils.BindExpression<BoundElementAccessExpression>("new int[3][1]");
+        var access = TestUtils.BindExpression<BoundElementAccessExpression>("(new int[3])[1]");
         access.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
-
-        var jagged = TestUtils.BindExpression<BoundElementAccessExpression>("new int[3][][0]");
-        ((ClrTypeSymbol)jagged.ResultType).ClrType.FullName.Should().Be("System.Int32[]");
     }
 }
 
