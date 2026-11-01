@@ -19,7 +19,14 @@ public sealed partial class Parser
     {
         Expression left;
         var unaryPrecedence = SyntaxFacts.UnaryOperatorPrecedence.GetValueOrDefault(Current.Kind, 0);
-        if (unaryPrecedence == 0 || unaryPrecedence <= parentPrecedence)
+        if (Current.Kind is SyntaxKind.PlusPlusToken or SyntaxKind.MinusMinusToken)
+        {
+            // prefix ++/--: report and drop the operator, keeping the operand.
+            var incrementDecrementToken = NextToken();
+            left = ParsePrimaryExpression();
+            ReportUnsupportedIncrementDecrement(left, incrementDecrementToken);
+        }
+        else if (unaryPrecedence == 0 || unaryPrecedence <= parentPrecedence)
         {
             left = this.ParsePrimaryExpression();
         }

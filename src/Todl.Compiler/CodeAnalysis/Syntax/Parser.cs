@@ -157,6 +157,11 @@ public sealed partial class Parser
             {
                 baseExpression = ParseElementAccessExpression(baseExpression);
             }
+            else if (Current.Kind is SyntaxKind.PlusPlusToken or SyntaxKind.MinusMinusToken)
+            {
+                // postfix ++/--: report and drop the operator, keeping the operand.
+                ReportUnsupportedIncrementDecrement(baseExpression, NextToken());
+            }
             else
             {
                 break;
@@ -200,6 +205,20 @@ public sealed partial class Parser
         }
 
         return label;
+    }
+
+    // ++/-- are lexed only to report this diagnostic; callers drop the operator and keep the operand.
+    private void ReportUnsupportedIncrementDecrement(SyntaxNode node, SyntaxToken operatorToken)
+    {
+        var suggestion = operatorToken.Kind == SyntaxKind.PlusPlusToken ? "+=" : "-=";
+
+        ReportDiagnostic(new()
+        {
+            Message = $"Todl has no '{operatorToken.Text}' operator; use '{suggestion} 1' instead",
+            ErrorCode = ErrorCode.UnsupportedIncrementDecrementOperator,
+            Level = DiagnosticLevel.Error,
+            TextLocation = node.GetTextLocation(operatorToken.Span)
+        });
     }
 
     private void ReportDiagnostic(Diagnostic diagnostic)
