@@ -15,6 +15,7 @@ namespace Todl.Compiler.Diagnostics
         DuplicateBareElseClauses,
         MisplacedBareElseClauses,
         InvalidLoopLabel,
+        UnsupportedIncrementDecrementOperator,
 
         // BinderErrors
         UndeclaredVariable,

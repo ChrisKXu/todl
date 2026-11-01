@@ -332,6 +332,11 @@ internal sealed class Lexer
                     kind = SyntaxKind.PlusEqualsToken;
                     this.position += 2;
                 }
+                else if (Peak == '+')
+                {
+                    kind = SyntaxKind.PlusPlusToken;
+                    this.position += 2;
+                }
                 else
                 {
                     kind = SyntaxKind.PlusToken;
@@ -342,6 +347,11 @@ internal sealed class Lexer
                 if (Peak == '=')
                 {
                     kind = SyntaxKind.MinusEqualsToken;
+                    this.position += 2;
+                }
+                else if (Peak == '-')
+                {
+                    kind = SyntaxKind.MinusMinusToken;
                     this.position += 2;
                 }
                 else

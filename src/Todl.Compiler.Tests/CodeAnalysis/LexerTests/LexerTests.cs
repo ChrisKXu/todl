@@ -78,8 +78,10 @@ public sealed partial class LexerTests
     {
         { SyntaxKind.PlusToken, "+" },
         { SyntaxKind.PlusEqualsToken, "+=" },
+        { SyntaxKind.PlusPlusToken, "++" },
         { SyntaxKind.MinusToken, "-" },
         { SyntaxKind.MinusEqualsToken, "-=" },
+        { SyntaxKind.MinusMinusToken, "--" },
         { SyntaxKind.StarToken, "*" },
         { SyntaxKind.StarEqualsToken, "*=" },
         { SyntaxKind.SlashToken, "/" },
