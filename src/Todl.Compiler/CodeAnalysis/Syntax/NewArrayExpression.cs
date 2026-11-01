@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
-using Todl.Compiler.Diagnostics;
 using Todl.Compiler.CodeAnalysis.Text;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Syntax;
 

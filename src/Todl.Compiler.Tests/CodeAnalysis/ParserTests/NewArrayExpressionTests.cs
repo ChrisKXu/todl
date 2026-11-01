@@ -108,4 +108,3 @@ public sealed class NewArrayExpressionTests
         diagnosticBuilder.Build().Should().Contain(d => d.ErrorCode == ErrorCode.UnexpectedToken);
     }
 }
-

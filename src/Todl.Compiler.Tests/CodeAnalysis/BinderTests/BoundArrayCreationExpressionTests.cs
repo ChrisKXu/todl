@@ -72,4 +72,3 @@ public sealed class BoundArrayCreationExpressionTests
         access.ResultType.SpecialType.Should().Be(SpecialType.ClrInt32);
     }
 }
-
