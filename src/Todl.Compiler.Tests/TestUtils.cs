@@ -130,7 +130,16 @@ internal static class TestUtils
             sourceTexts: new[] { sourceText },
             metadataLoadContext: TestDefaults.MetadataLoadContext);
 
-        return (compilation.Emit(), compilation.GetDiagnostics());
+        var diagnostics = compilation.GetDiagnostics().ToArray();
+
+        if (diagnostics.HasError())
+        {
+            throw new InvalidOperationException(
+                "Compilation produced errors:" + Environment.NewLine +
+                string.Join(Environment.NewLine, diagnostics.Select(d => $"{d.ErrorCode}: {d.Message}")));
+        }
+
+        return (compilation.Emit(), diagnostics);
     }
 
     internal static void RunAssembly(AssemblyDefinition assemblyDefinition, Action<System.Reflection.Assembly> action)
