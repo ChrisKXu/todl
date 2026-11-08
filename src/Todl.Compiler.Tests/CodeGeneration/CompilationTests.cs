@@ -31,4 +31,23 @@ public sealed class CompilationTests
         Action emit = () => compilation.Emit();
         emit.Should().Throw<InvalidOperationException>();
     }
+
+    [Fact]
+    public void CompilationWithAssignmentTypeMismatchReportsDiagnosticAndDoesNotEmit()
+    {
+        var compilation = new Compilation(
+            assemblyName: "test",
+            version: new Version(1, 0),
+            sourceTexts: new[]
+            {
+                SourceText.FromString(
+                    "int Run() { let a = [1, 2, 3]; a[0] = \"x\"; return a[0]; }\nvoid Main() {}")
+            },
+            clrTypeCache: TestDefaults.DefaultClrTypeCache);
+
+        compilation.GetDiagnostics().Should().Contain(d => d.ErrorCode == ErrorCode.TypeMismatch);
+
+        Action emit = () => compilation.Emit();
+        emit.Should().Throw<InvalidOperationException>();
+    }
 }

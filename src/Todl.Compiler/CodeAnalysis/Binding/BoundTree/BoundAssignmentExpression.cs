@@ -55,60 +55,23 @@ public partial class Binder
         var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
         var right = BindExpression(assignmentExpression.Right);
 
-        if (assignmentExpression.Left is SimpleNameExpression simpleNameExpression)
+        // A REPL assignment declares a new variable; this must happen before the
+        // left side is bound so the simple name resolves instead of reporting an
+        // undeclared variable.
+        if (assignmentExpression.Left is SimpleNameExpression simpleNameExpression
+            && Scope.LookupVariable(simpleNameExpression.CanonicalName) is null
+            && boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment
+            && AllowVariableDeclarationInAssignment)
         {
-            var variableName = simpleNameExpression.CanonicalName;
-            var variable = Scope.LookupVariable(variableName);
-
-            if (variable == null)
+            Scope.DeclareVariable(new ReplVariableSymbol()
             {
-                if (boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment
-                    && AllowVariableDeclarationInAssignment)
-                {
-                    variable = new ReplVariableSymbol()
-                    {
-                        AssignmentExpression = assignmentExpression,
-                        BoundInitializer = right
-                    };
-                    Scope.DeclareVariable(variable);
-                }
-            }
-            else if (variable.ReadOnly)
-            {
-                ReportDiagnostic(
-                    new Diagnostic()
-                    {
-                        Message = $"Variable {variableName} is read-only",
-                        Level = DiagnosticLevel.Error,
-                        TextLocation = simpleNameExpression.GetTextLocation(),
-                        ErrorCode = ErrorCode.ReadOnlyVariable
-                    });
-            }
-            else if (!variable.Type.Equals(right.ResultType))
-            {
-                ReportDiagnostic(
-                    new Diagnostic()
-                    {
-                        Message = $"Variable {variableName} cannot be assigned to type {right.ResultType}",
-                        Level = DiagnosticLevel.Error,
-                        TextLocation = simpleNameExpression.GetTextLocation(),
-                        ErrorCode = ErrorCode.TypeMismatch
-                    });
-            }
+                AssignmentExpression = assignmentExpression,
+                BoundInitializer = right
+            });
         }
 
         var left = BindExpression(assignmentExpression.Left);
-        if (!left.LValue)
-        {
-            ReportDiagnostic(
-                new Diagnostic()
-                {
-                    Message = $"The left-hand side of an assignment must be a variable, property or indexer",
-                    Level = DiagnosticLevel.Error,
-                    TextLocation = default,
-                    ErrorCode = ErrorCode.NotAnLValue
-                });
-        }
+        CheckAssignmentTarget(left, right);
 
         return BoundNodeFactory.CreateBoundAssignmentExpression(
             syntaxNode: assignmentExpression,
@@ -117,4 +80,90 @@ public partial class Binder
             @operator: boundAssignmentOperator,
             resultType: right.ResultType);
     }
+
+    private void CheckAssignmentTarget(BoundExpression left, BoundExpression right)
+    {
+        if (!left.LValue)
+        {
+            ReportDiagnostic(
+                new Diagnostic()
+                {
+                    Message = "The left-hand side of an assignment must be a variable, property or indexer",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = left.SyntaxNode.GetTextLocation(),
+                    ErrorCode = ErrorCode.NotAnLValue
+                });
+
+            return;
+        }
+
+        // Invalid targets already reported their own diagnostic and carry no type.
+        if (left.ResultType is null || right.ResultType is null)
+        {
+            return;
+        }
+
+        // Accessibility has already been reported; don't pile on more errors.
+        if (left is BoundMemberAccessExpression { IsPublic: false }
+            or BoundIndexerAccessExpression { IsPublic: false })
+        {
+            return;
+        }
+
+        var targetDescription = GetAssignmentTargetDescription(left);
+
+        if (left.ReadOnly)
+        {
+            ReportDiagnostic(
+                new Diagnostic()
+                {
+                    Message = $"{targetDescription} is read-only",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = left.SyntaxNode.GetTextLocation(),
+                    ErrorCode = ErrorCode.ReadOnlyVariable
+                });
+
+            return;
+        }
+
+        if (!IsAssignmentCompatible(left.ResultType, right.ResultType))
+        {
+            ReportDiagnostic(
+                new Diagnostic()
+                {
+                    Message = $"{targetDescription} cannot be assigned to type {right.ResultType}",
+                    Level = DiagnosticLevel.Error,
+                    TextLocation = left.SyntaxNode.GetTextLocation(),
+                    ErrorCode = ErrorCode.TypeMismatch
+                });
+        }
+    }
+
+    // Identity, or a reference conversion: storing a derived reference in a base
+    // reference needs no IL. Value types can't be converted here because the
+    // emitter has no conversion/boxing support yet.
+    private static bool IsAssignmentCompatible(TypeSymbol targetType, TypeSymbol valueType)
+    {
+        if (targetType.Equals(valueType))
+        {
+            return true;
+        }
+
+        return targetType is ClrTypeSymbol targetClrType
+            && valueType is ClrTypeSymbol valueClrType
+            && targetClrType.IsReferenceType
+            && valueClrType.IsReferenceType
+            && targetClrType.ClrType.IsAssignableFrom(valueClrType.ClrType);
+    }
+
+    private static string GetAssignmentTargetDescription(BoundExpression target)
+        => target switch
+        {
+            BoundVariableExpression variableExpression => $"Variable {variableExpression.Variable.Name}",
+            BoundMemberAccessExpression memberAccessExpression => $"Member {memberAccessExpression.MemberName}",
+            BoundArrayElementAccessExpression => "Array element",
+            BoundIndexerAccessExpression indexerAccessExpression
+                => $"Indexer of type {indexerAccessExpression.BoundBaseExpression.ResultType}",
+            _ => "Assignment target"
+        };
 }

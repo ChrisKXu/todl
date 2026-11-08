@@ -102,4 +102,83 @@ public sealed class BoundAssignmentExpressionTests
         typeMismatch.ErrorCode.Should().Be(ErrorCode.TypeMismatch);
         typeMismatch.Message.Should().Be("Variable n cannot be assigned to type System.String");
     }
+
+    [Theory]
+    [InlineData("{ let a = [1, 2, 3]; a[0] = \"x\"; }")]
+    [InlineData("{ let a = [1, 2, 3]; a[0] += \"x\"; }")]
+    public void TestBindAssignmentExpressionToArrayElementWithMismatchedTypes(string input)
+    {
+        var diagnosticsBuilder = new DiagnosticBag.Builder();
+        var block = TestUtils.BindStatement<BoundBlockStatement>(input, diagnosticsBuilder);
+        var boundAssignmentExpression = block.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundAssignmentExpression>();
+
+        boundAssignmentExpression.Left.Should().BeOfType<BoundArrayElementAccessExpression>();
+
+        var typeMismatch = diagnosticsBuilder.Build().Should().ContainSingle().Subject;
+        typeMismatch.Level.Should().Be(DiagnosticLevel.Error);
+        typeMismatch.ErrorCode.Should().Be(ErrorCode.TypeMismatch);
+        typeMismatch.Message.Should().Be("Array element cannot be assigned to type System.String");
+    }
+
+    [Theory]
+    [InlineData("Todl::Compiler::Tests::TestClass.Instance.PublicIntField = \"x\"")]
+    [InlineData("Todl::Compiler::Tests::TestClass.Instance.PublicIntProperty = \"x\"")]
+    [InlineData("Todl::Compiler::Tests::TestClass.Instance[0] = \"x\"")]
+    public void TestBindAssignmentExpressionToMemberTargetsWithMismatchedTypes(string input)
+    {
+        var diagnosticsBuilder = new DiagnosticBag.Builder();
+        var boundAssignmentExpression = TestUtils.BindExpression<BoundAssignmentExpression>(input, diagnosticsBuilder);
+
+        boundAssignmentExpression.Should().NotBeNull();
+
+        var typeMismatch = diagnosticsBuilder.Build().Should().ContainSingle().Subject;
+        typeMismatch.Level.Should().Be(DiagnosticLevel.Error);
+        typeMismatch.ErrorCode.Should().Be(ErrorCode.TypeMismatch);
+    }
+
+    [Theory]
+    [InlineData("\"abc\".Length = 5", "Member Length is read-only")]
+    [InlineData("System::Int32.MaxValue = 5", "Member MaxValue is read-only")]
+    [InlineData("\"abc\"[0] = \"x\"", "Indexer of type System.String is read-only")]
+    public void TestBindAssignmentExpressionToReadOnlyTargets(string input, string expectedMessage)
+    {
+        var diagnosticsBuilder = new DiagnosticBag.Builder();
+        TestUtils.BindExpression<BoundAssignmentExpression>(input, diagnosticsBuilder);
+
+        var readOnly = diagnosticsBuilder.Build().Should().ContainSingle().Subject;
+        readOnly.Level.Should().Be(DiagnosticLevel.Error);
+        readOnly.ErrorCode.Should().Be(ErrorCode.ReadOnlyVariable);
+        readOnly.Message.Should().Be(expectedMessage);
+    }
+
+    [Fact]
+    public void TestBindAssignmentExpressionToWritableIndexer()
+    {
+        var boundAssignmentExpression = TestUtils.BindExpression<BoundAssignmentExpression>(
+            "Todl::Compiler::Tests::TestClass.Instance[0] = 10");
+
+        boundAssignmentExpression.Left.Should().BeOfType<BoundIndexerAccessExpression>();
+    }
+
+    [Fact]
+    public void TestBindAssignmentExpressionAllowsReferenceConversion()
+    {
+        var boundAssignmentExpression = TestUtils.BindExpression<BoundAssignmentExpression>(
+            "Todl::Compiler::Tests::TestClass.Instance.PublicObjectField = \"x\"");
+
+        boundAssignmentExpression.Left.Should().BeOfType<BoundClrFieldAccessExpression>();
+    }
+
+    [Fact]
+    public void TestBindAssignmentExpressionRejectsBoxingAssignment()
+    {
+        var diagnosticsBuilder = new DiagnosticBag.Builder();
+        TestUtils.BindExpression<BoundAssignmentExpression>(
+            "Todl::Compiler::Tests::TestClass.Instance.PublicObjectField = 5", diagnosticsBuilder);
+
+        var typeMismatch = diagnosticsBuilder.Build().Should().ContainSingle().Subject;
+        typeMismatch.Level.Should().Be(DiagnosticLevel.Error);
+        typeMismatch.ErrorCode.Should().Be(ErrorCode.TypeMismatch);
+        typeMismatch.Message.Should().Be("Member PublicObjectField cannot be assigned to type System.Int32");
+    }
 }

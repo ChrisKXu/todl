@@ -5,6 +5,7 @@ public class TestClass
     public string PublicStringField;
     public int PublicIntField;
     public bool PublicBoolField;
+    public object PublicObjectField;
 
     public static string PublicStaticStringField;
     public static int PublicStaticIntField;
@@ -18,6 +19,11 @@ public class TestClass
     public static int PublicStaticIntProperty { get; set; }
     public static bool PublicStaticBoolProperty { get; set; }
 
+    public int this[int index]
+    {
+        get => 0;
+        set { }
+    }
 
     public static readonly TestClass Instance = new();
 }
