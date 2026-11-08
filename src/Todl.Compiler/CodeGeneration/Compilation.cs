@@ -50,19 +50,7 @@ public sealed class Compilation : IDisposable, IDiagnosable
 
         ClrTypeCache = ClrTypeCache.FromAssemblies(metadataLoadContext.GetAssemblies(), metadataLoadContext.CoreAssembly);
 
-        var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, diagnosticBuilder));
-        MainModule = BoundModule.Create(ClrTypeCache, syntaxTrees.ToImmutableList(), diagnosticBuilder);
-
-        if (MainModule.EntryPoint is null)
-        {
-            diagnosticBuilder.Add(new Diagnostic()
-            {
-                Message = "Module does not have an entry point.",
-                ErrorCode = ErrorCode.MissingEntryPoint,
-                TextLocation = default,
-                Level = DiagnosticLevel.Error
-            });
-        }
+        MainModule = ParseAndBind(sourceTexts);
     }
 
     /// <summary>
@@ -95,10 +83,37 @@ public sealed class Compilation : IDisposable, IDiagnosable
         ClrTypeCache = clrTypeCache;
         // metadataLoadContext remains null - caller owns it
 
-        var syntaxTrees = sourceTexts.Select(s => SyntaxTree.Parse(s, diagnosticBuilder));
-        MainModule = BoundModule.Create(ClrTypeCache, syntaxTrees.ToImmutableList(), diagnosticBuilder);
+        MainModule = ParseAndBind(sourceTexts);
+    }
+    public AssemblyDefinition Emit()
+    {
+        if (GetDiagnostics().HasError())
+        {
+            throw new InvalidOperationException(
+                "Cannot emit an assembly when the compilation has errors. Check GetDiagnostics() before calling Emit().");
+        }
 
-        if (MainModule.EntryPoint is null)
+        var emitter = Emitter.CreateAssemblyEmitter(this);
+        return emitter.Emit();
+    }
+
+    private BoundModule ParseAndBind(IEnumerable<SourceText> sourceTexts)
+    {
+        var syntaxTrees = sourceTexts
+            .Select(s => SyntaxTree.Parse(s, diagnosticBuilder))
+            .ToImmutableList();
+
+        // Binding malformed trees can crash the binder (e.g. a fabricated missing
+        // identifier reaches type resolution). Report syntax errors only; semantic
+        // diagnostics resume once the syntax is valid.
+        if (diagnosticBuilder.Diagnostics.HasError())
+        {
+            return null;
+        }
+
+        var mainModule = BoundModule.Create(ClrTypeCache, syntaxTrees, diagnosticBuilder);
+
+        if (mainModule.EntryPoint is null)
         {
             diagnosticBuilder.Add(new Diagnostic()
             {
@@ -108,11 +123,8 @@ public sealed class Compilation : IDisposable, IDiagnosable
                 Level = DiagnosticLevel.Error
             });
         }
-    }
-    public AssemblyDefinition Emit()
-    {
-        var emitter = Emitter.CreateAssemblyEmitter(this);
-        return emitter.Emit();
+
+        return mainModule;
     }
 
     public void Dispose()
