@@ -13,6 +13,9 @@ internal partial class Emitter
 {
     internal partial class InstructionEmitter
     {
+        private static readonly System.Reflection.MethodInfo StringConcat2Method
+            = typeof(string).GetMethod(nameof(string.Concat), new[] { typeof(string), typeof(string) });
+
         public void EmitExpression(BoundExpression boundExpression)
         {
             switch (boundExpression)
@@ -222,8 +225,12 @@ internal partial class Emitter
         {
             EmitExpression(boundBinaryExpression.Left);
             EmitExpression(boundBinaryExpression.Right);
+            EmitBinaryOperator(boundBinaryExpression.Operator);
+        }
 
-            switch (boundBinaryExpression.Operator.BoundBinaryOperatorKind)
+        private void EmitBinaryOperator(BoundBinaryOperator binaryOperator)
+        {
+            switch (binaryOperator.BoundBinaryOperatorKind)
             {
                 case BoundBinaryOperatorKind.Equality:
                     ILProcessor.Emit(OpCodes.Ceq);
@@ -238,7 +245,7 @@ internal partial class Emitter
                     // BoundBinaryOperatorKind.Comparison covers all four relational operators;
                     // the actual operator survives on Operator.SyntaxKind. `<=`/`>=` have no
                     // dedicated CIL opcode, so they're the negation of the strict opposite.
-                    switch (boundBinaryExpression.Operator.SyntaxKind)
+                    switch (binaryOperator.SyntaxKind)
                     {
                         case SyntaxKind.LessThanToken:
                             ILProcessor.Emit(OpCodes.Clt);
@@ -259,7 +266,7 @@ internal partial class Emitter
                             ILProcessor.Emit(OpCodes.Ceq);
                             return;
                         default:
-                            throw new NotSupportedException($"{boundBinaryExpression.Operator.SyntaxKind} is not a supported comparison operator");
+                            throw new NotSupportedException($"{binaryOperator.SyntaxKind} is not a supported comparison operator");
                     }
                 case BoundBinaryOperatorKind.LogicalAnd:
                     ILProcessor.Emit(OpCodes.And);
@@ -281,8 +288,11 @@ internal partial class Emitter
                     // Div (not Div_Un) matches every binder-resolved operand type today.
                     ILProcessor.Emit(OpCodes.Div);
                     return;
+                case BoundBinaryOperatorKind.StringConcatenation:
+                    ILProcessor.Emit(OpCodes.Call, AssemblyDefinition.MainModule.ImportReference(StringConcat2Method));
+                    return;
                 default:
-                    throw new NotSupportedException($"{boundBinaryExpression.Operator.BoundBinaryOperatorKind} is not a supported binary operator kind");
+                    throw new NotSupportedException($"{binaryOperator.BoundBinaryOperatorKind} is not a supported binary operator kind");
             }
         }
 
@@ -546,8 +556,8 @@ internal partial class Emitter
 
         private void EmitAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
         {
-            var operatorKind = boundAssignmentExpression.Operator.BoundAssignmentOperatorKind;
-            var isInline = operatorKind != BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment;
+            var isInline = boundAssignmentExpression.Operator.BoundAssignmentOperatorKind
+                != BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment;
 
             if (isInline && boundAssignmentExpression.Left is BoundElementAccessExpression elementAccess)
             {
@@ -565,27 +575,12 @@ internal partial class Emitter
                 }
 
                 EmitExpression(boundAssignmentExpression.Right);
-                EmitAssignmentOperator(operatorKind);
-            });
-        }
 
-        private void EmitAssignmentOperator(BoundAssignmentExpression.BoundAssignmentOperatorKind operatorKind)
-        {
-            switch (operatorKind)
-            {
-                case BoundAssignmentExpression.BoundAssignmentOperatorKind.AdditionInline:
-                    ILProcessor.Emit(OpCodes.Add);
-                    break;
-                case BoundAssignmentExpression.BoundAssignmentOperatorKind.SubstractionInline:
-                    ILProcessor.Emit(OpCodes.Sub);
-                    break;
-                case BoundAssignmentExpression.BoundAssignmentOperatorKind.MultiplicationInline:
-                    ILProcessor.Emit(OpCodes.Mul);
-                    break;
-                case BoundAssignmentExpression.BoundAssignmentOperatorKind.DivisionInline:
-                    ILProcessor.Emit(OpCodes.Div);
-                    break;
-            }
+                if (isInline)
+                {
+                    EmitBinaryOperator(boundAssignmentExpression.BinaryOperator);
+                }
+            });
         }
 
         // Base and index are spilled so they are evaluated once, per the compound assignment rule.
@@ -607,7 +602,7 @@ internal partial class Emitter
             EmitLocalLoad(indexTemp);
             EmitElementLoad(elementAccess);
             EmitExpression(boundAssignmentExpression.Right);
-            EmitAssignmentOperator(boundAssignmentExpression.Operator.BoundAssignmentOperatorKind);
+            EmitBinaryOperator(boundAssignmentExpression.BinaryOperator);
             EmitElementStore(elementAccess);
         }
 

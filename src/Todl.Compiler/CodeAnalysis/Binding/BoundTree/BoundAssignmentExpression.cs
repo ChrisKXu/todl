@@ -11,11 +11,16 @@ internal sealed class BoundAssignmentExpression : BoundExpression
     public sealed class BoundAssignmentOperator
     {
         public SyntaxKind SyntaxKind { get; }
+        public SyntaxKind BinarySyntaxKind { get; }
         public BoundAssignmentOperatorKind BoundAssignmentOperatorKind { get; }
 
-        public BoundAssignmentOperator(SyntaxKind syntaxKind, BoundAssignmentOperatorKind boundAssignmentOperatorKind)
+        public BoundAssignmentOperator(
+            SyntaxKind syntaxKind,
+            SyntaxKind binarySyntaxKind,
+            BoundAssignmentOperatorKind boundAssignmentOperatorKind)
         {
             SyntaxKind = syntaxKind;
+            BinarySyntaxKind = binarySyntaxKind;
             BoundAssignmentOperatorKind = boundAssignmentOperatorKind;
         }
     }
@@ -31,11 +36,11 @@ internal sealed class BoundAssignmentExpression : BoundExpression
 
     private static readonly IReadOnlyDictionary<SyntaxKind, BoundAssignmentOperator> supportedAssignmentOperators = new Dictionary<SyntaxKind, BoundAssignmentOperator>()
     {
-        { SyntaxKind.EqualsToken, new BoundAssignmentOperator(SyntaxKind.EqualsToken, BoundAssignmentOperatorKind.Assignment) },
-        { SyntaxKind.PlusEqualsToken, new BoundAssignmentOperator(SyntaxKind.PlusEqualsToken, BoundAssignmentOperatorKind.AdditionInline) },
-        { SyntaxKind.MinusEqualsToken, new BoundAssignmentOperator(SyntaxKind.MinusEqualsToken, BoundAssignmentOperatorKind.SubstractionInline) },
-        { SyntaxKind.StarEqualsToken, new BoundAssignmentOperator(SyntaxKind.StarEqualsToken, BoundAssignmentOperatorKind.MultiplicationInline) },
-        { SyntaxKind.SlashEqualsToken, new BoundAssignmentOperator(SyntaxKind.SlashEqualsToken, BoundAssignmentOperatorKind.DivisionInline) }
+        { SyntaxKind.EqualsToken, new BoundAssignmentOperator(SyntaxKind.EqualsToken, SyntaxKind.EqualsToken, BoundAssignmentOperatorKind.Assignment) },
+        { SyntaxKind.PlusEqualsToken, new BoundAssignmentOperator(SyntaxKind.PlusEqualsToken, SyntaxKind.PlusToken, BoundAssignmentOperatorKind.AdditionInline) },
+        { SyntaxKind.MinusEqualsToken, new BoundAssignmentOperator(SyntaxKind.MinusEqualsToken, SyntaxKind.MinusToken, BoundAssignmentOperatorKind.SubstractionInline) },
+        { SyntaxKind.StarEqualsToken, new BoundAssignmentOperator(SyntaxKind.StarEqualsToken, SyntaxKind.StarToken, BoundAssignmentOperatorKind.MultiplicationInline) },
+        { SyntaxKind.SlashEqualsToken, new BoundAssignmentOperator(SyntaxKind.SlashEqualsToken, SyntaxKind.SlashToken, BoundAssignmentOperatorKind.DivisionInline) }
     };
 
     internal static BoundAssignmentOperator MatchAssignmentOperator(SyntaxKind syntaxKind)
@@ -43,6 +48,7 @@ internal sealed class BoundAssignmentExpression : BoundExpression
 
     public BoundExpression Left { get; internal init; }
     public BoundAssignmentOperator Operator { get; internal init; }
+    public BoundBinaryOperator BinaryOperator { get; internal init; }
     public BoundExpression Right { get; internal init; }
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundAssignmentExpression(this);
@@ -71,17 +77,58 @@ public partial class Binder
         }
 
         var left = BindExpression(assignmentExpression.Left);
-        CheckAssignmentTarget(left, right);
+        var isTargetWritable = CheckAssignmentTarget(left);
+        var isInline = boundAssignmentOperator.BoundAssignmentOperatorKind != BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment;
+
+        var binaryOperator = default(BoundBinaryOperator);
+        var resultType = isInline ? null : right.ResultType;
+
+        if (isInline && isTargetWritable && left.ResultType is not null && right.ResultType is not null)
+        {
+            binaryOperator = BoundBinaryOperatorFactory.MatchBinaryOperator(
+                left.ResultType.SpecialType,
+                right.ResultType.SpecialType,
+                boundAssignmentOperator.BinarySyntaxKind);
+
+            if (binaryOperator is null)
+            {
+                ReportDiagnostic(
+                    new Diagnostic()
+                    {
+                        Message = $"Operator {assignmentExpression.AssignmentOperator.Text} is not supported on types {left.ResultType.Name} and {right.ResultType.Name}",
+                        Level = DiagnosticLevel.Error,
+                        TextLocation = assignmentExpression.GetTextLocation(assignmentExpression.AssignmentOperator.Span),
+                        ErrorCode = ErrorCode.UnsupportedOperator
+                    });
+            }
+            else
+            {
+                if (binaryOperator.BoundBinaryOperatorKind == BoundBinaryOperatorKind.StringConcatenation)
+                {
+                    // The target is also the left operand, so it cannot be replaced by a ToString() call.
+                    // A valid concatenating compound assignment always targets string already.
+                    right = ConvertToStringOperand(right, ClrTypeCache);
+                }
+
+                resultType = ClrTypeCache.ResolveSpecialType(binaryOperator.ResultType);
+            }
+        }
+
+        if (isTargetWritable && resultType is not null)
+        {
+            CheckAssignmentType(left, resultType);
+        }
 
         return BoundNodeFactory.CreateBoundAssignmentExpression(
             syntaxNode: assignmentExpression,
             left: left,
             right: right,
             @operator: boundAssignmentOperator,
-            resultType: right.ResultType);
+            binaryOperator: binaryOperator,
+            resultType: resultType);
     }
 
-    private void CheckAssignmentTarget(BoundExpression left, BoundExpression right)
+    private bool CheckAssignmentTarget(BoundExpression left)
     {
         if (!left.LValue)
         {
@@ -94,44 +141,47 @@ public partial class Binder
                     ErrorCode = ErrorCode.NotAnLValue
                 });
 
-            return;
+            return false;
         }
 
         // Invalid targets already reported their own diagnostic and carry no type.
-        if (left.ResultType is null || right.ResultType is null)
+        if (left.ResultType is null)
         {
-            return;
+            return false;
         }
 
         // Accessibility has already been reported; don't pile on more errors.
         if (left is BoundMemberAccessExpression { IsPublic: false }
             or BoundIndexerAccessExpression { IsPublic: false })
         {
-            return;
+            return false;
         }
-
-        var targetDescription = GetAssignmentTargetDescription(left);
 
         if (left.ReadOnly)
         {
             ReportDiagnostic(
                 new Diagnostic()
                 {
-                    Message = $"{targetDescription} is read-only",
+                    Message = $"{GetAssignmentTargetDescription(left)} is read-only",
                     Level = DiagnosticLevel.Error,
                     TextLocation = left.SyntaxNode.GetTextLocation(),
                     ErrorCode = ErrorCode.ReadOnlyVariable
                 });
 
-            return;
+            return false;
         }
 
-        if (!IsAssignmentCompatible(left.ResultType, right.ResultType))
+        return true;
+    }
+
+    private void CheckAssignmentType(BoundExpression left, TypeSymbol valueType)
+    {
+        if (!IsAssignmentCompatible(left.ResultType, valueType))
         {
             ReportDiagnostic(
                 new Diagnostic()
                 {
-                    Message = $"{targetDescription} cannot be assigned to type {right.ResultType}",
+                    Message = $"{GetAssignmentTargetDescription(left)} cannot be assigned to type {valueType}",
                     Level = DiagnosticLevel.Error,
                     TextLocation = left.SyntaxNode.GetTextLocation(),
                     ErrorCode = ErrorCode.TypeMismatch
