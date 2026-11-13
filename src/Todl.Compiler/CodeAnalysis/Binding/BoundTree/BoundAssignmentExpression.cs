@@ -55,8 +55,25 @@ internal sealed class BoundAssignmentExpression : BoundExpression
 
     public BoundExpression Left { get; internal init; }
     public BoundAssignmentOperator Operator { get; internal init; }
-    public BoundBinaryOperator BinaryOperator { get; internal init; }
     public BoundExpression Right { get; internal init; }
+
+    public BoundBinaryOperator BinaryOperator
+    {
+        get
+        {
+            if (Operator.BoundAssignmentOperatorKind == BoundAssignmentOperatorKind.Assignment
+                || Left.ResultType is null
+                || Right.ResultType is null)
+            {
+                return null;
+            }
+
+            return BoundBinaryOperatorFactory.MatchBinaryOperator(
+                Left.ResultType.SpecialType,
+                Right.ResultType.SpecialType,
+                Operator.GetBinarySyntaxKind());
+        }
+    }
 
     public override BoundNode Accept(BoundTreeVisitor visitor) => visitor.VisitBoundAssignmentExpression(this);
 }
@@ -66,6 +83,7 @@ public partial class Binder
     private BoundAssignmentExpression BindAssignmentExpression(AssignmentExpression assignmentExpression)
     {
         var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
+        var isSimpleAssignment = boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment;
         var right = BindExpression(assignmentExpression.Right);
 
         // A REPL assignment declares a new variable; this must happen before the
@@ -73,7 +91,7 @@ public partial class Binder
         // undeclared variable.
         if (assignmentExpression.Left is SimpleNameExpression simpleNameExpression
             && Scope.LookupVariable(simpleNameExpression.CanonicalName) is null
-            && boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment
+            && isSimpleAssignment
             && AllowVariableDeclarationInAssignment)
         {
             Scope.DeclareVariable(new ReplVariableSymbol()
@@ -85,14 +103,44 @@ public partial class Binder
 
         var left = BindExpression(assignmentExpression.Left);
         var isTargetWritable = CheckAssignmentTarget(left);
-        var isInline = boundAssignmentOperator.BoundAssignmentOperatorKind != BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment;
 
-        var binaryOperator = default(BoundBinaryOperator);
-        var resultType = isInline ? null : right.ResultType;
+        return isSimpleAssignment
+            ? BindSimpleAssignmentExpression(assignmentExpression, boundAssignmentOperator, left, right, isTargetWritable)
+            : BindCompoundAssignmentExpression(assignmentExpression, boundAssignmentOperator, left, right, isTargetWritable);
+    }
 
-        if (isInline && isTargetWritable && left.ResultType is not null && right.ResultType is not null)
+    private BoundAssignmentExpression BindSimpleAssignmentExpression(
+        AssignmentExpression assignmentExpression,
+        BoundAssignmentExpression.BoundAssignmentOperator boundAssignmentOperator,
+        BoundExpression left,
+        BoundExpression right,
+        bool isTargetWritable)
+    {
+        if (isTargetWritable && right.ResultType is not null)
         {
-            binaryOperator = BoundBinaryOperatorFactory.MatchBinaryOperator(
+            CheckAssignmentType(left, right.ResultType);
+        }
+
+        return BoundNodeFactory.CreateBoundAssignmentExpression(
+            syntaxNode: assignmentExpression,
+            left: left,
+            right: right,
+            @operator: boundAssignmentOperator,
+            resultType: right.ResultType);
+    }
+
+    private BoundAssignmentExpression BindCompoundAssignmentExpression(
+        AssignmentExpression assignmentExpression,
+        BoundAssignmentExpression.BoundAssignmentOperator boundAssignmentOperator,
+        BoundExpression left,
+        BoundExpression right,
+        bool isTargetWritable)
+    {
+        var resultType = default(TypeSymbol);
+
+        if (isTargetWritable && left.ResultType is not null && right.ResultType is not null)
+        {
+            var binaryOperator = BoundBinaryOperatorFactory.MatchBinaryOperator(
                 left.ResultType.SpecialType,
                 right.ResultType.SpecialType,
                 boundAssignmentOperator.GetBinarySyntaxKind());
@@ -131,7 +179,6 @@ public partial class Binder
             left: left,
             right: right,
             @operator: boundAssignmentOperator,
-            binaryOperator: binaryOperator,
             resultType: resultType);
     }
 

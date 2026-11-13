@@ -44,7 +44,6 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
                 left: left,
                 right: right,
                 @operator: boundAssignmentExpression.Operator,
-                binaryOperator: boundAssignmentExpression.BinaryOperator,
                 resultType: boundAssignmentExpression.ResultType);
     }
 
