@@ -556,8 +556,7 @@ internal partial class Emitter
 
         private void EmitAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
         {
-            var isInline = boundAssignmentExpression.Operator.BoundAssignmentOperatorKind
-                != BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment;
+            var isInline = boundAssignmentExpression.Operator.SyntaxKind != SyntaxKind.EqualsToken;
 
             if (isInline && boundAssignmentExpression.Left is BoundElementAccessExpression elementAccess)
             {

@@ -12,42 +12,29 @@ internal sealed class BoundAssignmentExpression : BoundExpression
     public sealed class BoundAssignmentOperator
     {
         public SyntaxKind SyntaxKind { get; }
-        public BoundAssignmentOperatorKind BoundAssignmentOperatorKind { get; }
 
-        public BoundAssignmentOperator(
-            SyntaxKind syntaxKind,
-            BoundAssignmentOperatorKind boundAssignmentOperatorKind)
+        public BoundAssignmentOperator(SyntaxKind syntaxKind)
         {
             SyntaxKind = syntaxKind;
-            BoundAssignmentOperatorKind = boundAssignmentOperatorKind;
         }
 
-        internal SyntaxKind GetBinarySyntaxKind() => BoundAssignmentOperatorKind switch
+        internal SyntaxKind GetBinarySyntaxKind() => SyntaxKind switch
         {
-            BoundAssignmentOperatorKind.AdditionInline => SyntaxKind.PlusToken,
-            BoundAssignmentOperatorKind.SubstractionInline => SyntaxKind.MinusToken,
-            BoundAssignmentOperatorKind.MultiplicationInline => SyntaxKind.StarToken,
-            BoundAssignmentOperatorKind.DivisionInline => SyntaxKind.SlashToken,
+            SyntaxKind.PlusEqualsToken => SyntaxKind.PlusToken,
+            SyntaxKind.MinusEqualsToken => SyntaxKind.MinusToken,
+            SyntaxKind.StarEqualsToken => SyntaxKind.StarToken,
+            SyntaxKind.SlashEqualsToken => SyntaxKind.SlashToken,
             _ => throw new InvalidOperationException("Assignment operator has no binary counterpart")
         };
     }
 
-    public enum BoundAssignmentOperatorKind
-    {
-        Assignment,
-        AdditionInline,
-        SubstractionInline,
-        MultiplicationInline,
-        DivisionInline
-    }
-
     private static readonly IReadOnlyDictionary<SyntaxKind, BoundAssignmentOperator> supportedAssignmentOperators = new Dictionary<SyntaxKind, BoundAssignmentOperator>()
     {
-        { SyntaxKind.EqualsToken, new BoundAssignmentOperator(SyntaxKind.EqualsToken, BoundAssignmentOperatorKind.Assignment) },
-        { SyntaxKind.PlusEqualsToken, new BoundAssignmentOperator(SyntaxKind.PlusEqualsToken, BoundAssignmentOperatorKind.AdditionInline) },
-        { SyntaxKind.MinusEqualsToken, new BoundAssignmentOperator(SyntaxKind.MinusEqualsToken, BoundAssignmentOperatorKind.SubstractionInline) },
-        { SyntaxKind.StarEqualsToken, new BoundAssignmentOperator(SyntaxKind.StarEqualsToken, BoundAssignmentOperatorKind.MultiplicationInline) },
-        { SyntaxKind.SlashEqualsToken, new BoundAssignmentOperator(SyntaxKind.SlashEqualsToken, BoundAssignmentOperatorKind.DivisionInline) }
+        { SyntaxKind.EqualsToken, new BoundAssignmentOperator(SyntaxKind.EqualsToken) },
+        { SyntaxKind.PlusEqualsToken, new BoundAssignmentOperator(SyntaxKind.PlusEqualsToken) },
+        { SyntaxKind.MinusEqualsToken, new BoundAssignmentOperator(SyntaxKind.MinusEqualsToken) },
+        { SyntaxKind.StarEqualsToken, new BoundAssignmentOperator(SyntaxKind.StarEqualsToken) },
+        { SyntaxKind.SlashEqualsToken, new BoundAssignmentOperator(SyntaxKind.SlashEqualsToken) }
     };
 
     internal static BoundAssignmentOperator MatchAssignmentOperator(SyntaxKind syntaxKind)
@@ -61,7 +48,7 @@ internal sealed class BoundAssignmentExpression : BoundExpression
     {
         get
         {
-            if (Operator.BoundAssignmentOperatorKind == BoundAssignmentOperatorKind.Assignment
+            if (Operator.SyntaxKind == SyntaxKind.EqualsToken
                 || Left.ResultType is null
                 || Right.ResultType is null)
             {
@@ -83,7 +70,7 @@ public partial class Binder
     private BoundAssignmentExpression BindAssignmentExpression(AssignmentExpression assignmentExpression)
     {
         var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
-        var isSimpleAssignment = boundAssignmentOperator.BoundAssignmentOperatorKind == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment;
+        var isSimpleAssignment = boundAssignmentOperator.SyntaxKind == SyntaxKind.EqualsToken;
         var right = BindExpression(assignmentExpression.Right);
 
         // A REPL assignment declares a new variable; this must happen before the
