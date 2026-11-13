@@ -126,6 +126,32 @@ public sealed class EmitAssignmentExpressionTests
     }
 
     [Fact]
+    public void TestEmitInstanceMemberCompoundAssignmentEvaluatesReceiverOnce()
+    {
+        TestUtils.EmitStatementAndVerify(
+            "Todl::Compiler::Tests::TestClass.Instance.PublicIntField += 1;",
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldfld, "System.Int32 Todl.Compiler.Tests.TestClass::PublicIntField"),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Stfld, "System.Int32 Todl.Compiler.Tests.TestClass::PublicIntField"));
+
+        TestUtils.EmitStatementAndVerify(
+            "Todl::Compiler::Tests::TestClass.Instance.PublicIntProperty += 1;",
+            TestInstruction.Create(OpCodes.Ldsfld, "Todl.Compiler.Tests.TestClass Todl.Compiler.Tests.TestClass::Instance"),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Callvirt, "System.Int32 Todl.Compiler.Tests.TestClass::get_PublicIntProperty()"),
+            TestInstruction.Create(OpCodes.Ldc_I4_1),
+            TestInstruction.Create(OpCodes.Add),
+            TestInstruction.Create(OpCodes.Callvirt, "System.Void Todl.Compiler.Tests.TestClass::set_PublicIntProperty(System.Int32)"));
+    }
+
+    [Fact]
     public void TestEmitAssignmentExpressionWithSelfAssignmentInstanceFields()
     {
         TestUtils.EmitStatementAndVerify(
