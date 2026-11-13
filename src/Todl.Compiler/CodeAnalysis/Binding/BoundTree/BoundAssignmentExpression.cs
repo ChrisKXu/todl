@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿﻿using System;
+using System.Collections.Generic;
 using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
@@ -11,18 +12,24 @@ internal sealed class BoundAssignmentExpression : BoundExpression
     public sealed class BoundAssignmentOperator
     {
         public SyntaxKind SyntaxKind { get; }
-        public SyntaxKind BinarySyntaxKind { get; }
         public BoundAssignmentOperatorKind BoundAssignmentOperatorKind { get; }
 
         public BoundAssignmentOperator(
             SyntaxKind syntaxKind,
-            SyntaxKind binarySyntaxKind,
             BoundAssignmentOperatorKind boundAssignmentOperatorKind)
         {
             SyntaxKind = syntaxKind;
-            BinarySyntaxKind = binarySyntaxKind;
             BoundAssignmentOperatorKind = boundAssignmentOperatorKind;
         }
+
+        internal SyntaxKind GetBinarySyntaxKind() => BoundAssignmentOperatorKind switch
+        {
+            BoundAssignmentOperatorKind.AdditionInline => SyntaxKind.PlusToken,
+            BoundAssignmentOperatorKind.SubstractionInline => SyntaxKind.MinusToken,
+            BoundAssignmentOperatorKind.MultiplicationInline => SyntaxKind.StarToken,
+            BoundAssignmentOperatorKind.DivisionInline => SyntaxKind.SlashToken,
+            _ => throw new InvalidOperationException("Assignment operator has no binary counterpart")
+        };
     }
 
     public enum BoundAssignmentOperatorKind
@@ -36,11 +43,11 @@ internal sealed class BoundAssignmentExpression : BoundExpression
 
     private static readonly IReadOnlyDictionary<SyntaxKind, BoundAssignmentOperator> supportedAssignmentOperators = new Dictionary<SyntaxKind, BoundAssignmentOperator>()
     {
-        { SyntaxKind.EqualsToken, new BoundAssignmentOperator(SyntaxKind.EqualsToken, SyntaxKind.EqualsToken, BoundAssignmentOperatorKind.Assignment) },
-        { SyntaxKind.PlusEqualsToken, new BoundAssignmentOperator(SyntaxKind.PlusEqualsToken, SyntaxKind.PlusToken, BoundAssignmentOperatorKind.AdditionInline) },
-        { SyntaxKind.MinusEqualsToken, new BoundAssignmentOperator(SyntaxKind.MinusEqualsToken, SyntaxKind.MinusToken, BoundAssignmentOperatorKind.SubstractionInline) },
-        { SyntaxKind.StarEqualsToken, new BoundAssignmentOperator(SyntaxKind.StarEqualsToken, SyntaxKind.StarToken, BoundAssignmentOperatorKind.MultiplicationInline) },
-        { SyntaxKind.SlashEqualsToken, new BoundAssignmentOperator(SyntaxKind.SlashEqualsToken, SyntaxKind.SlashToken, BoundAssignmentOperatorKind.DivisionInline) }
+        { SyntaxKind.EqualsToken, new BoundAssignmentOperator(SyntaxKind.EqualsToken, BoundAssignmentOperatorKind.Assignment) },
+        { SyntaxKind.PlusEqualsToken, new BoundAssignmentOperator(SyntaxKind.PlusEqualsToken, BoundAssignmentOperatorKind.AdditionInline) },
+        { SyntaxKind.MinusEqualsToken, new BoundAssignmentOperator(SyntaxKind.MinusEqualsToken, BoundAssignmentOperatorKind.SubstractionInline) },
+        { SyntaxKind.StarEqualsToken, new BoundAssignmentOperator(SyntaxKind.StarEqualsToken, BoundAssignmentOperatorKind.MultiplicationInline) },
+        { SyntaxKind.SlashEqualsToken, new BoundAssignmentOperator(SyntaxKind.SlashEqualsToken, BoundAssignmentOperatorKind.DivisionInline) }
     };
 
     internal static BoundAssignmentOperator MatchAssignmentOperator(SyntaxKind syntaxKind)
@@ -88,7 +95,7 @@ public partial class Binder
             binaryOperator = BoundBinaryOperatorFactory.MatchBinaryOperator(
                 left.ResultType.SpecialType,
                 right.ResultType.SpecialType,
-                boundAssignmentOperator.BinarySyntaxKind);
+                boundAssignmentOperator.GetBinarySyntaxKind());
 
             if (binaryOperator is null)
             {
