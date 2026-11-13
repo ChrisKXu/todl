@@ -39,12 +39,7 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
 
         return left == boundAssignmentExpression.Left && right == boundAssignmentExpression.Right
             ? boundAssignmentExpression
-            : BoundNodeFactory.CreateBoundAssignmentExpression(
-                syntaxNode: boundAssignmentExpression.SyntaxNode,
-                left: left,
-                right: right,
-                @operator: boundAssignmentExpression.Operator,
-                resultType: boundAssignmentExpression.ResultType);
+            : BoundNodeFactory.CreateBoundAssignmentExpression(boundAssignmentExpression.SyntaxNode, left, boundAssignmentExpression.Operator, right, boundAssignmentExpression.ResultType);
     }
 
     public override BoundNode VisitBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)

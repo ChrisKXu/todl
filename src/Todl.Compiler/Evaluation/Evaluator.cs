@@ -96,12 +96,7 @@ namespace Todl.Compiler.Evaluation
 
             Debug.Assert(leftValue != null && rightValue != null);
 
-            return EvaluateBinaryOperator(boundBinaryExpression.Operator, leftValue, rightValue);
-        }
-
-        private static object EvaluateBinaryOperator(BoundBinaryOperator binaryOperator, object leftValue, object rightValue)
-        {
-            return binaryOperator.BoundBinaryOperatorKind switch
+            return boundBinaryExpression.Operator.BoundBinaryOperatorKind switch
             {
                 BoundBinaryOperatorKind.NumericAddition => (int)leftValue + (int)rightValue,
                 BoundBinaryOperatorKind.NumericSubstraction => (int)leftValue - (int)rightValue,
@@ -116,17 +111,18 @@ namespace Todl.Compiler.Evaluation
 
         private object EvaluateBoundAssignmentExpression(BoundAssignmentExpression boundAssignmentExpression)
         {
-            var right = this.EvaluateBoundExpression(boundAssignmentExpression.Right);
+            var result = this.EvaluateBoundExpression(boundAssignmentExpression.Right);
             var variable = (boundAssignmentExpression.Left as BoundVariableExpression).Variable;
 
-            if (boundAssignmentExpression.Operator.BoundAssignmentOperatorKind
-                == BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment)
+            return boundAssignmentExpression.Operator.BoundAssignmentOperatorKind switch
             {
-                return SetVariableValue(variable, right);
-            }
-
-            var result = EvaluateBinaryOperator(boundAssignmentExpression.BinaryOperator, this.variables[variable], right);
-            return SetVariableValue(variable, result);
+                BoundAssignmentExpression.BoundAssignmentOperatorKind.Assignment => SetVariableValue(variable, result),
+                BoundAssignmentExpression.BoundAssignmentOperatorKind.AdditionInline => SetVariableValue(variable, (int)this.variables[variable] + (int)result),
+                BoundAssignmentExpression.BoundAssignmentOperatorKind.SubstractionInline => SetVariableValue(variable, (int)this.variables[variable] - (int)result),
+                BoundAssignmentExpression.BoundAssignmentOperatorKind.MultiplicationInline => SetVariableValue(variable, (int)this.variables[variable] * (int)result),
+                BoundAssignmentExpression.BoundAssignmentOperatorKind.DivisionInline => SetVariableValue(variable, (int)this.variables[variable] / (int)result),
+                _ => null
+            };
         }
 
         private object EvaluateBoundVariableExpression(BoundVariableExpression boundVariableExpression)
