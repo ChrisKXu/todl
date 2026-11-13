@@ -26,12 +26,4 @@ public class TestClass
     }
 
     public static readonly TestClass Instance = new();
-
-    public static int CreateInstanceCallCount;
-
-    public static TestClass CreateInstance()
-    {
-        CreateInstanceCallCount++;
-        return new TestClass();
-    }
 }

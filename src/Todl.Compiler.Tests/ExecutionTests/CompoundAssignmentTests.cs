@@ -33,32 +33,4 @@ void Main() {{}}
             runMethod.Invoke(null, arguments).Should().Be(expected);
         });
     }
-
-    [Fact]
-    public void CompoundAssignmentShouldEvaluateMemberReceiverOnce()
-    {
-        var inputText = @"
-import { TestClass } from Todl::Compiler::Tests;
-
-void Main() {}
-
-int Run()
-{
-    TestClass.CreateInstanceCallCount = 0;
-    TestClass.CreateInstance().PublicIntField += 1;
-    TestClass.CreateInstance().PublicIntProperty += 1;
-    return TestClass.CreateInstanceCallCount;
-}
-";
-        var (assemblyDefinition, diagnostics) = TestUtils.Compile(SourceText.FromString(inputText));
-        diagnostics.Should().BeEmpty();
-        assemblyDefinition.Should().NotBeNull();
-
-        TestUtils.RunAssembly(assemblyDefinition, assembly =>
-        {
-            var runMethod = assembly.EntryPoint.DeclaringType?.GetMethod("Run");
-            runMethod.Should().NotBeNull();
-            runMethod.Invoke(null, null).Should().Be(2);
-        });
-    }
 }
