@@ -53,6 +53,19 @@ public sealed class EmitAssignmentExpressionTests
     }
 
     [Fact]
+    public void TestEmitStringCompoundAssignment()
+    {
+        TestUtils.EmitStatementAndVerify(
+            "{ let a = \"x\"; a += \"y\"; }",
+            TestInstruction.Create(OpCodes.Ldstr, "x"),
+            TestInstruction.Create(OpCodes.Stloc_0),
+            TestInstruction.Create(OpCodes.Ldloc_0),
+            TestInstruction.Create(OpCodes.Ldstr, "y"),
+            TestInstruction.Create(OpCodes.Call, "System.String System.String::Concat(System.String,System.String)"),
+            TestInstruction.Create(OpCodes.Stloc_0));
+    }
+
+    [Fact]
     public void TestEmitAssignmentExpressionWithStaticFields()
     {
         TestUtils.EmitStatementAndVerify(

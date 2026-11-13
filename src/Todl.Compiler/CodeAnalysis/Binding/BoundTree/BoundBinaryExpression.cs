@@ -47,55 +47,50 @@ public enum BoundBinaryOperatorKind
     StringConcatenation
 }
 
-public sealed class BoundBinaryOperatorFactory
+public static class BoundBinaryOperatorFactory
 {
-    private readonly Dictionary<BinaryOperatorIndex, BoundBinaryOperator> supportedBinaryOperators;
-
-    public BoundBinaryOperatorFactory()
+    private static readonly Dictionary<BinaryOperatorIndex, BoundBinaryOperator> supportedBinaryOperators = new()
     {
-        supportedBinaryOperators = new()
-            {
-                { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.NumericAddition, SpecialType.ClrInt32) },
-                { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.MinusToken), new(SyntaxKind.MinusToken, BoundBinaryOperatorKind.NumericSubstraction, SpecialType.ClrInt32) },
-                { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.StarToken), new(SyntaxKind.StarToken, BoundBinaryOperatorKind.NumericMultiplication, SpecialType.ClrInt32) },
-                { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.SlashToken), new(SyntaxKind.SlashToken, BoundBinaryOperatorKind.NumericDivision, SpecialType.ClrInt32) },
+        { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.NumericAddition, SpecialType.ClrInt32) },
+        { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.MinusToken), new(SyntaxKind.MinusToken, BoundBinaryOperatorKind.NumericSubstraction, SpecialType.ClrInt32) },
+        { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.StarToken), new(SyntaxKind.StarToken, BoundBinaryOperatorKind.NumericMultiplication, SpecialType.ClrInt32) },
+        { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.SlashToken), new(SyntaxKind.SlashToken, BoundBinaryOperatorKind.NumericDivision, SpecialType.ClrInt32) },
 
-                { (SpecialType.ClrBoolean, SpecialType.ClrBoolean, SyntaxKind.AmpersandAmpersandToken), new(SyntaxKind.AmpersandAmpersandToken, BoundBinaryOperatorKind.LogicalAnd, SpecialType.ClrBoolean) },
-                { (SpecialType.ClrBoolean, SpecialType.ClrBoolean, SyntaxKind.PipePipeToken), new(SyntaxKind.PipePipeToken, BoundBinaryOperatorKind.LogicalOr, SpecialType.ClrBoolean) },
+        { (SpecialType.ClrBoolean, SpecialType.ClrBoolean, SyntaxKind.AmpersandAmpersandToken), new(SyntaxKind.AmpersandAmpersandToken, BoundBinaryOperatorKind.LogicalAnd, SpecialType.ClrBoolean) },
+        { (SpecialType.ClrBoolean, SpecialType.ClrBoolean, SyntaxKind.PipePipeToken), new(SyntaxKind.PipePipeToken, BoundBinaryOperatorKind.LogicalOr, SpecialType.ClrBoolean) },
 
-                { (SpecialType.ClrString, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrString, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
 
-                // string concatenation with any built-in value type; the non-string side is
-                // converted via ToString() at bind time (see ConvertToStringOperand below).
-                { (SpecialType.ClrBoolean, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrString, SpecialType.ClrBoolean, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrByte, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrString, SpecialType.ClrByte, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrChar, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrString, SpecialType.ClrChar, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrInt32, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrString, SpecialType.ClrInt32, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrUInt32, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrString, SpecialType.ClrUInt32, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrInt64, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrString, SpecialType.ClrInt64, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrUInt64, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrString, SpecialType.ClrUInt64, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrFloat, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrString, SpecialType.ClrFloat, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrDouble, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
-                { (SpecialType.ClrString, SpecialType.ClrDouble, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        // string concatenation with any built-in value type; the non-string side is
+        // converted via ToString() at bind time (see ConvertToStringOperand below).
+        { (SpecialType.ClrBoolean, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrString, SpecialType.ClrBoolean, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrByte, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrString, SpecialType.ClrByte, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrChar, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrString, SpecialType.ClrChar, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrInt32, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrString, SpecialType.ClrInt32, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrUInt32, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrString, SpecialType.ClrUInt32, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrInt64, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrString, SpecialType.ClrInt64, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrUInt64, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrString, SpecialType.ClrUInt64, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrFloat, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrString, SpecialType.ClrFloat, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrDouble, SpecialType.ClrString, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
+        { (SpecialType.ClrString, SpecialType.ClrDouble, SyntaxKind.PlusToken), new(SyntaxKind.PlusToken, BoundBinaryOperatorKind.StringConcatenation, SpecialType.ClrString) },
 
-                { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.EqualsEqualsToken), new(SyntaxKind.EqualsEqualsToken, BoundBinaryOperatorKind.Equality, SpecialType.ClrBoolean) },
-                { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.BangEqualsToken), new(SyntaxKind.BangEqualsToken, BoundBinaryOperatorKind.Inequality, SpecialType.ClrBoolean) },
-                { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.LessThanOrEqualsToken), new(SyntaxKind.LessThanOrEqualsToken, BoundBinaryOperatorKind.Comparison, SpecialType.ClrBoolean) },
-                { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.LessThanToken), new(SyntaxKind.LessThanToken, BoundBinaryOperatorKind.Comparison, SpecialType.ClrBoolean) },
-                { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.GreaterThanOrEqualsToken), new(SyntaxKind.GreaterThanOrEqualsToken, BoundBinaryOperatorKind.Comparison, SpecialType.ClrBoolean) },
-                { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.GreaterThanToken), new(SyntaxKind.GreaterThanToken, BoundBinaryOperatorKind.Comparison, SpecialType.ClrBoolean) },
-            };
-    }
+        { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.EqualsEqualsToken), new(SyntaxKind.EqualsEqualsToken, BoundBinaryOperatorKind.Equality, SpecialType.ClrBoolean) },
+        { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.BangEqualsToken), new(SyntaxKind.BangEqualsToken, BoundBinaryOperatorKind.Inequality, SpecialType.ClrBoolean) },
+        { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.LessThanOrEqualsToken), new(SyntaxKind.LessThanOrEqualsToken, BoundBinaryOperatorKind.Comparison, SpecialType.ClrBoolean) },
+        { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.LessThanToken), new(SyntaxKind.LessThanToken, BoundBinaryOperatorKind.Comparison, SpecialType.ClrBoolean) },
+        { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.GreaterThanOrEqualsToken), new(SyntaxKind.GreaterThanOrEqualsToken, BoundBinaryOperatorKind.Comparison, SpecialType.ClrBoolean) },
+        { (SpecialType.ClrInt32, SpecialType.ClrInt32, SyntaxKind.GreaterThanToken), new(SyntaxKind.GreaterThanToken, BoundBinaryOperatorKind.Comparison, SpecialType.ClrBoolean) },
+    };
 
-    public BoundBinaryOperator MatchBinaryOperator(
+    public static BoundBinaryOperator MatchBinaryOperator(
         SpecialType leftResultType,
         SpecialType rightResultType,
         SyntaxKind syntaxKind)

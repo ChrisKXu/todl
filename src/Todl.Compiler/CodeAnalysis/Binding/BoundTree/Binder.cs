@@ -12,9 +12,6 @@ public partial class Binder
     public BoundScope Scope { get; private init; }
     public Binder Parent { get; private init; }
 
-    public virtual BoundBinaryOperatorFactory BoundBinaryOperatorFactory
-        => Parent?.BoundBinaryOperatorFactory;
-
     public virtual ClrTypeCache ClrTypeCache
         => Parent?.ClrTypeCache;
 
@@ -193,14 +190,12 @@ public partial class Binder
         public ScriptBinder(ClrTypeCache clrTypeCache, DiagnosticBag.Builder diagnosticBuilder)
         {
             ClrTypeCache = clrTypeCache;
-            BoundBinaryOperatorFactory = new();
             ConstantValueFactory = new(clrTypeCache.BuiltInTypes);
             DiagnosticBuilder = diagnosticBuilder;
         }
 
         public override bool AllowVariableDeclarationInAssignment => true;
         public override ClrTypeCache ClrTypeCache { get; }
-        public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
         public override ConstantValueFactory ConstantValueFactory { get; }
         public override DiagnosticBag.Builder DiagnosticBuilder { get; }
     }
@@ -210,14 +205,12 @@ public partial class Binder
         public ModuleBinder(ClrTypeCache clrTypeCache, ConstantValueFactory constantValueFactory, DiagnosticBag.Builder diagnosticBuilder)
         {
             ClrTypeCache = clrTypeCache;
-            BoundBinaryOperatorFactory = new();
             ConstantValueFactory = constantValueFactory;
             DiagnosticBuilder = diagnosticBuilder;
         }
 
         public override bool AllowVariableDeclarationInAssignment => false;
         public override ClrTypeCache ClrTypeCache { get; }
-        public override BoundBinaryOperatorFactory BoundBinaryOperatorFactory { get; }
         public override ConstantValueFactory ConstantValueFactory { get; }
         public override DiagnosticBag.Builder DiagnosticBuilder { get; }
     }

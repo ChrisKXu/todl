@@ -1,35 +1,44 @@
-﻿using System.Linq;
+﻿﻿using System;
+using System.Linq;
 using FluentAssertions;
 using Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 using Todl.Compiler.CodeAnalysis.Symbols;
+using Todl.Compiler.CodeAnalysis.Syntax;
 using Todl.Compiler.Diagnostics;
 using Xunit;
-
-using static Todl.Compiler.CodeAnalysis.Binding.BoundTree.BoundAssignmentExpression;
 
 namespace Todl.Compiler.Tests.CodeAnalysis;
 
 public sealed class BoundAssignmentExpressionTests
 {
     [Theory]
-    [InlineData("{ let n = 0; n = 0; }", "n", BoundAssignmentOperatorKind.Assignment, SpecialType.ClrInt32)]
-    [InlineData("{ let abcd = string.Empty; abcd = \"abcde\"; }", "abcd", BoundAssignmentOperatorKind.Assignment, SpecialType.ClrString)]
-    [InlineData("{ let n = 0; n += 10; }", "n", BoundAssignmentOperatorKind.AdditionInline, SpecialType.ClrInt32)]
-    [InlineData("{ let n = 0; n -= 10; }", "n", BoundAssignmentOperatorKind.SubstractionInline, SpecialType.ClrInt32)]
-    [InlineData("{ let n = 0; n *= 10; }", "n", BoundAssignmentOperatorKind.MultiplicationInline, SpecialType.ClrInt32)]
-    [InlineData("{ let n = 0; n /= 10; }", "n", BoundAssignmentOperatorKind.DivisionInline, SpecialType.ClrInt32)]
+    [InlineData("{ let n = 0; n = 0; }", "n", SyntaxKind.EqualsToken, SpecialType.ClrInt32)]
+    [InlineData("{ let abcd = string.Empty; abcd = \"abcde\"; }", "abcd", SyntaxKind.EqualsToken, SpecialType.ClrString)]
+    [InlineData("{ let n = 0; n += 10; }", "n", SyntaxKind.PlusEqualsToken, SpecialType.ClrInt32)]
+    [InlineData("{ let n = 0; n -= 10; }", "n", SyntaxKind.MinusEqualsToken, SpecialType.ClrInt32)]
+    [InlineData("{ let n = 0; n *= 10; }", "n", SyntaxKind.StarEqualsToken, SpecialType.ClrInt32)]
+    [InlineData("{ let n = 0; n /= 10; }", "n", SyntaxKind.SlashEqualsToken, SpecialType.ClrInt32)]
     void TestBindAssignmentExpressionBasic(
         string input,
         string variableName,
-        BoundAssignmentOperatorKind expectedBoundAssignmentOperatorKind,
+        SyntaxKind expectedAssignmentOperatorSyntaxKind,
         SpecialType expectedResultType)
     {
         var block = TestUtils.BindStatement<BoundBlockStatement>(input);
         var boundAssignmentExpression = block.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundAssignmentExpression>();
         boundAssignmentExpression.Should().NotBeNull();
 
-        boundAssignmentExpression.Operator.BoundAssignmentOperatorKind.Should().Be(expectedBoundAssignmentOperatorKind);
+        boundAssignmentExpression.Operator.SyntaxKind.Should().Be(expectedAssignmentOperatorSyntaxKind);
         boundAssignmentExpression.ResultType.SpecialType.Should().Be(expectedResultType);
+
+        if (expectedAssignmentOperatorSyntaxKind == SyntaxKind.EqualsToken)
+        {
+            boundAssignmentExpression.BinaryOperator.Should().BeNull();
+        }
+        else
+        {
+            boundAssignmentExpression.BinaryOperator.Should().NotBeNull();
+        }
 
         var variable = boundAssignmentExpression.Left.As<BoundVariableExpression>().Variable;
 
@@ -84,9 +93,6 @@ public sealed class BoundAssignmentExpressionTests
     [Theory]
     [InlineData("{ let n = 0; n = \"abc\"; }")]
     [InlineData("{ let n = 0; n += \"abc\"; }")]
-    [InlineData("{ let n = 0; n -= \"abc\"; }")]
-    [InlineData("{ let n = 0; n *= \"abc\"; }")]
-    [InlineData("{ let n = 0; n /= \"abc\"; }")]
     public void TestBindAssignmentExpressionWithMismatchedTypes(string input)
     {
         var diagnosticsBuilder = new DiagnosticBag.Builder();
@@ -101,6 +107,54 @@ public sealed class BoundAssignmentExpressionTests
         typeMismatch.Level.Should().Be(DiagnosticLevel.Error);
         typeMismatch.ErrorCode.Should().Be(ErrorCode.TypeMismatch);
         typeMismatch.Message.Should().Be("Variable n cannot be assigned to type System.String");
+    }
+
+    [Theory]
+    [InlineData("{ let n = 0; n -= \"abc\"; }", "-=")]
+    [InlineData("{ let n = 0; n *= \"abc\"; }", "*=")]
+    [InlineData("{ let n = 0; n /= \"abc\"; }", "/=")]
+    [InlineData("{ let n = 0; n += true; }", "+=")]
+    public void TestBindCompoundAssignmentWithUnsupportedOperator(string input, string operatorText)
+    {
+        var diagnosticsBuilder = new DiagnosticBag.Builder();
+        var block = TestUtils.BindStatement<BoundBlockStatement>(input, diagnosticsBuilder);
+        var boundAssignmentExpression = block.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundAssignmentExpression>();
+
+        boundAssignmentExpression.BinaryOperator.Should().BeNull();
+        boundAssignmentExpression.ResultType.Should().BeNull();
+
+        var diagnostic = diagnosticsBuilder.Build().Should().ContainSingle().Subject;
+        diagnostic.Level.Should().Be(DiagnosticLevel.Error);
+        diagnostic.ErrorCode.Should().Be(ErrorCode.UnsupportedOperator);
+        diagnostic.Message.Should().StartWith($"Operator {operatorText} is not supported on types System.Int32 and System.");
+    }
+
+    [Theory]
+    [InlineData("{ let s = \"a\"; s += \"b\"; }", typeof(BoundConstant))]
+    [InlineData("{ let s = \"a\"; s += 1; }", typeof(BoundClrInvocationExpression))]
+    [InlineData("{ let s = \"a\"; s += true; }", typeof(BoundClrInvocationExpression))]
+    public void TestBindStringCompoundAssignment(string input, Type expectedRightType)
+    {
+        var block = TestUtils.BindStatement<BoundBlockStatement>(input);
+        var boundAssignmentExpression = block.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundAssignmentExpression>();
+
+        boundAssignmentExpression.Operator.SyntaxKind.Should().Be(SyntaxKind.PlusEqualsToken);
+        boundAssignmentExpression.BinaryOperator.BoundBinaryOperatorKind.Should().Be(BoundBinaryOperatorKind.StringConcatenation);
+        boundAssignmentExpression.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
+        boundAssignmentExpression.Right.Should().BeOfType(expectedRightType);
+        boundAssignmentExpression.Right.ResultType.SpecialType.Should().Be(SpecialType.ClrString);
+    }
+
+    [Fact]
+    public void TestBindStringCompoundAssignmentConvertsValueTypeOperand()
+    {
+        var block = TestUtils.BindStatement<BoundBlockStatement>("{ let s = \"a\"; s += 1; }");
+        var boundAssignmentExpression = block.Statements[1].As<BoundExpressionStatement>().Expression.As<BoundAssignmentExpression>();
+
+        var toStringCall = boundAssignmentExpression.Right.Should().BeOfType<BoundClrInvocationExpression>().Subject;
+        toStringCall.MethodInfo.Name.Should().Be("ToString");
+        toStringCall.MethodInfo.GetParameters().Should().BeEmpty();
+        toStringCall.IsStatic.Should().BeFalse();
     }
 
     [Theory]
