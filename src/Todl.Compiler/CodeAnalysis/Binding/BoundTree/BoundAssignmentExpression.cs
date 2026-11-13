@@ -9,15 +9,8 @@ namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 [BoundNode]
 internal sealed class BoundAssignmentExpression : BoundExpression
 {
-    public sealed class BoundAssignmentOperator
+    public sealed record BoundAssignmentOperator(SyntaxKind SyntaxKind)
     {
-        public SyntaxKind SyntaxKind { get; }
-
-        public BoundAssignmentOperator(SyntaxKind syntaxKind)
-        {
-            SyntaxKind = syntaxKind;
-        }
-
         internal SyntaxKind GetBinarySyntaxKind() => SyntaxKind switch
         {
             SyntaxKind.PlusEqualsToken => SyntaxKind.PlusToken,
