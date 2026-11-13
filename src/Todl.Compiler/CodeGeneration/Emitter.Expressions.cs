@@ -430,6 +430,11 @@ internal partial class Emitter
                 EmitExpression(boundMemberAccessExpression.BoundBaseExpression);
             }
 
+            EmitMemberLoad(boundMemberAccessExpression);
+        }
+
+        private void EmitMemberLoad(BoundMemberAccessExpression boundMemberAccessExpression)
+        {
             switch (boundMemberAccessExpression)
             {
                 case BoundClrFieldAccessExpression boundClrFieldAccessExpression:
@@ -438,6 +443,23 @@ internal partial class Emitter
                 case BoundClrPropertyAccessExpression boundClrPropertyAccessExpression:
                     EmitClrPropertyLoad(boundClrPropertyAccessExpression);
                     return;
+                default:
+                    throw new NotSupportedException($"Member access type {boundMemberAccessExpression.GetType().Name} is not supported.");
+            }
+        }
+
+        private void EmitMemberStore(BoundMemberAccessExpression boundMemberAccessExpression)
+        {
+            switch (boundMemberAccessExpression)
+            {
+                case BoundClrFieldAccessExpression boundClrFieldAccessExpression:
+                    EmitClrFieldStore(boundClrFieldAccessExpression);
+                    return;
+                case BoundClrPropertyAccessExpression boundClrPropertyAccessExpression:
+                    EmitClrPropertyStore(boundClrPropertyAccessExpression);
+                    return;
+                default:
+                    throw new NotSupportedException($"Member access type {boundMemberAccessExpression.GetType().Name} is not supported.");
             }
         }
 
@@ -564,6 +586,12 @@ internal partial class Emitter
                 return;
             }
 
+            if (isInline && boundAssignmentExpression.Left is BoundMemberAccessExpression { IsStatic: false } memberAccess)
+            {
+                EmitMemberCompoundAssignment(boundAssignmentExpression, memberAccess);
+                return;
+            }
+
             EmitStore(boundAssignmentExpression.Left, () =>
             {
                 // Inline operators (+=, -=, *=, /=) need the current value of the target
@@ -580,6 +608,25 @@ internal partial class Emitter
                     EmitBinaryOperator(boundAssignmentExpression.BinaryOperator);
                 }
             });
+        }
+
+        // The receiver is spilled so it is evaluated once, per the compound assignment rule.
+        private void EmitMemberCompoundAssignment(
+            BoundAssignmentExpression boundAssignmentExpression,
+            BoundMemberAccessExpression memberAccess)
+        {
+            var baseTemp = NewTemp(ResolveTypeReference(memberAccess.BoundBaseExpression.ResultType as ClrTypeSymbol));
+
+            EmitExpression(memberAccess.BoundBaseExpression);
+            EmitLocalStore(baseTemp);
+
+            // Receiver for the store, then receiver for loading the current value.
+            EmitLocalLoad(baseTemp);
+            EmitLocalLoad(baseTemp);
+            EmitMemberLoad(memberAccess);
+            EmitExpression(boundAssignmentExpression.Right);
+            EmitBinaryOperator(boundAssignmentExpression.BinaryOperator);
+            EmitMemberStore(memberAccess);
         }
 
         // Base and index are spilled so they are evaluated once, per the compound assignment rule.
