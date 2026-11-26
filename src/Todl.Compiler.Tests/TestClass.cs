@@ -27,3 +27,16 @@ public class TestClass
 
     public static readonly TestClass Instance = new();
 }
+
+public struct TestStruct
+{
+    public TestStruct(int value) { Value = value; }
+
+    public int Value { get; set; }
+
+    public int this[int index]
+    {
+        get => Value + index;
+        set => Value = value;
+    }
+}
