@@ -54,7 +54,7 @@ internal partial class Emitter
                     EmitArrayLiteralExpression(boundArrayLiteralExpression);
                     return;
                 case BoundElementAccessExpression boundElementAccessExpression:
-                    EmitExpression(boundElementAccessExpression.BoundBaseExpression);
+                    EmitElementReceiver(boundElementAccessExpression);
                     EmitExpression(boundElementAccessExpression.BoundIndexExpression);
                     EmitElementLoad(boundElementAccessExpression);
                     return;
@@ -192,20 +192,10 @@ internal partial class Emitter
                     }
 
                     // Not a local/parameter, so spill it to a temp local to make it addressable.
-                    ILProcessor.Body.InitLocals = true;
-                    var temp = new VariableDefinition(ResolveTypeReference(baseExpression.ResultType as ClrTypeSymbol));
-                    ILProcessor.Body.Variables.Add(temp);
+                    var temp = NewTemp(ResolveTypeReference(baseExpression.ResultType as ClrTypeSymbol));
                     EmitExpression(baseExpression);
                     EmitLocalStore(temp);
-
-                    if (temp.Index < 0xFF)
-                    {
-                        ILProcessor.Emit(OpCodes.Ldloca_S, temp);
-                    }
-                    else
-                    {
-                        ILProcessor.Emit(OpCodes.Ldloca, temp);
-                    }
+                    EmitLocalAddress(temp);
                     return;
             }
         }
@@ -427,7 +417,7 @@ internal partial class Emitter
         {
             if (!boundMemberAccessExpression.IsStatic)
             {
-                EmitExpression(boundMemberAccessExpression.BoundBaseExpression);
+                EmitMemberReceiver(boundMemberAccessExpression);
             }
 
             EmitMemberLoad(boundMemberAccessExpression);
@@ -479,12 +469,54 @@ internal partial class Emitter
             ILProcessor.Emit(opCode, fieldReference);
         }
 
+        private void EmitMemberReceiver(BoundMemberAccessExpression boundMemberAccessExpression)
+        {
+            if (boundMemberAccessExpression is BoundClrPropertyAccessExpression)
+            {
+                EmitInstanceCallReceiver(boundMemberAccessExpression.BoundBaseExpression);
+            }
+            else
+            {
+                EmitExpression(boundMemberAccessExpression.BoundBaseExpression);
+            }
+        }
+
+        private void EmitElementReceiver(BoundElementAccessExpression boundElementAccessExpression)
+        {
+            if (boundElementAccessExpression is BoundIndexerAccessExpression)
+            {
+                EmitInstanceCallReceiver(boundElementAccessExpression.BoundBaseExpression);
+            }
+            else
+            {
+                EmitExpression(boundElementAccessExpression.BoundBaseExpression);
+            }
+        }
+
+        // Struct receivers are passed by address, so use `call`; accessors declared on a
+        // reference type or interface need `constrained.` + `callvirt`.
+        private void EmitAccessorCall(System.Reflection.MethodInfo accessor, BoundExpression receiver, MethodReference methodReference)
+        {
+            if (accessor.IsStatic || receiver.ResultType.IsReferenceType)
+            {
+                ILProcessor.Emit(accessor.IsStatic ? OpCodes.Call : OpCodes.Callvirt, methodReference);
+            }
+            else if (accessor.DeclaringType.IsValueType)
+            {
+                ILProcessor.Emit(OpCodes.Call, methodReference);
+            }
+            else
+            {
+                ILProcessor.Emit(OpCodes.Constrained, ResolveTypeReference(receiver.ResultType as ClrTypeSymbol));
+                ILProcessor.Emit(OpCodes.Callvirt, methodReference);
+            }
+        }
+
         private void EmitClrPropertyLoad(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
         {
             var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.GetMethod);
             methodReference.ReturnType = ResolveTypeReference(boundClrPropertyAccessExpression.ResultType as ClrTypeSymbol);
-            var opCode = boundClrPropertyAccessExpression.IsStatic ? OpCodes.Call : OpCodes.Callvirt;
-            ILProcessor.Emit(opCode, methodReference);
+            EmitAccessorCall(boundClrPropertyAccessExpression.GetMethod, boundClrPropertyAccessExpression.BoundBaseExpression, methodReference);
         }
 
         private void EmitClrPropertyStore(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
@@ -492,8 +524,7 @@ internal partial class Emitter
             var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.SetMethod);
             methodReference.Parameters[0].ParameterType = ResolveTypeReference(boundClrPropertyAccessExpression.ResultType as ClrTypeSymbol);
             methodReference.ReturnType = AssemblyDefinition.MainModule.TypeSystem.Void;
-            var opCode = boundClrPropertyAccessExpression.IsStatic ? OpCodes.Call : OpCodes.Callvirt;
-            ILProcessor.Emit(opCode, methodReference);
+            EmitAccessorCall(boundClrPropertyAccessExpression.SetMethod, boundClrPropertyAccessExpression.BoundBaseExpression, methodReference);
         }
 
         private void EmitStore(BoundExpression left, Action assignmentAction)
@@ -501,11 +532,11 @@ internal partial class Emitter
             if (left is BoundMemberAccessExpression boundMemberAccessExpression
                 && !boundMemberAccessExpression.IsStatic)
             {
-                EmitExpression(boundMemberAccessExpression.BoundBaseExpression);
+                EmitMemberReceiver(boundMemberAccessExpression);
             }
             else if (left is BoundElementAccessExpression boundElementAccessExpression)
             {
-                EmitExpression(boundElementAccessExpression.BoundBaseExpression);
+                EmitElementReceiver(boundElementAccessExpression);
                 EmitExpression(boundElementAccessExpression.BoundIndexExpression);
             }
 
@@ -610,41 +641,57 @@ internal partial class Emitter
             });
         }
 
-        // The receiver is spilled so it is evaluated once, per the compound assignment rule.
+        // Returns an emitter for the receiver that evaluates it once. Variables are
+        // re-addressed so struct mutations hit the variable, not a copy.
+        private Action SpillReceiver(BoundExpression baseExpression)
+        {
+            if (!baseExpression.ResultType.IsReferenceType)
+            {
+                if (baseExpression is BoundVariableExpression { Variable: LocalVariableSymbol or ExceptionVariableSymbol or ParameterSymbol })
+                {
+                    return () => EmitInstanceCallReceiver(baseExpression);
+                }
+
+                var addressTemp = NewTemp(ResolveTypeReference(baseExpression.ResultType as ClrTypeSymbol));
+                EmitExpression(baseExpression);
+                EmitLocalStore(addressTemp);
+                return () => EmitLocalAddress(addressTemp);
+            }
+
+            var temp = NewTemp(ResolveTypeReference(baseExpression.ResultType as ClrTypeSymbol));
+            EmitExpression(baseExpression);
+            EmitLocalStore(temp);
+            return () => EmitLocalLoad(temp);
+        }
+
         private void EmitMemberCompoundAssignment(
             BoundAssignmentExpression boundAssignmentExpression,
             BoundMemberAccessExpression memberAccess)
         {
-            var baseTemp = NewTemp(ResolveTypeReference(memberAccess.BoundBaseExpression.ResultType as ClrTypeSymbol));
-
-            EmitExpression(memberAccess.BoundBaseExpression);
-            EmitLocalStore(baseTemp);
+            var emitReceiver = SpillReceiver(memberAccess.BoundBaseExpression);
 
             // Receiver for the store, then receiver for loading the current value.
-            EmitLocalLoad(baseTemp);
-            EmitLocalLoad(baseTemp);
+            emitReceiver();
+            emitReceiver();
             EmitMemberLoad(memberAccess);
             EmitExpression(boundAssignmentExpression.Right);
             EmitBinaryOperator(boundAssignmentExpression.BinaryOperator);
             EmitMemberStore(memberAccess);
         }
 
-        // Base and index are spilled so they are evaluated once, per the compound assignment rule.
         private void EmitElementCompoundAssignment(
             BoundAssignmentExpression boundAssignmentExpression,
             BoundElementAccessExpression elementAccess)
         {
-            var baseTemp = NewTemp(ResolveTypeReference(elementAccess.BoundBaseExpression.ResultType as ClrTypeSymbol));
+            var emitReceiver = SpillReceiver(elementAccess.BoundBaseExpression);
             var indexTemp = NewTemp(ResolveTypeReference(elementAccess.BoundIndexExpression.ResultType as ClrTypeSymbol));
 
-            EmitExpression(elementAccess.BoundBaseExpression);
-            EmitLocalStore(baseTemp);
             EmitExpression(elementAccess.BoundIndexExpression);
             EmitLocalStore(indexTemp);
 
-            EmitLocalLoad(baseTemp);
+            emitReceiver();
             EmitLocalLoad(indexTemp);
-            EmitLocalLoad(baseTemp);
+            emitReceiver();
             EmitLocalLoad(indexTemp);
             EmitElementLoad(elementAccess);
             EmitExpression(boundAssignmentExpression.Right);
@@ -658,6 +705,11 @@ internal partial class Emitter
             var temp = new VariableDefinition(typeReference);
             ILProcessor.Body.Variables.Add(temp);
             return temp;
+        }
+
+        private void EmitLocalAddress(VariableDefinition variableDefinition)
+        {
+            ILProcessor.Emit(variableDefinition.Index < 0xFF ? OpCodes.Ldloca_S : OpCodes.Ldloca, variableDefinition);
         }
 
         private void EmitLocalLoad(VariableDefinition variableDefinition)
@@ -754,7 +806,7 @@ internal partial class Emitter
             }
 
             methodReference.ReturnType = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(methodInfo.ReturnType));
-            ILProcessor.Emit(OpCodes.Callvirt, methodReference);
+            EmitAccessorCall(methodInfo, boundIndexerAccessExpression.BoundBaseExpression, methodReference);
         }
 
         private void EmitLdelem(ClrTypeSymbol elementType, TypeReference elementTypeReference)
