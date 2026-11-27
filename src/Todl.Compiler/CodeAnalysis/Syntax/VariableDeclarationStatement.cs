@@ -8,6 +8,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
     {
         // const or let
         public SyntaxToken DeclarationKeyword { get; internal init; }
+        public TypeExpression TypeExpression { get; internal init; }
         public SyntaxToken IdentifierToken { get; internal init; }
         public SyntaxToken AssignmentToken { get; internal init; }
         public Expression InitializerExpression { get; internal init; }
@@ -22,6 +23,13 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         private VariableDeclarationStatement ParseVariableDeclarationStatement()
         {
             var constOrLetKeyword = this.ExpectToken(Current.Kind);
+
+            // A type precedes the name when it starts with a type keyword, or an identifier not followed by '=' ('let uint = 1;' names a variable).
+            var typeExpression = SyntaxFacts.BuiltInTypes.Contains(Current.Kind)
+                || (Current.Kind == SyntaxKind.IdentifierToken && Peak.Kind != SyntaxKind.EqualsToken)
+                ? this.ParseTypeExpression()
+                : null;
+
             var identifierToken = this.ExpectToken(SyntaxKind.IdentifierToken);
             var equalsToken = this.ExpectToken(SyntaxKind.EqualsToken);
             var initializerExpression = this.ParseExpression();
@@ -31,6 +39,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
             {
                 SyntaxTree = syntaxTree,
                 DeclarationKeyword = constOrLetKeyword,
+                TypeExpression = typeExpression,
                 IdentifierToken = identifierToken,
                 AssignmentToken = equalsToken,
                 InitializerExpression = initializerExpression,

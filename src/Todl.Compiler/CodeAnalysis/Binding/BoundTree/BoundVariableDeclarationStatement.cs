@@ -1,5 +1,6 @@
 ﻿using Todl.Compiler.CodeAnalysis.Symbols;
 using Todl.Compiler.CodeAnalysis.Syntax;
+using Todl.Compiler.Diagnostics;
 
 namespace Todl.Compiler.CodeAnalysis.Binding.BoundTree;
 
@@ -18,10 +19,26 @@ public partial class Binder
         VariableDeclarationStatement variableDeclarationStatement)
     {
         var initializerExpression = BindExpression(variableDeclarationStatement.InitializerExpression);
+        var declaredType = BindDeclaredVariableType(variableDeclarationStatement.TypeExpression);
+
+        if (declaredType is not null
+            && initializerExpression.ResultType is not null
+            && !initializerExpression.ResultType.Equals(declaredType))
+        {
+            ReportDiagnostic(new Diagnostic()
+            {
+                Message = $"Cannot initialize variable '{variableDeclarationStatement.IdentifierToken.Text}' of type {declaredType} with a value of type {initializerExpression.ResultType}.",
+                Level = DiagnosticLevel.Error,
+                TextLocation = variableDeclarationStatement.InitializerExpression.GetTextLocation(),
+                ErrorCode = ErrorCode.TypeMismatch
+            });
+        }
+
         var variable = new LocalVariableSymbol()
         {
             VariableDeclarationStatement = variableDeclarationStatement,
-            BoundInitializer = initializerExpression
+            BoundInitializer = initializerExpression,
+            DeclaredType = declaredType
         };
 
         DeclareLocalVariable(
@@ -32,5 +49,42 @@ public partial class Binder
             syntaxNode: variableDeclarationStatement,
             variable: variable,
             initializerExpression: initializerExpression);
+    }
+
+    private TypeSymbol BindDeclaredVariableType(TypeExpression typeExpression)
+    {
+        if (typeExpression is null)
+        {
+            return null;
+        }
+
+        var type = GetClrTypeCacheView(typeExpression.SyntaxTree).ResolveType(typeExpression);
+        if (type is null)
+        {
+            ReportDiagnostic(new Diagnostic()
+            {
+                Message = $"Type {typeExpression.GetText()} is invalid",
+                Level = DiagnosticLevel.Error,
+                TextLocation = typeExpression.GetTextLocation(),
+                ErrorCode = ErrorCode.TypeNotFound
+            });
+
+            return null;
+        }
+
+        if (type.SpecialType == SpecialType.ClrVoid)
+        {
+            ReportDiagnostic(new Diagnostic()
+            {
+                Message = "A variable cannot be of type void.",
+                Level = DiagnosticLevel.Error,
+                TextLocation = typeExpression.GetTextLocation(),
+                ErrorCode = ErrorCode.InvalidVariableType
+            });
+
+            return null;
+        }
+
+        return type;
     }
 }
