@@ -8,12 +8,14 @@ internal sealed class LocalVariableSymbol : VariableSymbol
     public VariableDeclarationStatement VariableDeclarationStatement { get; internal init; }
     public BoundExpression BoundInitializer { get; internal init; }
 
+    public TypeSymbol DeclaredType { get; internal init; }
+
     public override string Name
         => VariableDeclarationStatement.IdentifierToken.Text.ToString();
 
     public override bool ReadOnly
         => VariableDeclarationStatement.DeclarationKeyword.Kind == SyntaxKind.ConstKeywordToken;
 
-    public override TypeSymbol Type => BoundInitializer.ResultType;
+    public override TypeSymbol Type => DeclaredType ?? BoundInitializer.ResultType;
     public override bool Constant => ReadOnly && BoundInitializer.Constant;
 }
