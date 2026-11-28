@@ -173,6 +173,9 @@ internal abstract class BoundTreeWalker : BoundTreeVisitor
     public override BoundNode VisitBoundNoOpStatement(BoundNoOpStatement boundNoOpStatement)
         => boundNoOpStatement;
 
+    public override BoundNode VisitBoundNullLiteralExpression(BoundNullLiteralExpression boundNullLiteralExpression)
+        => boundNullLiteralExpression;
+
     public override BoundNode VisitBoundObjectCreationExpression(BoundObjectCreationExpression boundObjectCreationExpression)
     {
         VisitList(boundObjectCreationExpression.BoundArguments);

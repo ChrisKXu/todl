@@ -38,6 +38,7 @@ namespace Todl.Compiler.CodeAnalysis.Syntax
         {
             { "true", SyntaxKind.TrueKeywordToken },
             { "false", SyntaxKind.FalseKeywordToken },
+            { "null", SyntaxKind.NullKeywordToken },
 
             { "const", SyntaxKind.ConstKeywordToken },
             { "let", SyntaxKind.LetKeywordToken },

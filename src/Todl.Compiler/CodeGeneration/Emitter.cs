@@ -80,36 +80,115 @@ internal partial class Emitter
         return AssemblyDefinition.MainModule.ImportReference(clrType);
     }
 
-    private MethodReference ResolveMethodReference(BoundClrInvocationExpression boundClrInvocationExpression)
+    // The reflection importer closes primitives over metadata-style references; rebuild them with intrinsic element types.
+    private MethodReference ImportMethodReference(System.Reflection.MethodBase methodBase)
     {
-        var methodInfo = boundClrInvocationExpression.MethodInfo;
-        var methodReference = AssemblyDefinition.MainModule.ImportReference(methodInfo);
-        methodReference.ReturnType = ResolveTypeReference(boundClrInvocationExpression.ResultType as ClrTypeSymbol);
+        if (methodBase.DeclaringType is { IsConstructedGenericType: true } declaringType)
+        {
+            return ImportGenericInstanceMethodReference(methodBase, declaringType);
+        }
 
-        var parameters = methodInfo.GetParameters();
+        var methodReference = AssemblyDefinition.MainModule.ImportReference(methodBase);
+
+        var parameters = methodBase.GetParameters();
         for (var i = 0; i != methodReference.Parameters.Count; ++i)
         {
             methodReference.Parameters[i].ParameterType
                 = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(parameters[i].ParameterType));
         }
 
+        if (methodBase is System.Reflection.MethodInfo methodInfo)
+        {
+            methodReference.ReturnType = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(methodInfo.ReturnType));
+        }
+
         return methodReference;
     }
+
+    // Builds member references from the open generic definition; the reflection importer cannot resolve them on a MetadataLoadContext.
+    private MethodReference ImportGenericInstanceMethodReference(System.Reflection.MethodBase methodBase, Type declaringType)
+    {
+        var definition = FindGenericDefinition(methodBase, declaringType);
+        var declaringTypeReference = (GenericInstanceType)ResolveComplexTypeReference(declaringType);
+        var openTypeReference = declaringTypeReference.ElementType;
+
+        for (var i = openTypeReference.GenericParameters.Count; i < declaringType.GetGenericArguments().Length; ++i)
+        {
+            openTypeReference.GenericParameters.Add(new GenericParameter($"T{i}", openTypeReference));
+        }
+
+        var returnType = definition is System.Reflection.MethodInfo definitionMethod
+            ? ResolveDefinitionTypeReference(definitionMethod.ReturnType, openTypeReference)
+            : AssemblyDefinition.MainModule.TypeSystem.Void;
+
+        var methodReference = new MethodReference(methodBase.Name, returnType, declaringTypeReference)
+        {
+            HasThis = !methodBase.IsStatic
+        };
+
+        foreach (var parameter in definition.GetParameters())
+        {
+            methodReference.Parameters.Add(
+                new ParameterDefinition(ResolveDefinitionTypeReference(parameter.ParameterType, openTypeReference)));
+        }
+
+        return methodReference;
+    }
+
+    private TypeReference ResolveDefinitionTypeReference(Type definitionType, TypeReference openTypeReference)
+    {
+        if (!definitionType.ContainsGenericParameters)
+        {
+            return ResolveTypeReference(Compilation.ClrTypeCache.Resolve(definitionType));
+        }
+
+        if (definitionType.IsGenericParameter)
+        {
+            return openTypeReference.GenericParameters[definitionType.GenericParameterPosition];
+        }
+
+        if (definitionType.IsArray)
+        {
+            var elementType = ResolveDefinitionTypeReference(definitionType.GetElementType(), openTypeReference);
+            return definitionType.IsSZArray ? new ArrayType(elementType) : new ArrayType(elementType, definitionType.GetArrayRank());
+        }
+
+        if (definitionType.IsByRef)
+        {
+            return new ByReferenceType(ResolveDefinitionTypeReference(definitionType.GetElementType(), openTypeReference));
+        }
+
+        var genericInstanceType = new GenericInstanceType(
+            AssemblyDefinition.MainModule.ImportReference(definitionType.GetGenericTypeDefinition()));
+
+        foreach (var typeArgument in definitionType.GetGenericArguments())
+        {
+            genericInstanceType.GenericArguments.Add(ResolveDefinitionTypeReference(typeArgument, openTypeReference));
+        }
+
+        return genericInstanceType;
+    }
+
+    private static System.Reflection.MethodBase FindGenericDefinition(System.Reflection.MethodBase methodBase, Type constructedType)
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.NonPublic
+            | System.Reflection.BindingFlags.Instance
+            | System.Reflection.BindingFlags.Static
+            | System.Reflection.BindingFlags.DeclaredOnly;
+
+        var openType = constructedType.GetGenericTypeDefinition();
+
+        return methodBase is System.Reflection.ConstructorInfo
+            ? openType.GetConstructors(flags).Single(c => c.MetadataToken == methodBase.MetadataToken)
+            : openType.GetMethods(flags).Single(m => m.MetadataToken == methodBase.MetadataToken);
+    }
+
+    private MethodReference ResolveMethodReference(BoundClrInvocationExpression boundClrInvocationExpression)
+        => ImportMethodReference(boundClrInvocationExpression.MethodInfo);
 
     private MethodReference ResolveMethodReference(BoundObjectCreationExpression boundObjectCreationExpression)
-    {
-        var constructorInfo = boundObjectCreationExpression.ConstructorInfo;
-        var methodReference = AssemblyDefinition.MainModule.ImportReference(constructorInfo);
-
-        var parameters = constructorInfo.GetParameters();
-        for (var i = 0; i != methodReference.Parameters.Count; ++i)
-        {
-            methodReference.Parameters[i].ParameterType
-                = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(parameters[i].ParameterType));
-        }
-
-        return methodReference;
-    }
+        => ImportMethodReference(boundObjectCreationExpression.ConstructorInfo);
 
     protected virtual MethodReference ResolveMethodReference(BoundTodlInvocationExpression boundTodlInvocationExpression)
     {

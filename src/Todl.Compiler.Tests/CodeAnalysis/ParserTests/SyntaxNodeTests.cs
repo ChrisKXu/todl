@@ -71,7 +71,8 @@ public sealed class SyntaxNodeTests
         "new object()", // NewExpression
         "a[0]", // ElementAccessExpression
         "new int[5]", // NewArrayExpression
-        "[1, 2, 3]" // ArrayLiteralExpression
+        "[1, 2, 3]", // ArrayLiteralExpression
+        "null" // NullLiteralExpression
     };
 
     private static readonly string[] testStatements =

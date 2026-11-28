@@ -8,6 +8,7 @@ public sealed class NewArrayExpression : Expression
 {
     public SyntaxToken NewKeywordToken { get; internal init; }
     public NameExpression ElementTypeNameExpression { get; internal init; }
+    public SyntaxToken? QuestionToken { get; internal init; }
     public SyntaxToken OpenBracketToken { get; internal init; }
     public Expression LengthExpression { get; internal init; }
     public SyntaxToken CloseBracketToken { get; internal init; }
@@ -21,7 +22,7 @@ public sealed class NewArrayExpression : Expression
 
 public sealed partial class Parser
 {
-    private NewArrayExpression ParseNewArrayExpression(SyntaxToken newKeywordToken, NameExpression elementTypeNameExpression)
+    private NewArrayExpression ParseNewArrayExpression(SyntaxToken newKeywordToken, NameExpression elementTypeNameExpression, SyntaxToken? questionToken)
     {
         var openBracketToken = ExpectToken(SyntaxKind.OpenBracketToken);
         var lengthExpression = ParseExpression();
@@ -53,6 +54,7 @@ public sealed partial class Parser
             SyntaxTree = syntaxTree,
             NewKeywordToken = newKeywordToken,
             ElementTypeNameExpression = elementTypeNameExpression,
+            QuestionToken = questionToken,
             OpenBracketToken = openBracketToken,
             LengthExpression = lengthExpression,
             CloseBracketToken = closeBracketToken,

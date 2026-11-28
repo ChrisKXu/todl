@@ -23,14 +23,16 @@ public partial class Binder
         var body = loopBinder.BindBlockStatementInScope(whileUntilStatement.BlockStatement);
         var negated = whileUntilStatement.WhileOrUntilToken.Kind == SyntaxKind.UntilKeywordToken;
 
-        if (condition.ResultType.SpecialType != Symbols.SpecialType.ClrBoolean)
+        if (condition.ResultType is not null && condition.ResultType.SpecialType != Symbols.SpecialType.ClrBoolean)
         {
             ReportDiagnostic(new Diagnostic()
             {
                 ErrorCode = ErrorCode.TypeMismatch,
                 Level = DiagnosticLevel.Error,
                 TextLocation = whileUntilStatement.ConditionExpression.GetTextLocation(),
-                Message = "Condition must be of boolean type."
+                Message = condition.ResultType.IsNullableValueType
+                    ? $"Condition must be of type bool; '{condition.ResultType}' is not a valid condition."
+                    : "Condition must be of boolean type."
             });
         }
 

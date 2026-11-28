@@ -85,6 +85,17 @@ namespace Todl.Compiler.CodeAnalysis.Binding
             return symbol ?? Parent?.LookupFunctionSymbol(functionDeclarationMember);
         }
 
+        public IEnumerable<FunctionSymbol> LookupFunctionSymbols(string name)
+        {
+            for (var scope = this; scope is not null; scope = scope.Parent)
+            {
+                foreach (var function in scope.symbols.OfType<FunctionSymbol>().Where(f => f.Name == name))
+                {
+                    yield return function;
+                }
+            }
+        }
+
         public FunctionSymbol LookupFunctionSymbol(string name, IReadOnlyDictionary<string, TypeSymbol> namedArguments)
         {
             var symbol = symbols

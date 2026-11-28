@@ -6,6 +6,10 @@ public abstract class TypeSymbol : Symbol
 
     public virtual bool IsArray => false;
 
+    public virtual bool IsNullableValueType => false;
+
+    public virtual TypeSymbol UnderlyingNullableType => null;
+
     public abstract SpecialType SpecialType { get; }
 
     public abstract bool IsReferenceType { get; }

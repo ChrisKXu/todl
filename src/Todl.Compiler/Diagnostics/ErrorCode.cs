@@ -50,6 +50,9 @@ namespace Todl.Compiler.Diagnostics
         RethrowOutsideExceptBlock,
         JumpOutOfFinally,
         InvalidRankSpecifier,
-        InvalidVariableType
+        InvalidVariableType,
+        InvalidNullableType,
+        UntypedNullLiteral,
+        AmbiguousCall
     }
 }

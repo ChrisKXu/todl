@@ -102,7 +102,8 @@ public sealed class BoundNodeTests
         "System::Environment.GetCommandLineArgs()[0]", // BoundArrayElementAccessExpression
         "new System::Text::StringBuilder(\"abc\")[0]", // BoundIndexerAccessExpression
         "new int[5]", // BoundArrayCreationExpression
-        "[1, 2, 3]" // BoundArrayLiteralExpression
+        "[1, 2, 3]", // BoundArrayLiteralExpression
+        "null" // BoundNullLiteralExpression
     ];
 
     private static readonly string[] testStatements =

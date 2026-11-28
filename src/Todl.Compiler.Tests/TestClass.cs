@@ -40,3 +40,32 @@ public struct TestStruct
         set => Value = value;
     }
 }
+
+public static class NullableTestHelper
+{
+    public static int? Echo(int? value) => value;
+
+    public static int? Make(bool hasValue, int value) => hasValue ? value : null;
+
+    public static string Describe(int? value) => value.HasValue ? "value:" + value.Value : "empty";
+
+    public static string Pick(int value) => "plain";
+    public static string Pick(int? value) => "nullable";
+
+    public static string Only(long? value) => "long?";
+
+    public static string Both(int? value) => "int?";
+    public static string Both(long? value) => "long?";
+
+    public static string Named(int? first, bool? second) => $"{first}-{second}";
+}
+
+public sealed class NullableTestHolder
+{
+    public int? Field;
+    public double? Property { get; set; }
+
+    public NullableTestHolder() { }
+
+    public NullableTestHolder(int? field) { Field = field; }
+}

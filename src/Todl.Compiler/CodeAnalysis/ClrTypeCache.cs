@@ -124,8 +124,31 @@ public sealed class ClrTypeCache
         }
 
         // Create and cache
-        var symbol = new ClrTypeSymbol(type, IsExceptionClrType(type));
+        var symbol = new ClrTypeSymbol(type, IsExceptionClrType(type), ResolveNullableUnderlyingType(type));
         return typeCache.GetOrAdd(fullName, symbol);
+    }
+
+    private static bool IsNullableClrType(Type type)
+        => type.IsConstructedGenericType && type.GetGenericTypeDefinition().FullName == typeof(Nullable<>).FullName;
+
+    private ClrTypeSymbol ResolveNullableUnderlyingType(Type type)
+        => IsNullableClrType(type) ? Resolve(type.GetGenericArguments()[0]) : null;
+
+    /// <summary>
+    /// Returns <c>System.Nullable&lt;T&gt;</c> for a non-nullable value type, or null if <paramref name="underlyingType"/> cannot be made nullable.
+    /// </summary>
+    public ClrTypeSymbol ResolveNullable(ClrTypeSymbol underlyingType)
+    {
+        if (underlyingType is null
+            || underlyingType.IsReferenceType
+            || underlyingType.IsNullableValueType
+            || underlyingType.SpecialType == SpecialType.ClrVoid)
+        {
+            return null;
+        }
+
+        var nullableOpenType = CoreAssembly.GetType(typeof(Nullable<>).FullName);
+        return Resolve(nullableOpenType.MakeGenericType(underlyingType.ClrType));
     }
 
     private bool IsExceptionClrType(Type type)

@@ -9,8 +9,10 @@ public sealed class ClrTypeSymbol : TypeSymbol
 {
     public override bool IsNative => true;
     public override bool IsArray => ClrType.IsArray;
-    public override string Name => ClrType.FullName;
+    public override string Name => underlyingNullableType is null ? ClrType.FullName : $"{underlyingNullableType.Name}?";
     public override bool IsReferenceType => !ClrType.IsValueType;
+    public override bool IsNullableValueType => underlyingNullableType is not null;
+    public override TypeSymbol UnderlyingNullableType => underlyingNullableType;
     public string Namespace => ClrType.Namespace;
 
     public Type ClrType { get; }
@@ -19,11 +21,14 @@ public sealed class ClrTypeSymbol : TypeSymbol
 
     public override bool IsExceptionType { get; }
 
-    internal ClrTypeSymbol(Type clrType, bool isExceptionType)
+    private readonly ClrTypeSymbol underlyingNullableType;
+
+    internal ClrTypeSymbol(Type clrType, bool isExceptionType, ClrTypeSymbol underlyingNullableType = null)
     {
         ClrType = clrType;
         SpecialType = SpecialType.None;
         IsExceptionType = isExceptionType;
+        this.underlyingNullableType = underlyingNullableType;
     }
 
     internal ClrTypeSymbol(Type clrType, SpecialType specialType)

@@ -41,11 +41,13 @@
         TildeToken,
         DotToken,
         CommaToken,
+        QuestionToken,
         IdentifierToken,
 
         // Keywords
         TrueKeywordToken,
         FalseKeywordToken,
+        NullKeywordToken,
         ConstKeywordToken,
         LetKeywordToken,
         ImportKeywordToken,

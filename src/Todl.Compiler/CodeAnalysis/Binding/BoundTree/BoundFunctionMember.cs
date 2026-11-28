@@ -26,6 +26,12 @@ public partial class Binder
         var functionSymbol = Scope.LookupFunctionSymbol(functionDeclarationMember);
         var functionBinder = CreateFunctionBinder(functionSymbol);
 
+        ValidateNullableTypeExpression(functionDeclarationMember.ReturnType);
+        foreach (var parameter in functionDeclarationMember.Parameters.Items)
+        {
+            ValidateNullableTypeExpression(parameter.ParameterType);
+        }
+
         var duplicate = functionSymbol
             .Parameters
             .GroupBy(p => p.Name)
