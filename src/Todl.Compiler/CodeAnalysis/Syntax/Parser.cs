@@ -131,6 +131,9 @@ public sealed partial class Parser
                     LiteralToken = ExpectToken(Current.Kind)
                 };
                 break;
+            case SyntaxKind.NullKeywordToken:
+                baseExpression = ParseNullLiteralExpression();
+                break;
             case SyntaxKind.OpenParenthesisToken:
                 baseExpression = this.ParseParethesizedExpression();
                 break;

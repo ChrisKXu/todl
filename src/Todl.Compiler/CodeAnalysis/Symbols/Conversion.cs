@@ -7,7 +7,9 @@ public enum ConversionKind
 {
     None,
     Identity,
-    ImplicitNumeric
+    ImplicitNumeric,
+    ImplicitNullable,
+    NullLiteral
 }
 
 public readonly struct Conversion
@@ -16,6 +18,8 @@ public readonly struct Conversion
     public bool Exists => Kind != ConversionKind.None;
     public bool IsIdentity => Kind == ConversionKind.Identity;
     public bool IsImplicitNumeric => Kind == ConversionKind.ImplicitNumeric;
+    public bool IsImplicitNullable => Kind == ConversionKind.ImplicitNullable;
+    public bool IsNullLiteral => Kind == ConversionKind.NullLiteral;
 
     private Conversion(ConversionKind kind)
     {
@@ -25,6 +29,8 @@ public readonly struct Conversion
     public static readonly Conversion None = new(ConversionKind.None);
     public static readonly Conversion Identity = new(ConversionKind.Identity);
     public static readonly Conversion ImplicitNumeric = new(ConversionKind.ImplicitNumeric);
+    public static readonly Conversion ImplicitNullable = new(ConversionKind.ImplicitNullable);
+    public static readonly Conversion NullLiteral = new(ConversionKind.NullLiteral);
 }
 
 // Mirrors C#'s standard implicit numeric conversions (ECMA-334 §10.2.1), minus decimal.
@@ -109,8 +115,18 @@ public static class Conversions
             return Conversion.Identity;
         }
 
+        if (destination.IsNullableValueType && source.Equals(destination.UnderlyingNullableType))
+        {
+            return Conversion.ImplicitNullable;
+        }
+
         return implicitNumericConversions.Contains((source.SpecialType, destination.SpecialType))
             ? Conversion.ImplicitNumeric
             : Conversion.None;
     }
+
+    public static Conversion ClassifyNullLiteral(TypeSymbol destination)
+        => destination is not null && destination.IsNullableValueType
+            ? Conversion.NullLiteral
+            : Conversion.None;
 }

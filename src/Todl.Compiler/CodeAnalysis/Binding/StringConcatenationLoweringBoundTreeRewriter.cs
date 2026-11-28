@@ -24,7 +24,7 @@ internal sealed class StringConcatenationLoweringBoundTreeRewriter : BoundTreeRe
 
     public override BoundNode VisitBoundBinaryExpression(BoundBinaryExpression boundBinaryExpression)
     {
-        if (boundBinaryExpression.Operator.BoundBinaryOperatorKind != BoundBinaryOperatorKind.StringConcatenation)
+        if (boundBinaryExpression.Operator?.BoundBinaryOperatorKind != BoundBinaryOperatorKind.StringConcatenation)
         {
             return base.VisitBoundBinaryExpression(boundBinaryExpression);
         }

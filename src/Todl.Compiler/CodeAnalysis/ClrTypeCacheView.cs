@@ -32,20 +32,17 @@ public sealed class ClrTypeCacheView
 
     public ClrTypeSymbol ResolveType(TypeExpression typeExpression)
     {
-        var baseType = ResolveType(typeExpression.BaseTypeExpression);
-        if (!typeExpression.IsArrayType)
+        var type = ResolveType(typeExpression.BaseTypeExpression);
+
+        // An invalid '?' is reported by the binder; keep the base type so symbols stay resolvable.
+        if (typeExpression.IsNullableType)
         {
-            return baseType;
+            type = clrTypeCache.ResolveNullable(type) ?? type;
         }
 
-        if (baseType is null)
-        {
-            return null;
-        }
-
-        var resolvedTypeString = typeExpression.GetText().Replace(typeExpression.BaseTypeExpression.GetText(), baseType.Name);
-
-        return new(baseType.ClrType.Assembly.GetType(resolvedTypeString), isExceptionType: false);
+        return typeExpression.IsArrayType
+            ? ResolveArrayType(type, typeExpression.ArrayRankSpecifiers.Length)
+            : type;
     }
 
     internal ClrTypeSymbol ResolveArrayType(ClrTypeSymbol elementType, int rank)
@@ -55,10 +52,13 @@ public sealed class ClrTypeCacheView
             return null;
         }
 
-        var arrayTypeName = elementType.ClrType.FullName + string.Concat(Enumerable.Repeat("[]", rank));
-        var clrType = elementType.ClrType.Assembly.GetType(arrayTypeName);
+        var clrType = elementType.ClrType;
+        for (var i = 0; i < rank; ++i)
+        {
+            clrType = clrType.MakeArrayType();
+        }
 
-        return clrType is null ? null : new(clrType, isExceptionType: false);
+        return new(clrType, isExceptionType: false);
     }
 
     private ImmutableDictionary<string, ClrTypeSymbol> ImportTypeAliases(IEnumerable<ImportDirective> importDirectives)

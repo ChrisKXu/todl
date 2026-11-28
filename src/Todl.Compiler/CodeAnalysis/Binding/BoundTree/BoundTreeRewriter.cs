@@ -218,6 +218,9 @@ internal abstract class BoundTreeRewriter : BoundTreeVisitor
     public override BoundNode VisitBoundNoOpStatement(BoundNoOpStatement boundNoOpStatement)
         => boundNoOpStatement;
 
+    public override BoundNode VisitBoundNullLiteralExpression(BoundNullLiteralExpression boundNullLiteralExpression)
+        => boundNullLiteralExpression;
+
     public override BoundNode VisitBoundObjectCreationExpression(BoundObjectCreationExpression boundObjectCreationExpression)
     {
         var arguments = VisitList(boundObjectCreationExpression.BoundArguments);

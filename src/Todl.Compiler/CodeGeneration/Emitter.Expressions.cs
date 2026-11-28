@@ -53,6 +53,9 @@ internal partial class Emitter
                 case BoundArrayLiteralExpression boundArrayLiteralExpression:
                     EmitArrayLiteralExpression(boundArrayLiteralExpression);
                     return;
+                case BoundConversionExpression boundConversionExpression:
+                    EmitConversionExpression(boundConversionExpression);
+                    return;
                 case BoundElementAccessExpression boundElementAccessExpression:
                     EmitElementReceiver(boundElementAccessExpression);
                     EmitExpression(boundElementAccessExpression.BoundIndexExpression);
@@ -60,6 +63,29 @@ internal partial class Emitter
                     return;
                 default:
                     throw new NotSupportedException($"Expression type {boundExpression.GetType().Name} is not supported.");
+            }
+        }
+
+        private void EmitConversionExpression(BoundConversionExpression boundConversionExpression)
+        {
+            switch (boundConversionExpression.ConversionKind)
+            {
+                case ConversionKind.Identity:
+                    EmitExpression(boundConversionExpression.Operand);
+                    return;
+                case ConversionKind.ImplicitNullable:
+                    EmitExpression(boundConversionExpression.Operand);
+                    ILProcessor.Emit(OpCodes.Newobj, ImportMethodReference(((ClrTypeSymbol)boundConversionExpression.ResultType).ClrType.GetConstructors().Single()));
+                    return;
+                case ConversionKind.NullLiteral:
+                    var nullableType = ResolveTypeReference((ClrTypeSymbol)boundConversionExpression.ResultType);
+                    var temp = NewTemp(nullableType);
+                    EmitLocalAddress(temp);
+                    ILProcessor.Emit(OpCodes.Initobj, nullableType);
+                    EmitLocalLoad(temp);
+                    return;
+                default:
+                    throw new NotSupportedException($"Conversion kind {boundConversionExpression.ConversionKind} is not supported.");
             }
         }
 
@@ -514,16 +540,13 @@ internal partial class Emitter
 
         private void EmitClrPropertyLoad(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
         {
-            var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.GetMethod);
-            methodReference.ReturnType = ResolveTypeReference(boundClrPropertyAccessExpression.ResultType as ClrTypeSymbol);
+            var methodReference = ImportMethodReference(boundClrPropertyAccessExpression.GetMethod);
             EmitAccessorCall(boundClrPropertyAccessExpression.GetMethod, boundClrPropertyAccessExpression.BoundBaseExpression, methodReference);
         }
 
         private void EmitClrPropertyStore(BoundClrPropertyAccessExpression boundClrPropertyAccessExpression)
         {
-            var methodReference = AssemblyDefinition.MainModule.ImportReference(boundClrPropertyAccessExpression.SetMethod);
-            methodReference.Parameters[0].ParameterType = ResolveTypeReference(boundClrPropertyAccessExpression.ResultType as ClrTypeSymbol);
-            methodReference.ReturnType = AssemblyDefinition.MainModule.TypeSystem.Void;
+            var methodReference = ImportMethodReference(boundClrPropertyAccessExpression.SetMethod);
             EmitAccessorCall(boundClrPropertyAccessExpression.SetMethod, boundClrPropertyAccessExpression.BoundBaseExpression, methodReference);
         }
 
@@ -797,15 +820,7 @@ internal partial class Emitter
 
         private void EmitIndexerCall(BoundIndexerAccessExpression boundIndexerAccessExpression, System.Reflection.MethodInfo methodInfo)
         {
-            var methodReference = AssemblyDefinition.MainModule.ImportReference(methodInfo);
-            var parameters = methodInfo.GetParameters();
-            for (var i = 0; i != methodReference.Parameters.Count; ++i)
-            {
-                methodReference.Parameters[i].ParameterType
-                    = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(parameters[i].ParameterType));
-            }
-
-            methodReference.ReturnType = ResolveTypeReference(Compilation.ClrTypeCache.Resolve(methodInfo.ReturnType));
+            var methodReference = ImportMethodReference(methodInfo);
             EmitAccessorCall(methodInfo, boundIndexerAccessExpression.BoundBaseExpression, methodReference);
         }
 

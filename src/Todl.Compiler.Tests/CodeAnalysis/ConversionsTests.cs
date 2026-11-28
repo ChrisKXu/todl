@@ -128,4 +128,35 @@ public sealed class ConversionsTests
         Conversions.ClassifyImplicit(null, int32).Exists.Should().BeFalse();
         Conversions.ClassifyImplicit(int32, null).Exists.Should().BeFalse();
     }
+
+    [Fact]
+    public void ClassifyImplicitWrapsTheExactUnderlyingTypeIntoNullable()
+    {
+        var int32 = Resolve(SpecialType.ClrInt32);
+        var nullableInt32 = TestDefaults.DefaultClrTypeCache.ResolveNullable(int32);
+
+        Conversions.ClassifyImplicit(int32, nullableInt32).Kind.Should().Be(ConversionKind.ImplicitNullable);
+        Conversions.ClassifyImplicit(nullableInt32, nullableInt32).Kind.Should().Be(ConversionKind.Identity);
+        Conversions.ClassifyImplicit(nullableInt32, int32).Exists.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ClassifyImplicitDoesNotWidenIntoNullable()
+    {
+        var nullableInt64 = TestDefaults.DefaultClrTypeCache.ResolveNullable(Resolve(SpecialType.ClrInt64));
+
+        Conversions.ClassifyImplicit(Resolve(SpecialType.ClrInt32), nullableInt64).Exists.Should().BeFalse();
+        Conversions.ClassifyImplicit(Resolve(SpecialType.ClrInt64), nullableInt64).Kind.Should().Be(ConversionKind.ImplicitNullable);
+    }
+
+    [Fact]
+    public void ClassifyNullLiteralOnlyConvertsToNullableValueTypes()
+    {
+        var cache = TestDefaults.DefaultClrTypeCache;
+
+        Conversions.ClassifyNullLiteral(cache.ResolveNullable(Resolve(SpecialType.ClrInt32))).Kind.Should().Be(ConversionKind.NullLiteral);
+        Conversions.ClassifyNullLiteral(Resolve(SpecialType.ClrInt32)).Exists.Should().BeFalse();
+        Conversions.ClassifyNullLiteral(Resolve(SpecialType.ClrString)).Exists.Should().BeFalse();
+        Conversions.ClassifyNullLiteral(null).Exists.Should().BeFalse();
+    }
 }

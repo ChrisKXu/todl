@@ -65,6 +65,12 @@ public partial class Binder
     private TypeSymbol BindExceptionType(ExceptClause exceptClause, IReadOnlyList<BoundExceptClause> earlierClauses)
     {
         var typeExpression = exceptClause.TypeExpression;
+
+        if (!ValidateNullableTypeExpression(typeExpression))
+        {
+            return null;
+        }
+
         var type = GetClrTypeCacheView(typeExpression.SyntaxTree).ResolveType(typeExpression);
 
         if (type is null)

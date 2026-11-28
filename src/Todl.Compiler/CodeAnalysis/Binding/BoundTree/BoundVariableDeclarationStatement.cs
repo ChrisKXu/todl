@@ -18,8 +18,12 @@ public partial class Binder
     private BoundVariableDeclarationStatement BindVariableDeclarationStatement(
         VariableDeclarationStatement variableDeclarationStatement)
     {
-        var initializerExpression = BindExpression(variableDeclarationStatement.InitializerExpression);
         var declaredType = BindDeclaredVariableType(variableDeclarationStatement.TypeExpression);
+        var initializerExpression = variableDeclarationStatement.TypeExpression is null
+            ? BindExpression(variableDeclarationStatement.InitializerExpression)
+            : declaredType is null
+                ? BindExpressionDeferringNullLiteral(variableDeclarationStatement.InitializerExpression)
+                : BindExpressionWithTargetType(variableDeclarationStatement.InitializerExpression, declaredType);
 
         if (declaredType is not null
             && initializerExpression.ResultType is not null
@@ -53,7 +57,7 @@ public partial class Binder
 
     private TypeSymbol BindDeclaredVariableType(TypeExpression typeExpression)
     {
-        if (typeExpression is null)
+        if (typeExpression is null || !ValidateNullableTypeExpression(typeExpression))
         {
             return null;
         }

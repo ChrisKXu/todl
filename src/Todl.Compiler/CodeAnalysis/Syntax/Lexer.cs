@@ -524,6 +524,10 @@ internal sealed class Lexer
                 kind = SyntaxKind.CommaToken;
                 ++this.position;
                 break;
+            case '?':
+                kind = SyntaxKind.QuestionToken;
+                ++this.position;
+                break;
             default:
                 // identifiers in todl can only start with a letter and not a digit or underscore
                 if (char.IsLetter(Current))

@@ -7,7 +7,7 @@ namespace Todl.Compiler.CodeAnalysis.Binding;
 
 internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
 {
-    private readonly Dictionary<VariableSymbol, BoundConstant> constantMap = new();
+    private readonly Dictionary<VariableSymbol, BoundExpression> constantMap = new();
     private readonly ConstantValueFactory constantValueFactory;
     private readonly DiagnosticBag.Builder diagnosticBuilder;
 
@@ -27,7 +27,8 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
 
         // if both of left and right are now constant, fold the binary expression into constant as well
         if (left is BoundConstant constantLeft
-            && right is BoundConstant constantRight)
+            && right is BoundConstant constantRight
+            && boundBinaryExpression.Operator is not null)
         {
             return FoldBinaryConstant(constantLeft, constantRight, boundBinaryExpression);
         }
@@ -135,7 +136,7 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
     {
         var visitedOperand = VisitBoundExpression(boundUnaryExpression.Operand);
 
-        if (visitedOperand is BoundConstant constant)
+        if (visitedOperand is BoundConstant constant && boundUnaryExpression.Operator is not null)
         {
             var value = boundUnaryExpression.Operator.BoundUnaryOperatorKind.GetOperationKind() switch
             {
@@ -195,9 +196,9 @@ internal sealed class ConstantFoldingBoundTreeRewriter : BoundTreeRewriter
     {
         var visitedExpression = VisitBoundExpression(boundVariableDeclarationStatement.InitializerExpression);
 
-        if (visitedExpression is BoundConstant constant)
+        if (visitedExpression is BoundConstant or BoundConversionExpression { Constant: true })
         {
-            constantMap.Add(boundVariableDeclarationStatement.Variable, constant);
+            constantMap.Add(boundVariableDeclarationStatement.Variable, visitedExpression);
         }
 
         if (visitedExpression == boundVariableDeclarationStatement.InitializerExpression)

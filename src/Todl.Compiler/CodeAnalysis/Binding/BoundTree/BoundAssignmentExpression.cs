@@ -64,7 +64,9 @@ public partial class Binder
     {
         var boundAssignmentOperator = BoundAssignmentExpression.MatchAssignmentOperator(assignmentExpression.AssignmentOperator.Kind);
         var isSimpleAssignment = boundAssignmentOperator.SyntaxKind == SyntaxKind.EqualsToken;
-        var right = BindExpression(assignmentExpression.Right);
+        var right = isSimpleAssignment
+            ? BindExpressionDeferringNullLiteral(assignmentExpression.Right)
+            : BindExpression(assignmentExpression.Right);
 
         // A REPL assignment declares a new variable; this must happen before the
         // left side is bound so the simple name resolves instead of reporting an
@@ -96,9 +98,22 @@ public partial class Binder
         BoundExpression right,
         bool isTargetWritable)
     {
-        if (isTargetWritable && right.ResultType is not null)
+        if (right is BoundNullLiteralExpression)
         {
-            CheckAssignmentType(left, right.ResultType);
+            right = ConvertNullLiteral(right, left.ResultType);
+        }
+        else if (right.ResultType is not null)
+        {
+            var converted = left.ResultType is null ? null : TryConvertImplicit(right, left.ResultType);
+
+            if (converted is not null)
+            {
+                right = converted;
+            }
+            else if (isTargetWritable)
+            {
+                CheckAssignmentType(left, right.ResultType);
+            }
         }
 
         return BoundNodeFactory.CreateBoundAssignmentExpression(

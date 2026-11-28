@@ -115,36 +115,54 @@ public partial class Binder
 
         var arguments = invocationExpression.Arguments.Items.ToDictionary(
             keySelector: a => a.Identifier.Value.Text.ToString(),
-            elementSelector: a => BindExpression(a.Expression));
+            elementSelector: a => BindExpressionDeferringNullLiteral(a.Expression));
 
-        var nameAndTypes = arguments.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
+        var candidate = default(MethodInfo);
+        var boundArguments = default(ImmutableArray<BoundExpression>);
 
-        var candidate = candidates.FirstOrDefault(methodInfo =>
+        if (arguments.Values.All(IsPlainClrArgument))
         {
-            var parameters = methodInfo.GetParameters().Select(p => new Tuple<string, Type>(p.Name, p.ParameterType));
-            return nameAndTypes.SetEquals(parameters);
-        });
+            var nameAndTypes = arguments.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
+
+            candidate = candidates.FirstOrDefault(methodInfo =>
+            {
+                var parameters = methodInfo.GetParameters().Select(p => new Tuple<string, Type>(p.Name, p.ParameterType));
+                return nameAndTypes.SetEquals(parameters);
+            });
+
+            if (candidate is not null)
+            {
+                boundArguments = candidate
+                    .GetParameters()
+                    .OrderBy(p => p.Position)
+                    .Select(p => arguments[p.Name])
+                    .ToImmutableArray();
+            }
+        }
+
+        var status = OverloadResolutionStatus.NoMatch;
+        if (candidate is null)
+        {
+            var result = ResolveNullableAwareOverload(
+                candidates,
+                ToOverloadParameters,
+                arguments.Select(a => (a.Key, a.Value)).ToList());
+
+            status = result.Status;
+            candidate = result.Candidate;
+            boundArguments = result.Arguments;
+        }
 
         if (candidate is null)
         {
-            ReportNoMatchingFunctionCandidate(invocationExpression, nameToken);
-
-            return BoundNodeFactory.CreateBoundInvalidInvocationExpression(
-                syntaxNode: invocationExpression,
-                boundBaseExpression: boundBaseExpression,
-                boundArguments: arguments.Values.ToImmutableArray());
+            return BindUnresolvedInvocation(status, invocationExpression, nameToken, boundBaseExpression, arguments.Values.ToImmutableArray());
         }
-
-        var boundArguments = candidate
-            .GetParameters()
-            .OrderBy(p => p.Position)
-            .Select(p => arguments[p.Name]);
 
         return BoundNodeFactory.CreateBoundClrInvocationExpression(
             syntaxNode: invocationExpression,
             boundBaseExpression: boundBaseExpression,
             methodInfo: candidate,
-            boundArguments: boundArguments.ToImmutableArray(),
+            boundArguments: boundArguments,
             resultType: ClrTypeCache.Resolve(candidate.ReturnType));
     }
 
@@ -155,27 +173,38 @@ public partial class Binder
     {
         Debug.Assert(boundBaseExpression.ResultType.IsNative);
 
-        var boundArguments = invocationExpression.Arguments.Items.Select(a => BindExpression(a.Expression)).ToImmutableArray();
+        var boundArguments = invocationExpression.Arguments.Items.Select(a => BindExpressionDeferringNullLiteral(a.Expression)).ToImmutableArray();
         var type = (boundBaseExpression.ResultType as ClrTypeSymbol).ClrType;
         var isStatic = boundBaseExpression is BoundTypeExpression;
+        var bindingFlags = BindingFlags.Public | (isStatic ? BindingFlags.Static : BindingFlags.Instance);
 
-        var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
+        var candidate = boundArguments.All(IsPlainClrArgument)
+            ? WithoutNullableConversions(
+                type.GetMethod(
+                    name: nameToken.Text.ToString(),
+                    bindingAttr: bindingFlags,
+                    binder: null,
+                    types: boundArguments.Select(b => ((ClrTypeSymbol)b.ResultType).ClrType).ToArray(),
+                    modifiers: null),
+                boundArguments)
+            : null;
 
-        var candidate = type.GetMethod(
-            name: nameToken.Text.ToString(),
-            bindingAttr: BindingFlags.Public | (isStatic ? BindingFlags.Static : BindingFlags.Instance),
-            binder: null,
-            types: argumentTypes,
-            modifiers: null);
+        var status = OverloadResolutionStatus.NoMatch;
+        if (candidate is null)
+        {
+            var result = ResolveNullableAwareOverload(
+                type.GetMethods(bindingFlags).Where(m => m.Name == nameToken.Text.ToString() && !m.ContainsGenericParameters),
+                ToOverloadParameters,
+                ToPositionalArguments(boundArguments));
+
+            status = result.Status;
+            candidate = result.Candidate;
+            boundArguments = result.Arguments.IsDefault ? boundArguments : result.Arguments;
+        }
 
         if (candidate is null)
         {
-            ReportNoMatchingFunctionCandidate(invocationExpression, nameToken);
-
-            return BoundNodeFactory.CreateBoundInvalidInvocationExpression(
-                syntaxNode: invocationExpression,
-                boundBaseExpression: boundBaseExpression,
-                boundArguments: boundArguments);
+            return BindUnresolvedInvocation(status, invocationExpression, nameToken, boundBaseExpression, boundArguments);
         }
 
         return BoundNodeFactory.CreateBoundClrInvocationExpression(
@@ -184,6 +213,28 @@ public partial class Binder
             methodInfo: candidate,
             boundArguments: boundArguments,
             resultType: ClrTypeCache.Resolve(candidate.ReturnType));
+    }
+
+    private BoundExpression BindUnresolvedInvocation(
+        OverloadResolutionStatus status,
+        InvocationExpression invocationExpression,
+        SyntaxToken nameToken,
+        BoundExpression boundBaseExpression,
+        ImmutableArray<BoundExpression> boundArguments)
+    {
+        if (status == OverloadResolutionStatus.Ambiguous)
+        {
+            ReportAmbiguousCall(invocationExpression, nameToken.Text.ToString());
+        }
+        else
+        {
+            ReportNoMatchingFunctionCandidate(invocationExpression, nameToken);
+        }
+
+        return BoundNodeFactory.CreateBoundInvalidInvocationExpression(
+            syntaxNode: invocationExpression,
+            boundBaseExpression: boundBaseExpression,
+            boundArguments: boundArguments);
     }
 
     private void ReportNoMatchingFunctionCandidate(

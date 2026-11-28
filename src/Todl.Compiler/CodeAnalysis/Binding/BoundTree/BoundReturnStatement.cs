@@ -20,7 +20,9 @@ public partial class Binder
         BoundExpression boundReturnValueExpression = null;
         if (returnStatement.ReturnValueExpression != null)
         {
-            boundReturnValueExpression = BindExpression(returnStatement.ReturnValueExpression);
+            boundReturnValueExpression = IsInFunction
+                ? BindExpressionWithTargetType(returnStatement.ReturnValueExpression, FunctionSymbol.ReturnType)
+                : BindExpression(returnStatement.ReturnValueExpression);
         }
 
         var boundReturnStatement = BoundNodeFactory.CreateBoundReturnStatement(
@@ -38,7 +40,8 @@ public partial class Binder
                 Level = DiagnosticLevel.Error
             });
         }
-        else if (!boundReturnStatement.ReturnType.Equals(FunctionSymbol.ReturnType))
+        else if (boundReturnValueExpression is not BoundNullLiteralExpression
+            && !boundReturnStatement.ReturnType.Equals(FunctionSymbol.ReturnType))
         {
             ReportDiagnostic(new Diagnostic()
             {

@@ -56,4 +56,30 @@ public sealed class ClrTypeCacheTests
         TestDefaults.DefaultClrTypeCache.Resolve(openListType).Should().BeNull();
         TestDefaults.DefaultClrTypeCache.Resolve(openListType.GetGenericArguments()[0]).Should().BeNull();
     }
+
+    [Fact]
+    public void ResolveNullableShouldReturnTheSameSymbolAsResolvingTheClosedClrType()
+    {
+        var cache = TestDefaults.DefaultClrTypeCache;
+        var int32 = cache.BuiltInTypes.Int32;
+        var closedNullable = cache.CoreAssembly.GetType("System.Nullable`1").MakeGenericType(int32.ClrType);
+
+        var nullable = cache.ResolveNullable(int32);
+
+        nullable.Should().BeSameAs(cache.Resolve(closedNullable));
+        nullable.IsNullableValueType.Should().BeTrue();
+        nullable.UnderlyingNullableType.Should().Be(int32);
+        cache.ResolveNullable(nullable).Should().BeNull();
+    }
+
+    [Fact]
+    public void ResolveNullableShouldRejectVoidAndReferenceTypes()
+    {
+        var cache = TestDefaults.DefaultClrTypeCache;
+
+        cache.ResolveNullable(cache.BuiltInTypes.Void).Should().BeNull();
+        cache.ResolveNullable(cache.BuiltInTypes.String).Should().BeNull();
+        cache.ResolveNullable(cache.BuiltInTypes.Object).Should().BeNull();
+        cache.ResolveNullable(null).Should().BeNull();
+    }
 }

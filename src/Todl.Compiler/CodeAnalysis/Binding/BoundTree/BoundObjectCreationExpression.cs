@@ -65,18 +65,30 @@ public partial class Binder
         Debug.Assert(targetType.IsNative);
 
         var clrType = (targetType as ClrTypeSymbol).ClrType;
-        var boundArguments = newExpression.Arguments.Items.Select(a => BindExpression(a.Expression)).ToImmutableArray();
-        var argumentTypes = boundArguments.Select(b => (b.ResultType as ClrTypeSymbol).ClrType).ToArray();
+        var boundArguments = newExpression.Arguments.Items.Select(a => BindExpressionDeferringNullLiteral(a.Expression)).ToImmutableArray();
 
-        var constructorInfo = clrType.GetConstructor(argumentTypes);
+        var constructorInfo = boundArguments.All(IsPlainClrArgument)
+            ? WithoutNullableConversions(
+                clrType.GetConstructor(boundArguments.Select(b => ((ClrTypeSymbol)b.ResultType).ClrType).ToArray()),
+                boundArguments)
+            : null;
+
+        var status = OverloadResolutionStatus.NoMatch;
+        if (constructorInfo is null)
+        {
+            var result = ResolveNullableAwareOverload(
+                clrType.GetConstructors(),
+                ToOverloadParameters,
+                ToPositionalArguments(boundArguments));
+
+            status = result.Status;
+            constructorInfo = result.Candidate;
+            boundArguments = result.Arguments.IsDefault ? boundArguments : result.Arguments;
+        }
 
         if (constructorInfo is null)
         {
-            ReportNoMatchingConstructorCandidate(newExpression);
-
-            return BoundNodeFactory.CreateBoundInvalidObjectCreationExpression(
-                syntaxNode: newExpression,
-                boundArguments: boundArguments);
+            return BindUnresolvedObjectCreation(status, newExpression, boundArguments);
         }
 
         return new BoundObjectCreationExpression()
@@ -100,33 +112,71 @@ public partial class Binder
             .Where(c => c.IsPublic && c.GetParameters().Length == arguments.Items.Length);
         var argumentsDictionary = arguments.Items.ToDictionary(
             keySelector: a => a.Identifier.Value.Text.ToString(),
-            elementSelector: a => BindExpression(a.Expression));
-        var nameAndTypes = argumentsDictionary.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
+            elementSelector: a => BindExpressionDeferringNullLiteral(a.Expression));
 
-        var constructorInfo = candidates.FirstOrDefault(c =>
+        var constructorInfo = default(ConstructorInfo);
+        var boundArguments = default(ImmutableArray<BoundExpression>);
+
+        if (argumentsDictionary.Values.All(IsPlainClrArgument))
         {
-            var parameters = c.GetParameters().Select(p => new Tuple<string, Type>(p.Name, p.ParameterType));
-            return nameAndTypes.SetEquals(parameters);
-        });
+            var nameAndTypes = argumentsDictionary.Select(a => new Tuple<string, Type>(a.Key, ((ClrTypeSymbol)a.Value.ResultType).ClrType)).ToHashSet();
+
+            constructorInfo = candidates.FirstOrDefault(c =>
+            {
+                var parameters = c.GetParameters().Select(p => new Tuple<string, Type>(p.Name, p.ParameterType));
+                return nameAndTypes.SetEquals(parameters);
+            });
+
+            if (constructorInfo is not null)
+            {
+                boundArguments = constructorInfo.GetParameters().OrderBy(p => p.Position).Select(p => argumentsDictionary[p.Name]).ToImmutableArray();
+            }
+        }
+
+        var status = OverloadResolutionStatus.NoMatch;
+        if (constructorInfo is null)
+        {
+            var result = ResolveNullableAwareOverload(
+                candidates,
+                ToOverloadParameters,
+                argumentsDictionary.Select(a => (a.Key, a.Value)).ToList());
+
+            status = result.Status;
+            constructorInfo = result.Candidate;
+            boundArguments = result.Arguments;
+        }
 
         if (constructorInfo is null)
         {
-            ReportNoMatchingConstructorCandidate(newExpression);
-
-            return BoundNodeFactory.CreateBoundInvalidObjectCreationExpression(
-                syntaxNode: newExpression,
-                boundArguments: argumentsDictionary.Values.ToImmutableArray());
+            return BindUnresolvedObjectCreation(status, newExpression, argumentsDictionary.Values.ToImmutableArray());
         }
-
-        var boundArguments = constructorInfo.GetParameters().OrderBy(p => p.Position).Select(p => argumentsDictionary[p.Name]).ToList();
 
         return new BoundObjectCreationExpression()
         {
             SyntaxNode = newExpression,
             ConstructorInfo = constructorInfo,
-            BoundArguments = boundArguments.ToImmutableArray(),
+            BoundArguments = boundArguments,
             ResultType = ClrTypeCache.Resolve(constructorInfo.DeclaringType),
         };
+    }
+
+    private BoundExpression BindUnresolvedObjectCreation(
+        OverloadResolutionStatus status,
+        NewExpression newExpression,
+        ImmutableArray<BoundExpression> boundArguments)
+    {
+        if (status == OverloadResolutionStatus.Ambiguous)
+        {
+            ReportAmbiguousCall(newExpression, $"new {newExpression.TypeNameExpression.GetText()}");
+        }
+        else
+        {
+            ReportNoMatchingConstructorCandidate(newExpression);
+        }
+
+        return BoundNodeFactory.CreateBoundInvalidObjectCreationExpression(
+            syntaxNode: newExpression,
+            boundArguments: boundArguments);
     }
 
     private void ReportNoMatchingConstructorCandidate(

@@ -57,9 +57,28 @@ public partial class Binder
                 resultType: null);
         }
 
+        var elementType = (ClrTypeSymbol)elementTypeExpression.ResultType;
+
+        if (newArrayExpression.QuestionToken is not null)
+        {
+            var nullableElementType = ClrTypeCache.ResolveNullable(elementType);
+
+            if (nullableElementType is null)
+            {
+                ReportInvalidNullableBase(elementType, newArrayExpression.GetTextLocation(newArrayExpression.ElementTypeNameExpression.Text));
+
+                return BoundNodeFactory.CreateBoundArrayCreationExpression(
+                    syntaxNode: newArrayExpression,
+                    boundLengthExpression: boundLengthExpression,
+                    resultType: null);
+            }
+
+            elementType = nullableElementType;
+        }
+
         var rank = 1 + newArrayExpression.ArrayRankSpecifiers.Length;
         var arrayType = GetClrTypeCacheView(newArrayExpression.SyntaxTree)
-            .ResolveArrayType((ClrTypeSymbol)elementTypeExpression.ResultType, rank);
+            .ResolveArrayType(elementType, rank);
 
         return BoundNodeFactory.CreateBoundArrayCreationExpression(
             syntaxNode: newArrayExpression,

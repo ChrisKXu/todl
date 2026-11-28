@@ -83,7 +83,9 @@ public partial class Binder
 
     private void ValidateResultType(BoundConditionalStatement boundConditionalStatement)
     {
-        if (boundConditionalStatement.Condition.ResultType.SpecialType != SpecialType.ClrBoolean)
+        var conditionType = boundConditionalStatement.Condition.ResultType;
+
+        if (conditionType is not null && conditionType.SpecialType != SpecialType.ClrBoolean)
         {
             var conditionSyntaxNode = boundConditionalStatement.SyntaxNode switch
             {
@@ -94,7 +96,9 @@ public partial class Binder
 
             ReportDiagnostic(new Diagnostic()
             {
-                Message = "Condition expressions need to be of boolean type",
+                Message = conditionType.IsNullableValueType
+                    ? $"Condition expressions need to be of type bool; '{conditionType}' is not a valid condition"
+                    : "Condition expressions need to be of boolean type",
                 ErrorCode = ErrorCode.TypeMismatch,
                 TextLocation = conditionSyntaxNode.GetTextLocation(),
                 Level = DiagnosticLevel.Error

@@ -19,10 +19,11 @@ public sealed partial class Parser
     {
         var newKeywordToken = ExpectToken(SyntaxKind.NewKeywordToken);
         var typeNameExpression = ParseNameExpression();
+        var questionToken = ParseOptionalQuestionToken();
 
-        if (Current.Kind == SyntaxKind.OpenBracketToken)
+        if (Current.Kind == SyntaxKind.OpenBracketToken || questionToken is not null)
         {
-            return ParseNewArrayExpression(newKeywordToken, typeNameExpression);
+            return ParseNewArrayExpression(newKeywordToken, typeNameExpression, questionToken);
         }
 
         var arguments = ParseCommaSeparatedSyntaxList(ParseArgument);
